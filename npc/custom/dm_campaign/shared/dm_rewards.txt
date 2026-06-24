@@ -1,0 +1,138 @@
+// Seal Cascade reward helpers and curated loot rolls.
+
+function	script	DM_RollRewardItem	{
+	.@arc = getarg(0, 1);
+	.@level = getarg(1, BaseLevel);
+	.@tier = getarg(2, 0);
+
+	if (.@arc == 1) {
+		switch (.@tier) {
+			case 0:
+				return callfunc("F_Rand", 501, 502, 601, 602, 909, 938);
+			case 1:
+				return callfunc("F_Rand", 503, 504, 645, 656, 1201, 1601);
+			case 2:
+				return callfunc("F_Rand", 607, 608, 1204, 1604, 2220);
+			case 3:
+				return callfunc("F_Rand", 617, 608, 607, 2220);
+		}
+	}
+
+	if (.@level < 26) {
+		if (.@tier <= 0)
+			return callfunc("F_Rand", 501, 502, 601, 602, 909);
+		if (.@tier == 1)
+			return callfunc("F_Rand", 503, 504, 645, 656);
+		return callfunc("F_Rand", 607, 608, 617);
+	}
+
+	if (.@level < 81) {
+		if (.@tier <= 0)
+			return callfunc("F_Rand", 502, 503, 601, 602, 645);
+		if (.@tier == 1)
+			return callfunc("F_Rand", 504, 505, 656, 657);
+		return callfunc("F_Rand", 607, 608, 617);
+	}
+
+	if (.@tier <= 0)
+		return callfunc("F_Rand", 504, 505, 601, 602, 645);
+	if (.@tier == 1)
+		return callfunc("F_Rand", 656, 657, 678, 715);
+	return callfunc("F_Rand", 607, 608, 617, 984, 985);
+}
+
+function	script	DM_RollRewardZeny	{
+	.@level = getarg(0, BaseLevel);
+	.@tier = getarg(1, 0);
+	.@party_count = getarg(2, 1);
+
+	.@base = max(100, .@level * 60);
+
+	switch (.@tier) {
+		case 1: .@base *= 2; break;
+		case 2: .@base *= 4; break;
+		case 3: .@base *= 8; break;
+	}
+
+	return rand(.@base / 2, .@base) * max(1, .@party_count);
+}
+
+function	script	DM_GivePartyItem	{
+	.@item_id = getarg(0);
+	.@amount = getarg(1, 1);
+	.@party_id = getarg(2, getcharid(CHAR_ID_PARTY));
+	.@dryrun = getarg(3, 0);
+
+	if (.@party_id <= 0) {
+		if (!.@dryrun)
+			getitem2(.@item_id, .@amount, 1, 0, 0, 0, 0, 0, 0);
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (isloggedin(.@accid[.@i], .@charid[.@i])) {
+			if (!.@dryrun)
+				getitem2(.@item_id, .@amount, 1, 0, 0, 0, 0, 0, 0, .@accid[.@i]);
+			++.@given;
+		}
+	}
+
+	return .@given;
+}
+
+function	script	DM_GivePartyZeny	{
+	.@amount = getarg(0);
+	.@party_id = getarg(1, getcharid(CHAR_ID_PARTY));
+	.@dryrun = getarg(2, 0);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@party_id <= 0) {
+		if (!.@dryrun)
+			Zeny += .@amount;
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (isloggedin(.@accid[.@i], .@charid[.@i])) {
+			if (!.@dryrun && attachrid(.@accid[.@i])) {
+				Zeny += .@amount;
+				detachrid();
+			}
+			++.@given;
+		}
+	}
+
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+
+	return .@given;
+}
+
+function	script	DM_GenerateLoot	{
+	.@arc = getarg(0, 1);
+	.@level = getarg(1, BaseLevel);
+	.@tier = getarg(2, 0);
+	.@party_id = getarg(3, getcharid(CHAR_ID_PARTY));
+	.@dryrun = getarg(4, 0);
+
+	.@party_count = callfunc("DM_PartyOnlineCount", .@party_id);
+	.@item_id = callfunc("DM_RollRewardItem", .@arc, .@level, .@tier);
+	.@amount = (.@tier >= 3 ? 1 : rand(1, max(1, .@tier + 2)));
+	.@zeny = callfunc("DM_RollRewardZeny", .@level, .@tier, .@party_count);
+
+	callfunc("DM_GivePartyItem", .@item_id, .@amount, .@party_id, .@dryrun);
+	callfunc("DM_GivePartyZeny", .@zeny, .@party_id, .@dryrun);
+
+	dispbottom("[DM] " + (.@dryrun ? "Rolled" : "Awarded") + " "
+		+ callfunc("DM_TierName", .@tier) + " loot: "
+		+ .@amount + "x " + getitemname(.@item_id) + " and "
+		+ callfunc("F_InsertComma", .@zeny) + " zeny.");
+
+	return .@item_id;
+}

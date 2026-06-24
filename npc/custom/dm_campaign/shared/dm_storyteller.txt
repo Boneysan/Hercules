@@ -1,0 +1,32 @@
+// Seal Cascade narration helpers.
+
+function	script	DM_MapStory	{
+	.@text$ = getarg(0);
+	.@map$ = getarg(1, callfunc("DM_CurrentMap"));
+
+	if (.@text$ == "")
+		return 0;
+
+	mapannounce(.@map$, "[DM] " + .@text$, bc_map, 0x88CCFF);
+	return 1;
+}
+
+function	script	DM_GlobalStory	{
+	.@text$ = getarg(0);
+
+	if (.@text$ == "")
+		return 0;
+
+	announce("[DM] " + .@text$, bc_all, 0x88CCFF);
+	return 1;
+}
+
+function	script	DM_WhisperSelf	{
+	.@text$ = getarg(0);
+
+	if (.@text$ == "")
+		return 0;
+
+	dispbottom("[DM] " + .@text$);
+	return 1;
+}

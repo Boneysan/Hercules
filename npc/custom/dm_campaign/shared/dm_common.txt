@@ -1,0 +1,84 @@
+// Seal Cascade shared DM helpers.
+
+function	script	DM_IsDM	{
+	return getgmlevel() >= getarg(0, 60);
+}
+
+function	script	DM_RequireDM	{
+	if (callfunc("DM_IsDM", getarg(0, 60)))
+		return 1;
+
+	dispbottom("[DM] You do not have permission to use this tool.");
+	return 0;
+}
+
+function	script	DM_CurrentParty	{
+	return getcharid(CHAR_ID_PARTY);
+}
+
+function	script	DM_PartyOnlineCount	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	if (.@party_id <= 0)
+		return 1;
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (isloggedin(.@accid[.@i], .@charid[.@i]))
+			++.@online;
+	}
+
+	return .@online;
+}
+
+function	script	DM_CurrentMap	{
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	return .@map$;
+}
+
+function	script	DM_JoinArgs	{
+	.@start = getarg(0, 0);
+	.@end = getarg(1, .@atcmd_numparameters);
+	.@text$ = "";
+
+	for (.@i = .@start; .@i < .@end; ++.@i)
+		.@text$ += (.@i > .@start ? " " : "") + .@atcmd_parameters$[.@i];
+
+	return .@text$;
+}
+
+function	script	DM_ParseTier	{
+	.@tier$ = getarg(0, "common");
+
+	if (.@tier$ == "common")
+		return 0;
+	if (.@tier$ == "uncommon")
+		return 1;
+	if (.@tier$ == "rare")
+		return 2;
+	if (.@tier$ == "boss")
+		return 3;
+
+	return atoi(.@tier$);
+}
+
+function	script	DM_TierName	{
+	switch (getarg(0, 0)) {
+		case 1: return "uncommon";
+		case 2: return "rare";
+		case 3: return "boss";
+	}
+
+	return "common";
+}
+
+function	script	DM_Color	{
+	switch (getarg(0, 0)) {
+		case 1: return 0x88CCFF;
+		case 2: return 0xD0A0FF;
+		case 3: return 0xFFAA33;
+	}
+
+	return 0xAAFFAA;
+}

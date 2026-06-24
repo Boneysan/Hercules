@@ -1,0 +1,190 @@
+// Seal Cascade in-game DM command console.
+
+-	script	DM_Console	FAKE_NPC,{
+	end;
+
+OnInit:
+	bindatcmd("dm", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDM", 60, 99, 1);
+	bindatcmd("dmreward", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReward", 60, 99, 1);
+	bindatcmd("dmflag", strnpcinfo(NPC_NAME_UNIQUE)+"::OnFlag", 60, 99, 1);
+	bindatcmd("dmstory", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStory", 60, 99, 1);
+	bindatcmd("dmcleanup", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCleanup", 60, 99, 1);
+	end;
+
+OnDM:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	if (.@atcmd_numparameters < 1) {
+		callsub(S_Help);
+		end;
+	}
+
+	.@sub$ = .@atcmd_parameters$[0];
+
+	if (.@sub$ == "help") {
+		callsub(S_Help);
+		end;
+	}
+
+	if (.@sub$ == "reward") {
+		callsub(S_Reward, 1);
+		end;
+	}
+
+	if (.@sub$ == "flag") {
+		callsub(S_Flag, 1);
+		end;
+	}
+
+	if (.@sub$ == "story") {
+		.@text$ = "";
+		for (.@i = 1; .@i < .@atcmd_numparameters; ++.@i)
+			.@text$ += (.@i > 1 ? " " : "") + .@atcmd_parameters$[.@i];
+		callfunc("DM_MapStory", .@text$);
+		end;
+	}
+
+	if (.@sub$ == "globalstory") {
+		.@text$ = "";
+		for (.@i = 1; .@i < .@atcmd_numparameters; ++.@i)
+			.@text$ += (.@i > 1 ? " " : "") + .@atcmd_parameters$[.@i];
+		callfunc("DM_GlobalStory", .@text$);
+		end;
+	}
+
+	if (.@sub$ == "spawn") {
+		callsub(S_Spawn, 1);
+		end;
+	}
+
+	if (.@sub$ == "cleanup") {
+		callfunc("DM_CleanupMap");
+		end;
+	}
+
+	dispbottom("[DM] Unknown subcommand: " + .@sub$);
+	callsub(S_Help);
+	end;
+
+OnReward:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Reward, 0);
+	end;
+
+OnFlag:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Flag, 0);
+	end;
+
+OnStory:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	.@text$ = "";
+	for (.@i = 0; .@i < .@atcmd_numparameters; ++.@i)
+		.@text$ += (.@i > 0 ? " " : "") + .@atcmd_parameters$[.@i];
+	callfunc("DM_MapStory", .@text$);
+	end;
+
+OnCleanup:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callfunc("DM_CleanupMap");
+	end;
+
+OnDMKilled:
+	end;
+
+OnDMBossKilled:
+	mapannounce(strcharinfo(PC_MAP), "[DM] The set-piece foe falls.", bc_map, 0xFFAA33);
+	end;
+
+OnDMCleanup:
+	end;
+
+S_Help:
+	dispbottom("[DM] @dm reward [arc] [tier] [dryrun]");
+	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01> [name] [value]");
+	dispbottom("[DM] @dm story <message> | @dm globalstory <message>");
+	dispbottom("[DM] @dm spawn <mob_id> [count] [name]");
+	dispbottom("[DM] Shortcuts: @dmreward, @dmflag, @dmstory, @dmcleanup");
+	return;
+
+S_Reward:
+	.@offset = getarg(0, 0);
+	.@arc = atoi(.@atcmd_parameters$[.@offset]);
+	if (.@arc <= 0)
+		.@arc = 1;
+
+	.@tier = callfunc("DM_ParseTier", .@atcmd_parameters$[.@offset + 1]);
+	.@dryrun = atoi(.@atcmd_parameters$[.@offset + 2]);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+
+	callfunc("DM_GenerateLoot", .@arc, BaseLevel, .@tier, .@party_id, .@dryrun);
+	return;
+
+S_Flag:
+	.@offset = getarg(0, 0);
+	.@action$ = .@atcmd_parameters$[.@offset];
+
+	if (.@action$ == "arc01") {
+		callfunc("DM_PrintArc01Flags");
+		return;
+	}
+
+	if (.@action$ == "cleararc01") {
+		callfunc("DM_ClearArc01Flags");
+		dispbottom("[DM] Arc 01 flags cleared for this character.");
+		return;
+	}
+
+	.@flag$ = .@atcmd_parameters$[.@offset + 1];
+	if (.@flag$ == "") {
+		dispbottom("[DM] Usage: @dmflag <get|set|clear|arc01|cleararc01> [name] [value]");
+		return;
+	}
+
+	if (.@action$ == "get") {
+		dispbottom("[DM] " + .@flag$ + " = " + callfunc("DM_GetFlag", .@flag$));
+		return;
+	}
+
+	if (.@action$ == "set") {
+		.@value = atoi(.@atcmd_parameters$[.@offset + 2]);
+		callfunc("DM_SetFlag", .@flag$, .@value);
+		dispbottom("[DM] " + .@flag$ + " set to " + .@value + ".");
+		return;
+	}
+
+	if (.@action$ == "clear") {
+		callfunc("DM_ClearFlag", .@flag$);
+		dispbottom("[DM] " + .@flag$ + " cleared.");
+		return;
+	}
+
+	dispbottom("[DM] Unknown flag action: " + .@action$);
+	return;
+
+S_Spawn:
+	.@offset = getarg(0, 0);
+	.@mob_id = atoi(.@atcmd_parameters$[.@offset]);
+	.@count = atoi(.@atcmd_parameters$[.@offset + 1]);
+	.@name$ = .@atcmd_parameters$[.@offset + 2];
+
+	if (.@mob_id <= 0) {
+		dispbottom("[DM] Usage: @dm spawn <mob_id> [count] [name]");
+		return;
+	}
+
+	if (.@count <= 0)
+		.@count = 1;
+	if (.@name$ == "")
+		.@name$ = "--ja--";
+
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	areamonster(.@map$, .@x - 3, .@y - 3, .@x + 3, .@y + 3, .@name$, .@mob_id, .@count, "DM_Console::OnDMKilled");
+	dispbottom("[DM] Spawned " + .@count + " mob(s) near you on " + .@map$ + ".");
+	return;
+}

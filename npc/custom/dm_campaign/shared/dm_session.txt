@@ -1,0 +1,11 @@
+// Seal Cascade session cleanup helpers.
+
+function	script	DM_CleanupMap	{
+	.@map$ = getarg(0, callfunc("DM_CurrentMap"));
+
+	killmonster(.@map$, "DM_Console::OnDMKilled", 1);
+	killmonster(.@map$, "DM_Console::OnDMBossKilled", 1);
+	killmonster(.@map$, "DM_Console::OnDMCleanup", 1);
+	mapannounce(.@map$, "[DM] Encounter cleanup complete.", bc_map, 0xAAAAAA);
+	return 1;
+}

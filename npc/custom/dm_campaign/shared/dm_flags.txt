@@ -1,0 +1,54 @@
+// Seal Cascade story flag helpers.
+
+function	script	DM_SetFlag	{
+	.@flag$ = getarg(0);
+	.@value = getarg(1, 1);
+
+	if (.@flag$ == "")
+		return 0;
+
+	setd(.@flag$, .@value);
+	return .@value;
+}
+
+function	script	DM_GetFlag	{
+	.@flag$ = getarg(0);
+
+	if (.@flag$ == "")
+		return 0;
+
+	return getd(.@flag$);
+}
+
+function	script	DM_ClearFlag	{
+	.@flag$ = getarg(0);
+
+	if (.@flag$ == "")
+		return 0;
+
+	setd(.@flag$, 0);
+	return 1;
+}
+
+function	script	DM_ClearArc01Flags	{
+	callfunc("DM_ClearFlag", "dm_arc01_started");
+	callfunc("DM_ClearFlag", "dm_arc01_tibbets_befriended");
+	callfunc("DM_ClearFlag", "dm_arc01_refugees_helped");
+	callfunc("DM_ClearFlag", "dm_arc01_holt_spared");
+	callfunc("DM_ClearFlag", "dm_arc01_holt_killed");
+	callfunc("DM_ClearFlag", "dm_arc01_sigil_ring_obtained");
+	callfunc("DM_ClearFlag", "dm_mira_lives");
+	return 1;
+}
+
+function	script	DM_PrintArc01Flags	{
+	dispbottom("[DM] Arc 01 flags:");
+	dispbottom("  started=" + callfunc("DM_GetFlag", "dm_arc01_started")
+		+ " tibbets=" + callfunc("DM_GetFlag", "dm_arc01_tibbets_befriended")
+		+ " refugees=" + callfunc("DM_GetFlag", "dm_arc01_refugees_helped"));
+	dispbottom("  holt_spared=" + callfunc("DM_GetFlag", "dm_arc01_holt_spared")
+		+ " holt_killed=" + callfunc("DM_GetFlag", "dm_arc01_holt_killed")
+		+ " sigil_ring=" + callfunc("DM_GetFlag", "dm_arc01_sigil_ring_obtained"));
+	dispbottom("  mira_lives=" + callfunc("DM_GetFlag", "dm_mira_lives"));
+	return 1;
+}
