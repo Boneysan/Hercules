@@ -1,5 +1,9 @@
 // Seal Cascade reward helpers and curated loot rolls.
 
+// Curated loot pools by AegisName constant (readable, server-verified).
+// Tiers: 0 common, 1 uncommon, 2 rare, 3 boss. Arc 1 has its own early-game
+// pool; other arcs fall back to level bands. Themed toward survival staples,
+// then refine ores and prize boxes as the tier climbs.
 function	script	DM_RollRewardItem	{
 	.@arc = getarg(0, 1);
 	.@level = getarg(1, BaseLevel);
@@ -8,37 +12,43 @@ function	script	DM_RollRewardItem	{
 	if (.@arc == 1) {
 		switch (.@tier) {
 			case 0:
-				return callfunc("F_Rand", 501, 502, 601, 602, 909, 938);
+				return callfunc("F_Rand", Red_Potion, Green_Herb, Jellopy, Sticky_Mucus, Wing_Of_Fly);
 			case 1:
-				return callfunc("F_Rand", 503, 504, 645, 656, 1201, 1601);
+				return callfunc("F_Rand", Orange_Potion, Yellow_Potion, Awakening_Potion, Wing_Of_Butterfly, Center_Potion);
 			case 2:
-				return callfunc("F_Rand", 607, 608, 1204, 1604, 2220);
+				return callfunc("F_Rand", White_Potion, Old_Blue_Box, Seed_Of_Yggdrasil, Oridecon);
 			case 3:
-				return callfunc("F_Rand", 617, 608, 607, 2220);
+				return callfunc("F_Rand", Old_Violet_Box, Yggdrasilberry, Old_Card_Album, Elunium);
 		}
 	}
 
 	if (.@level < 26) {
 		if (.@tier <= 0)
-			return callfunc("F_Rand", 501, 502, 601, 602, 909);
+			return callfunc("F_Rand", Red_Potion, Orange_Potion, Jellopy, Green_Herb, Wing_Of_Fly);
 		if (.@tier == 1)
-			return callfunc("F_Rand", 503, 504, 645, 656);
-		return callfunc("F_Rand", 607, 608, 617);
+			return callfunc("F_Rand", Yellow_Potion, White_Potion, Center_Potion, Awakening_Potion);
+		if (.@tier == 2)
+			return callfunc("F_Rand", Old_Blue_Box, Seed_Of_Yggdrasil, Oridecon);
+		return callfunc("F_Rand", Old_Violet_Box, Yggdrasilberry, Old_Card_Album);
 	}
 
 	if (.@level < 81) {
 		if (.@tier <= 0)
-			return callfunc("F_Rand", 502, 503, 601, 602, 645);
+			return callfunc("F_Rand", Orange_Potion, Yellow_Potion, Wing_Of_Fly, Center_Potion);
 		if (.@tier == 1)
-			return callfunc("F_Rand", 504, 505, 656, 657);
-		return callfunc("F_Rand", 607, 608, 617);
+			return callfunc("F_Rand", White_Potion, Awakening_Potion, Wing_Of_Butterfly, Old_Blue_Box);
+		if (.@tier == 2)
+			return callfunc("F_Rand", Seed_Of_Yggdrasil, Yggdrasilberry, Oridecon, Elunium);
+		return callfunc("F_Rand", Old_Violet_Box, Old_Card_Album, Yggdrasilberry, Elunium);
 	}
 
 	if (.@tier <= 0)
-		return callfunc("F_Rand", 504, 505, 601, 602, 645);
+		return callfunc("F_Rand", White_Potion, Center_Potion, Wing_Of_Butterfly, Seed_Of_Yggdrasil);
 	if (.@tier == 1)
-		return callfunc("F_Rand", 656, 657, 678, 715);
-	return callfunc("F_Rand", 607, 608, 617, 984, 985);
+		return callfunc("F_Rand", Yggdrasilberry, Old_Blue_Box, Seed_Of_Yggdrasil, Awakening_Potion);
+	if (.@tier == 2)
+		return callfunc("F_Rand", Old_Violet_Box, Oridecon, Elunium, Old_Card_Album);
+	return callfunc("F_Rand", Old_Card_Album, Old_Violet_Box, Yggdrasilberry, Elunium);
 }
 
 function	script	DM_RollRewardZeny	{
@@ -102,6 +112,49 @@ function	script	DM_GivePartyZeny	{
 		if (isloggedin(.@accid[.@i], .@charid[.@i])) {
 			if (!.@dryrun && attachrid(.@accid[.@i])) {
 				Zeny += .@amount;
+				detachrid();
+			}
+			++.@given;
+		}
+	}
+
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+
+	return .@given;
+}
+
+// Grants base/job EXP to every online party member. getexp() only affects the
+// attached character, so we loop the party (attaching each RID) and restore the
+// caller's attachment afterward. Returns how many members were credited.
+function	script	DM_PartyExp	{
+	.@base = getarg(0, 0);
+	.@job = getarg(1, 0);
+	.@party_id = getarg(2, getcharid(CHAR_ID_PARTY));
+	.@dryrun = getarg(3, 0);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@base < 0)
+		.@base = 0;
+	if (.@job < 0)
+		.@job = 0;
+	if (.@base == 0 && .@job == 0)
+		return 0;
+
+	// Solo / no party: give to the attached character only.
+	if (.@party_id <= 0) {
+		if (!.@dryrun)
+			getexp(.@base, .@job);
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (isloggedin(.@accid[.@i], .@charid[.@i])) {
+			if (!.@dryrun && attachrid(.@accid[.@i])) {
+				getexp(.@base, .@job);
 				detachrid();
 			}
 			++.@given;

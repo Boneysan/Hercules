@@ -154,3 +154,56 @@ Required content:
 
 Those are useful later, but the first risk is whether the campaign loop feels good
 inside RO. Prove that with Arc 1 before widening the surface area.
+
+## Implementation Status
+
+### Done (committed/working-tree)
+- **Shared DM tooling** — `npc/custom/dm_campaign/shared/` (console, flags, rewards,
+  storyteller, session, common). `@dm` commands gated to GM level 60.
+- **Arc 1 vertical slice** — `npc/custom/dm_campaign/act_01/arc_01_prontera.txt`:
+  - Quartermaster Wynne (fountain) — swearing-in with noble/pragmatic/aggressive
+    branch (`dm_arc01_hero_type`), contracts 20002/20003, gates main quest 20005.
+  - Frightened Mother (south gate) — *The Trembling Ground* (20004); protect-vs-report
+    fork sets `dm_arc01_refugees_helped`.
+  - Tibbets the Keeper (Culvert) — three doors; kind/proven path sets
+    `dm_arc01_tibbets_befriended` (tide-wheel key → fewer adds).
+  - Deacon Holt (`prt_sewb4`, the Listening Chamber) — cutscene + Cassell escape +
+    Sigil Ring grant; spare/kill fork (mercy only if refugees helped); spawns the
+    **Deviruchi** MVP with cult-familiar adds that scale down with mercy/ally choices.
+    On boss death: completes 20005, EXP burst, "the seals are weakening" beat.
+- **Quest DB** — `db/quest_db.conf` entries 20001-20006 (range 20000-20099 reserved).
+- **Sigil Ring** — `db/item_db2.conf` Id 50001 (`Sigil_Ring`, IT_ETC, untradeable token).
+- **Dungeon Master group** — `conf/groups.conf` id 5, level 60, inherits Event Manager
+  + Law Enforcement (spawn/warp/hide/recall/item/zeny/broadcast), `can_trade` re-enabled.
+- **Registration** — `npc/scripts_custom.conf` loads the Arc 1 script.
+- **Validation** — `bash ./script-checker <files>` passes (note: the checker needs
+  **bash**, not sh — line 49 uses `[[`).
+
+### Remaining manual steps (need a running stack / Windows client)
+1. **Start MariaDB** (`sudo service mariadb start`) — map-server connects to the DB
+   *before* loading scripts/DBs, so a full boot-parse needs it up. Then run
+   `./run-servers.sh` and confirm map-server loads quest_db/item_db2/groups/Arc 1
+   with no warnings.
+2. **Client itemInfo** — add a Sigil Ring (50001) entry to the client's
+   `itemInfo.lub` so it displays in-game (server-side it already works).
+3. **GM playthrough** — make a DM-group (or Admin) character, run the loop:
+   Wynne → contracts → Tibbets → (`@warp prt_sewb4`) → Holt → Deviruchi → reward.
+   Use `@dmflag arc01` to inspect flags and `@dmflag cleararc01` to retest branches.
+
+### Backend helpers added (closing earlier gaps)
+- **Party-wide quest credit** - `dm_quests.txt` (`DM_PartyQuestComplete/Set/Erase`);
+  `OnDeviruchiDead` now credits the whole online party, not just the killer.
+- **Private dungeon instances** - `dm_instances.txt` (`DM_InstanceStart/End`),
+  exposed as `@dm instance start <map>/end`. Script-driven; no instance_db needed.
+- **Party warp tooling** - `DM_WarpParty` + `@dm warp <map>` / `@dm recall`.
+- **Party-wide EXP** - `DM_PartyExp(base, job{, party_id{, dryrun}})` in
+  `dm_rewards.txt`; the Arc 1 boss EXP burst now credits the whole party.
+- **Themed loot** - `dm_rewards.txt` pools rewritten from legacy numeric IDs to
+  readable, server-verified AegisName constants (potions -> ores -> prize boxes).
+- Arc 1's Listening Chamber is now map-relative (`strnpcinfo(NPC_MAP)`), so it runs
+  standalone on `prt_sewb4` *or* inside a `@dm instance` copy.
+
+### Known slice-level simplifications
+- Holt's chamber re-triggers per-character until 20005 is complete; concurrent
+  re-trigger is blocked by an NPC `.boss_up` guard (single-party assumption).
+- The Trembling Ground "search" is narrated, not combat-tracked (table-style).

@@ -9,6 +9,9 @@ OnInit:
 	bindatcmd("dmflag", strnpcinfo(NPC_NAME_UNIQUE)+"::OnFlag", 60, 99, 1);
 	bindatcmd("dmstory", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStory", 60, 99, 1);
 	bindatcmd("dmcleanup", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCleanup", 60, 99, 1);
+	bindatcmd("dmwarp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnWarp", 60, 99, 1);
+	bindatcmd("dmrecall", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRecall", 60, 99, 1);
+	bindatcmd("dminstance", strnpcinfo(NPC_NAME_UNIQUE)+"::OnInstance", 60, 99, 1);
 	end;
 
 OnDM:
@@ -63,6 +66,21 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "warp") {
+		callsub(S_Warp, 1);
+		end;
+	}
+
+	if (.@sub$ == "recall") {
+		callsub(S_Recall);
+		end;
+	}
+
+	if (.@sub$ == "instance") {
+		callsub(S_Instance, 1);
+		end;
+	}
+
 	dispbottom("[DM] Unknown subcommand: " + .@sub$);
 	callsub(S_Help);
 	end;
@@ -94,6 +112,24 @@ OnCleanup:
 	callfunc("DM_CleanupMap");
 	end;
 
+OnWarp:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Warp, 0);
+	end;
+
+OnRecall:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Recall);
+	end;
+
+OnInstance:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Instance, 0);
+	end;
+
 OnDMKilled:
 	end;
 
@@ -109,7 +145,62 @@ S_Help:
 	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01> [name] [value]");
 	dispbottom("[DM] @dm story <message> | @dm globalstory <message>");
 	dispbottom("[DM] @dm spawn <mob_id> [count] [name]");
-	dispbottom("[DM] Shortcuts: @dmreward, @dmflag, @dmstory, @dmcleanup");
+	dispbottom("[DM] @dm warp <map> [x] [y]   (warps your whole party)");
+	dispbottom("[DM] @dm recall              (pulls party to you)");
+	dispbottom("[DM] @dm instance <start <map> [x] [y] [label] | end>");
+	dispbottom("[DM] Shortcuts: @dmreward, @dmflag, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance");
+	return;
+
+S_Warp:
+	.@offset = getarg(0, 0);
+	.@map$ = .@atcmd_parameters$[.@offset];
+	.@x = atoi(.@atcmd_parameters$[.@offset + 1]);
+	.@y = atoi(.@atcmd_parameters$[.@offset + 2]);
+
+	if (.@map$ == "") {
+		dispbottom("[DM] Usage: @dm warp <map> [x] [y]");
+		return;
+	}
+
+	.@moved = callfunc("DM_WarpParty", .@map$, .@x, .@y, getcharid(CHAR_ID_PARTY));
+	dispbottom("[DM] Warped " + .@moved + " party member(s) to " + .@map$ + ".");
+	return;
+
+S_Recall:
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	.@moved = callfunc("DM_WarpParty", .@map$, .@x, .@y, getcharid(CHAR_ID_PARTY));
+	dispbottom("[DM] Recalled " + .@moved + " party member(s) to your position on " + .@map$ + ".");
+	return;
+
+S_Instance:
+	.@offset = getarg(0, 0);
+	.@action$ = .@atcmd_parameters$[.@offset];
+
+	if (.@action$ == "end") {
+		callfunc("DM_InstanceEnd", getcharid(CHAR_ID_PARTY));
+		return;
+	}
+
+	if (.@action$ == "start") {
+		.@src$ = .@atcmd_parameters$[.@offset + 1];
+		if (.@src$ == "") {
+			dispbottom("[DM] Usage: @dm instance start <source_map> [x] [y] [label]");
+			return;
+		}
+		.@x = atoi(.@atcmd_parameters$[.@offset + 2]);
+		.@y = atoi(.@atcmd_parameters$[.@offset + 3]);
+
+		.@label$ = "";
+		for (.@i = .@offset + 4; .@i < .@atcmd_numparameters; ++.@i)
+			.@label$ += (.@i > .@offset + 4 ? " " : "") + .@atcmd_parameters$[.@i];
+		if (.@label$ == "")
+			.@label$ = "Seal Cascade - " + .@src$;
+
+		callfunc("DM_InstanceStart", .@label$, .@src$, .@x, .@y, getcharid(CHAR_ID_PARTY));
+		return;
+	}
+
+	dispbottom("[DM] Usage: @dm instance <start <map> [x] [y] [label] | end>");
 	return;
 
 S_Reward:

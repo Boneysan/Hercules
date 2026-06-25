@@ -7,11 +7,13 @@ without recompiling the server.
 
 ## Loaded Scripts
 
-- `dm_common.txt` - shared permission, party, map, and reward-tier helpers.
+- `dm_common.txt` - shared permission, party, map, reward-tier, and party-warp helpers.
 - `dm_flags.txt` - persistent campaign flag helpers and Arc 1 flag shortcuts.
 - `dm_rewards.txt` - curated arc/level/tier reward generator and party delivery.
 - `dm_storyteller.txt` - map and global narration helpers.
 - `dm_session.txt` - encounter cleanup helpers.
+- `dm_quests.txt` - party-wide quest set/complete/erase (credits the whole party, not just the killer).
+- `dm_instances.txt` - script-driven private dungeon instances (create/attach/init/warp/destroy; no instance_db needed).
 - `dm_console.txt` - GM-facing bound commands.
 
 ## GM Commands
@@ -30,6 +32,36 @@ All commands require GM level 60 or higher.
 @dm spawn <mob_id> [count] [name]
 @dm cleanup
 @dmcleanup
+@dm warp <map> [x] [y]
+@dmwarp <map> [x] [y]
+@dm recall
+@dmrecall
+@dm instance start <source_map> [x] [y] [label]
+@dm instance end
+@dminstance start <source_map> [x] [y] [label]
+@dminstance end
+```
+
+## Party Warp And Instances
+
+`@dm warp` moves the GM's whole online party to a map (random cell if no x/y
+given); `@dm recall` pulls the party to the GM's current position. Both fall
+back to moving only the GM if they are not in a party.
+
+`@dm instance start <source_map>` gives the party a private copy of that map and
+warps them in. One live instance per party is tracked in `$dm_inst_<party_id>`;
+`@dm instance end` tears it down. Instances time out after 1h alive / 10m idle.
+Because `instance_init` copies the source map's NPCs into the private copy,
+campaign set-pieces work inside instances **as long as their scripts spawn and
+announce against `strnpcinfo(NPC_MAP)`** rather than a hard-coded map name (the
+Arc 1 Listening Chamber does this).
+
+Example - run the Arc 1 climax as a private instance of the deep Culvert:
+
+```text
+@dm instance start prt_sewb4 103 100
+... party fights Deacon Holt / Deviruchi in their own copy ...
+@dm instance end
 ```
 
 ## Reward Generator
@@ -46,6 +78,8 @@ Current behavior:
 - Party rewards are delivered to online party members when the GM has a party;
   otherwise the attached GM/test character receives the reward.
 - Passing `dryrun` as `1` rolls and reports the reward without giving it.
+- `DM_PartyExp(base, job{, party_id{, dryrun}})` grants base/job EXP to every
+  online party member (used by the Arc 1 boss-death burst).
 
 Examples:
 

@@ -37,6 +37,34 @@ function	script	DM_CurrentMap	{
 	return .@map$;
 }
 
+function	script	DM_WarpParty	{
+	.@map$ = getarg(0);
+	.@x = getarg(1, 0);
+	.@y = getarg(2, 0);
+	.@party_id = getarg(3, getcharid(CHAR_ID_PARTY));
+
+	if (.@map$ == "")
+		return 0;
+
+	// Solo / no party: warp the attached character only.
+	if (.@party_id <= 0) {
+		warp(.@map$, .@x, .@y);
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (isloggedin(.@accid[.@i], .@charid[.@i])) {
+			warpchar(.@map$, .@x, .@y, .@charid[.@i]);
+			++.@moved;
+		}
+	}
+
+	return .@moved;
+}
+
 function	script	DM_JoinArgs	{
 	.@start = getarg(0, 0);
 	.@end = getarg(1, .@atcmd_numparameters);

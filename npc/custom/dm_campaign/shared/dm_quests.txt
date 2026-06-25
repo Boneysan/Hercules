@@ -1,0 +1,76 @@
+// Seal Cascade party-wide quest helpers.
+//
+// setquest/completequest/erasequest only affect the attached character, so
+// these loop the online party (attaching each account RID in turn) and then
+// restore the original attachment. Use them from boss-death labels and DM
+// tools so quest credit lands on the whole party, not just the killer.
+
+function	script	DM_PartyApplyQuest	{
+	.@action$   = getarg(0);                                   // "set" | "complete" | "erase"
+	.@quest_id  = getarg(1);
+	.@party_id  = getarg(2, getcharid(CHAR_ID_PARTY));
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@quest_id <= 0)
+		return 0;
+
+	// Solo / no party: apply to the attached character only.
+	if (.@party_id <= 0) {
+		callsub(S_Apply, .@action$, .@quest_id);
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		callsub(S_Apply, .@action$, .@quest_id);
+		detachrid();
+		++.@done;
+	}
+
+	// Re-attach the original caller so the calling script keeps its context.
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+
+	return .@done;
+
+S_Apply:
+	.@a$ = getarg(0);
+	.@q = getarg(1);
+
+	if (.@a$ == "set") {
+		if (questprogress(.@q) == 0)
+			setquest(.@q);
+		return;
+	}
+	if (.@a$ == "complete") {
+		if (questprogress(.@q) == 0)
+			setquest(.@q);
+		if (questprogress(.@q) == 1)
+			completequest(.@q);
+		return;
+	}
+	if (.@a$ == "erase") {
+		if (questprogress(.@q) > 0)
+			erasequest(.@q);
+		return;
+	}
+	return;
+}
+
+function	script	DM_PartyQuestComplete	{
+	return callfunc("DM_PartyApplyQuest", "complete", getarg(0), getarg(1, getcharid(CHAR_ID_PARTY)));
+}
+
+function	script	DM_PartyQuestSet	{
+	return callfunc("DM_PartyApplyQuest", "set", getarg(0), getarg(1, getcharid(CHAR_ID_PARTY)));
+}
+
+function	script	DM_PartyQuestErase	{
+	return callfunc("DM_PartyApplyQuest", "erase", getarg(0), getarg(1, getcharid(CHAR_ID_PARTY)));
+}
