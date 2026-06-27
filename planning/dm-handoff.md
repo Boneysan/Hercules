@@ -63,6 +63,27 @@ updates in `npc/custom/dm_campaign/`.
 - The beat menu exposes all currently scripted Arc 16 Rina outcomes and Arc 17
   Administrator outcomes, including `rina_rolled` and `admin_negotiated`.
 
+## Known Limitations
+
+### Single Active Party
+
+`$dm_active_party` is a single global variable. Only one DM session can run at a
+time on this server. If two groups ever need simultaneous sessions (e.g., two
+GMs running separate campaign parties at the same time), the current gating
+logic would need to change: instead of checking `getcharid(CHAR_ID_PARTY) ==
+$dm_active_party`, it would need to check a per-character or per-party flag
+stored with a key like `$dm_session_<party_id>`. This would require:
+
+1. A `$dm_session_<party_id>` global per party (set 1 on mode on, cleared on mode off).
+2. NPC gates checking `getd("$dm_session_" + getcharid(CHAR_ID_PARTY))` instead of
+   the single `$dm_active_party` equality.
+3. The console tracking its own party's session state rather than a global slot.
+
+For the intended single-DM use case (one game night group), the current design
+is correct and sufficient.
+
+---
+
 ## Open Work
 
 ### 1. DnD Mode Toggle
