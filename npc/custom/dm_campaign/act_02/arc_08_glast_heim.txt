@@ -1,0 +1,255 @@
+//===== Seal Cascade Campaign ================================
+//= Act II, Arc 8 - The Cursed Kingdom (Glast Heim)
+//===== By: ==================================================
+//= Seal Cascade DM tooling
+//===== Description: =========================================
+//= Glast Heim is the cascade's loudest echo of a thing already
+//= broken. A holy kingdom prayed itself to death. The last
+//= bishop refuses to accept the evidence. The Dark Lord feeds
+//= on the faith still burning in the ruins.
+//=
+//= Quests (db/quest_db.conf):
+//=   20121 A Kingdom Unmade           (arc tracker / Dark Lord)
+//=   20122 Outer Garrison             (Raydric x20)
+//=   20123 Fallen Choir               (Wraith x20)
+//=   20124 The Weight of Faith        (Brother Manfred)
+//=
+//= Story flags (persistent character vars, see dm_flags.txt):
+//=   dm_arc08_started, dm_arc08_manfred_spared,
+//=   dm_arc08_manfred_killed, dm_arc08_darklord_killed
+//===========================================================
+
+// ── Sir Aldric the Unfrocked — Survivor of the Holy Kingdom ────────────────
+geffen,120,120,5	script	Sir Aldric the Unfrocked#dm	4_M_03,{
+	if (questprogress(20121) == 2) {
+		mes("[Sir Aldric]");
+		mes("The Dark Lord sleeps again. I would call it victory if I did not know we are the ones who made it possible in the first place.");
+		close();
+	}
+
+	if (!dm_arc08_started) {
+		callsub(S_StartArc);
+		end;
+	}
+
+	callsub(S_TurnIns);
+	end;
+
+S_StartArc:
+	mes("[Sir Aldric]");
+	mes("Geffen's scholars hired you to look into the ruins. Curious timing. The cascade has been ringing the old cathedral bells for three days.");
+	next();
+	if (dm_arc04_cassell_unmasked || dm_arc04_seal_reinforced) {
+		mes("[Sir Aldric]");
+		mes("You were in Geffen before. The Baphomet situation. Faith and power eating themselves. Glast Heim is that story finished.");
+		next();
+	}
+	if (countitem(50001) > 0 || dm_arc01_sigil_ring_obtained) {
+		mes("^3355FF*The Sigil Ring does not grow warmer here. It grows heavier, as though the faith that soaked into these stones weighs on it.*^000000");
+		next();
+	}
+	mes("[Sir Aldric]");
+	mes("Glast Heim was the capital. A kingdom built on absolute faith in the Twelve. Not metaphorical faith. They legislated it. Doubt was a crime.");
+	next();
+	switch (select("What destroyed it?", "What is the Dark Lord?", "What do you need from us?")) {
+	case 1:
+		mes("[Sir Aldric]");
+		mes("The faith. Pure, complete, and utterly without mercy. When the Holy War came, they prayed harder instead of fighting smarter. The Dead Sea Project was born from that same desperation.");
+		break;
+	case 2:
+		mes("[Sir Aldric]");
+		mes("The collective will of a kingdom that refused to accept it had failed. Made manifest by the cascade's pressure on this place. The Dark Lord is not a demon. It is a mirror.");
+		break;
+	case 3:
+		mes("[Sir Aldric]");
+		mes("Clear the outer garrison. The undead patrol routes have moved closer to the cathedral walls — they are being drawn inward. Then clear the abbey itself.");
+		break;
+	}
+	next();
+	mes("[Sir Aldric]");
+	mes("And there is Brother Manfred. The last bishop of the Holy Kingdom. He lives in the ruins and believes this is all a holy test. He is wrong, and he is dangerous, and you will have to decide what to do with him.");
+	callfunc("DM_InstanceSetFlag", "dm_arc08_started", 1);
+	callfunc("DM_InstanceQuestStart", 20121);
+	callfunc("DM_InstanceQuestStart", 20122);
+	callfunc("DM_InstanceQuestStart", 20123);
+	next();
+	mes("^3355FF[Quest started: A Kingdom Unmade]^000000");
+	mes("^3355FFOuter Garrison - clear 20 Raydric from the outer walls.^000000");
+	mes("^3355FFFallen Choir - silence 20 Wraith in the abbey passages.^000000");
+	close();
+
+S_TurnIns:
+	.@paid = 0;
+	if (questprogress(20122) == 1 && questprogress(20122, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20122);
+		callfunc("DM_PartyExp", 240000, 115000);
+		callfunc("DM_GivePartyZeny", 20000);
+		.@paid = 1;
+		mes("[Sir Aldric]");
+		mes("The outer patrol routes are clear. The Raydric were not random undead — they were marching in formation. Something is still giving orders out there.");
+		next();
+		switch (select("Consecrate the cleared ground.", "Document the patrol patterns.", "Leave them. We have bigger problems inside.")) {
+		case 1:
+			mes("[Sir Aldric]");
+			mes("The words don't work the way they used to in a place like this. But the gesture matters. You'll understand why when you're inside.");
+			break;
+		case 2:
+			mes("[Sir Aldric]");
+			mes("The formations match the old garrison maps. The Dark Lord is using institutional memory to command the dead. That is remarkably specific evil.");
+			break;
+		case 3:
+			mes("[Sir Aldric]");
+			mes("Efficient. The garrison was bought time, not resolved. But you're not wrong.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20123) == 1 && questprogress(20123, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20123);
+		callfunc("DM_PartyExp", 260000, 125000);
+		callfunc("DM_GivePartyZeny", 22000);
+		.@paid = 1;
+		mes("[Sir Aldric]");
+		mes("The Wraith were clergy. You can tell by the habits on what's left. They're still singing. A hymn with no words.");
+		next();
+		switch (select("Give them last rites.", "This is what the cascade amplifies — a kingdom's dying echo.", "The only mercy here is silence.")) {
+		case 1:
+			mes("[Sir Aldric]");
+			mes("I am not a priest. But I remember the words. Somewhere in there I think something hears them.");
+			break;
+		case 2:
+			mes("[Sir Aldric]");
+			mes("Exactly that. The cascade does not create these things. It magnifies what was already dying. Glast Heim was dying for a century before the Dead Sea Project.");
+			break;
+		case 3:
+			mes("[Sir Aldric]");
+			mes("It is. And you gave it to them. I'll mark this in my record.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20122) == 2 && questprogress(20123) == 2 && questprogress(20124) == 0) {
+		mes("[Sir Aldric]");
+		mes("The garrison and choir are done. Manfred remains. He holds the cathedral approach and he will not let you pass to the Dark Lord without a confrontation.");
+		next();
+		mes("[Sir Aldric]");
+		mes("He is not beyond reason. He was a good bishop once. But the cascade is giving his faith a frequency it was never meant to carry. Approach with open hands.");
+		callfunc("DM_InstanceQuestStart", 20124);
+		next();
+		mes("^3355FF[Quest started: The Weight of Faith]^000000");
+		mes("^3355FFFind Brother Manfred inside Glast Heim. Decide what his faith is worth.^000000");
+		close();
+	}
+
+	if (questprogress(20124) == 1 && !dm_arc08_manfred_spared && !dm_arc08_manfred_killed) {
+		mes("[Sir Aldric]");
+		mes("Manfred is at the cathedral steps. He is the last obstacle before the Dark Lord.");
+		close();
+	}
+
+	if (questprogress(20124) == 1 && (dm_arc08_manfred_spared || dm_arc08_manfred_killed)) {
+		mes("[Sir Aldric]");
+		mes("Manfred is resolved. The cathedral is open. The Dark Lord awaits in the deepest chamber. When it dies, this arc of history finally closes.");
+		close();
+	}
+
+	if (.@paid) {
+		mes("[Sir Aldric]");
+		mes("Both the garrison and the choir need to be cleared before you face Manfred. The Dark Lord has to come last.");
+		close();
+	}
+
+	mes("[Sir Aldric]");
+	if (questprogress(20122) == 1 && questprogress(20123) == 1)
+		mes("The outer garrison and the fallen choir are both still active. The ruins between here and the cathedral are not safe.");
+	else if (questprogress(20122) == 1)
+		mes("The outer garrison is still open. Raydric on the outer walls.");
+	else if (questprogress(20123) == 1)
+		mes("The fallen choir is still open. Wraith in the abbey passages.");
+	else
+		mes("The contracts are done. Manfred waits at the cathedral steps.");
+	close();
+}
+
+// ── Brother Manfred — The Last Bishop ──────────────────────────────────────
+gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
+	if (!dm_arc08_started) {
+		mes("[Brother Manfred]");
+		mes("This is holy ground. Outsiders are not welcome in the Kingdom's halls.");
+		close();
+	}
+
+	if (dm_arc08_manfred_spared || dm_arc08_manfred_killed) {
+		mes("[Brother Manfred]");
+		if (dm_arc08_manfred_spared)
+			mes("Go then. Face what our faith made. I will pray that you succeed where the kingdom failed.");
+		else
+			mes("...");
+		close();
+	}
+
+	mes("[Brother Manfred]");
+	mes("The kingdom endures. It endures in the stones, in the silence, in the faith that outlasted every sword. Do you understand what faith means when it has nothing left to lose?");
+	next();
+	mes("[Manfred]");
+	mes("The Dark Lord is not evil. It is the test. Midgard turned away from the Twelve. The cascade is their answer. I will not let heretics unmake what the Twelve have sent.");
+	next();
+	switch (select("The kingdom is gone, Manfred. The faith killed it.", "What would the Twelve actually want here?", "Stand with us. Help us put this to rest.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_killed", 1);
+		callfunc("DM_InstanceQuestComplete", 20124);
+		mes("[Manfred]");
+		mes("Then I am already dead. Take your heresy into the cathedral. The Twelve will judge you there.");
+		next();
+		mes("^3355FF*Manfred stands aside, hollow. His prayers will feed the court's unrest.*^000000");
+		mes("^3355FF[DM note: spawn 2-3 extra undead adds with the Dark Lord to reflect his despair joining the fight.]^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
+		callfunc("DM_InstanceQuestComplete", 20124);
+		mes("[Manfred]");
+		mes("...");
+		next();
+		mes("[Manfred]");
+		mes("I have been asking myself that question for thirty years. I never liked the answer. They would want it to stop.");
+		next();
+		mes("^3355FF*Something in Manfred's bearing changes. He steps aside.*^000000");
+		mes("^3355FF[DM note: the Dark Lord fights with its court suppressed — spawn fewer adds, the faith holding them back.]^000000");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
+		callfunc("DM_InstanceQuestComplete", 20124);
+		mes("[Manfred]");
+		mes("No outsider has ever asked me that. Help you. The cathedral was mine. The kingdom was mine. The dead are mine.");
+		next();
+		mes("[Manfred]");
+		mes("Let me walk ahead. If the faith has any weight left in this place, it will clear your path.");
+		next();
+		mes("^3355FF*Manfred leads the way into the cathedral. His prayers hold the adds at bay.*^000000");
+		mes("^3355FF[DM note: spawn fewer adds with the Dark Lord — Manfred's faith restrains the court.]^000000");
+		break;
+	}
+	next();
+	mes("^3355FF[The Weight of Faith resolved. The cathedral is open.]^000000");
+	close();
+}
+
+// ── Glast Heim Abbey Set-piece ─────────────────────────────────────────────
+gl_church,150,150,0	script	Glast Heim Abbey#dm	HIDDEN_NPC,{
+	end;
+
+OnDarkLordDead:
+	callfunc("DM_InstanceQuestComplete", 20121);
+	callfunc("DM_InstanceSetFlag", "dm_arc08_darklord_killed", 1);
+	callfunc("DM_PartyExp", 700000, 400000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 899);
+	if (dm_arc08_manfred_spared)
+		instance_announce(instance_id(), "^3355FF[DM] The Dark Lord disperses. In the quiet after, Manfred's voice is the only sound.^000000", bc_all);
+	else
+		instance_announce(instance_id(), "^3355FF[DM] The Dark Lord is banished. The cursed kingdom finally falls silent.^000000", bc_all);
+	sleep(2000);
+	instance_announce(instance_id(), "^FF6600[DM] The same institutional rot lives on in Rachel. The cascade has a church to feed on next.^000000", bc_all);
+	end;
+}

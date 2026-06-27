@@ -1,0 +1,290 @@
+//===== Seal Cascade Campaign ================================
+//= Act II, Arc 6 - The Floating Republic (Yuno)
+//===== By: ==================================================
+//= Seal Cascade DM tooling
+//===== Description: =========================================
+//= Yuno floats on a Ymir shard. Scholars have measured the
+//= cascade and given it a number the city refuses to hear.
+//= Director Krenn is paid to keep Vahl's research buried.
+//= The Mistress MVP in Juperos feeds on the fragment below.
+//=
+//= Quests (db/quest_db.conf):
+//=   20101 The Heart That Holds the City  (arc tracker / Mistress)
+//=   20102 The Number Nobody Wants        (Vahl's crisis document)
+//=   20103 Harpy Weather Log              (Harpy x20)
+//=   20104 Juperos Parts Requisition      (Venatu x20)
+//=
+//= Story flags (persistent character vars, see dm_flags.txt):
+//=   dm_arc06_started, dm_arc06_vahl_trust,
+//=   dm_arc06_krenn_bribed, dm_arc06_krenn_exposed,
+//=   dm_arc06_mistress_spared, dm_arc06_mistress_killed
+//===========================================================
+
+// ── Doctor Ingrid Vahl — Yuno Atmospheric Researcher ───────────────────────
+yuno,155,185,5	script	Doctor Ingrid Vahl#dm	4_F_02,{
+	if (questprogress(20101) == 2) {
+		mes("[Doctor Vahl]");
+		if (dm_arc06_mistress_killed)
+			mes("The readings have stabilized. Not safe — stable. There is a difference, and Yuno still does not want to know it.");
+		else
+			mes("The Mistress has gone quiet. Something else holds the shard now. I am not certain it is better.");
+		next();
+		mes("[Vahl]");
+		mes("Keep the number. Someone has to carry it.");
+		close();
+	}
+
+	if (!dm_arc06_started) {
+		callsub(S_StartArc);
+		end;
+	}
+
+	callsub(S_TurnIns);
+	end;
+
+S_StartArc:
+	mes("[Doctor Vahl]");
+	mes("You are not Rekenber's private security. That is already better than most of my visitors today.");
+	next();
+	if (countitem(50001) > 0 || dm_arc01_sigil_ring_obtained) {
+		mes("^3355FF*The Sigil Ring grows warmer here, not colder. Yuno hums on a frequency the ring agrees with.*^000000");
+		next();
+	}
+	if (dm_arc05_northern_account || dm_arc05_brode_threatened) {
+		mes("[Vahl]");
+		mes("Brode's gray courier and the northern account? That money leads here. Director Krenn's suppression budget comes from the same Yuno investor chain. You already pulled that thread.");
+		next();
+	}
+	mes("[Vahl]");
+	mes("I am Doctor Vahl. I measure the dimensional instability in the Ymir shard that holds this city up.");
+	next();
+	mes("[Vahl]");
+	mes("The Republic built everything on a fragment the old gods used as a hinge. Fine. But the cascade is interfering with the fragment's resonance. I have the number now. The city has years, not decades.");
+	next();
+	switch (select("What does Yuno need from us?", "Who is paying to suppress this?", "Show us the data.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_vahl_trust", 1);
+		mes("[Vahl]");
+		mes("Atmospheric readings from the Harpy migration routes. They sense the disturbance before instruments do. And machine parts from Juperos — the ruins below are still reacting to the fragment.");
+		break;
+	case 2:
+		mes("[Vahl]");
+		mes("Director Krenn. Rekenber pays him to file my readings as 'within acceptable parameters.' The city floats on denial as much as the shard.");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_vahl_trust", 1);
+		mes("[Vahl]");
+		mes("This graph. The resonance frequency is diverging from baseline. That line will intersect the cascade frequency in... I am still writing the decimal. It is not a long one.");
+		break;
+	}
+	next();
+	mes("[Vahl]");
+	mes("Help me gather field evidence. Harpy weather logs from the sky migration, and Venatu components from the Juperos ruins. Then I can finish the report and we see what Krenn does with it.");
+	callfunc("DM_InstanceSetFlag", "dm_arc06_started", 1);
+	callfunc("DM_InstanceQuestStart", 20101);
+	callfunc("DM_InstanceQuestStart", 20103);
+	callfunc("DM_InstanceQuestStart", 20104);
+	next();
+	mes("^3355FF[Quest started: The Heart That Holds the City]^000000");
+	mes("^3355FFHarpy Weather Log - gather migration data from 20 Harpy in the Yuno fields.^000000");
+	mes("^3355FFJuperos Parts Requisition - recover 20 Venatu components from the Juperos ruins.^000000");
+	close();
+
+S_TurnIns:
+	.@paid = 0;
+	if (questprogress(20103) == 1 && questprogress(20103, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20103);
+		callfunc("DM_PartyExp", 180000, 85000);
+		callfunc("DM_GivePartyZeny", 15000);
+		.@paid = 1;
+		mes("[Vahl]");
+		mes("Harpy migration data. They have been banking south for three weeks. They feel the shard warming before the instruments register it.");
+		next();
+		switch (select("Log the readings and file them.", "Publish the migration data early.", "Give the raw data to Krenn as leverage.")) {
+		case 1:
+			mes("[Vahl]");
+			mes("Filed. When the crisis report is complete, this becomes the paper trail he cannot burn.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
+			mes("[Vahl]");
+			mes("The naturalist journals will run it before Krenn can kill the suppression memo. That is either brave or reckless. Possibly both.");
+			break;
+		case 3:
+			mes("[Vahl]");
+			mes("Giving Krenn advance data to use as cover for his own suppression. That is a bet on his gratitude, which I would not take.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20104) == 1 && questprogress(20104, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20104);
+		callfunc("DM_PartyExp", 220000, 105000);
+		callfunc("DM_GivePartyZeny", 18000);
+		.@paid = 1;
+		mes("[Vahl]");
+		mes("Venatu components. The ruins are vibrating at the same frequency as the shard. The Juperos builders knew. They built resonators into the ruins to monitor the fragment from below.");
+		next();
+		switch (select("Calibrate them for your instruments.", "Sell them to Schwarzwald engineers.", "Keep one — the Sigil Ring reacts to it.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc06_vahl_trust", 1);
+			mes("[Vahl]");
+			mes("With these calibrated, the instruments will read the fragment directly. The number I give the Council will be accurate enough to make them genuinely afraid.");
+			break;
+		case 2:
+			mes("[Vahl]");
+			mes("They will learn what they need from the parts. And we get the budget to finish the report.");
+			break;
+		case 3:
+			if (dm_arc01_sigil_ring_obtained || countitem(50001) > 0) {
+				mes("[Vahl]");
+				mes("The resonator and the ring hum at each other. The Juperos builders and whoever forged that ring understood the same thing about sealed things.");
+			} else {
+				mes("[Vahl]");
+				mes("A souvenir from the ruins. They make a noise that no one else in the party hears.");
+			}
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20103) == 2 && questprogress(20104) == 2 && questprogress(20102) == 0) {
+		mes("[Vahl]");
+		mes("Both datasets are in. The report is written: resonance divergence, migration anomaly, and a timeline the Republic will not enjoy.");
+		next();
+		mes("[Vahl]");
+		mes("I am calling it The Number Nobody Wants. Krenn has to either sign the transmission or formally bury it. Either way it ends his comfortable suppression.");
+		next();
+		switch (select("Deliver it over Krenn's head to the Republic Council.", "Let us carry it past Krenn ourselves.", "Use it as leverage against Krenn.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
+			mes("[Vahl]");
+			mes("The Council will not enjoy it. But they will not be able to bury it with you watching.");
+			break;
+		case 2:
+			mes("[Vahl]");
+			mes("Krenn's office is between us and the Council chamber. He will intercept it. Be ready for that conversation.");
+			break;
+		case 3:
+			mes("[Vahl]");
+			mes("Leverage only works if you are willing to use it, and willing to survive what happens after you do. But yes. It is leverage.");
+			break;
+		}
+		callfunc("DM_InstanceQuestStart", 20102);
+		next();
+		mes("^3355FF[Quest started: The Number Nobody Wants]^000000");
+		mes("^3355FFConfront Director Krenn. Then descend to Juperos and face the Mistress.^000000");
+		close();
+	}
+
+	if (questprogress(20102) == 1 && !dm_arc06_krenn_bribed && !dm_arc06_krenn_exposed) {
+		mes("[Vahl]");
+		mes("Krenn is the wall between the data and the city that needs it. He posts near the Grand Library most mornings.");
+		close();
+	}
+
+	if ((questprogress(20102) == 1 || questprogress(20102) == 0) && (dm_arc06_krenn_bribed || dm_arc06_krenn_exposed)) {
+		if (questprogress(20102) == 1) callfunc("DM_InstanceQuestComplete", 20102);
+		mes("[Vahl]");
+		mes("Krenn is dealt with. Now the fragment below needs dealing with.");
+		next();
+		mes("[Vahl]");
+		mes("The Mistress. An old guardian spirit from the Juperos era — it was supposed to watch over the shard. The cascade has been feeding it. Whatever it is watching over now, it is no longer the shard.");
+		next();
+		mes("[Vahl]");
+		mes("The entrance is below the plateau, south of the Republic's lower docks.");
+		close();
+	}
+
+	if (.@paid) {
+		mes("[Vahl]");
+		mes("Bring back both sets of field data. The report writes itself after that.");
+		close();
+	}
+
+	mes("[Vahl]");
+	if (questprogress(20103) == 1 && questprogress(20104) == 1)
+		mes("The Harpy logs and the Juperos parts are both still open. The shard readings do not improve while we wait.");
+	else if (questprogress(20103) == 1)
+		mes("The Harpy migration contract is still open. They are banking south from the outer fields.");
+	else if (questprogress(20104) == 1)
+		mes("The Juperos parts requisition is still open. The Venatu down there know what they are guarding.");
+	else
+		mes("Finish both contracts and come back. The number is waiting.");
+	close();
+}
+
+// ── Director Aldous Krenn — The Republic's Money ───────────────────────
+yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
+	if (!dm_arc06_started) {
+		mes("[Director Krenn]");
+		mes("The Research Bureau handles appointments. I handle approvals. You require neither.");
+		close();
+	}
+
+	if (dm_arc06_krenn_bribed || dm_arc06_krenn_exposed) {
+		mes("[Director Krenn]");
+		if (dm_arc06_krenn_bribed)
+			mes("You took the money. Good. Now let us pretend this was a professional arrangement.");
+		else
+			mes("The Council has the document. I hope you know what you have started.");
+		close();
+	}
+
+	mes("[Director Krenn]");
+	mes("Vahl's numbers. Yes. I have seen them.");
+	next();
+	if (dm_arc04_cassell_unmasked) {
+		mes("[Krenn]");
+		mes("Brother Cassell sends his regards, incidentally. He was very specific: 'parties carrying unusual seals are to receive every courtesy.' So. Here we are.");
+		next();
+	}
+	mes("[Krenn]");
+	mes("The investors who built the Republic's infrastructure take a dim view of public panic. My job is managed uncertainty. Vahl's report is unmanaged certainty. You see the problem.");
+	next();
+	switch (select("Sign the document. This city deserves the truth.", "We will take the data to a buyer who is not Rekenber.", "What does staying quiet pay?")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
+		mes("[Krenn]");
+		mes("You want me to sign my own career's end so Yuno can panic in an orderly fashion. No. But you do not need my signature.");
+		next();
+		mes("^3355FF*Krenn's refusal goes on record. The document moves to the Council over his objection.*^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
+		mes("[Krenn]");
+		mes("The Schwarzwald naturalist journals will print anything. And I will find a reason to have you removed from the city before morning.");
+		next();
+		mes("^3355FF*The threat is hollow. Vahl's data leaves through the naturalist circuit.*^000000");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_bribed", 1);
+		callfunc("DM_GivePartyZeny", 25000);
+		mes("[Krenn]");
+		mes("Now you are speaking the Republic's language. Twenty-five thousand zeny. Consider it a retainer for services rendered in the public interest.");
+		next();
+		mes("^3355FF*25,000 zeny changes hands. Krenn files the report under 'acceptable variance.'*^000000");
+		break;
+	}
+	callfunc("DM_InstanceQuestComplete", 20102);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 605);
+	next();
+	mes("^3355FF[The Number Nobody Wants resolved. The Juperos set-piece is now accessible.]^000000");
+	close();
+}
+
+// ── Juperos Vault Set-piece ────────────────────────────────────────────────
+juperos_01,150,150,0	script	Juperos Vault#dm	HIDDEN_NPC,{
+	end;
+
+OnMistressDead:
+	callfunc("DM_InstanceQuestComplete", 20101);
+	callfunc("DM_InstanceSetFlag", "dm_arc06_mistress_killed", 1);
+	callfunc("DM_PartyExp", 500000, 300000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 699);
+	instance_announce(instance_id(), "^3355FF[DM] Mistress falls. The Ymir fragment shudders, but the city above holds... for now.^000000", bc_all);
+	sleep(2000);
+	instance_announce(instance_id(), "^FF6600[DM] The cascade has a measured number. The Ash Vacuum thread opens. Act II continues north.^000000", bc_all);
+	end;
+}

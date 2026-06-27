@@ -1,0 +1,221 @@
+//===== Seal Cascade Campaign ================================
+//= Act IV, Arc 18 - The Witch of Death (Niflheim)
+//===== By: ==================================================
+//= Seal Cascade DM tooling
+//===== Description: =========================================
+//= Niflheim is overflowing. The boundary between the dead and
+//= the living has become a suggestion. Himmelmez was given
+//= this throne by Loki, in exchange for keeping the dead from
+//= walking north. Now Loki is silent and the dead walk anyway.
+//=
+//= Quests (db/quest_db.conf):
+//=   20221 The Queen the Drowned Chose  (arc tracker / Himmelmez)
+//=   20222 The Dead You Failed          (Dullahan x15)
+//=   20223 Banquet Hall Procession      (Gibbet x15)
+//=
+//= Story flags (persistent character vars, see dm_flags.txt):
+//=   dm_arc18_started, dm_arc18_himmelmez_killed,
+//=   dm_arc18_himmelmez_bargained
+//===========================================================
+
+// ── The Familiar Dead — The Witness ───────────────────────────────────────
+niflheim,100,100,5	script	The Familiar Dead#dm	4_M_03,{
+	if (questprogress(20221) == 2) {
+		mes("[The Familiar Dead]");
+		if (dm_arc18_himmelmez_bargained)
+			mes("She walks with you. The dead of Niflheim are quiet for now. Loki's silence has not changed. But the direction you face has.");
+		else
+			mes("Himmelmez is gone. Niflheim has no queen. The dead walk regardless. What has changed is that they walk into a world that is about to make a decision about all of them.");
+		close();
+	}
+
+	if (!dm_arc18_started) {
+		callsub(S_StartArc);
+		end;
+	}
+
+	callsub(S_TurnIns);
+	end;
+
+S_StartArc:
+	mes("[The Familiar Dead]");
+	mes("You made it this far. That means something. Most things that cross the cascade's shadow do not.");
+	next();
+	if (dm_arc17_beta_killed) {
+		mes("[The Familiar Dead]");
+		mes("Varmundt's Biolabs. The research extracted. The dead here know Varmundt — he spent time in Niflheim toward the end, working. He wanted to know what frequency the dead heard. His notes on that are not in the archive. They are in the walls here.");
+		next();
+	}
+	if (dm_arc15_pratt_challenged) {
+		mes("[The Familiar Dead]");
+		mes("Pratt's documentation. The full cost of the Thanatos method. Thanatos is still in the seal. He has been here, in a sense, since the sacrifice. The dead of Niflheim know his frequency. It is a frequency of someone who chose to stop being available.");
+		next();
+	}
+	if (dm_arc16_rina_defected) {
+		mes("[The Familiar Dead]");
+		mes("Bijou. Maret. The dead here knew her before the attunement. She came to Niflheim three years ago to ask Himmelmez if there was a way to stop hearing. Himmelmez told her no. They were both right.");
+		next();
+	}
+	mes("[The Familiar Dead]");
+	mes("Niflheim is overflowing. The boundary between death and the living world was already thin. The cascade has made it a suggestion. The dead do not push through maliciously. They push through because the suggestion is simply insufficient to stop them.");
+	next();
+	switch (select("What does Himmelmez have to do with this?", "What is the cascade doing to Niflheim specifically?", "What can we do here?")) {
+	case 1:
+		mes("[The Familiar Dead]");
+		mes("She was given this throne by Loki, in exchange for keeping the dead from walking north. She accepted. Now they walk anyway and Loki is silent. She has been sitting on the throne for three years waiting for instructions that have not come.");
+		break;
+	case 2:
+		mes("[The Familiar Dead]");
+		mes("It is providing a frequency the boundary cannot resist. The dead hear it as permission. The living do not hear it at all. The cascade's signal and the boundary's signal are at almost exactly the same frequency, except the cascade's is louder.");
+		break;
+	case 3:
+		mes("[The Familiar Dead]");
+		mes("Find Himmelmez. She knows what Loki asked of her and what the cascade has changed. Whether you fight her or talk to her, what you decide together here will matter at the seal.");
+		break;
+	}
+	next();
+	mes("[The Familiar Dead]");
+	mes("The Dullahan in the outer reaches are the recently dead who have not settled — the overflow is loudest at the boundary and they are caught in it. The Gibbet in the Banquet Hall have been here much longer. They are part of Niflheim's structure. The overflow has unsettled them too.");
+	callfunc("DM_InstanceSetFlag", "dm_arc18_started", 1);
+	callfunc("DM_InstanceQuestStart", 20221);
+	callfunc("DM_InstanceQuestStart", 20222);
+	callfunc("DM_InstanceQuestStart", 20223);
+	next();
+	mes("^3355FF[Quest started: The Queen the Drowned Chose]^000000");
+	mes("^3355FFThe Dead You Failed - quiet 15 Dullahan caught in the overflow at Niflheim's border.^000000");
+	mes("^3355FFBanquet Hall Procession - still 15 Gibbet unsettled from the Banquet Hall's structure.^000000");
+	close();
+
+S_TurnIns:
+	.@paid = 0;
+	if (questprogress(20222) == 1 && questprogress(20222, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20222);
+		callfunc("DM_PartyExp", 450000, 220000);
+		callfunc("DM_GivePartyZeny", 36000);
+		.@paid = 1;
+		mes("[The Familiar Dead]");
+		mes("The Dullahan are quieted. They were the recently dead — people the living world lost in the last year. Some of them were from places you have been. They heard the cascade's frequency from the living side and followed it here because it felt like direction.");
+		next();
+		switch (select("They were looking for where to go.", "The cascade is leading the dead the same way it leads the living.", "Give them rest if you can.")) {
+		case 1:
+			mes("[The Familiar Dead]");
+			mes("Yes. The dead need direction the same way the living do. The boundary usually provides that — a clear delineation of what they are now. The overflow removed the delineation.");
+			break;
+		case 2:
+			mes("[The Familiar Dead]");
+			mes("Yes. The cascade does not distinguish between the living and the dead. It is a frequency. It amplifies what is already present. In the living: urgency. In the dead: motion without direction.");
+			break;
+		case 3:
+			mes("[The Familiar Dead]");
+			mes("I said the words. For all of them. I know some of their names. That was the harder part.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20223) == 1 && questprogress(20223, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20223);
+		callfunc("DM_PartyExp", 450000, 220000);
+		callfunc("DM_GivePartyZeny", 36000);
+		.@paid = 1;
+		mes("[The Familiar Dead]");
+		mes("The Banquet Hall is quiet. The Gibbet have been part of Niflheim's architecture for centuries — they are part of what death looks like here. When they became unsettled, it meant the overflow had reached deep enough to shake things that had not moved in a very long time.");
+		next();
+		switch (select("How deep is the overflow now?", "Niflheim was stable until the cascade reached this frequency.", "Himmelmez has been watching this happen from her throne.")) {
+		case 1:
+			mes("[The Familiar Dead]");
+			mes("To the Hall. That is the structural center. If the Banquet Hall's residents were unsettled, the Hall itself was at risk of losing coherence. The dead would have had nowhere that felt like Niflheim anymore. Nowhere to settle.");
+			break;
+		case 2:
+			mes("[The Familiar Dead]");
+			mes("For three hundred years since Thanatos. This frequency was always there but never this loud. The cascade's amplification pushed it past what the structure could absorb.");
+			break;
+		case 3:
+			mes("[The Familiar Dead]");
+			mes("Every day for three years. Without Loki's instructions. Without a way to fix the boundary herself. She has been doing what she can, which is hold what she can hold, and watch the rest overflow.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20222) == 2 && questprogress(20223) == 2 && questprogress(20221) == 1 && !dm_arc18_himmelmez_killed && !dm_arc18_himmelmez_bargained) {
+		mes("[The Familiar Dead]");
+		mes("The overflow is reduced. Himmelmez will feel that — the structure is less stressed now. She is in the inner hall. nif_in.");
+		next();
+		mes("[The Familiar Dead]");
+		mes("Whether you fight her or talk to her: understand that she has been alone on that throne for three years waiting for a conversation to happen. This is it.");
+		close();
+	}
+
+	if (.@paid) {
+		mes("[The Familiar Dead]");
+		mes("Both contracts need to be done before the inner hall. Himmelmez can sense the overflow. She will not receive a conversation while the structure is still unstable.");
+		close();
+	}
+
+	mes("[The Familiar Dead]");
+	if (questprogress(20222) == 1 && questprogress(20223) == 1)
+		mes("The Dullahan quieting and the Gibbet stilling are both still active.");
+	else if (questprogress(20222) == 1)
+		mes("The Dead You Failed is still open. Dullahan at Niflheim's outer reaches.");
+	else if (questprogress(20223) == 1)
+		mes("Banquet Hall Procession is still open. Gibbet in the Banquet Hall.");
+	else
+		mes("Both done. Himmelmez is in the inner hall. nif_in.");
+	close();
+}
+
+// ── Himmelmez — The Queen the Drowned Chose ───────────────────────────────
+nif_in,150,150,5	script	Himmelmez#dm	4_F_02,{
+	if (questprogress(20221) == 2) {
+		mes("[Himmelmez]");
+		if (dm_arc18_himmelmez_bargained)
+			mes("The pact holds. Death is patient. I will hold what I can hold while you do what needs to be done.");
+		else
+			mes("The throne is empty. The dead hear no queen. What they will hear next is what you decide in Morroc's ruins.");
+		close();
+	}
+
+	if (!dm_arc18_started) {
+		mes("[Himmelmez]");
+		mes("Who sent you to the hall of the dead?");
+		close();
+	}
+
+	if (questprogress(20222) < 2 || questprogress(20223) < 2) {
+		mes("[Himmelmez]");
+		mes("The structure is still unstable. Come back when the overflow is reduced. I can hear it from here.");
+		close();
+	}
+
+	mes("[Himmelmez]");
+	mes("I was like you, once. That is not a thing queens of the dead usually say. But the throne was Loki's gift and I accepted it knowing what accepting it meant.");
+	next();
+	mes("[Himmelmez]");
+	mes("The seal decays and Niflheim overflows. I have been keeping the dead from walking north by sheer attention. That is not a sustainable strategy. I have known it for three years. I have been waiting for someone who understands the weight of that.");
+	next();
+	mes("[Himmelmez]");
+	mes("Loki offered me this throne in exchange for keeping the dead contained while the living world sorted itself out. The living world has not sorted itself out. Loki is silent. The dead do not care about the administrative situation.");
+	next();
+	switch (select("You are part of what has gone wrong. This ends here.", "We need your hand to seal the cascade from the inside.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_killed", 1);
+		callfunc("DM_InstanceQuestComplete", 20221);
+		callfunc("DM_PartyExp", 2500000, 1500000);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1899);
+		instance_announce(instance_id(), "^3355FF[DM] Himmelmez falls. Niflheim has no queen. The dead pour north without her hand — and into a world that will have to decide what to do with them as part of the seal.^000000", bc_all);
+		sleep(2000);
+		instance_announce(instance_id(), "^FF6600[DM] One more piece removed. One less hand available for the finale. The seal's shape will have to account for an empty throne.^000000", bc_all);
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_bargained", 1);
+		callfunc("DM_InstanceQuestComplete", 20221);
+		callfunc("DM_PartyExp", 2000000, 1200000);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1899);
+		instance_announce(instance_id(), "^3355FF[DM] A dark pact is sealed. Himmelmez will hold the dead while the living face Loki. She says: 'I have been holding them already. I am glad to have a reason now.'^000000", bc_all);
+		sleep(2000);
+		instance_announce(instance_id(), "^FF6600[DM] You leave Niflheim with a queen at your back and a debt that has no price yet. The ruins of Morroc are the last thread before the choice.^000000", bc_all);
+		break;
+	}
+	close();
+}
