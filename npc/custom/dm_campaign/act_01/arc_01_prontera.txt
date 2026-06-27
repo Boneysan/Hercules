@@ -53,17 +53,17 @@ S_SwearIn:
 	next();
 	switch (select("We're here to help the city.", "What's the pay like?", "Just point us to the monsters.")) {
 	case 1:
-		dm_arc01_hero_type = 1;
+		callfunc("DM_InstanceSetFlag", "dm_arc01_hero_type", 1);
 		mes("[Wynne]");
 		mes("Good. The city needs helping. Specifically, the Culvert needs helping - it's overflowing with Tarou and worse.");
 		break;
 	case 2:
-		dm_arc01_hero_type = 2;
+		callfunc("DM_InstanceSetFlag", "dm_arc01_hero_type", 2);
 		mes("[Wynne]");
 		mes("Better than farming, worse than dying. You get paid per bounty. Kill the vermin, bring proof, get coin.");
 		break;
 	case 3:
-		dm_arc01_hero_type = 3;
+		callfunc("DM_InstanceSetFlag", "dm_arc01_hero_type", 3);
 		mes("[Wynne]");
 		mes("Eager. I had another eager party last week - I'm mailing their boots back to their mothers today. Try to keep yours on.");
 		break;
@@ -74,10 +74,10 @@ S_SwearIn:
 	next();
 	mes("[Wynne]");
 	mes("Be smart. It pays. It's also a bad idea. Both things are true. Sign here.");
-	dm_arc01_started = 1;
-	setquest(20001);
-	setquest(20002);
-	setquest(20003);
+	callfunc("DM_InstanceSetFlag", "dm_arc01_started", 1);
+	callfunc("DM_InstanceQuestStart", 20001);
+	callfunc("DM_InstanceQuestStart", 20002);
+	callfunc("DM_InstanceQuestStart", 20003);
 	next();
 	mes("^3355FF[Quest started: Omens at the Fountain]^000000");
 	mes("^3355FFContract: Cellar Vermin - cull 10 Tarou in the Culvert.^000000");
@@ -89,18 +89,18 @@ S_Contracts:
 	// Settle any completed hunting contracts.
 	.@paid = 0;
 	if (questprogress(20002) == 1 && questprogress(20002, HUNTING) == 2) {
-		completequest(20002);
-		getexp 4000, 1500;
-		Zeny += 2000;
+		callfunc("DM_InstanceQuestComplete", 20002);
+		callfunc("DM_PartyExp", 4000, 1500);
+		callfunc("DM_GivePartyZeny", 2000);
 		.@paid = 1;
 		mes("[Wynne]");
 		mes("Cellar's a little cleaner. 2,000 zeny, and the ledger likes you.");
 		next();
 	}
 	if (questprogress(20003) == 1 && questprogress(20003, HUNTING) == 2) {
-		completequest(20003);
-		getexp 4500, 1800;
-		Zeny += 2000;
+		callfunc("DM_InstanceQuestComplete", 20003);
+		callfunc("DM_PartyExp", 4500, 1800);
+		callfunc("DM_GivePartyZeny", 2000);
 		.@paid = 1;
 		mes("[Wynne]");
 		mes("Fields are quieter. Another 2,000. And you brought back rumors with the proof - good.");
@@ -117,7 +117,7 @@ S_Contracts:
 		next();
 		switch (select("We'll find the source.", "Not yet.")) {
 		case 1:
-			setquest(20005);
+			callfunc("DM_InstanceQuestStart", 20005);
 			mes("^3355FF[Quest started: The Goat-Headed Sign]^000000");
 			mes("^3355FFSee Tibbets, then descend to the lowest Culvert chamber.^000000");
 			close();
@@ -167,7 +167,7 @@ prontera,156,40,3	script	Frightened Mother#dm	4_F_01,{
 		switch (select("We'll find her.", "Stay safe. We'll look.")) {
 		case 1:
 		case 2:
-			setquest(20004);
+			callfunc("DM_InstanceQuestStart", 20004);
 			mes("^3355FF[Quest started: The Trembling Ground]^000000");
 			mes("^3355FFFollow the child's drawings into the upper Culvert.^000000");
 			close();
@@ -181,18 +181,18 @@ prontera,156,40,3	script	Frightened Mother#dm	4_F_01,{
 	next();
 	switch (select("Bring her home quietly.", "Report the soup line to the city guard.")) {
 	case 1:
-		dm_arc01_refugees_helped = 1;
-		completequest(20004);
-		getexp 3000, 1200;
-		Zeny += 1500;
+		callfunc("DM_InstanceSetFlag", "dm_arc01_refugees_helped", 1);
+		callfunc("DM_InstanceQuestComplete", 20004);
+		callfunc("DM_PartyExp", 3000, 1200);
+		callfunc("DM_GivePartyZeny", 1500);
 		mes("^3355FF*You walk the girl back to her mother. The refugees mark your faces as friends - half of them will not raise a hand against you below.*^000000");
 		mes("^3355FF[The Trembling Ground complete.]^000000");
 		close();
 	case 2:
-		dm_arc01_refugees_helped = 0;
-		completequest(20004);
-		getexp 3000, 1200;
-		Zeny += 2500;
+		callfunc("DM_InstanceSetFlag", "dm_arc01_refugees_helped", 0);
+		callfunc("DM_InstanceQuestComplete", 20004);
+		callfunc("DM_PartyExp", 3000, 1200);
+		callfunc("DM_GivePartyZeny", 2500);
 		mes("^3355FF*The guard sweeps the camp. You collect a tidy bounty - but the terrified refugees scatter into the cult's arms. The chamber below will be more crowded for it.*^000000");
 		mes("^3355FF[The Trembling Ground complete.]^000000");
 		close();
@@ -224,14 +224,14 @@ prontera,146,193,5	script	Tibbets the Keeper#dm	1_M_SIZ,{
 		next();
 		mes("[Tibbets]");
 		mes("You took the time to ask an old man. Here - the tide-wheel key. The lowest chamber floods and drains on it. Drain it, and you'll reach the thing on dry footing.");
-		dm_arc01_tibbets_befriended = 1;
+		callfunc("DM_InstanceSetFlag", "dm_arc01_tibbets_befriended", 1);
 		mes("^3355FF[Tibbets gives you the tide-wheel key. The Listening Chamber can be drained.]^000000");
 		close();
 	case 2:
 		if (questprogress(20002) == 2) {
 			mes("[Tibbets]");
 			mes("You already cleared the upper runs - you're no greenhorn. All right. Take the tide-wheel key; drain the lowest chamber before you fight.");
-			dm_arc01_tibbets_befriended = 1;
+			callfunc("DM_InstanceSetFlag", "dm_arc01_tibbets_befriended", 1);
 			mes("^3355FF[Tibbets gives you the tide-wheel key. The Listening Chamber can be drained.]^000000");
 			close();
 		}
@@ -288,8 +288,8 @@ prt_sewb4,103,100,4	script	Deacon Holt#dm	1_M_PASTOR,{
 	next();
 	mes("^3355FF*Cassell drops a smoke bomb and slips through a side-grate. He leaves behind a small silver ring stamped with a goat's head.*^000000");
 	if (!dm_arc01_sigil_ring_obtained) {
-		getitem 50001, 1;
-		dm_arc01_sigil_ring_obtained = 1;
+		callfunc("DM_GivePartyItem", 50001, 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_sigil_ring_obtained", 1);
 		mes("^3355FF[You obtained the Sigil Ring - it radiates a faint, growing cold.]^000000");
 	}
 	next();
@@ -298,21 +298,21 @@ prt_sewb4,103,100,4	script	Deacon Holt#dm	1_M_PASTOR,{
 	if (dm_arc01_refugees_helped) {
 		switch (select("Holt - you're being used. Stop, and you live.", "You summoned a demon under a city. You'll answer for it.")) {
 		case 1:
-			dm_arc01_holt_spared = 1;
-			dm_arc01_holt_killed = 0;
+			callfunc("DM_InstanceSetFlag", "dm_arc01_holt_spared", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc01_holt_killed", 0);
 			mes("[Deacon Holt]");
 			mes("...Gods forgive me. The binding-word is 'Hlin'. Unspeak it - let the thing starve. I'll tell the guild everything. I swear it.");
 			break;
 		case 2:
-			dm_arc01_holt_killed = 1;
-			dm_arc01_holt_spared = 0;
+			callfunc("DM_InstanceSetFlag", "dm_arc01_holt_killed", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc01_holt_spared", 0);
 			mes("[Deacon Holt]");
 			mes("Then I die guarding the conduit. Blood for the listener!");
 			break;
 		}
 	} else {
-		dm_arc01_holt_killed = 1;
-		dm_arc01_holt_spared = 0;
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_killed", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_spared", 0);
 		mes("[Deacon Holt]");
 		mes("(the cornered refugees close ranks around him) No! Protect the conduit!");
 	}

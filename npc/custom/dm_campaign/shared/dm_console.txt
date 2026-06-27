@@ -7,6 +7,8 @@ OnInit:
 	bindatcmd("dm", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDM", 60, 99, 1);
 	bindatcmd("dmreward", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReward", 60, 99, 1);
 	bindatcmd("dmflag", strnpcinfo(NPC_NAME_UNIQUE)+"::OnFlag", 60, 99, 1);
+	bindatcmd("dmquest", strnpcinfo(NPC_NAME_UNIQUE)+"::OnQuest", 60, 99, 1);
+	bindatcmd("dmbeat", strnpcinfo(NPC_NAME_UNIQUE)+"::OnBeat", 60, 99, 1);
 	bindatcmd("dmstory", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStory", 60, 99, 1);
 	bindatcmd("dmcleanup", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCleanup", 60, 99, 1);
 	bindatcmd("dmwarp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnWarp", 60, 99, 1);
@@ -37,6 +39,16 @@ OnDM:
 
 	if (.@sub$ == "flag") {
 		callsub(S_Flag, 1);
+		end;
+	}
+
+	if (.@sub$ == "quest") {
+		callsub(S_Quest, 1);
+		end;
+	}
+
+	if (.@sub$ == "beat") {
+		callsub(S_Beat);
 		end;
 	}
 
@@ -97,6 +109,18 @@ OnFlag:
 	callsub(S_Flag, 0);
 	end;
 
+OnQuest:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Quest, 0);
+	end;
+
+OnBeat:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Beat);
+	end;
+
 OnStory:
 	if (!callfunc("DM_RequireDM"))
 		end;
@@ -142,13 +166,15 @@ OnDMCleanup:
 
 S_Help:
 	dispbottom("[DM] @dm reward [arc] [tier] [dryrun]");
-	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01> [name] [value]");
+	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05> [name] [value]");
+	dispbottom("[DM] @dm quest <start|complete|erase> <quest_id>   (current party)");
+	dispbottom("[DM] @dm beat                 (menu: location/NPC/story tracking)");
 	dispbottom("[DM] @dm story <message> | @dm globalstory <message>");
 	dispbottom("[DM] @dm spawn <mob_id> [count] [name]");
 	dispbottom("[DM] @dm warp <map> [x] [y]   (warps your whole party)");
 	dispbottom("[DM] @dm recall              (pulls party to you)");
 	dispbottom("[DM] @dm instance <start <map> [x] [y] [label] | end>");
-	dispbottom("[DM] Shortcuts: @dmreward, @dmflag, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance");
+	dispbottom("[DM] Shortcuts: @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance");
 	return;
 
 S_Warp:
@@ -231,9 +257,53 @@ S_Flag:
 		return;
 	}
 
+	if (.@action$ == "arc02") {
+		callfunc("DM_PrintArc02Flags");
+		return;
+	}
+
+	if (.@action$ == "cleararc02") {
+		callfunc("DM_ClearArc02Flags");
+		dispbottom("[DM] Arc 02 flags cleared for this character.");
+		return;
+	}
+
+	if (.@action$ == "arc03") {
+		callfunc("DM_PrintArc03Flags");
+		return;
+	}
+
+	if (.@action$ == "cleararc03") {
+		callfunc("DM_ClearArc03Flags");
+		dispbottom("[DM] Arc 03 flags cleared for this character.");
+		return;
+	}
+
+	if (.@action$ == "arc04") {
+		callfunc("DM_PrintArc04Flags");
+		return;
+	}
+
+	if (.@action$ == "cleararc04") {
+		callfunc("DM_ClearArc04Flags");
+		dispbottom("[DM] Arc 04 flags cleared for this character.");
+		return;
+	}
+
+	if (.@action$ == "arc05") {
+		callfunc("DM_PrintArc05Flags");
+		return;
+	}
+
+	if (.@action$ == "cleararc05") {
+		callfunc("DM_ClearArc05Flags");
+		dispbottom("[DM] Arc 05 flags cleared for this character.");
+		return;
+	}
+
 	.@flag$ = .@atcmd_parameters$[.@offset + 1];
 	if (.@flag$ == "") {
-		dispbottom("[DM] Usage: @dmflag <get|set|clear|arc01|cleararc01> [name] [value]");
+		dispbottom("[DM] Usage: @dmflag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05> [name] [value]");
 		return;
 	}
 
@@ -244,18 +314,485 @@ S_Flag:
 
 	if (.@action$ == "set") {
 		.@value = atoi(.@atcmd_parameters$[.@offset + 2]);
-		callfunc("DM_SetFlag", .@flag$, .@value);
-		dispbottom("[DM] " + .@flag$ + " set to " + .@value + ".");
+		.@done = callfunc("DM_InstanceSetFlag", .@flag$, .@value);
+		dispbottom("[DM] " + .@flag$ + " set to " + .@value + " for " + .@done + " party member(s).");
 		return;
 	}
 
 	if (.@action$ == "clear") {
-		callfunc("DM_ClearFlag", .@flag$);
-		dispbottom("[DM] " + .@flag$ + " cleared.");
+		.@done = callfunc("DM_InstanceClearFlag", .@flag$);
+		dispbottom("[DM] " + .@flag$ + " cleared for " + .@done + " party member(s).");
 		return;
 	}
 
 	dispbottom("[DM] Unknown flag action: " + .@action$);
+	return;
+
+S_Quest:
+	.@offset = getarg(0, 0);
+	.@action$ = .@atcmd_parameters$[.@offset];
+	.@quest_id = atoi(.@atcmd_parameters$[.@offset + 1]);
+
+	if (.@quest_id <= 0) {
+		dispbottom("[DM] Usage: @dmquest <start|complete|erase> <quest_id>");
+		return;
+	}
+
+	if (.@action$ == "start" || .@action$ == "set") {
+		.@done = callfunc("DM_InstanceQuestStart", .@quest_id);
+		dispbottom("[DM] Quest " + .@quest_id + " started for " + .@done + " party member(s).");
+		return;
+	}
+
+	if (.@action$ == "complete") {
+		.@done = callfunc("DM_InstanceQuestComplete", .@quest_id);
+		dispbottom("[DM] Quest " + .@quest_id + " completed for " + .@done + " party member(s).");
+		return;
+	}
+
+	if (.@action$ == "erase" || .@action$ == "clear") {
+		.@done = callfunc("DM_InstanceQuestErase", .@quest_id);
+		dispbottom("[DM] Quest " + .@quest_id + " erased for " + .@done + " party member(s).");
+		return;
+	}
+
+	dispbottom("[DM] Unknown quest action: " + .@action$);
+	return;
+
+S_Beat:
+	mes("[DM Beat Director]");
+	mes("Choose a campaign beat. These update the current party's quest log and story flags.");
+	next();
+	switch (select("Act I / Arc 1 - Prontera", "Act I / Arc 2 - Payon", "Act I / Arc 3 - Morroc", "Act I / Arc 4 - Geffen", "Act I / Arc 5 - Alberta", "Cancel")) {
+	case 1:
+		callsub(S_BeatArc01);
+		close();
+	case 2:
+		callsub(S_BeatArc02);
+		close();
+	case 3:
+		callsub(S_BeatArc03);
+		close();
+	case 4:
+		callsub(S_BeatArc04);
+		close();
+	case 5:
+		callsub(S_BeatArc05);
+		close();
+	case 6:
+		close();
+	}
+	return;
+
+S_BeatArc01:
+	mes("[Arc 1 - Omens at the Fountain]");
+	mes("Pick the NPC/location or story beat.");
+	next();
+	switch (select("Warp: Quartermaster Wynne", "Beat: Wynne starts contracts", "Warp: Frightened Mother", "Beat: Trembling Ground", "Warp: Tibbets", "Beat: Tibbets gives key", "Warp: Deacon Holt", "Beat: Start Goat-Headed Sign", "Beat: Complete Arc 1", "Back")) {
+	case 1:
+		callfunc("DM_WarpParty", "prontera", 156, 191);
+		mes("Party warped to Quartermaster Wynne.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc01_started", 1);
+		callfunc("DM_InstanceQuestStart", 20001);
+		callfunc("DM_InstanceQuestStart", 20002);
+		callfunc("DM_InstanceQuestStart", 20003);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 101);
+		callfunc("DM_MapStory", "Quartermaster Wynne signs the party into the Adventurers' Guild ledger.");
+		mes("Arc 1 contracts started for the current party.");
+		break;
+	case 3:
+		callfunc("DM_WarpParty", "prontera", 156, 40);
+		mes("Party warped to the Frightened Mother.");
+		break;
+	case 4:
+		callfunc("DM_InstanceQuestStart", 20004);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 104);
+		callfunc("DM_MapStory", "A refugee mother points the party toward the gray almsman and the Culvert grate.");
+		mes("The Trembling Ground started for the current party.");
+		break;
+	case 5:
+		callfunc("DM_WarpParty", "prontera", 146, 193);
+		mes("Party warped to Tibbets.");
+		break;
+	case 6:
+		callfunc("DM_InstanceSetFlag", "dm_arc01_tibbets_befriended", 1);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 106);
+		callfunc("DM_MapStory", "Tibbets gives up the tide-wheel key. The lowest chamber can be drained.");
+		mes("Tibbets/key flag set for the current party.");
+		break;
+	case 7:
+		callfunc("DM_WarpParty", "prt_sewb4", 103, 100);
+		mes("Party warped to Deacon Holt.");
+		break;
+	case 8:
+		callfunc("DM_InstanceQuestStart", 20005);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 108);
+		callfunc("DM_MapStory", "The goat-headed sign leads down. Deacon Holt waits in the Listening Chamber.");
+		mes("The Goat-Headed Sign started for the current party.");
+		break;
+	case 9:
+		callfunc("DM_InstanceQuestComplete", 20005);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_sigil_ring_obtained", 1);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 199);
+		callfunc("DM_MapStory", "The Listening Chamber falls silent. The Sigil Ring grows colder.");
+		mes("Arc 1 marked complete for the current party.");
+		break;
+	case 10:
+		callsub(S_Beat);
+		break;
+	}
+	return;
+
+S_BeatArc02:
+	mes("[Arc 2 - The Sleeping Forest]");
+	mes("Pick the NPC/location or story beat.");
+	next();
+	switch (select("Warp: Sun-Hwa", "Beat: Sun-Hwa starts contracts", "Beat: Lantern choice", "Beat: Emptied Graves choice", "Warp: Scholar Voss", "Beat: Start Moonlight set-piece", "Beat: Complete Arc 2", "Back")) {
+	case 1:
+		callfunc("DM_WarpParty", "payon", 181, 104);
+		mes("Party warped to Sun-Hwa.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc02_started", 1);
+		callfunc("DM_InstanceQuestStart", 20007);
+		callfunc("DM_InstanceQuestStart", 20008);
+		callfunc("DM_InstanceQuestStart", 20009);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 201);
+		callfunc("DM_MapStory", "Sun-Hwa names the disturbance below Payon. The dead are being asked the wrong questions.");
+		mes("Arc 2 contracts started for the current party.");
+		break;
+	case 3:
+		mes("[Lanterns for the Lost]");
+		mes("Choose the branch to track.");
+		next();
+		.@choice = select("Guide spirits home", "Use lanterns to trap Voss", "Keep one lantern");
+		callfunc("DM_InstanceSetFlag", "dm_arc02_lantern_choice", .@choice);
+		callfunc("DM_InstanceQuestComplete", 20010);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 210 + .@choice);
+		callfunc("DM_MapStory", "The blue lanterns answer the party's choice.");
+		mes("Lantern branch tracked for the current party.");
+		break;
+	case 4:
+		mes("[The Emptied Graves]");
+		mes("Choose the branch to track.");
+		next();
+		.@choice = select("Recover remains and comb", "Copy only the map");
+		callfunc("DM_InstanceSetFlag", "dm_arc02_ancestor_helped", .@choice == 1);
+		callfunc("DM_InstanceQuestComplete", 20011);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 220 + .@choice);
+		callfunc("DM_MapStory", "The emptied grave gives up what Voss missed.");
+		mes("Emptied Graves branch tracked for the current party.");
+		break;
+	case 5:
+		callfunc("DM_WarpParty", "pay_dun04", 120, 115);
+		mes("Party warped to Scholar Voss.");
+		break;
+	case 6:
+		callfunc("DM_InstanceQuestStart", 20012);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 230);
+		callfunc("DM_MapStory", "The shrine-map points to Payon Cave F5. Scholar Voss has turned the grove into an engine.");
+		mes("Moonlight set-piece started for the current party.");
+		break;
+	case 7:
+		callfunc("DM_InstanceQuestComplete", 20012);
+		callfunc("DM_InstanceSetFlag", "dm_arc02_notebook_obtained", 1);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 299);
+		callfunc("DM_MapStory", "Voss's notebook names the pattern: bound spirits, fed with souls, weakening seals.");
+		mes("Arc 2 marked complete for the current party.");
+		break;
+	case 8:
+		callsub(S_Beat);
+		break;
+	}
+	return;
+
+S_BeatArc03:
+	mes("[Arc 3 - Sand and Whispers]");
+	mes("Pick the NPC/location or story beat.");
+	next();
+	switch (select("Warp: Rashid", "Beat: Rashid starts contracts", "Warp: Mother Sabra", "Beat: Sabra branch", "Warp: Osiris Court", "Beat: Start Osiris side quest", "Warp: Amon Ra Lid", "Beat: Start King Beneath", "Beat: Complete Arc 3", "Back")) {
+	case 1:
+		callfunc("DM_WarpParty", "morocc", 159, 97);
+		mes("Party warped to Rashid.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc03_started", 1);
+		callfunc("DM_InstanceQuestStart", 20013);
+		callfunc("DM_InstanceQuestStart", 20014);
+		callfunc("DM_InstanceQuestStart", 20015);
+		callfunc("DM_InstanceQuestStart", 20016);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 301);
+		callfunc("DM_MapStory", "Rashid names the route below Morroc. The Sigil Ring points straight down.");
+		mes("Arc 3 support contracts started for the current party.");
+		break;
+	case 3:
+		callfunc("DM_WarpParty", "moc_fild01", 84, 45);
+		mes("Party warped to Mother Sabra's relief mission.");
+		break;
+	case 4:
+		mes("[Mother Sabra]");
+		mes("Choose the branch to track.");
+		next();
+		.@choice = select("Expose the dig", "Take the compassion deal", "Hear the cascade truth");
+		if (.@choice == 1) {
+			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_exposed", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_deal", 0);
+		} else if (.@choice == 2) {
+			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_deal", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc03_refugees_protected", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_exposed", 0);
+		} else {
+			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_marked_party", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_revealed_cascade", 1);
+		}
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 320 + .@choice);
+		callfunc("DM_MapStory", "Mother Sabra turns mercy into a knife and asks who the party becomes holding it.");
+		mes("Sabra branch tracked for the current party.");
+		break;
+	case 5:
+		callfunc("DM_WarpParty", "moc_pryd04", 100, 92);
+		mes("Party warped to Osiris's Court.");
+		break;
+	case 6:
+		callfunc("DM_InstanceQuestStart", 20017);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 317);
+		callfunc("DM_MapStory", "A dead king has climbed out of the sand and started holding court.");
+		mes("Osiris side quest started for the current party.");
+		break;
+	case 7:
+		callfunc("DM_WarpParty", "moc_pryd06", 102, 85);
+		mes("Party warped to Amon Ra's Lid.");
+		break;
+	case 8:
+		callfunc("DM_InstanceQuestStart", 20018);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 318);
+		callfunc("DM_MapStory", "Amon Ra's chamber is not the bottom of the Pyramid. It is the lid.");
+		mes("The King Beneath started for the current party.");
+		break;
+	case 9:
+		callfunc("DM_InstanceQuestComplete", 20018);
+		callfunc("DM_InstanceSetFlag", "dm_arc03_lidstone_obtained", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc03_shaft_seen", 1);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 398);
+		callfunc("DM_MapStory", "The rumor is true: something vast waits under Morroc, and the shaft must not open.");
+		mes("Arc 3 marked complete for the current party.");
+		break;
+	case 10:
+		callsub(S_Beat);
+		break;
+	}
+	return;
+
+S_BeatArc04:
+	mes("[Arc 4 - The City Above the Beast]");
+	mes("Pick the NPC/location or story beat.");
+	next();
+	switch (select("Warp: Apprentice Elsbeth", "Beat: Elsbeth starts contracts", "Beat: Elsbeth branch", "Warp: Archmagus Doran", "Beat: Doran branch", "Warp: Baphomet's Seal", "Beat: Start Vault set-piece", "Beat: Complete Vault", "Warp: Brother Cassell", "Beat: Complete Arc 4", "Back")) {
+	case 1:
+		callfunc("DM_WarpParty", "geffen", 120, 100);
+		mes("Party warped to Apprentice Elsbeth.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_started", 1);
+		callfunc("DM_InstanceQuestStart", 20019);
+		callfunc("DM_InstanceQuestStart", 20020);
+		callfunc("DM_InstanceQuestStart", 20021);
+		callfunc("DM_InstanceQuestStart", 20022);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 401);
+		callfunc("DM_MapStory", "Apprentice Elsbeth names Geffen's secret: the tower shines because something below is chained.");
+		mes("Arc 4 support contracts started for the current party.");
+		break;
+	case 3:
+		mes("[Apprentice Elsbeth]");
+		mes("Choose the branch to track.");
+		next();
+		.@choice = select("Protect Elsbeth and take ward-key", "Bring Elsbeth into the vault", "Distrust the Guild");
+		if (.@choice == 1) {
+			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 1);
+		} else if (.@choice == 2) {
+			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 1);
+		} else {
+			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 0);
+		}
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 410 + .@choice);
+		callfunc("DM_MapStory", "Elsbeth decides how close she will stand to the vault door.");
+		mes("Elsbeth branch tracked for the current party.");
+		break;
+	case 4:
+		callfunc("DM_WarpParty", "gef_dun02", 205, 205);
+		mes("Party warped to Archmagus Doran.");
+		break;
+	case 5:
+		mes("[Archmagus Doran]");
+		mes("Choose the branch to track.");
+		next();
+		.@choice = select("Condemn Doran", "Offer publication and surrender", "Ask for Cassell's teaching");
+		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_confronted", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_unmasked", 1);
+		if (.@choice == 1) {
+			callfunc("DM_InstanceSetFlag", "dm_arc04_doran_fought", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 0);
+		} else if (.@choice == 2) {
+			callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc04_doran_fought", 0);
+		} else {
+			callfunc("DM_InstanceSetFlag", "dm_arc04_doran_taught", 1);
+		}
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 430 + .@choice);
+		callfunc("DM_MapStory", "Archmagus Doran reveals Cassell's hand in Geffen's lower vault.");
+		mes("Doran branch tracked for the current party.");
+		break;
+	case 6:
+		callfunc("DM_WarpParty", "gef_dun02", 214, 212);
+		mes("Party warped to Baphomet's Seal.");
+		break;
+	case 7:
+		callfunc("DM_InstanceQuestStart", 20023);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 423);
+		callfunc("DM_MapStory", "The lower vault is open. Baphomet's prison-prayer is failing.");
+		mes("The Vault That Prays started for the current party.");
+		break;
+	case 8:
+		callfunc("DM_InstanceQuestComplete", 20023);
+		callfunc("DM_InstanceQuestStart", 20024);
+		callfunc("DM_InstanceSetFlag", "dm_arc04_keystone_shard", 1);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 498);
+		callfunc("DM_MapStory", "Baphomet is driven back. A Keystone Shard breaks loose from the vault.");
+		mes("Vault marked complete and Pilgrim's Offer started for the current party.");
+		break;
+	case 9:
+		callfunc("DM_WarpParty", "gef_dun02", 218, 210);
+		mes("Party warped to Brother Cassell.");
+		break;
+	case 10:
+		mes("[Brother Cassell]");
+		mes("Choose the catechism branch to track.");
+		next();
+		.@choice = select("Refuse in faith", "Refuse but listen", "Accept the teaching");
+		callfunc("DM_InstanceSetFlag", "dm_arc04_catechism_choice", .@choice);
+		if (.@choice == 2)
+			callfunc("DM_InstanceSetFlag", "dm_arc04_tamper_sense", 1);
+		if (.@choice == 3) {
+			callfunc("DM_InstanceSetFlag", "dm_arc04_pilgrim_catechism", 1);
+			callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
+		}
+		callfunc("DM_InstanceQuestComplete", 20024);
+		callfunc("DM_InstanceQuestComplete", 20019);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 499);
+		callfunc("DM_MapStory", "Cassell offers the Pilgrim's Catechism. The party chooses what kind of key knowledge becomes.");
+		mes("Arc 4 marked complete for the current party.");
+		break;
+	case 11:
+		callsub(S_Beat);
+		break;
+	}
+	return;
+
+S_BeatArc05:
+	mes("[Arc 5 - Tides and Trade]");
+	mes("Pick the NPC/location or story beat.");
+	next();
+	switch (select("Warp: Captain Mara", "Beat: Mara starts contracts", "Beat: Mara branch", "Warp: Smuggler-Baron Brode", "Beat: Brode manifest branch", "Warp: Cargo Hold", "Beat: Complete Cargo of Souls", "Warp: Deep Trench Wake", "Beat: Start Tao Gunka", "Beat: Complete Act I", "Back")) {
+	case 1:
+		callfunc("DM_WarpParty", "alberta", 183, 151);
+		mes("Party warped to Captain Mara.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc05_started", 1);
+		callfunc("DM_InstanceQuestStart", 20025);
+		callfunc("DM_InstanceQuestStart", 20026);
+		callfunc("DM_InstanceQuestStart", 20027);
+		callfunc("DM_InstanceQuestStart", 20028);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 501);
+		callfunc("DM_MapStory", "Captain Mara shows the party the tide route: refugees, cargo, and cult freight moving through the same harbor.");
+		mes("Arc 5 support contracts started for the current party.");
+		break;
+	case 3:
+		mes("[Captain Mara]");
+		mes("Choose the branch to track.");
+		next();
+		.@choice = select("Trust Mara and protect refugees", "Use Mara pragmatically", "Insult Mara");
+		if (.@choice == 1) {
+			callfunc("DM_InstanceSetFlag", "dm_arc05_mara_trust", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc05_mara_network", 1);
+		} else if (.@choice == 2) {
+			callfunc("DM_InstanceSetFlag", "dm_arc05_mara_pragmatic", 1);
+		} else {
+			callfunc("DM_InstanceSetFlag", "dm_arc05_mara_insulted", 1);
+		}
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 510 + .@choice);
+		callfunc("DM_MapStory", "Captain Mara decides whether the Saltmother becomes a safe harbor or just another route.");
+		mes("Mara branch tracked for the current party.");
+		break;
+	case 4:
+		callfunc("DM_WarpParty", "alberta", 101, 65);
+		mes("Party warped to Smuggler-Baron Brode.");
+		break;
+	case 5:
+		mes("[Smuggler-Baron Brode]");
+		mes("Choose the manifest branch to track.");
+		next();
+		.@choice = select("Expose and ruin Brode", "Buy the manifest", "Threaten Brode");
+		callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_taken", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc05_cassell_courier_drop", 1);
+		if (.@choice == 1) {
+			callfunc("DM_InstanceSetFlag", "dm_arc05_brode_ruined", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc05_brode_enemy", 1);
+		} else if (.@choice == 2) {
+			callfunc("DM_InstanceSetFlag", "dm_arc05_brode_sold_manifest", 1);
+		} else {
+			callfunc("DM_InstanceSetFlag", "dm_arc05_brode_threatened", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc05_brode_enemy", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc05_northern_account", 1);
+		}
+		callfunc("DM_InstanceQuestStart", 20029);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 525 + .@choice);
+		callfunc("DM_MapStory", "Brode's Manifest reframes the cascade as freight: ports, dates, and a northern account.");
+		mes("Brode branch tracked and Cargo of Souls started for the current party.");
+		break;
+	case 6:
+		callfunc("DM_WarpParty", "treasure01", 153, 160);
+		mes("Party warped to the inspection-exempt hold.");
+		break;
+	case 7:
+		callfunc("DM_InstanceQuestComplete", 20029);
+		callfunc("DM_InstanceSetFlag", "dm_arc05_refugees_freed", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_taken", 1);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 529);
+		callfunc("DM_MapStory", "The locked hold opens: refugees and cult cargo were shipped on the same manifest.");
+		mes("Cargo of Souls marked complete for the current party.");
+		break;
+	case 8:
+		callfunc("DM_WarpParty", "tur_dun04", 99, 93);
+		mes("Party warped to Deep Trench Wake.");
+		break;
+	case 9:
+		callfunc("DM_InstanceQuestStart", 20030);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 530);
+		callfunc("DM_MapStory", "Brode's dumped crates pulse below Turtle Island. Something the size of an island turns over.");
+		mes("What Turned Over in the Deep started for the current party.");
+		break;
+	case 10:
+		callfunc("DM_InstanceQuestComplete", 20030);
+		callfunc("DM_InstanceQuestComplete", 20025);
+		callfunc("DM_InstanceSetFlag", "dm_arc05_sodden_crate_seal", 1);
+		callfunc("DM_InstanceSetFlag", "dm_act01_complete", 1);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 599);
+		callfunc("DM_MapStory", "Tao Gunka falls. Brode's Manifest points north, and Act I ends with the cascade revealed as a route.");
+		mes("Act I marked complete for the current party.");
+		break;
+	case 11:
+		callsub(S_Beat);
+		break;
+	}
 	return;
 
 S_Spawn:

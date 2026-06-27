@@ -74,3 +74,68 @@ function	script	DM_PartyQuestSet	{
 function	script	DM_PartyQuestErase	{
 	return callfunc("DM_PartyApplyQuest", "erase", getarg(0), getarg(1, getcharid(CHAR_ID_PARTY)));
 }
+
+// Instance quest aliases. These intentionally use the caller's party; the
+// instance itself is party-owned, and the same helpers safely fall back to solo.
+function	script	DM_InstanceQuestStart	{
+	return callfunc("DM_PartyQuestSet", getarg(0), getarg(1, getcharid(CHAR_ID_PARTY)));
+}
+
+function	script	DM_InstanceQuestComplete	{
+	return callfunc("DM_PartyQuestComplete", getarg(0), getarg(1, getcharid(CHAR_ID_PARTY)));
+}
+
+function	script	DM_InstanceQuestErase	{
+	return callfunc("DM_PartyQuestErase", getarg(0), getarg(1, getcharid(CHAR_ID_PARTY)));
+}
+
+// Story flags are character vars too. Use these for party/instance choices so
+// later NPC gates see the same branch for every online member in the group.
+function	script	DM_PartyApplyFlag	{
+	.@flag$ = getarg(0);
+	.@value = getarg(1, 1);
+	.@party_id = getarg(2, getcharid(CHAR_ID_PARTY));
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@flag$ == "")
+		return 0;
+
+	if (.@party_id <= 0) {
+		setd(.@flag$, .@value);
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		setd(.@flag$, .@value);
+		detachrid();
+		++.@done;
+	}
+
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+
+	return .@done;
+}
+
+function	script	DM_PartySetFlag	{
+	return callfunc("DM_PartyApplyFlag", getarg(0), getarg(1, 1), getarg(2, getcharid(CHAR_ID_PARTY)));
+}
+
+function	script	DM_PartyClearFlag	{
+	return callfunc("DM_PartyApplyFlag", getarg(0), 0, getarg(1, getcharid(CHAR_ID_PARTY)));
+}
+
+function	script	DM_InstanceSetFlag	{
+	return callfunc("DM_PartySetFlag", getarg(0), getarg(1, 1), getarg(2, getcharid(CHAR_ID_PARTY)));
+}
+
+function	script	DM_InstanceClearFlag	{
+	return callfunc("DM_PartyClearFlag", getarg(0), getarg(1, getcharid(CHAR_ID_PARTY)));
+}

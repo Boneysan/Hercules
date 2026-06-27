@@ -58,6 +58,33 @@ Reserve quest IDs for campaign content:
 Use quest DB entries for visible quest log and hunting objectives. Use character
 variables for story branches and campaign flags.
 
+For campaign / instance NPCs, do not call `setquest`, `completequest`, or direct
+story-flag assignments in the script body. Use the party-safe wrappers instead:
+
+```text
+DM_InstanceQuestStart(<quest_id>)
+DM_InstanceQuestComplete(<quest_id>)
+DM_InstanceQuestErase(<quest_id>)
+DM_InstanceSetFlag("<flag_name>", <value>)
+DM_InstanceClearFlag("<flag_name>")
+```
+
+Those wrappers update every online member of the caller's party, and safely fall
+back to solo behavior when the player is not in a party.
+
+For live DM-driven scenes, use the beat director instead of manually remembering
+quest IDs and flags:
+
+```text
+@dm beat
+@dmbeat
+```
+
+The beat menu is organized by arc, then NPC/location/story beat. A beat can warp
+the current party to a quest giver, start or complete the relevant quest IDs, set
+the branch flags, announce the story beat on the map, and write `dm_story_beat`
+for lightweight tracking.
+
 ### Story Flags
 
 Use persistent character/account flags for choices that matter later:
@@ -89,7 +116,7 @@ Phase 1 DM controls:
 Phase 2 DM controls:
 
 - Custom `@dm` atcommand namespace or HPM map plugin.
-- Commands for `spawn`, `story`, `reward`, `warp`, `flag`, and `session`.
+- Commands for `spawn`, `story`, `reward`, `warp`, `flag`, `quest`, and `session`.
 - Optional web/Discord control panel only after the in-game loop works.
 
 ### Campaign Data
@@ -171,11 +198,57 @@ inside RO. Prove that with Arc 1 before widening the surface area.
     Sigil Ring grant; spare/kill fork (mercy only if refugees helped); spawns the
     **Deviruchi** MVP with cult-familiar adds that scale down with mercy/ally choices.
     On boss death: completes 20005, EXP burst, "the seals are weakening" beat.
-- **Quest DB** — `db/quest_db.conf` entries 20001-20006 (range 20000-20099 reserved).
+- **Arc 2 vertical slice** — `npc/custom/dm_campaign/act_01/arc_02_payon.txt`:
+  - Source-driven from the Obsidian Arc 2 folder (`The Sleeping Forest`).
+  - Sun-Hwa (Payon shrine-medium) starts the arc, frames the Sigil Ring as a cold
+    cascade compass, settles support contracts, and branches the forbidden ancestor
+    rite (`dm_arc02_rite_path`, `dm_arc02_sunhwa_marked`).
+  - Support quests: *Mushroom Ring Patrol* (20008), *Bone Tag Turn-In* (20009),
+    *Lanterns for the Lost* (20010), and *The Emptied Graves* (20011).
+  - Scholar Voss (`pay_dun04`) runs the Moonlight Flower grove set-piece; choices
+    cover sparing/killing Voss, severing conduits, and restoring vs. burning the
+    grove. Boss death completes 20012 and party-wide EXP.
+- **Arc 3 vertical slice** — `npc/custom/dm_campaign/act_01/arc_03_morroc.txt`:
+  - Source-driven from the Obsidian Arc 3 folder (`Sand and Whispers`).
+  - Rashid the Guide (Morroc tea-stall) starts the arc, settles support contracts,
+    and tracks trust/route/ward-charm outcomes.
+  - Mother Sabra (`moc_fild01`) handles the relief-mission dilemma: expose the dig,
+    take the compassion deal, or hear the cascade truth.
+  - Support quests: *Caravan Water Debt* (20014), *Ant Hell Survey* (20015), and
+    *Sphinx Night Watch* (20016).
+  - Osiris's Court (`moc_pryd04`) runs the side set-piece for 20017; Amon Ra's Lid
+    (`moc_pryd06`) runs the main set-piece for 20018 and records the sealed-shaft
+    reveal.
+- **Arc 4 vertical slice** — `npc/custom/dm_campaign/act_01/arc_04_geffen.txt`:
+  - Source-driven from the Obsidian Arc 4 folder (`The City Above the Beast`).
+  - Apprentice Elsbeth (Geffen) starts the arc, handles ward-key/protection choices,
+    and settles support contracts.
+  - Support quests: *Tower Apprentice Drills* (20020), *Orc Village Bounty* (20021),
+    and *Argiope Silk Run* (20022).
+  - Archmagus Doran (`gef_dun02`) exposes Cassell's role and branches into fight,
+    stand-down, or teaching.
+  - Baphomet's Seal (`gef_dun02`) runs the main Baphomet + Doppelganger set-piece
+    for 20023, tracks reinforce-vs-overflow outcome, and starts *The Pilgrim's
+    Offer* (20024).
+  - Brother Cassell (`gef_dun02`) resolves the catechism choice and completes Arc 4.
+- **Arc 5 vertical slice** — `npc/custom/dm_campaign/act_01/arc_05_alberta_izlude.txt`:
+  - Source-driven from the Obsidian Arc 5 folder (`Tides and Trade`).
+  - Captain Mara (Alberta docks) starts the arc, handles the refugee/Sabra payoff,
+    settles support contracts, and gates the cargo/deep quests.
+  - Support quests: *Refugee Ferry Rotation* (20026), *Byalan Tide Contract* (20027),
+    and *Sunken Ship Manifest* (20028).
+  - Smuggler-Baron Brode (Alberta counting-house) handles the manifest branch:
+    expose/ruin, buy, or threaten for the northern-account clue.
+  - Inspection-Exempt Hold (`treasure01`) runs *Cargo of Souls* (20029), freeing
+    refugees and revealing the cult-as-logistics network.
+  - Deep Trench Wake (`tur_dun04`) runs the Tao Gunka Act I finale for 20030,
+    optionally escalating with Drake/Kraken based on branch heat, then marks
+    `dm_act01_complete`.
+- **Quest DB** — `db/quest_db.conf` entries 20001-20030 (range 20000-20099 reserved).
 - **Sigil Ring** — `db/item_db2.conf` Id 50001 (`Sigil_Ring`, IT_ETC, untradeable token).
 - **Dungeon Master group** — `conf/groups.conf` id 5, level 60, inherits Event Manager
   + Law Enforcement (spawn/warp/hide/recall/item/zeny/broadcast), `can_trade` re-enabled.
-- **Registration** — `npc/scripts_custom.conf` loads the Arc 1 script.
+- **Registration** — `npc/scripts_custom.conf` loads the Arc 1 through Arc 5 scripts.
 - **Validation** — `bash ./script-checker <files>` passes (note: the checker needs
   **bash**, not sh — line 49 uses `[[`).
 
@@ -189,10 +262,31 @@ inside RO. Prove that with Arc 1 before widening the surface area.
 3. **GM playthrough** — make a DM-group (or Admin) character, run the loop:
    Wynne → contracts → Tibbets → (`@warp prt_sewb4`) → Holt → Deviruchi → reward.
    Use `@dmflag arc01` to inspect flags and `@dmflag cleararc01` to retest branches.
+4. **Arc 2 GM playthrough** — Payon Sun-Hwa → support contracts → side branches →
+   (`@warp pay_dun04 120 115`) → Voss → Moonlight Flower → reward. Use
+   `@dmflag arc02` and `@dmflag cleararc02` while testing.
+5. **Arc 3 GM playthrough** — Rashid → support contracts → Mother Sabra branch →
+   (`@warp moc_pryd04 100 92`) → Osiris → (`@warp moc_pryd06 102 85`) → Amon Ra
+   → sealed-shaft reveal. Use `@dmbeat` and `@dmflag arc03` while testing.
+6. **Arc 4 GM playthrough** — Elsbeth → support contracts → Doran branch →
+   (`@warp gef_dun02 214 212`) → Baphomet/Doppelganger → Cassell catechism choice.
+   Use `@dmbeat` and `@dmflag arc04` while testing.
+7. **Arc 5 GM playthrough** — Captain Mara → support contracts → Brode manifest
+   branch → (`@warp treasure01 153 160`) Cargo of Souls → (`@warp tur_dun04 99 93`)
+   Tao Gunka finale. Use `@dmbeat` and `@dmflag arc05` while testing.
 
 ### Backend helpers added (closing earlier gaps)
 - **Party-wide quest credit** - `dm_quests.txt` (`DM_PartyQuestComplete/Set/Erase`);
   `OnDeviruchiDead` now credits the whole online party, not just the killer.
+- **Instance quest wrappers** - `dm_quests.txt`
+  (`DM_InstanceQuestStart/Complete/Erase`, `DM_InstanceSetFlag/ClearFlag`).
+  Arc 1 and Arc 2 NPCs now use these for shared quest state and branch choices.
+- **Live party quest control** - `@dm quest <start|complete|erase> <quest_id>`
+  and shortcut `@dmquest`, plus party-scoped `@dm flag set/clear`.
+- **Story beat director** - `@dm beat` / `@dmbeat` opens a DM menu for Arc 1 through
+  Arc 5 NPC locations and story beats. It can warp the party to the
+  relevant NPC, update party quest state, set branch flags, announce the beat, and
+  write `dm_story_beat`.
 - **Private dungeon instances** - `dm_instances.txt` (`DM_InstanceStart/End`),
   exposed as `@dm instance start <map>/end`. Script-driven; no instance_db needed.
 - **Party warp tooling** - `DM_WarpParty` + `@dm warp <map>` / `@dm recall`.
