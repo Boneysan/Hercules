@@ -1,0 +1,132 @@
+// Seal Cascade shared DM helpers.
+
+function	script	DM_IsDM	{
+	return getgmlevel() >= getarg(0, 1);
+}
+
+function	script	DM_RequireDM	{
+	if (callfunc("DM_IsDM", getarg(0, 1)))
+		return 1;
+
+	dispbottom("[DM] You do not have permission to use this tool.");
+	return 0;
+}
+
+function	script	DM_CurrentParty	{
+	return getcharid(CHAR_ID_PARTY);
+}
+
+function	script	DM_PartyOnlineCount	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	if (.@party_id <= 0)
+		return 1;
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (isloggedin(.@accid[.@i], .@charid[.@i]))
+			++.@online;
+	}
+
+	return .@online;
+}
+
+function	script	DM_CurrentMap	{
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	return .@map$;
+}
+
+function	script	DM_WarpParty	{
+	.@map$ = getarg(0);
+	.@x = getarg(1, 0);
+	.@y = getarg(2, 0);
+	.@party_id = getarg(3, getcharid(CHAR_ID_PARTY));
+
+	if (.@map$ == "")
+		return 0;
+
+	// Solo / no party: warp the attached character only.
+	if (.@party_id <= 0) {
+		warp(.@map$, .@x, .@y);
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (isloggedin(.@accid[.@i], .@charid[.@i])) {
+			warpchar(.@map$, .@x, .@y, .@charid[.@i]);
+			++.@moved;
+		}
+	}
+
+	return .@moved;
+}
+
+function	script	DM_JoinArgs	{
+	.@start = getarg(0, 0);
+	.@end = getarg(1, .@atcmd_numparameters);
+	.@text$ = "";
+
+	for (.@i = .@start; .@i < .@end; ++.@i)
+		.@text$ += (.@i > .@start ? " " : "") + .@atcmd_parameters$[.@i];
+
+	return .@text$;
+}
+
+function	script	DM_ParseTier	{
+	.@tier$ = getarg(0, "common");
+
+	if (.@tier$ == "common")
+		return 0;
+	if (.@tier$ == "uncommon")
+		return 1;
+	if (.@tier$ == "rare")
+		return 2;
+	if (.@tier$ == "boss")
+		return 3;
+
+	return atoi(.@tier$);
+}
+
+function	script	DM_TierName	{
+	switch (getarg(0, 0)) {
+		case 1: return "uncommon";
+		case 2: return "rare";
+		case 3: return "boss";
+	}
+
+	return "common";
+}
+
+function	script	DM_Color	{
+	switch (getarg(0, 0)) {
+		case 1: return 0x88CCFF;
+		case 2: return 0xD0A0FF;
+		case 3: return 0xFFAA33;
+	}
+
+	return 0xAAFFAA;
+}
+
+// Fire an event on a hazard/encounter NPC by name, resolving to the
+// instance-specific clone when the caller's party has a live instance.
+function	script	DM_TriggerEvent	{
+	.@npc$   = getarg(0);
+	.@label$ = getarg(1);
+
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	if (.@party_id > 0) {
+		.@iid = getd("$dm_inst_" + .@party_id);
+		if (.@iid > 0) {
+			.@inst_npc$ = instance_npcname(.@npc$, .@iid);
+			if (.@inst_npc$ != "")
+				.@npc$ = .@inst_npc$;
+		}
+	}
+
+	donpcevent(.@npc$ + "::" + .@label$);
+	return;
+}

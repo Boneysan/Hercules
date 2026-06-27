@@ -1,0 +1,322 @@
+//===== Seal Cascade Campaign ================================
+//= Act II, Arc 9 - Frozen Faith (Rachel)
+//===== By: ==================================================
+//= Seal Cascade DM tooling
+//===== Description: =========================================
+//= Arunafeltz's church built its theology over an Ash Vacuum
+//= rift and called it the Blessing of the Twelve. High Prelate
+//= Karsh has known for twenty years. Gloom Under Night was not
+//= summoned — it was the first thing that heard the prayers.
+//=
+//= Quests (db/quest_db.conf):
+//=   20131 The Bleeding Blessing       (arc tracker / Gloom)
+//=   20132 Ice Core Samples            (Ice Titan x15)
+//=   20133 Hollow Blessings            (Snowier x20)
+//=   20134 The Prelate's Record        (Karsh confrontation)
+//=
+//= Story flags (persistent character vars, see dm_flags.txt):
+//=   dm_arc09_started, dm_arc09_karsh_exposed,
+//=   dm_arc09_karsh_deal, dm_arc09_gloom_killed
+//===========================================================
+
+// ── Acolyte Naima — The Believer Who Looked Too Closely ────────────────────
+rachel,120,120,5	script	Acolyte Naima#dm	4_F_04,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (questprogress(20131) == 2) {
+		mes("[Acolyte Naima]");
+		if (dm_arc09_karsh_exposed)
+			mes("The truth is out. The Prelate is finished. The church will survive this. I have to believe that.");
+		else
+			mes("The bleeding stopped. The rift is quiet. Karsh walks free. I do not know if what we did was right.");
+		close();
+	}
+
+	if (!dm_arc09_started) {
+		callsub(S_StartArc);
+		end;
+	}
+
+	callsub(S_TurnIns);
+	end;
+
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20131, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20131, 1;
+	end;
+
+S_StartArc:
+	mes("[Acolyte Naima]");
+	mes("You are not pilgrims. Good. Every pilgrim I tell this to walks away faster.");
+	next();
+	if (dm_arc08_manfred_spared || dm_arc08_manfred_killed) {
+		mes("[Naima]");
+		mes("You came from Glast Heim. The kingdom that loved its faith to death. I have studied the accounts. Rachel is slower. But I think we are walking the same road.");
+		next();
+	}
+	if (dm_arc08_darklord_killed) {
+		mes("[Naima]");
+		mes("What the cascade did to Glast Heim — amplifying a kingdom's collective despair into something that walks around — I think it is doing something similar here. Except the thing under the ice has been listening to prayers instead of grief.");
+		next();
+	}
+	mes("[Naima]");
+	mes("The Blessing of the Twelve. The sacred rift beneath the ice. Every child in Arunafeltz learns the story. A divine aperture where the Twelve's will pours into the world.");
+	next();
+	mes("[Naima]");
+	mes("I took ice core samples three months ago. The rift is not divine. It is dimensional. It matches every measurement I have of the Ash Vacuum.");
+	next();
+	switch (select("How long has the church known?", "What is Gloom Under Night?", "What do you need us to do?")) {
+	case 1:
+		mes("[Naima]");
+		mes("Karsh has been sitting on my predecessor's identical findings for twenty years. The paperwork exists. He archived it under a false classification code. I found it.");
+		break;
+	case 2:
+		mes("[Naima]");
+		mes("The first thing that heard the prayers. When an entire civilization prays into a dimensional rift for four hundred years, something eventually answers. Gloom Under Night is that answer.");
+		break;
+	case 3:
+		mes("[Naima]");
+		mes("Ice cores from the deep ice formations — they record the rift's dimensional resonance going back centuries. And the pilgrims who camped in the outer sanctum. Something followed them home. I need evidence of the effect, not just the cause.");
+		break;
+	}
+	next();
+	mes("[Naima]");
+	mes("Ice Titan cores from the third ice level give the deepest resonance readings. And the Snowier in the outer sanctum — they have absorbed dimensional bleed through proximity to the rift. Their biology shows it.");
+	callfunc("DM_InstanceSetFlag", "dm_arc09_started", 1);
+	callfunc("DM_InstanceQuestStart", 20131);
+	callfunc("DM_InstanceQuestStart", 20132);
+	callfunc("DM_InstanceQuestStart", 20133);
+	next();
+	mes("^3355FF[Quest started: The Bleeding Blessing]^000000");
+	mes("^3355FFIce Core Samples - gather resonance data from 15 Ice Titan in the deep ice.^000000");
+	mes("^3355FFHollow Blessings - document dimensional bleed in 20 Snowier near the outer sanctum.^000000");
+	close();
+
+S_TurnIns:
+	.@paid = 0;
+	if (questprogress(20132) == 1 && questprogress(20132, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20132);
+		callfunc("DM_PartyExp", 250000, 120000);
+		callfunc("DM_GivePartyZeny", 20000);
+		.@paid = 1;
+		mes("[Naima]");
+		mes("The deep core samples. These go back three centuries. The rift has been here far longer than the church. The Twelve did not create it. The church was built around something that was already here.");
+		next();
+		switch (select("Publish the historical data immediately.", "Add it to the case file against Karsh.", "Keep it. Let the church make its own peace with this.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_exposed", 1);
+			mes("[Naima]");
+			mes("The university scribes in Juno can distribute it within a week. Karsh cannot recall every copy. This becomes a matter of public record.");
+			break;
+		case 2:
+			mes("[Naima]");
+			mes("Good. When we have the Snowier data as well, Karsh's suppression becomes indefensible.");
+			break;
+		case 3:
+			mes("[Naima]");
+			mes("I understand the instinct. But the church will be the last institution to make peace with it. Someone else has to put the truth in circulation first.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20133) == 1 && questprogress(20133, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20133);
+		callfunc("DM_PartyExp", 270000, 130000);
+		callfunc("DM_GivePartyZeny", 22000);
+		.@paid = 1;
+		mes("[Naima]");
+		mes("The Snowier tissue shows active dimensional absorption. They have been changed by proximity to the rift over generations. The outer sanctum has been bleeding into local fauna for at least forty years.");
+		next();
+		switch (select("Document the fauna effect and file it with the ice core data.", "Send samples to Vahl in Yuno — she would want to see this.", "This is the evidence. Karsh knew what he was sitting on.")) {
+		case 1:
+			mes("[Naima]");
+			mes("Filed. Together the two datasets constitute the most comprehensive documentation of a dimensional rift's environmental impact I know of.");
+			break;
+		case 2:
+			if (dm_arc06_vahl_trust) {
+				mes("[Naima]");
+				mes("Vahl's cascade measurements and our rift biology data together... yes. That cross-reference would be powerful. I will send a copy to Yuno.");
+			} else {
+				mes("[Naima]");
+				mes("I don't know this Vahl. But if she has cascade data from Yuno, the cross-reference with our rift biology would be significant. I'll reach out.");
+			}
+			break;
+		case 3:
+			mes("[Naima]");
+			mes("He knew. His predecessor documented the first signs forty years ago. Karsh inherited the knowledge and the silence. We have the paper trail.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20132) == 2 && questprogress(20133) == 2 && questprogress(20134) == 0) {
+		mes("[Naima]");
+		mes("Both datasets are in. The ice cores and the fauna samples together constitute an undeniable record of what the Blessing actually is.");
+		next();
+		mes("[Naima]");
+		mes("Karsh knows I have this. He has been waiting for me to either disappear or make a move. I think you are the move he did not plan for.");
+		next();
+		switch (select("We go to Karsh directly. Force his hand.", "We publish everything first, then confront him.", "Let's find out what he's actually protecting.")) {
+		case 1:
+			mes("[Naima]");
+			mes("Directly. He will have a prepared response. But he will not have seen you coming. That may be enough.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_exposed", 1);
+			mes("[Naima]");
+			mes("Published before he can act. He will know. But he will not be able to bury it.");
+			break;
+		case 3:
+			mes("[Naima]");
+			mes("The official explanation has changed three times. What he is protecting is the institution. What he is afraid of is that the institution cannot survive the truth. He may be right.");
+			break;
+		}
+		callfunc("DM_InstanceQuestStart", 20134);
+		next();
+		mes("^3355FF[Quest started: The Prelate's Record]^000000");
+		mes("^3355FFConfront High Prelate Karsh. Then descend to ice_dun03 and face Gloom Under Night.^000000");
+		close();
+	}
+
+	if (questprogress(20134) == 1 && !dm_arc09_karsh_exposed && !dm_arc09_karsh_deal) {
+		mes("[Naima]");
+		mes("Karsh is at his study in the Sanctuary. He will be expecting something. He is always expecting something.");
+		close();
+	}
+
+	if (questprogress(20134) == 1 && (dm_arc09_karsh_exposed || dm_arc09_karsh_deal)) {
+		mes("[Naima]");
+		mes("Karsh is resolved. Whatever he chose, the record is what it is.");
+		next();
+		mes("[Naima]");
+		mes("Gloom Under Night remains. It does not care about Karsh or the data or what we choose. It is four hundred years of answered prayers. It will take something harder than truth to quiet it.");
+		close();
+	}
+
+	if (.@paid) {
+		mes("[Naima]");
+		mes("We need both the ice cores and the fauna samples. The case is not complete without both.");
+		close();
+	}
+
+	mes("[Naima]");
+	if (questprogress(20132) == 1 && questprogress(20133) == 1)
+		mes("The ice core samples and the Snowier documentation are both still open.");
+	else if (questprogress(20132) == 1)
+		mes("Ice Core Samples is still open. Ice Titan in the deep ice, third level.");
+	else if (questprogress(20133) == 1)
+		mes("Hollow Blessings is still open. Snowier in the outer sanctum.");
+	else
+		mes("The data is waiting. Come back when you have both contracts.");
+	close();
+}
+
+// ── High Prelate Karsh — The Church's Secret Keeper ────────────────────────
+rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc09_started) {
+		mes("[High Prelate Karsh]");
+		mes("The Sanctuary is not a public venue. Present credentials or leave.");
+		close();
+	}
+
+	if (questprogress(20131) == 2) {
+		mes("[High Prelate Karsh]");
+		if (dm_arc09_karsh_exposed)
+			mes("The Council of Arunafeltz has been informed. My statement stands. I was managing a sensitive theological matter responsibly.");
+		else
+			mes("An arrangement was reached. The church will manage the transition in its own way.");
+		close();
+	}
+
+	if (dm_arc09_karsh_exposed || dm_arc09_karsh_deal) {
+		mes("[High Prelate Karsh]");
+		mes("We have concluded our business. Whatever you believe you have accomplished, consider carefully what happens to institutions when they are publicly embarrassed.");
+		close();
+	}
+
+	mes("[High Prelate Karsh]");
+	mes("Naima sent you. Of course she did.");
+	next();
+	if (dm_arc06_krenn_exposed) {
+		mes("[Karsh]");
+		mes("You were in Yuno as well. Krenn and I have mutual acquaintances. They tell me you have a pattern of... institutional interference.");
+		next();
+	}
+	if (dm_arc08_manfred_spared) {
+		mes("[Karsh]");
+		mes("You left Manfred of Glast Heim alive. A mercy or a mistake. I will refrain from judging. The man spent thirty years in ruins because of his faith. I have some sympathy for that particular affliction.");
+		next();
+	}
+	mes("[Karsh]");
+	mes("I have the documentation Naima's predecessor produced. I have Naima's own notes from three months ago. I have twenty years of archives that say exactly what she claims they say.");
+	next();
+	mes("[Karsh]");
+	mes("The question is what you intend to do with that fact.");
+	next();
+	switch (select("Sign a public confession. The people of Arunafeltz deserve the truth.", "What would it take for you to manage this transition yourself?", "We are not interested in the church. We need Gloom Under Night stopped.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_exposed", 1);
+		mes("[Karsh]");
+		mes("A public confession. Signed, dated, distributed. The Council will remove me. The church will enter a crisis it may not survive.");
+		next();
+		mes("[Karsh]");
+		mes("...");
+		next();
+		mes("[Karsh]");
+		mes("Give me the paper.");
+		next();
+		mes("^3355FF*Karsh signs. His hand does not tremble.*^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_deal", 1);
+		mes("[Karsh]");
+		mes("A managed transition. I formally reclassify the Blessing as a dimensional anomaly under theological study. The Council is briefed privately. No public confession. The institution survives.");
+		next();
+		mes("[Karsh]");
+		mes("In return, Naima's findings are incorporated into official doctrine on a five-year timeline. And I retire from active duty at year's end.");
+		next();
+		mes("^3355FF*The deal is struck. The truth moves at the church's pace. That may be the best available outcome.*^000000");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_deal", 1);
+		mes("[Karsh]");
+		mes("Then we have more in common than I expected. Gloom Under Night is what happens when four hundred years of prayer hits a dimensional aperture with nothing on the other side to receive it. I need it gone as much as you do.");
+		next();
+		mes("[Karsh]");
+		mes("I will cooperate with whatever you need to descend into ice_dun03. The theology is a separate question. One problem at a time.");
+		next();
+		mes("^3355FF*Karsh's cooperation is practical rather than principled. But it opens the ice dungeon approach.*^000000");
+		break;
+	}
+	callfunc("DM_InstanceQuestComplete", 20134);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 905);
+	next();
+	mes("^3355FF[The Prelate's Record resolved. Descend to ice_dun03 and face Gloom Under Night.]^000000");
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20134, 1;
+	end;
+}
+
+// ── Ice Bleed Site Set-piece ───────────────────────────────────────────────
+ice_dun03,150,150,0	script	Ice Bleed Site#dm	HIDDEN_NPC,{
+	end;
+
+OnGloomDead:
+	callfunc("DM_InstanceQuestComplete", 20131);
+	callfunc("DM_InstanceSetFlag", "dm_arc09_gloom_killed", 1);
+	callfunc("DM_PartyExp", 800000, 450000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 999);
+	if (dm_arc09_karsh_exposed)
+		instance_announce(instance_id(), "^3355FF[DM] Gloom disperses. The rift goes quiet. Arunafeltz will have to learn a new theology.^000000", bc_all);
+	else
+		instance_announce(instance_id(), "^3355FF[DM] Gloom disperses. The rift goes quiet. Whether the church finds the truth on its own schedule remains to be seen.^000000", bc_all);
+	sleep(2000);
+	instance_announce(instance_id(), "^FF6600[DM] Act II's thread ends here. The cascade has been measured, witnessed, and prayed at. Now it leads to Lighthalzen — where it is being manufactured.^000000", bc_all);
+	end;
+}

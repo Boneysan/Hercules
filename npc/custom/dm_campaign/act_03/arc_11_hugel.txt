@@ -1,0 +1,306 @@
+//===== Seal Cascade Campaign ================================
+//= Act III, Arc 11 - The Wrath of Heaven (Hugel)
+//===== By: ==================================================
+//= Seal Cascade DM tooling
+//===== Description: =========================================
+//= The cascade has severed the Valkyries' connection to Odin's
+//= will. Cut off from direction, they defaulted to their oldest
+//= function: punishing the faithless. Midgard provides no
+//= shortage of targets.
+//=
+//= Quests (db/quest_db.conf):
+//=   20151 When Heaven Turns          (arc tracker / Randgris)
+//=   20153 Gryphon Vigil              (Gryphon x20)
+//=   20154 Dragon Pack Dispersal      (Ferus x20)
+//=   20155 The Zealot's Testimony     (Zealot Bjorn)
+//=
+//= Story flags (persistent character vars, see dm_flags.txt):
+//=   dm_arc11_started, dm_arc11_bjorn_subdued,
+//=   dm_arc11_bjorn_joined, dm_arc11_randgris_killed
+//===========================================================
+
+// ── Priest Eadric — The Faithful Witness ───────────────────────────────────
+hugel,100,100,5	script	Priest Eadric#dm	4_M_01,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (questprogress(20151) == 2) {
+		mes("[Priest Eadric]");
+		if (dm_arc11_bjorn_joined)
+			mes("Bjorn walked into the temple ahead of you. He came out alone, carrying his crook. He has not spoken since. I think he understood what Randgris was, at the end.");
+		else
+			mes("Heaven fell silent. I am not sure if that is better or worse than what it was saying before.");
+		close();
+	}
+
+	if (!dm_arc11_started) {
+		callsub(S_StartArc);
+		end;
+	}
+
+	callsub(S_TurnIns);
+	end;
+
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20151, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20151, 1;
+	end;
+
+S_StartArc:
+	mes("[Priest Eadric]");
+	mes("You came from the south. Good. Everything coming from the north has been trying to kill us.");
+	next();
+	if (dm_arc09_karsh_exposed || dm_arc09_karsh_deal) {
+		mes("[Eadric]");
+		mes("Rachel's Prelate Karsh. I heard. The church's failures are not unique to Arunafeltz. The same rot shows up in every institution that mistakes authority for truth. We are not immune here.");
+		next();
+	}
+	if (dm_arc08_manfred_killed) {
+		mes("[Eadric]");
+		mes("The last bishop of Glast Heim. I knew his name from the accounts. His faith was absolute and it died alone in the ruins with him. I keep thinking about that.");
+		next();
+	}
+	if (dm_arc08_manfred_spared) {
+		mes("[Eadric]");
+		mes("Manfred of Glast Heim is still alive? That is... I had assumed. Good. Good.");
+		next();
+	}
+	mes("[Eadric]");
+	mes("The Valkyries of Odin's Temple have turned on us. Not corruption, not possession. They have simply stopped receiving orders, and without orders from Odin, they have defaulted to their original function.");
+	next();
+	switch (select("What is their original function?", "What happened to Odin's signal?", "What do you need from us?")) {
+	case 1:
+		mes("[Eadric]");
+		mes("Punishing the faithless. Before the age of temples and prayers, Valkyries were instruments of divine judgment. They chose the worthy among the dead. Everyone else was... judged.");
+		break;
+	case 2:
+		mes("[Eadric]");
+		mes("The cascade. It is not destroying the connection — it is filling it with noise. Odin's signal exists, but the Valkyries cannot distinguish it from the cascade's frequency. They have been operating blind for weeks.");
+		break;
+	case 3:
+		mes("[Eadric]");
+		mes("The sacred creatures near the temple approach have gone feral. The Gryphon roosts are dangerous. The Ferus packs have moved into the lower approach. I need those paths clear before anyone can reach the temple.");
+		break;
+	}
+	next();
+	mes("[Eadric]");
+	mes("There is also Bjorn. He is one of ours — or was. He has decided the Valkyries are right. That we deserve this. He is standing between the lower approach and the temple gates.");
+	callfunc("DM_InstanceSetFlag", "dm_arc11_started", 1);
+	callfunc("DM_InstanceQuestStart", 20151);
+	callfunc("DM_InstanceQuestStart", 20153);
+	callfunc("DM_InstanceQuestStart", 20154);
+	next();
+	mes("^3355FF[Quest started: When Heaven Turns]^000000");
+	mes("^3355FFGryphon Vigil - clear 20 Gryphon from the temple approach.^000000");
+	mes("^3355FFDragon Pack Dispersal - drive back 20 Ferus from the lower approach.^000000");
+	close();
+
+S_TurnIns:
+	.@paid = 0;
+	if (questprogress(20153) == 1 && questprogress(20153, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20153);
+		callfunc("DM_PartyExp", 300000, 145000);
+		callfunc("DM_GivePartyZeny", 25000);
+		.@paid = 1;
+		mes("[Eadric]");
+		mes("The Gryphon roosts are clear. They were not attacking out of aggression — they were afraid. The cascade vibration off the temple stones is a frequency those creatures can hear that we cannot.");
+		next();
+		switch (select("Mark the roost locations. They can return once the temple is stable.", "The path is clear. That's what matters.", "These creatures may have been reacting to Randgris's state.")) {
+		case 1:
+			mes("[Eadric]");
+			mes("Thoughtful. Gryphon are sacred to this place. They should come back. I will mark the roosts.");
+			break;
+		case 2:
+			mes("[Eadric]");
+			mes("Practical. You are not wrong.");
+			break;
+		case 3:
+			mes("[Eadric]");
+			mes("That is... yes. If Randgris's emotional state is propagating outward through the cascade, the animals would feel it before the people. I had not followed that chain.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20154) == 1 && questprogress(20154, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20154);
+		callfunc("DM_PartyExp", 300000, 145000);
+		callfunc("DM_GivePartyZeny", 25000);
+		.@paid = 1;
+		mes("[Eadric]");
+		mes("The Ferus packs are back in the high slopes. They den near the temple normally — they moved down when the Valkyries began acting erratically. The temple's blessing repelled them.");
+		next();
+		switch (select("The temple's own energy is destabilizing.", "How long until the Valkyries move beyond the temple?", "Bjorn must be watching all of this.")) {
+		case 1:
+			mes("[Eadric]");
+			mes("Yes. The cascade is feeding into the blessing instead of the prayers feeding outward. The flow has reversed. I am not sure what that means structurally.");
+			break;
+		case 2:
+			mes("[Eadric]");
+			mes("I think that is what Randgris is working toward. The outer creatures going feral was the first sign. The next sign will be worse.");
+			break;
+		case 3:
+			mes("[Eadric]");
+			mes("He has been taking notes. I find that more frightening than if he were weeping.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20153) == 2 && questprogress(20154) == 2 && questprogress(20155) == 0) {
+		mes("[Eadric]");
+		mes("The approaches are clear. Bjorn stands at the temple gate. He has not attacked anyone yet. I believe he is waiting to make a point.");
+		next();
+		switch (select("Let us go to him.", "What does he actually want?", "Is he dangerous?")) {
+		case 1:
+			mes("[Eadric]");
+			mes("Yes. Go. He deserves to be heard before he is dealt with.");
+			break;
+		case 2:
+			mes("[Eadric]");
+			mes("Validation, I think. He has been saying for years that Midgard's faith is hollow and performative. The Valkyries have apparently agreed with him. He wants someone to acknowledge that he was right.");
+			break;
+		case 3:
+			mes("[Eadric]");
+			mes("Not yet. But if the Valkyries come for him and he is still standing at the gate, he will let them through rather than fight them off.");
+			break;
+		}
+		callfunc("DM_InstanceQuestStart", 20155);
+		next();
+		mes("^3355FF[Quest started: The Zealot's Testimony]^000000");
+		mes("^3355FFFind Zealot Bjorn at the temple gate. Then descend to abyss_03 and face Randgris.^000000");
+		close();
+	}
+
+	if (questprogress(20155) == 1 && !dm_arc11_bjorn_subdued && !dm_arc11_bjorn_joined) {
+		mes("[Eadric]");
+		mes("Bjorn is at the temple gate. He has not moved.");
+		close();
+	}
+
+	if (questprogress(20155) == 1 && (dm_arc11_bjorn_subdued || dm_arc11_bjorn_joined)) {
+		mes("[Eadric]");
+		mes("Bjorn has stepped aside. The temple gate is open. Randgris waits in the deepest sanctum — the Valkyrie Hall in the abyss below.");
+		close();
+	}
+
+	if (.@paid) {
+		mes("[Eadric]");
+		mes("Both field contracts need to be finished before you face Bjorn. Clear the approaches first.");
+		close();
+	}
+
+	mes("[Eadric]");
+	if (questprogress(20153) == 1 && questprogress(20154) == 1)
+		mes("The Gryphon Vigil and Dragon Pack Dispersal are both still active. The approaches are not clear.");
+	else if (questprogress(20153) == 1)
+		mes("Gryphon Vigil is still open. The roosts are in the upper approach north of Hugel.");
+	else if (questprogress(20154) == 1)
+		mes("Dragon Pack Dispersal is still open. Ferus in the lower slopes.");
+	else
+		mes("The approaches are clear. Find Bjorn at the temple gate.");
+	close();
+}
+
+// ── Zealot Bjorn — The Man Who Was Right for the Wrong Reasons ─────────────
+hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc11_started) {
+		mes("[Zealot Bjorn]");
+		mes("Midgard sleeps. The reckoning approaches and no one watches the horizon.");
+		close();
+	}
+
+	if (dm_arc11_bjorn_subdued || dm_arc11_bjorn_joined) {
+		mes("[Zealot Bjorn]");
+		if (dm_arc11_bjorn_joined)
+			mes("I walk with you now. Not because the Valkyries were wrong about what we became. But because I think we can still become something else.");
+		else
+			mes("I will not fight the Valkyries. I will not fight you. I will wait here and see which of us was right.");
+		close();
+	}
+
+	mes("[Zealot Bjorn]");
+	mes("We deserve their wrath. Every Valkyrie turning her blade on a Midgard citizen is doing what heaven intended. We built cities instead of faith. We built commerce instead of virtue.");
+	next();
+	mes("[Bjorn]");
+	mes("I have been saying this for fifteen years. Now the sky confirms it.");
+	next();
+	switch (select("The Valkyries are not judging us. They are malfunctioning.", "You may be right about Midgard's failures. That is not what this is.", "Then stand with us and do something about those failures.")) {
+	case 1:
+		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_joined");
+		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_subdued", 1);
+		callfunc("DM_InstanceQuestComplete", 20155);
+		mes("[Bjorn]");
+		mes("Malfunctioning. A divine instrument of judgment, and you call it broken.");
+		next();
+		mes("[Bjorn]");
+		mes("...");
+		next();
+		mes("[Bjorn]");
+		mes("What if you are right? What if I spent fifteen years calling the instrument what I wished to hear?");
+		next();
+		mes("^3355FF*Bjorn does not move. But he does not block the path.*^000000");
+		mes("^3355FF[Encounter: Randgris will fight with her full court.]^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_joined");
+		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_subdued", 1);
+		callfunc("DM_InstanceQuestComplete", 20155);
+		mes("[Bjorn]");
+		mes("You acknowledge that Midgard is faithless.");
+		next();
+		mes("[Bjorn]");
+		mes("Then what are you doing here? If the diagnosis is correct but the medicine is wrong, what is your alternative?");
+		next();
+		mes("^3355FF*Bjorn steps aside to hear the answer in Randgris's death. He will be watching.*^000000");
+		mes("^3355FF[Encounter: Randgris will fight with her full court.]^000000");
+		break;
+	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_subdued");
+		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_joined", 1);
+		callfunc("DM_InstanceQuestComplete", 20155);
+		mes("[Bjorn]");
+		mes("Do something about it.");
+		next();
+		mes("[Bjorn]");
+		mes("Not punish it. Not mourn it. Do something about it.");
+		next();
+		mes("[Bjorn]");
+		mes("All right. I have been mourning it for fifteen years. Let me try your approach for an hour.");
+		next();
+		mes("^3355FF*Bjorn picks up his crook and walks toward the temple gate.*^000000");
+		mes("^3355FF[Encounter: Bjorn's faith will restrain part of Randgris's court.]^000000");
+		break;
+	}
+	next();
+	mes("^3355FF[The Zealot's Testimony resolved. The temple gate is open.]^000000");
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20155, 1;
+	end;
+}
+
+// ── Valkyrie Hall Set-piece ─────────────────────────────────────────────────
+abyss_03,150,150,0	script	Valkyrie Hall#dm	HIDDEN_NPC,{
+	end;
+
+OnRandgrisDead:
+	killmonster strnpcinfo(NPC_MAP), "Valkyrie Hall#dm::OnAddDead";
+	callfunc("DM_InstanceQuestComplete", 20151);
+	callfunc("DM_InstanceSetFlag", "dm_arc11_randgris_killed", 1);
+	callfunc("DM_PartyExp", 1200000, 700000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1199);
+	if (dm_arc11_bjorn_joined)
+		instance_announce(instance_id(), "^3355FF[DM] Randgris falls. Bjorn catches her as she goes. She says something to him no one else hears. He weeps.^000000", bc_all);
+	else
+		instance_announce(instance_id(), "^3355FF[DM] Valkyrie Randgris falls. A dying Valkyrie hears Loki laugh from somewhere that has no direction.^000000", bc_all);
+	sleep(2000);
+	instance_announce(instance_id(), "^FF6600[DM] The divine signal is unblocked. But Odin remains silent. The New World's wound is the next thread.^000000", bc_all);
+	end;
+
+OnAddDead:
+	end;
+}

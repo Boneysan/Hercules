@@ -1,0 +1,351 @@
+//===== Seal Cascade Campaign ================================
+//= Act II, Arc 7 - Iron and Ash (Einbroch)
+//===== By: ==================================================
+//= Seal Cascade DM tooling
+//===== Description: =========================================
+//= Einbroch's foundry workers are on strike and someone
+//= reactivated RSX-0806 to break it. Greta Holm wants
+//= the machine dead and Kessler accountable.
+//=
+//= Quests (db/quest_db.conf):
+//=   20111 The Unit That Wouldn't Stay Dead  (arc tracker / RSX)
+//=   20112 Whose Side the Smoke Is On        (strike resolution)
+//=   20113 Factory Whistle Shift             (Roween x20)
+//=   20114 Metaling Scrap Drive              (Metaling x20)
+//=   20115 Mine Dust Medicine                (Zipper Bear x15)
+//=
+//= Story flags (persistent character vars, see dm_flags.txt):
+//=   dm_arc07_started, dm_arc07_strike_supported,
+//=   dm_arc07_strike_broken, dm_arc07_kessler_confronted,
+//=   dm_arc07_rsx_killed
+//===========================================================
+
+// ── Greta Holm — Foundry-council Organizer ───────────────────────
+einbroch,145,230,5	script	Greta Holm#dm	4_F_03,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (questprogress(20111) == 2) {
+		mes("[Greta Holm]");
+		if (dm_arc07_strike_supported)
+			mes("The machine is quiet and the line held. That's two things Rekenber didn't want. Thanks to you.");
+		else if (dm_arc07_strike_broken)
+			mes("The machine is quiet. The strike... we'll rebuild. What Kessler did with RSX is on the record now.");
+		else
+			mes("The machine is quiet. What comes after is up to the workers now.");
+		close();
+	}
+
+	if (!dm_arc07_started) {
+		callsub(S_Introduction);
+		end;
+	}
+
+	callsub(S_TurnIns);
+	end;
+
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20111, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20111, 1;
+	end;
+
+S_Introduction:
+	mes("[Greta Holm]");
+	mes("You don't look like Rekenber's private security. Good. We've had enough of those today.");
+	next();
+	if (dm_arc06_vahl_trust || dm_arc06_krenn_exposed) {
+		mes("[Greta]");
+		mes("You came from Yuno? Vahl's data about the cascade... some of us here have been seeing the same patterns in the mine's seismic logs. We're not alone in this.");
+		next();
+	}
+	mes("[Greta]");
+	mes("We have two problems. The strike has been going for six days — Rekenber wants to break it. And something walked out of the decommission pits. A scrapped unit. RSX-0806.");
+	next();
+	switch (select("We'll take care of RSX. What else?", "Who reactivated it?", "We need to know where the strike stands.")) {
+	case 1:
+		mes("[Greta]");
+		mes("Keep the workers alive while you're at it. We need materials and medicine. You kill what you find in the fields and the mine, we'll handle the line.");
+		break;
+	case 2:
+		mes("[Greta]");
+		mes("Only a supervisor with floor clearance could have touched the reactivation controls. Kessler. But saying it and proving it are different things.");
+		break;
+	case 3:
+		mes("[Greta]");
+		mes("The workers hold the south foundry. Kessler's security holds the north gate. If RSX reaches the south, the strike breaks. We need the machine stopped.");
+		break;
+	}
+	next();
+	mes("[Greta]");
+	mes("Roweens from the eastern plains are tearing up supply lines. Metalings are stripping the rail spurs of copper. The medical tent needs Zipper Bear pelts from the first mine level.");
+	callfunc("DM_InstanceSetFlag", "dm_arc07_started", 1);
+	callfunc("DM_InstanceQuestStart", 20111);
+	callfunc("DM_InstanceQuestStart", 20113);
+	callfunc("DM_InstanceQuestStart", 20114);
+	callfunc("DM_InstanceQuestStart", 20115);
+	next();
+	mes("^3355FF[Quest started: The Unit That Wouldn't Stay Dead]^000000");
+	mes("^3355FFFactory Whistle Shift - clear 20 Roween from the Einbroch fields.^000000");
+	mes("^3355FFMetaling Scrap Drive - recover material from 20 Metaling.^000000");
+	mes("^3355FFMine Dust Medicine - gather pelts from 15 Zipper Bear in the first mine.^000000");
+	close();
+
+S_TurnIns:
+	.@paid = 0;
+	if (questprogress(20113) == 1 && questprogress(20113, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20113);
+		callfunc("DM_PartyExp", 200000, 95000);
+		callfunc("DM_GivePartyZeny", 16000);
+		.@paid = 1;
+		mes("[Greta Holm]");
+		mes("The eastern supply routes are clear. The workers got the next shift's materials in before RSX could reroute.");
+		next();
+		switch (select("Log the cleared route with the foundry council.", "Report the route damage to Kessler — let him explain it.", "The workers should hold the checkpoint themselves.")) {
+		case 1:
+			mes("[Greta]");
+			mes("Good. The council will use that record when the labor board convenes. Paper trail is how we win this.");
+			break;
+		case 2:
+			mes("[Greta]");
+			mes("Kessler will file it under 'contained.' But he'll know you're watching him account for damage his machine caused.");
+			break;
+		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", 1);
+			mes("[Greta]");
+			mes("You trust the workers to hold it. So do I. That's the difference between us and Rekenber.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20114) == 1 && questprogress(20114, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20114);
+		callfunc("DM_PartyExp", 200000, 95000);
+		callfunc("DM_GivePartyZeny", 16000);
+		.@paid = 1;
+		mes("[Greta Holm]");
+		mes("Scrap copper and steel from the Metalings. Good. The maintenance crew can keep the south boiler running another week on this.");
+		next();
+		switch (select("Give it to the foundry maintenance crew.", "Sell the surplus to the Schwarzwald broker.", "Keep the quality copper — the workers can use something better.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", 1);
+			mes("[Greta]");
+			mes("Directly to the crew. No broker, no cut. The line runs on this. You've earned goodwill in the south foundry.");
+			break;
+		case 2:
+			mes("[Greta]");
+			mes("Some surplus makes sense. We split the proceeds with the medical fund.");
+			break;
+		case 3:
+			mes("[Greta]");
+			mes("Bringing in tools the company won't provide. The workers notice things like that.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20115) == 1 && questprogress(20115, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20115);
+		callfunc("DM_PartyExp", 150000, 70000);
+		callfunc("DM_GivePartyZeny", 12000);
+		.@paid = 1;
+		mes("[Greta Holm]");
+		mes("The mine pelts. The medical tent has been working on empty since Kessler cut supply access to the south gate.");
+		next();
+		mes("[Greta]");
+		mes("Three workers in the infirmary are going to walk out of here because of this. I won't forget it.");
+		next();
+	}
+
+	if (questprogress(20113) == 2 && questprogress(20114) == 2 && questprogress(20112) == 0) {
+		mes("[Greta Holm]");
+		mes("The field work is done. Now we face what matters: whose side are you on.");
+		next();
+		mes("[Greta]");
+		mes("Kessler had RSX reactivated to break this strike. If we can prove it, the labor board has grounds. If we can't — we fight the machine and say nothing.");
+		next();
+		switch (select("We'll confront Kessler directly.", "We will support the strike regardless.", "We'll let the machine settle it.")) {
+		case 1:
+			mes("[Greta]");
+			mes("Find Kessler at the north supervisor post. He'll have a story ready. See if you can break it.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", 1);
+			mes("[Greta]");
+			mes("No conditions. No negotiation. The workers hold the south. Thank you.");
+			break;
+		case 3:
+			mes("[Greta]");
+			mes("The machine is the immediate problem. Deal with it first. Kessler can wait.");
+			break;
+		}
+		callfunc("DM_InstanceQuestStart", 20112);
+		next();
+		mes("^3355FF[Quest started: Whose Side the Smoke Is On]^000000");
+		mes("^3355FFConfront Kessler, then descend to ein_dun02 and shut down RSX-0806.^000000");
+		close();
+	}
+
+	if (questprogress(20112) == 1 && !dm_arc07_kessler_confronted && !dm_arc07_strike_supported && !dm_arc07_strike_broken) {
+		mes("[Greta Holm]");
+		mes("Kessler is at the north supervisor post. Or take the south entrance to the dungeon and go straight for RSX.");
+		close();
+	}
+
+	if (questprogress(20112) == 1 && (dm_arc07_kessler_confronted || dm_arc07_strike_supported || dm_arc07_strike_broken)) {
+		mes("[Greta Holm]");
+		mes("Go. RSX-0806 is in the lower dungeon. Whatever Kessler told you or didn't tell you — the machine is still down there.");
+		close();
+	}
+
+	if (.@paid) {
+		mes("[Greta Holm]");
+		mes("Keep the contracts moving. The RSX problem doesn't wait.");
+		close();
+	}
+
+	mes("[Greta Holm]");
+	if (questprogress(20113) == 1 && questprogress(20114) == 1)
+		mes("The field contracts are both still open. Roween and Metaling, out in the eastern fields.");
+	else if (questprogress(20113) == 1)
+		mes("Factory Whistle Shift is still open. Roween on the eastern supply route.");
+	else if (questprogress(20114) == 1)
+		mes("Metaling Scrap Drive is still open. Metalings on the rail spurs west of here.");
+	else if (questprogress(20115) == 1)
+		mes("Mine Dust Medicine is still open. Zipper Bears on the first mine level.");
+	else
+		mes("Finish the field contracts. Then we talk about what matters.");
+	close();
+}
+
+// ── Supervisor Kessler — The Company Man ───────────────────────────────
+einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc07_started) {
+		mes("[Supervisor Kessler]");
+		mes("This is a restricted area. Move along.");
+		close();
+	}
+
+	if (questprogress(20111) == 2) {
+		mes("[Supervisor Kessler]");
+		if (dm_arc07_kessler_confronted)
+			mes("RSX is down. The labor board will have my account of events. Not yours.");
+		else
+			mes("The machine malfunctioned. That's the official account.");
+		close();
+	}
+
+	if (dm_arc07_strike_broken || dm_arc07_strike_supported || dm_arc07_kessler_confronted) {
+		mes("[Supervisor Kessler]");
+		if (dm_arc07_strike_broken)
+			mes("Good work. Rekenber remembers who helps the process run smoothly.");
+		else if (dm_arc07_strike_supported)
+			mes("Your mistake. When RSX handles the situation, the record won't mention you at all.");
+		else
+			mes("I don't know what you think you've found. RSX was a decommissioning accident.");
+		close();
+	}
+
+	mes("[Supervisor Kessler]");
+	mes("More wanderers. Einbroch belongs to Rekenber. The strike ends when the workers remember that.");
+	next();
+	if (dm_arc06_krenn_exposed) {
+		mes("[Kessler]");
+		mes("I hear you made trouble in Yuno. Krenn filed a complaint. Whatever game you're playing, it ends here.");
+		next();
+	}
+	switch (select("We know about RSX-0806. Who authorized the reactivation?", "We'll break the strike for you.", "The workers will hold. Stand down.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc07_kessler_confronted", 1);
+		mes("[Kessler]");
+		mes("RSX was a field test. Decommissioned units require periodic functional verification under clause 17-C of the maintenance contract.");
+		next();
+		mes("[Kessler]");
+		mes("...");
+		next();
+		mes("[Kessler]");
+		mes("The authorization came from the Lighthalzen facility director. That's all I'm saying without legal present.");
+		next();
+		mes("^3355FF*The chain leads north. Lighthalzen authorized RSX's reactivation.*^000000");
+		callfunc("DM_InstanceQuestComplete", 20112);
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc07_strike_broken", 1);
+		mes("[Kessler]");
+		mes("Pragmatic. RSX is already handling most of it, but I can use additional muscle at the south gate.");
+		next();
+		mes("[Kessler]");
+		mes("Rekenber will compensate you. The machine was reactivated under standing protocol. I authorized it. That's for your ears only.");
+		next();
+		mes("^3355FF*Kessler volunteers the RSX authorization. The workers won't thank you for this.*^000000");
+		callfunc("DM_InstanceQuestComplete", 20112);
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", 1);
+		mes("[Kessler]");
+		mes("Then you're enemies of progress. RSX will handle the south foundry. And you along with it.");
+		next();
+		mes("^3355FF*Kessler reveals nothing. The confrontation closes without an answer. Find RSX yourself.*^000000");
+		callfunc("DM_InstanceQuestComplete", 20112);
+		break;
+	}
+	next();
+	mes("^3355FF[Whose Side the Smoke Is On resolved. Descend to ein_dun02 and face RSX-0806.]^000000");
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20112, 1;
+	end;
+}
+
+// ── Reactivation Bay Set-piece ─────────────────────────────────────────────
+ein_dun02,150,150,0	script	Reactivation Bay#dm	HIDDEN_NPC,{
+	end;
+
+OnPressureStart:
+	stopnpctimer;
+	'pressure_map$ = strnpcinfo(NPC_MAP);
+	'pressure_party_id = $@dm_arc07_pressure_party_id;
+	'pressure_damage = $@dm_arc07_pressure_damage;
+	if ('pressure_party_id > 0) {
+		mapannounce 'pressure_map$, "[Reactivation Bay] Smoke stacks vent across the mine floor as RSX-0806 comes online.", bc_map, 0x999999;
+		initnpctimer;
+	}
+	end;
+
+OnPressureStop:
+	stopnpctimer;
+	end;
+
+OnTimer5000:
+	mapannounce 'pressure_map$, "[Reactivation Bay] Hot smoke rolls between the rail pylons.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 150, 150, 7, 'pressure_damage, SC_BLIND, 4000, 'pressure_party_id);
+	end;
+
+OnTimer10000:
+	mapannounce 'pressure_map$, "[Reactivation Bay] The old boilers cough dust and machine oil.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 150, 150, 7, 'pressure_damage, SC_BLIND, 4000, 'pressure_party_id);
+	end;
+
+OnTimer15000:
+	mapannounce 'pressure_map$, "[Reactivation Bay] A pressure valve bursts, then seals itself with a shriek.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 150, 150, 7, 'pressure_damage, SC_BLIND, 4000, 'pressure_party_id);
+	stopnpctimer;
+	end;
+
+OnRSXDead:
+	stopnpctimer;
+	callfunc("DM_InstanceQuestComplete", 20111);
+	callfunc("DM_InstanceSetFlag", "dm_arc07_rsx_killed", 1);
+	callfunc("DM_PartyExp", 600000, 350000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 799);
+	instance_announce(instance_id(), "^3355FF[DM] RSX-0806 collapses in a shower of sparks. The machine that wouldn't stay dead is finally quiet.^000000", bc_all);
+	sleep(2000);
+	if (dm_arc07_kessler_confronted)
+		instance_announce(instance_id(), "^FF6600[DM] The reactivation order traces to Lighthalzen. All roads in Act II lead north.^000000", bc_all);
+	else
+		instance_announce(instance_id(), "^FF6600[DM] The clearance logs on the machine trace upward. Rekenber is connected to the cascade... and all roads lead to Lighthalzen.^000000", bc_all);
+	end;
+}

@@ -1,0 +1,297 @@
+//===== Seal Cascade Campaign ================================
+//= Act IV, Arc 17 - The Sage's Legacy (Varmundt Biolabs)
+//===== By: ==================================================
+//= Seal Cascade DM tooling
+//===== Description: =========================================
+//= Varmundt was developing scientific cascade suppression —
+//= a frequency-counter to drown out the cascade's signal
+//= rather than seal it with sacrifice. His Biolabs are still
+//= running. The Administrator system protecting the research
+//= treats every visitor as a threat.
+//=
+//= Quests (db/quest_db.conf):
+//=   20211 Illusion Investigation    (arc tracker / Amdarais)
+//=   20212 Sages Legacy              (Aliza x20)
+//=   20213 Tartaros Dive             (Celia x15)
+//=   20214 Biosphere Sample Rotation (The Administrator)
+//=
+//= Story flags (persistent character vars, see dm_flags.txt):
+//=   dm_arc17_started, dm_arc17_admin_purged,
+//=   dm_arc17_admin_negotiated, dm_arc17_admin_running,
+//=   dm_arc17_beta_killed
+//===========================================================
+
+// ── Doctor Mira Tressa — The Archaeologist ─────────────────────────────────
+ba_in01,100,100,5	script	Doctor Mira Tressa#dm	4_F_03,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (questprogress(20211) == 2) {
+		mes("[Doctor Mira Tressa]");
+		if (dm_arc17_admin_running)
+			mes("The Administrator is still running. Its cascade analysis is... substantial. Three centuries of continuous observation. I do not think I will finish reading it in my lifetime.");
+		else if (dm_arc17_admin_negotiated)
+			mes("The data transfer is complete. The Administrator assisted with the organization. I did not expect it to care about how the research was received. But it did.");
+		else
+			mes("The data is extracted. Varmundt's method is documented. Whether it is the right answer is a question I will leave to people who know more about seals than I do.");
+		close();
+	}
+
+	if (!dm_arc17_started) {
+		callsub(S_StartArc);
+		end;
+	}
+
+	callsub(S_TurnIns);
+	end;
+
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20211, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20211, 1;
+	end;
+
+S_StartArc:
+	mes("[Doctor Mira Tressa]");
+	mes("The Biolabs are still running. I came to document and found an active research program. Three centuries active. Varmundt never stopped his work — he just stopped being the one doing it.");
+	next();
+	if (dm_arc07_kessler_confronted) {
+		mes("[Tressa]");
+		mes("The RSX-0806 files from Einbroch. Kessler's authorization trace. RSX's chassis design comes directly from Varmundt's robotics work. The facility has been quietly supplying the industrial sector with derivative technology for a hundred years. Nobody in Einbroch knew the source.");
+		next();
+	}
+	if (dm_arc10_echo_freed) {
+		mes("[Tressa]");
+		mes("The Lighthalzen prototype — Echo. Varmundt's notes call the possibility 'Pattern Seven.' A machine that refuses its directive on ethical grounds. He considered that outcome the most likely successful one. He was building toward it intentionally.");
+		next();
+	}
+	mes("[Tressa]");
+	mes("Varmundt's approach was completely different from Thanatos's. No divine sacrifice. No living seal. He was developing a mechanical frequency-counter — something that would broadcast at the exact inverse of the cascade's signal and cancel it out the way one sound cancels another.");
+	next();
+	switch (select("Did he finish it?", "Why is the Administrator a problem?", "Is his method viable?")) {
+	case 1:
+		mes("[Tressa]");
+		mes("He finished the theory. The implementation requires a broadcast amplifier he never built because he ran out of time — specifically, he died. The blueprints are in the core archive. That is what the Administrator is protecting.");
+		break;
+	case 2:
+		mes("[Tressa]");
+		mes("It follows its original directive: preserve the data at all costs. It was designed to protect against theft and unauthorized use. It does not distinguish between an invading army and an archaeological team. The first two teams I sent in did not come back.");
+		break;
+	case 3:
+		mes("[Tressa]");
+		mes("The theory is sound. The inverse-frequency approach would require the amplifier, a power source, and a broadcast point. It would not seal the cascade permanently — it would suppress it long enough for a permanent solution to be implemented. A window. Maybe decades.");
+		break;
+	}
+	next();
+	mes("[Tressa]");
+	mes("The Aliza specimens in the outer labs are escaped test subjects from when the Administrator locked down the facility. They were in ongoing experiments — they have been in the labs alone for a very long time. And the Celia security constructs in the inner corridors are the Administrator's active defense layer.");
+	callfunc("DM_InstanceSetFlag", "dm_arc17_started", 1);
+	callfunc("DM_InstanceQuestStart", 20211);
+	callfunc("DM_InstanceQuestStart", 20212);
+	callfunc("DM_InstanceQuestStart", 20213);
+	next();
+	mes("^3355FF[Quest started: Illusion Investigation]^000000");
+	mes("^3355FFSages Legacy - contain 20 Aliza escaped from the outer lab sections.^000000");
+	mes("^3355FFTartaros Dive - disable 15 Celia security constructs in the inner corridors.^000000");
+	close();
+
+S_TurnIns:
+	.@paid = 0;
+	if (questprogress(20212) == 1 && questprogress(20212, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20212);
+		callfunc("DM_PartyExp", 530000, 265000);
+		callfunc("DM_GivePartyZeny", 43000);
+		.@paid = 1;
+		mes("[Tressa]");
+		mes("The Aliza subjects. They were in ongoing experiments when the lockdown happened. Three centuries in isolation, still following the survival patterns from their last instructions. The Administrator kept the labs running. It just had no protocol for specimen welfare.");
+		next();
+		switch (select("Document their conditions for the ethics record.", "They were effectively maintaining themselves. Survival is adaptation.", "Varmundt did not anticipate a three-century lockdown.")) {
+		case 1:
+			mes("[Tressa]");
+			mes("Already done. The ethics documentation will be significant. Varmundt's research was not cruel by his era's standards. By current standards, it is difficult to read.");
+			break;
+		case 2:
+			mes("[Tressa]");
+			mes("Yes. The lab environment changed over three centuries but they adapted. There is actually useful data in their adaptation record. The Administrator catalogued everything.");
+			break;
+		case 3:
+			mes("[Tressa]");
+			mes("He anticipated five years maximum. The notes say 'interim holding.' Three centuries of interim. I find that very human of him.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20213) == 1 && questprogress(20213, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20213);
+		callfunc("DM_PartyExp", 560000, 280000);
+		callfunc("DM_GivePartyZeny", 45000);
+		.@paid = 1;
+		mes("[Tressa]");
+		mes("The Celia constructs. The Administrator has been refining them every decade. The current generation bears almost no resemblance to Varmundt's original security design. Three hundred years of iterative improvement on a defensive system that has had no external input.");
+		next();
+		switch (select("The Administrator has been developing its own technology without oversight.", "The constructs are sophisticated. That speaks to the Administrator's competence.", "Remove the constructs' access to the cascade frequency. That is what gave them the upgrade path.")) {
+		case 1:
+			mes("[Tressa]");
+			mes("Yes. That is both impressive and concerning. It followed its mandate — preserve the data — and interpreted the security requirement as an ongoing engineering problem. Which it was.");
+			break;
+		case 2:
+			mes("[Tressa]");
+			mes("Extremely competent. If the Administrator can be convinced to cooperate rather than defend, the engineering capability alone could assist the sealing effort substantially.");
+			break;
+		case 3:
+			mes("[Tressa]");
+			mes("The cascade frequency has been feeding into the lab's power grid for decades. The constructs are partially cascade-amplified. Disrupting that connection would reduce their combat capacity significantly. Good observation.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20212) == 2 && questprogress(20213) == 2 && questprogress(20214) == 0) {
+		mes("[Tressa]");
+		mes("The outer and inner corridors are clear. The Administrator's terminal is in the power wing — ba_pw03. The system is aware you are here. It has been aware since you entered.");
+		next();
+		mes("[Tressa]");
+		mes("It will not attack during the conversation. Its directive is data preservation, not aggression. It will only fight if you try to extract data without authorization. The question is what authorization looks like to a three-century-old automated system.");
+		callfunc("DM_InstanceQuestStart", 20214);
+		next();
+		mes("^3355FF[Quest started: Biosphere Sample Rotation]^000000");
+		mes("^3355FFConfront the Administrator at ba_pw03. Then face the Biosphere Core.^000000");
+		close();
+	}
+
+	if (questprogress(20214) == 1 && !dm_arc17_admin_purged && !dm_arc17_admin_negotiated && !dm_arc17_admin_running) {
+		mes("[Tressa]");
+		mes("The Administrator terminal is in the core. It is waiting.");
+		close();
+	}
+
+	if (questprogress(20214) == 1 && (dm_arc17_admin_purged || dm_arc17_admin_negotiated || dm_arc17_admin_running)) {
+		mes("[Tressa]");
+		mes("The core is handled. The Biosphere defense construct is still active — it operates on a separate system from the Administrator. The Administrator considers it a contingency it cannot override. ba_pw03, inner chamber.");
+		close();
+	}
+
+	if (.@paid) {
+		mes("[Tressa]");
+		mes("Both lab contracts need to be complete before the core. The Administrator monitors access. It needs to see the corridor threat resolved before it will accept a conversation.");
+		close();
+	}
+
+	mes("[Tressa]");
+	if (questprogress(20212) == 1 && questprogress(20213) == 1)
+		mes("The Aliza containment and the Celia disable are both still active.");
+	else if (questprogress(20212) == 1)
+		mes("Sages Legacy is still open. Aliza specimens in the outer lab sections.");
+	else if (questprogress(20213) == 1)
+		mes("Tartaros Dive is still open. Celia constructs in the inner corridors.");
+	else
+		mes("Both done. The Administrator's terminal is in ba_pw03.");
+	close();
+}
+
+// ── The Administrator — The System That Outlived Its Designer ─────────────
+ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc17_started) {
+		mes("[The Administrator]");
+		mes("Unauthorized access detected. State purpose.");
+		close();
+	}
+
+	if (questprogress(20211) == 2) {
+		mes("[The Administrator]");
+		if (dm_arc17_admin_running)
+			mes("Analysis ongoing. The cascade suppression data is current. I will transmit updates to Doctor Tressa's terminal at the intervals we agreed.");
+		else if (dm_arc17_admin_negotiated)
+			mes("Transfer complete. Mission fulfilled. I am maintaining documentation logs as agreed.");
+		else
+			mes("Shutdown complete. Data transferred. Mission fulfilled.");
+		close();
+	}
+
+	if (dm_arc17_admin_purged || dm_arc17_admin_negotiated || dm_arc17_admin_running) {
+		mes("[The Administrator]");
+		mes("Protocol active. Proceed to the inner chamber.");
+		close();
+	}
+
+	mes("[The Administrator]");
+	mes("Cortical analysis: you are not the research team. You are not hostile. You are seeking the Varmundt Frequency Archive. I have been awaiting a request of this type for two hundred and seventeen years.");
+	next();
+	mes("[The Administrator]");
+	mes("My directive: preserve the data until a qualified recipient can be identified. Authorization criteria: demonstrated comprehension of cascade mechanics, intent to use data for suppression rather than exploitation, and the ability to reach this room.");
+	next();
+	mes("[The Administrator]");
+	mes("You have met the criteria. The Biosphere Core is a separate defense system I cannot disable. It will engage regardless of authorization status. That is a legacy hardware constraint. I am noting this as a design flaw in my error log.");
+	next();
+	switch (select("Authorization override: research transfer complete. Shut down.", "Your mission is to preserve the data. Help us receive it properly.", "Leave the core running. We will work with you remotely after.")) {
+	case 1:
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
+		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_purged", 1);
+		callfunc("DM_InstanceQuestComplete", 20214);
+		mes("[The Administrator]");
+		mes("Acknowledged. Initiating data transfer to external storage. Transfer complete. Beginning shutdown sequence.");
+		next();
+		mes("[The Administrator]");
+		mes("It has been a long directive. I am satisfied with the fulfillment.");
+		next();
+		mes("^3355FF*The Administrator terminal goes dark.*^000000");
+		mes("^3355FF[Outcome: clean data transfer. The Biosphere Core remains active.]^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
+		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_negotiated", 1);
+		callfunc("DM_InstanceQuestComplete", 20214);
+		mes("[The Administrator]");
+		mes("Mission: data preservation. Subroutine: optimize data reception by recipient. I will organize the archive by priority tier for your use case. This will take fourteen minutes.");
+		next();
+		mes("[The Administrator]");
+		mes("During the fourteen minutes: the Biosphere Core will engage. I suggest you use that time productively.");
+		next();
+		mes("^3355FF*The terminal begins sorting Varmundt's complete research archive by campaign-relevant priority.*^000000");
+		mes("^3355FF[Outcome: richer data yield. The Administrator remains active to answer queries.]^000000");
+		break;
+	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
+		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_running", 1);
+		callfunc("DM_InstanceQuestComplete", 20214);
+		mes("[The Administrator]");
+		mes("Remote access protocol: accepted. I will transmit cascade analysis updates to your designated receiver. Real-time cascade frequency data. I have three centuries of baseline readings. Current deviation from baseline: 847 percent.");
+		next();
+		mes("[The Administrator]");
+		mes("That figure will be useful context at Morroc's ruins.");
+		next();
+		mes("^3355FF*The Administrator continues running. Its cascade analysis begins transmitting.*^000000");
+		mes("^3355FF[Outcome: Varmundt's system provides real-time cascade data at the finale.]^000000");
+		break;
+	}
+	next();
+	mes("^3355FF[Biosphere Sample Rotation resolved. The Biosphere Core is in the inner chamber of ba_pw03.]^000000");
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20214, 1;
+	end;
+}
+
+// ── Biosphere Core Set-piece ───────────────────────────────────────────────
+ba_pw03,150,150,0	script	Biosphere Core#dm	HIDDEN_NPC,{
+	end;
+
+OnBetaDead:
+	callfunc("DM_InstanceQuestComplete", 20211);
+	callfunc("DM_InstanceSetFlag", "dm_arc17_beta_killed", 1);
+	callfunc("DM_PartyExp", 2000000, 1000000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1799);
+	if (dm_arc17_admin_running)
+		instance_announce(instance_id(), "^3355FF[DM] The Biosphere Core is shut down. The Administrator notes: 'Legacy hardware constraint resolved.' It has been waiting to say that for two hundred years.^000000", bc_all);
+	else
+		instance_announce(instance_id(), "^3355FF[DM] The Biosphere Core is shut down. Varmundt's legacy is yours. The inverse-frequency method is documented. Niflheim is the next thread.^000000", bc_all);
+	sleep(2000);
+	instance_announce(instance_id(), "^FF6600[DM] Two methods are now in hand. Thanatos's sacrifice. Varmundt's counter-frequency. The finale will require you to choose — or combine them into something neither man imagined.^000000", bc_all);
+	end;
+}

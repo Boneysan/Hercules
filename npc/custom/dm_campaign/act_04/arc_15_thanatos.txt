@@ -1,0 +1,350 @@
+//===== Seal Cascade Campaign ================================
+//= Act IV, Arc 15 - The Hero's Tomb (Thanatos Tower)
+//===== By: ==================================================
+//= Seal Cascade DM tooling
+//===== Description: =========================================
+//= The cascade is resonating with Thanatos's sacrifice — using
+//= the echo of what he did as a structural amplifier. Keeper
+//= Lysandra knows the real cost. Scholar Pratt wants to
+//= replicate the method. He hasn't told his volunteers yet.
+//=
+//= Quests (db/quest_db.conf):
+//=   20191 The Five Doors of a Dead Hero  (arc tracker / Thanatos)
+//=   20192 What the Tower Remembers       (Hylozoist x15)
+//=   20193 Aldebaran Last Letters         (Lude x15)
+//=   20194 The Method's Price             (Scholar Pratt)
+//=
+//= Story flags (persistent character vars, see dm_flags.txt):
+//=   dm_arc15_started, dm_arc15_pratt_exposed,
+//=   dm_arc15_pratt_delayed, dm_arc15_pratt_challenged,
+//=   dm_arc15_thanatos_killed
+//===========================================================
+
+// ── Keeper Lysandra — The Archivist ────────────────────────────────────────
+aldebaran,100,100,5	script	Keeper Lysandra#dm	4_F_01,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (questprogress(20191) == 2) {
+		mes("[Keeper Lysandra]");
+		if (dm_arc15_pratt_challenged)
+			mes("Pratt knows the full cost now. Good. That knowledge is harder to ignore than the method.");
+		else
+			mes("Now you know what Thanatos paid. That is a heavy thing to carry into the next conversation.");
+		close();
+	}
+
+	if (!dm_arc15_started) {
+		callsub(S_StartArc);
+		end;
+	}
+
+	callsub(S_TurnIns);
+	end;
+
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20191, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20191, 1;
+	end;
+
+S_StartArc:
+	mes("[Keeper Lysandra]");
+	mes("You ascended the Tower. Most who attempt that are looking for power or absolution. You look like neither.");
+	next();
+	if (dm_arc12_vance_helped) {
+		mes("[Lysandra]");
+		mes("Envoy Aelith sent word. The rift anchor at the New World is resonating at the same frequency as the Tower's upper levels. That frequency is Thanatos. The cascade found him.");
+		next();
+	}
+	if (dm_arc13_carrion_bribed) {
+		mes("[Lysandra]");
+		mes("The Broker's deal. Carrion noted the cascade's Thanatos-frequency in his coalition briefing. He called it a 'structural seam.' He is not wrong. A seam is a weakness, and also a place where things can be joined.");
+		next();
+	}
+	mes("[Lysandra]");
+	mes("Thanatos sealed Morroc three centuries ago. The official account is that he slew the demon with a divine weapon and paid his life in the effort. The official account is a useful simplification.");
+	next();
+	switch (select("What actually happened?", "How is the cascade involved?", "What does this mean for sealing the cascade now?")) {
+	case 1:
+		mes("[Lysandra]");
+		mes("He became the seal. He wove his life-force into the containment structure directly — a living lock on a dead thing. The Tower is not his tomb. It is his anchor point.");
+		break;
+	case 2:
+		mes("[Lysandra]");
+		mes("The cascade found the anchor. The sacrifice left an echo — a frequency of intention that has been resonating for three hundred years. The cascade is using that echo as a carrier wave. It is not destroying the seal. It is singing through it.");
+		break;
+	case 3:
+		mes("[Lysandra]");
+		mes("It means the next seal needs to be different. The same method restarts the same cycle. But first you need to understand exactly what the method costs. That is why the Tower matters.");
+		break;
+	}
+	next();
+	mes("[Lysandra]");
+	mes("There is a Schwarzwald researcher here. Scholar Pratt. He has been here for three months. He believes the Thanatos method can be replicated efficiently. I have been watching him recruit.");
+	next();
+	mes("[Lysandra]");
+	mes("The Tower's upper levels are saturated with cascade resonance. The spirits there — Hylozoist, Lude — are echoes of scholars who ascended before you and became part of the resonance. Clear them. You need to reach the memory directly.");
+	callfunc("DM_InstanceSetFlag", "dm_arc15_started", 1);
+	callfunc("DM_InstanceQuestStart", 20191);
+	callfunc("DM_InstanceQuestStart", 20192);
+	callfunc("DM_InstanceQuestStart", 20193);
+	next();
+	mes("^3355FF[Quest started: The Five Doors of a Dead Hero]^000000");
+	mes("^3355FFWhat the Tower Remembers - disperse 15 Hylozoist. They hold fragments of the original memory.^000000");
+	mes("^3355FFAldebaran Last Letters - silence 15 Lude. Ghosts of scholars who became trapped in the echo.^000000");
+	close();
+
+S_TurnIns:
+	.@paid = 0;
+	if (questprogress(20192) == 1 && questprogress(20192, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20192);
+		callfunc("DM_PartyExp", 500000, 250000);
+		callfunc("DM_GivePartyZeny", 40000);
+		.@paid = 1;
+		mes("[Lysandra]");
+		mes("The Hylozoist are dispersed. They were not hostile in the original sense — they were replaying the moment of the sacrifice on a loop, trying to complete something that was never meant to complete.");
+		next();
+		switch (select("What were they trying to do?", "Are the memories recoverable?", "The cascade accelerated their replay cycle.")) {
+		case 1:
+			mes("[Lysandra]");
+			mes("Reach the end of the sacrifice and find an exit. There was none. Thanatos chose permanence. They were caught in the echo of a decision that does not conclude.");
+			break;
+		case 2:
+			mes("[Lysandra]");
+			mes("Some. The dispersal releases fragments. I can piece together the moment of decision from what you have freed. It will take time — but yes.");
+			break;
+		case 3:
+			mes("[Lysandra]");
+			mes("Yes. The cascade resonates at the sacrifice's frequency and drives the echo faster. The Hylozoist have been in accelerating distress for months. You released them from something I could not reach.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20193) == 1 && questprogress(20193, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20193);
+		callfunc("DM_PartyExp", 500000, 250000);
+		callfunc("DM_GivePartyZeny", 40000);
+		.@paid = 1;
+		mes("[Lysandra]");
+		mes("The Lude. Those were my predecessors — archivists and scholars who came to document the Tower and stayed without choosing to. I recognized some of them.");
+		next();
+		switch (select("They came to understand the sacrifice and got caught in it.", "What does it mean that scholars keep becoming part of this?", "You stayed. You are still here.")) {
+		case 1:
+			mes("[Lysandra]");
+			mes("Yes. The Tower does not trap through malice. It traps through truth. The sacrifice is so complete that anyone who fully comprehends it finds it difficult to leave the comprehension behind.");
+			break;
+		case 2:
+			mes("[Lysandra]");
+			mes("It means the cascade's solution requires more than understanding. It requires willingness to act differently than Thanatos did. Understanding alone becomes a loop.");
+			break;
+		case 3:
+			mes("[Lysandra]");
+			mes("I leave every evening. I have for forty years. I think that is the difference — I do not try to understand the sacrifice completely. I maintain the record. There is a distinction.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20192) == 2 && questprogress(20193) == 2 && questprogress(20194) == 0) {
+		mes("[Lysandra]");
+		mes("The upper levels are clear. Scholar Pratt is in the archive room at the Tower's seventh floor. He has a meeting scheduled with his volunteers this afternoon.");
+		next();
+		mes("[Lysandra]");
+		mes("I cannot stop him myself. I am an archivist. I preserve records. You are something else.");
+		callfunc("DM_InstanceQuestStart", 20194);
+		next();
+		mes("^3355FF[Quest started: The Method's Price]^000000");
+		mes("^3355FFConfront Scholar Pratt at the Tower's upper archive. Then descend to thana_boss and face the Memory of Thanatos.^000000");
+		close();
+	}
+
+	if (questprogress(20194) == 1 && !dm_arc15_pratt_exposed && !dm_arc15_pratt_delayed && !dm_arc15_pratt_challenged) {
+		mes("[Lysandra]");
+		mes("Pratt is on the seventh floor. His volunteers arrive in two hours.");
+		close();
+	}
+
+	if (questprogress(20194) == 1 && (dm_arc15_pratt_exposed || dm_arc15_pratt_delayed || dm_arc15_pratt_challenged)) {
+		mes("[Lysandra]");
+		mes("Pratt is handled. The memory lies below thana_boss. It will be... intense. You understand what you are walking into.");
+		close();
+	}
+
+	if (.@paid) {
+		mes("[Lysandra]");
+		mes("Both field contracts need to be complete before you face Pratt. He deserves to be stopped with full knowledge, not urgency.");
+		close();
+	}
+
+	mes("[Lysandra]");
+	if (questprogress(20192) == 1 && questprogress(20193) == 1)
+		mes("The Hylozoist hunt and the Lude silencing are both still active.");
+	else if (questprogress(20192) == 1)
+		mes("What the Tower Remembers is still open. The Hylozoist in the upper floors.");
+	else if (questprogress(20193) == 1)
+		mes("Aldebaran Last Letters is still open. The Lude in the scholar levels.");
+	else
+		mes("Both done. Pratt is on the seventh floor.");
+	close();
+}
+
+// ── Scholar Pratt — The Method Without the Cost ────────────────────────────
+aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc15_started) {
+		mes("[Scholar Pratt]");
+		mes("The Tower's archives are restricted to approved researchers. I suggest you speak to Keeper Lysandra.");
+		close();
+	}
+
+	if (questprogress(20191) == 2) {
+		mes("[Scholar Pratt]");
+		if (dm_arc15_pratt_exposed)
+			mes("The volunteers have been released from their commitments. I am... preparing to brief my council. Honestly. I had not anticipated how large the word 'honestly' was going to be.");
+		else if (dm_arc15_pratt_challenged)
+			mes("The full cost. Yes. I know the full cost now. My research proposals will reflect that. My council will not be pleased.");
+		else
+			mes("The council review is scheduled for next month. There is time. The method is sound. I still believe that.");
+		close();
+	}
+
+	if (dm_arc15_pratt_exposed || dm_arc15_pratt_delayed || dm_arc15_pratt_challenged) {
+		mes("[Scholar Pratt]");
+		mes("We have spoken. I have work to do.");
+		close();
+	}
+
+	mes("[Scholar Pratt]");
+	mes("The Thanatos method. Three centuries old and still the most complete cascade-suppression event in recorded history. I intend to reproduce it.");
+	next();
+	mes("[Pratt]");
+	mes("My research team has assembled four candidates. Individuals with the correct attunement profile, the right threshold of spiritual resonance. They have agreed to participate in a 'sealing procedure.'");
+	next();
+	mes("[Pratt]");
+	mes("They believe it is a temporary ritual. The procedure is not temporary. I have not told them that. The research cannot proceed if the candidates withdraw due to cost-related concerns.");
+	next();
+	switch (select("Name your volunteers. What they agreed to was not informed consent.", "Present your findings to the council before you proceed with any human subjects.", "What do you know about the cost that is not in the official record?")) {
+	case 1:
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
+		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_exposed", 1);
+		callfunc("DM_InstanceQuestComplete", 20194);
+		mes("[Pratt]");
+		mes("They chose to serve research. That is not the same as—");
+		next();
+		mes("[Pratt]");
+		mes("...");
+		next();
+		mes("[Pratt]");
+		mes("Candidate names. Yes. I will provide them to Lysandra. The volunteer commitments are... rescinded.");
+		next();
+		mes("^3355FF*Pratt writes the names. His hand is steady. His face is not.*^000000");
+		mes("^3355FF[Encounter: the Tower's resonance weakens because the cycle will not be repeated.]^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
+		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_delayed", 1);
+		callfunc("DM_InstanceQuestComplete", 20194);
+		mes("[Pratt]");
+		mes("The council. Yes. The standard review process. My timeline can accommodate that.");
+		next();
+		mes("[Pratt]");
+		mes("You understand that the council review changes nothing about the method's viability.");
+		next();
+		mes("[Pratt]");
+		mes("I understand you understand that.");
+		next();
+		mes("^3355FF*Pratt files the council review paperwork. The method survives, delayed.*^000000");
+		mes("^3355FF[Encounter: the Tower's resonance remains unstable while the method survives.]^000000");
+		break;
+	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
+		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_challenged", 1);
+		callfunc("DM_InstanceQuestComplete", 20194);
+		mes("[Pratt]");
+		mes("What I know that is not in the record. Yes. I can tell you that.");
+		next();
+		mes("[Pratt]");
+		mes("Thanatos is still in the seal. He did not sacrifice himself and then cease. He became the living lock on a dead thing. He has been in there for three hundred years. Aware. Unable to leave. Maintaining the seal.");
+		next();
+		mes("[Pratt]");
+		mes("My method replicates that. My four volunteers would become four living locks. For however long the seal holds.");
+		next();
+		mes("^3355FF*Pratt closes his research notes.*^000000");
+		mes("^3355FF*He does not open them again.*^000000");
+		mes("^3355FF[Encounter: Thanatos recognizes that the party understands the living-lock cost.]^000000");
+		break;
+	}
+	next();
+	mes("^3355FF[The Method's Price resolved. Descend to thana_boss and face the Memory of Thanatos.]^000000");
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20194, 1;
+	end;
+}
+
+// ── Memory of Thanatos Set-piece ───────────────────────────────────────────
+thana_boss,150,150,0	script	Memory of Thanatos#dm	HIDDEN_NPC,{
+	end;
+
+OnResonanceStart:
+	stopnpctimer;
+	'resonance_map$ = strnpcinfo(NPC_MAP);
+	'resonance_party_id = $@dm_arc15_resonance_party_id;
+	'resonance_damage = $@dm_arc15_resonance_damage;
+	'resonance_status = $@dm_arc15_resonance_status;
+	'resonance_status_ms = $@dm_arc15_resonance_status_ms;
+	if ('resonance_party_id > 0) {
+		mapannounce 'resonance_map$, "[Thanatos Memory] The tower begins replaying the cost of the seal.", bc_map, 0xCC99FF;
+		initnpctimer;
+	}
+	end;
+
+OnResonanceStop:
+	stopnpctimer;
+	end;
+
+OnTimer6000:
+	mapannounce 'resonance_map$, "[Thanatos Memory] A remembered oath crushes the chamber.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", 'resonance_map$, 150, 150, 9, 'resonance_damage, 'resonance_status, 'resonance_status_ms, 'resonance_party_id);
+	end;
+
+OnTimer12000:
+	mapannounce 'resonance_map$, "[Thanatos Memory] Four absent volunteers answer in echo.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", 'resonance_map$, 150, 150, 9, 'resonance_damage, 'resonance_status, 'resonance_status_ms, 'resonance_party_id);
+	end;
+
+OnTimer18000:
+	mapannounce 'resonance_map$, "[Thanatos Memory] The seal's pressure finds every living heartbeat.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", 'resonance_map$, 150, 150, 9, 'resonance_damage, 'resonance_status, 'resonance_status_ms, 'resonance_party_id);
+	end;
+
+OnTimer24000:
+	mapannounce 'resonance_map$, "[Thanatos Memory] The tower resonance fractures and fades.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", 'resonance_map$, 150, 150, 9, 'resonance_damage, 'resonance_status, 'resonance_status_ms, 'resonance_party_id);
+	stopnpctimer;
+	end;
+
+OnThanatosDead:
+	stopnpctimer;
+	killmonster strnpcinfo(NPC_MAP), "Memory of Thanatos#dm::OnAddDead";
+	callfunc("DM_InstanceQuestComplete", 20191);
+	callfunc("DM_InstanceSetFlag", "dm_arc15_thanatos_killed", 1);
+	callfunc("DM_PartyExp", 2000000, 1000000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1599);
+	if (dm_arc15_pratt_challenged)
+		instance_announce(instance_id(), "^3355FF[DM] The Memory stills. Thanatos looks at you from inside the seal. He knows you know what he is still doing. That is the most alone thing in the world.^000000", bc_all);
+	else
+		instance_announce(instance_id(), "^3355FF[DM] The Memory fades. Thanatos did not slay Morroc. He became the seal. He is still in there. He has been in there for three hundred years.^000000", bc_all);
+	sleep(2000);
+	instance_announce(instance_id(), "^FF6600[DM] The truth is yours. The next seal must be different. Prontera's court is the next thread.^000000", bc_all);
+	end;
+
+OnAddDead:
+	end;
+}

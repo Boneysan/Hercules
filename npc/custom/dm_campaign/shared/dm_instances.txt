@@ -1,0 +1,77 @@
+// Seal Cascade instanced-dungeon helpers.
+//
+// Instances are created fully from script (this Hercules build needs no
+// instance_db entry): create -> attach a source map -> init (copies the
+// source map's NPCs into the private copy) -> warp the party in.
+//
+// The live instance id is stored in $dm_inst_<party_id> so the DM can tear
+// it down later from the console without being inside it.
+//
+// For a campaign map to behave inside an instance, its NPCs must spawn /
+// announce against their OWN current map (strnpcinfo(NPC_MAP)) rather than a
+// hard-coded map name - the Arc 1 Listening Chamber (Deacon Holt) does this.
+
+function	script	DM_InstanceStart	{
+	.@label$   = getarg(0, "Seal Cascade Dungeon");
+	.@source$  = getarg(1);
+	.@x        = getarg(2, 0);
+	.@y        = getarg(3, 0);
+	.@party_id = getarg(4, getcharid(CHAR_ID_PARTY));
+
+	if (.@source$ == "") {
+		dispbottom("[DM] Instance: no source map given.");
+		return -1;
+	}
+	if (.@party_id <= 0) {
+		dispbottom("[DM] Instance: you must be in a party to host one.");
+		return -2;
+	}
+
+	// One live instance per party for this tool.
+	.@existing = getd("$dm_inst_" + .@party_id);
+	if (.@existing > 0) {
+		dispbottom("[DM] Instance: party already has a live instance (id " + .@existing + "). End it first.");
+		return -4;
+	}
+
+	.@iid = instance_create(.@label$, .@party_id, IOT_PARTY);
+	if (.@iid < 0) {
+		dispbottom("[DM] Instance: create failed (code " + .@iid + ").");
+		return .@iid;
+	}
+
+	.@map$ = instance_attachmap(.@source$, .@iid, true);
+	if (.@map$ == "") {
+		dispbottom("[DM] Instance: could not attach source map '" + .@source$ + "'.");
+		instance_destroy(.@iid);
+		return -5;
+	}
+
+	instance_init(.@iid);
+	instance_set_timeout(14400, 1800, .@iid);  // 4h alive, 30m idle
+	setd("$dm_inst_" + .@party_id, .@iid);
+
+	instance_warpall(.@map$, .@x, .@y, .@iid);
+	dispbottom("[DM] Instance up: " + .@map$ + " (id " + .@iid + "). Party warped in.");
+	return .@iid;
+}
+
+function	script	DM_InstanceEnd	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+
+	if (.@party_id <= 0) {
+		dispbottom("[DM] Instance: no party.");
+		return 0;
+	}
+
+	.@iid = getd("$dm_inst_" + .@party_id);
+	if (.@iid <= 0) {
+		dispbottom("[DM] Instance: party has no live instance on record.");
+		return 0;
+	}
+
+	instance_destroy(.@iid);
+	setd("$dm_inst_" + .@party_id, 0);
+	dispbottom("[DM] Instance " + .@iid + " destroyed.");
+	return 1;
+}

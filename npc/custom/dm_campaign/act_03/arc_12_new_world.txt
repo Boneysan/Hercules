@@ -1,0 +1,331 @@
+//===== Seal Cascade Campaign ================================
+//= Act III, Arc 12 - Beyond the Horizon (New World)
+//===== By: ==================================================
+//= Seal Cascade DM tooling
+//===== Description: =========================================
+//= The New World's dimensional membrane dissolves fastest
+//= because it sits closest to the Ash Vacuum's expansion front.
+//= The Sapha warned Midgard. Midgard sent soldiers.
+//=
+//= Quests (db/quest_db.conf):
+//=   20161 The Wound With a Keeper    (arc tracker / Naght Sieger)
+//=   20163 New World Cornus Survey    (Cornus x20)
+//=   20164 Naga Border Patrol        (Naga x20)
+//=   20165 The Vance Proposal        (Captain Vance)
+//=
+//= Story flags (persistent character vars, see dm_flags.txt):
+//=   dm_arc12_started, dm_arc12_vance_exposed,
+//=   dm_arc12_vance_helped, dm_arc12_naght_killed
+//===========================================================
+
+// ── Envoy Aelith — Voice of the New World ──────────────────────────────────
+mid_camp,100,100,5	script	Envoy Aelith#dm	4_F_01,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (questprogress(20161) == 2) {
+		mes("[Envoy Aelith]");
+		if (dm_arc12_vance_helped)
+			mes("The wound is quieter. Captain Vance has his reports. Whether your nations learn to share this world before the cascade finishes it remains an open question.");
+		else
+			mes("The wound is quieter. Naght Sieger is gone. Vance's ambitions are smaller than the problem they are embedded in. We will manage the rest.");
+		close();
+	}
+
+	if (!dm_arc12_started) {
+		callsub(S_StartArc);
+		end;
+	}
+
+	callsub(S_TurnIns);
+	end;
+
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20161, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20161, 1;
+	end;
+
+S_StartArc:
+	mes("[Envoy Aelith]");
+	mes("You are not soldiers. Good. The soldiers that came before you are part of why the Naga have stopped distinguishing between Midgard and the cascade as threats.");
+	next();
+	if (dm_arc10_kiel_killed || dm_arc10_echo_freed) {
+		mes("[Aelith]");
+		mes("The Lighthalzen laboratory. Your actions there reduced the cascade's industrial amplification in this region by a measurable amount. We noticed. My council noticed. You have credibility here that soldiers do not.");
+		next();
+	}
+	if (dm_arc11_randgris_killed) {
+		mes("[Aelith]");
+		mes("Randgris. The Valkyrie. We share a pantheon's boundary with Odin's domain. What happened to her — the cascade severing divine communication — is happening here too. Our own spirit-guides have gone silent.");
+		next();
+	}
+	mes("[Aelith]");
+	mes("The Ash Vacuum's expansion front is here. The New World sits closest to it. Our membrane is the thinnest. We have been watching it dissolve for three years.");
+	next();
+	switch (select("What is the Ash Vacuum actually doing to the membrane?", "What does the New World need from Midgard?", "What is at the Rift Anchor?")) {
+	case 1:
+		mes("[Aelith]");
+		mes("Consuming it. The membrane is dimensional tension — the difference in pressure between what-is and what-isn't. The cascade equalizes that pressure. Where the pressure equalizes, the membrane ceases to have a reason to exist.");
+		break;
+	case 2:
+		mes("[Aelith]");
+		mes("Honesty. We needed you to acknowledge what the cascade is and where it leads. Instead you sent Captain Vance to survey 'resource potential.' We are not a resource.");
+		break;
+	case 3:
+		mes("[Aelith]");
+		mes("A nexus. The point where the cascade's pressure is highest in this region. Naght Sieger — a creature born from that nexus — guards it instinctively. It does not intend harm. It is the harm.");
+		break;
+	}
+	next();
+	mes("[Aelith]");
+	mes("The Cornus clusters near the anchor have been absorbing cascade energy and overgrowing — they are blocking the approaches. The Naga are hostile because Vance's soldiers shot at them last week. Both problems need to be addressed before we can reach the anchor.");
+	callfunc("DM_InstanceSetFlag", "dm_arc12_started", 1);
+	callfunc("DM_InstanceQuestStart", 20161);
+	callfunc("DM_InstanceQuestStart", 20163);
+	callfunc("DM_InstanceQuestStart", 20164);
+	next();
+	mes("^3355FF[Quest started: The Wound With a Keeper]^000000");
+	mes("^3355FFNew World Cornus Survey - clear 20 Cornus overgrowth near the rift anchor.^000000");
+	mes("^3355FFNaga Border Patrol - engage 20 Naga along the border corridor.^000000");
+	close();
+
+S_TurnIns:
+	.@paid = 0;
+	if (questprogress(20163) == 1 && questprogress(20163, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20163);
+		callfunc("DM_PartyExp", 340000, 165000);
+		callfunc("DM_GivePartyZeny", 28000);
+		.@paid = 1;
+		mes("[Aelith]");
+		mes("The Cornus growth has been trimmed back. They were not aggressive — they were panicking. The cascade frequency matches their growth signal and they responded as if spring had arrived permanently.");
+		next();
+		switch (select("Document the growth pattern for the survey.", "They can grow back once the anchor is stable.", "The anchor's signal is driving local ecology crazy.")) {
+		case 1:
+			mes("[Aelith]");
+			mes("Good data. The Sapha botanists will want this. Understanding how the cascade interacts with New World ecology is a question that outlasts this crisis.");
+			break;
+		case 2:
+			mes("[Aelith]");
+			mes("They will. The Cornus are not the problem. The anchor is. We are treating symptoms here.");
+			break;
+		case 3:
+			mes("[Aelith]");
+			mes("Yes. Every living thing in range of the anchor is responding to a signal it was never built to receive. The Naga have been affected longer and more severely than the flora.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20164) == 1 && questprogress(20164, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20164);
+		callfunc("DM_PartyExp", 360000, 175000);
+		callfunc("DM_GivePartyZeny", 30000);
+		.@paid = 1;
+		mes("[Aelith]");
+		mes("You engaged the Naga. How did you approach it?");
+		next();
+		switch (select("We fought through them. The path is open.", "We tried to communicate before engaging.", "We pushed them back without killing more than necessary.")) {
+		case 1:
+			mes("[Aelith]");
+			mes("The border is clear. The Naga will remember. Whether that becomes a longer problem depends on what Vance does next.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc12_vance_helped", 1);
+			mes("[Aelith]");
+			mes("They do not speak Midgard languages easily. But they understand posture and intent. The fact that you tried — that will carry.");
+			break;
+		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc12_vance_helped", 1);
+			mes("[Aelith]");
+			mes("Restraint. The Naga will remember that too. These things matter more than Vance's reports.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20163) == 2 && questprogress(20164) == 2 && questprogress(20165) == 0) {
+		mes("[Aelith]");
+		mes("The approaches are clear. But Captain Vance is standing at the anchor's perimeter with a survey team. He has not engaged Naght Sieger. He does not know what Naght Sieger is. He will if he gets closer.");
+		next();
+		switch (select("We need to deal with Vance before he does something irreversible.", "Can Vance's survey data help?", "Vance is secondary. The anchor is what matters.")) {
+		case 1:
+			mes("[Aelith]");
+			mes("Yes. He is not malicious. He is ambitious. Those are different problems and the second is solvable.");
+			break;
+		case 2:
+			mes("[Aelith]");
+			mes("It might. If he can be redirected from territorial survey to dimensional survey. That is a different brief and it requires him to understand what he is actually looking at.");
+			break;
+		case 3:
+			mes("[Aelith]");
+			mes("The anchor is what matters. But Vance in the wrong place at the wrong moment becomes a variable.");
+			break;
+		}
+		callfunc("DM_InstanceQuestStart", 20165);
+		next();
+		mes("^3355FF[Quest started: The Vance Proposal]^000000");
+		mes("^3355FFConfront Captain Vance. Then proceed to spl_fild01 and face Naght Sieger.^000000");
+		close();
+	}
+
+	if (questprogress(20165) == 1 && !dm_arc12_vance_exposed && !dm_arc12_vance_helped) {
+		mes("[Aelith]");
+		mes("Captain Vance is at the anchor perimeter. He has been there for two hours. I do not know what he is planning.");
+		close();
+	}
+
+	if (questprogress(20165) == 1 && (dm_arc12_vance_exposed || dm_arc12_vance_helped)) {
+		mes("[Aelith]");
+		mes("Vance is resolved. Naght Sieger remains. The rift anchor is in the Splendide field. You will feel it before you see it.");
+		close();
+	}
+
+	if (.@paid) {
+		mes("[Aelith]");
+		mes("Both field contracts need to be done before we can reach Vance's position safely.");
+		close();
+	}
+
+	mes("[Aelith]");
+	if (questprogress(20163) == 1 && questprogress(20164) == 1)
+		mes("The Cornus survey and the Naga border patrol are both still active.");
+	else if (questprogress(20163) == 1)
+		mes("New World Cornus Survey is still open. The overgrowth near the anchor approach.");
+	else if (questprogress(20164) == 1)
+		mes("Naga Border Patrol is still open. The border corridor is hostile.");
+	else
+		mes("The approaches are clear. Vance is at the anchor perimeter.");
+	close();
+}
+
+// ── Captain Roderick Vance — The Wrong Expedition ──────────────────────────
+mid_camp,110,100,5	script	Captain Vance#dm	4_M_03,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc12_started) {
+		mes("[Captain Vance]");
+		mes("This is a restricted survey zone. Move along.");
+		close();
+	}
+
+	if (questprogress(20161) == 2) {
+		mes("[Captain Vance]");
+		if (dm_arc12_vance_helped)
+			mes("I have filed an amended survey report. 'Dimensional stabilization assessment' instead of 'resource potential.' It reads differently. The brass will ask questions. I will answer them honestly this time.");
+		else
+			mes("Naght Sieger is dead. I have filed a report. I do not think my superiors will understand what I am describing.");
+		close();
+	}
+
+	if (dm_arc12_vance_exposed || dm_arc12_vance_helped) {
+		mes("[Captain Vance]");
+		mes("I have the amended brief. We will stand down from the perimeter.");
+		close();
+	}
+
+	mes("[Captain Vance]");
+	mes("We will secure this zone. Whatever that creature is, it guards a significant dimensional anomaly. That anomaly has strategic value.");
+	next();
+	switch (select("The anomaly is consuming this world. It is not a resource.", "We need your survey data. But you need to understand what you are surveying.", "Stand your people down. This is not a military operation.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc12_vance_exposed", 1);
+		mes("[Vance]");
+		mes("Consuming. You mean the cascade. I have read the Yuno reports. I chose to interpret them optimistically.");
+		next();
+		mes("[Vance]");
+		mes("That was a mistake. I can see that from here. All right. I pull my team back. The anomaly is yours.");
+		next();
+		mes("^3355FF*Vance withdraws. He will file an honest report. His superiors will not like it.*^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc12_vance_helped", 1);
+		mes("[Vance]");
+		mes("What I am surveying. I am surveying a dimensional nexus consuming a world. Yes. I understand that intellectually. Emotionally I was writing a survey about unclaimed territory.");
+		next();
+		mes("[Vance]");
+		mes("You are right. I will amend the brief. Dimensional stabilization assessment instead of resource survey. Different priorities, different conclusions.");
+		next();
+		mes("^3355FF*Vance redirects his team. The data they collect will be scientifically useful rather than strategically convenient.*^000000");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc12_vance_exposed", 1);
+		mes("[Vance]");
+		mes("On whose authority?");
+		next();
+		mes("[Vance]");
+		mes("...");
+		next();
+		mes("[Vance]");
+		mes("On the authority of that thing in there that I have been standing here trying not to look at for two hours. Fine. We pull back.");
+		next();
+		mes("^3355FF*Vance's team withdraws. He does not look like a man whose confidence was dented.*^000000");
+		mes("^3355FF*He looks like a man who has been waiting for permission to stop pretending.*^000000");
+		break;
+	}
+	callfunc("DM_InstanceQuestComplete", 20165);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1205);
+	next();
+	mes("^3355FF[The Vance Proposal resolved. Proceed to spl_fild01 and face Naght Sieger.]^000000");
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20165, 1;
+	end;
+}
+
+// ── Rift Anchor Set-piece ──────────────────────────────────────────────────
+spl_fild01,150,150,0	script	Rift Anchor#dm	HIDDEN_NPC,{
+	end;
+
+OnRiftStart:
+	stopnpctimer;
+	'rift_map$ = strnpcinfo(NPC_MAP);
+	'rift_party_id = $@dm_arc12_rift_party_id;
+	'rift_damage = $@dm_arc12_rift_damage;
+	'rift_status = $@dm_arc12_rift_status;
+	'rift_status_ms = $@dm_arc12_rift_status_ms;
+	if ('rift_party_id > 0) {
+		mapannounce 'rift_map$, "[Rift Anchor] The membrane thins. Space pulls toward the wound.", bc_map, 0x66CCFF;
+		initnpctimer;
+	}
+	end;
+
+OnRiftStop:
+	stopnpctimer;
+	end;
+
+OnTimer7000:
+	mapannounce 'rift_map$, "[Rift Anchor] A crosswind from the Ash Vacuum tears through the anchor.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 7, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	end;
+
+OnTimer14000:
+	mapannounce 'rift_map$, "[Rift Anchor] The horizon folds inward and snaps back.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 7, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	end;
+
+OnTimer21000:
+	mapannounce 'rift_map$, "[Rift Anchor] Static crawls over the wound in the world.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 7, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	end;
+
+OnTimer28000:
+	mapannounce 'rift_map$, "[Rift Anchor] The rift exhales one last unstable pressure wave.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 7, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	stopnpctimer;
+	end;
+
+OnNaghtDead:
+	stopnpctimer;
+	callfunc("DM_InstanceQuestComplete", 20161);
+	callfunc("DM_InstanceSetFlag", "dm_arc12_naght_killed", 1);
+	callfunc("DM_PartyExp", 1400000, 800000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1299);
+	if (dm_arc12_vance_helped)
+		instance_announce(instance_id(), "^3355FF[DM] Naght Sieger disperses. The rift anchor shudders and holds. Vance's team records everything.^000000", bc_all);
+	else
+		instance_announce(instance_id(), "^3355FF[DM] Naght Sieger disperses. The rift anchor shudders. The wound is not healed — it is cauterized.^000000", bc_all);
+	sleep(2000);
+	instance_announce(instance_id(), "^FF6600[DM] The Ash Vacuum's front is held here. The demon lords on the Nameless Island are watching. They are coordinating.^000000", bc_all);
+	end;
+}
