@@ -288,6 +288,10 @@ gef_dun02,214,212,4	script	Baphomet's Seal#dm	4_ENERGY_RED,{
 		mes("^3355FF*The lower vault is locked by Guild wards. Elsbeth and Doran must move the story here first.*^000000");
 		close();
 	}
+	if (!(dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3)) {
+		mes("^3355FF*The inner vault is protected by an outer glyph sequence. You must align the three outer glyphs before approaching the center.*^000000");
+		close();
+	}
 	if (.boss_up) {
 		mes("^3355FF*Baphomet is already battering the seal. Survive the prayer.*^000000");
 		close();
@@ -464,4 +468,69 @@ OnTimer15000:
 	callfunc("DM_HazardArea", .pressure_map$, 214, 212, 10, .pressure_damage, SC_CURSE, 4000, .pressure_party_id);
 	stopnpctimer;
 	end;
+}
+
+// ── Vault Outer Seal Puzzle ────────────────────────────────────────────────
+gef_dun02,219,212,4	script	East Seal Glyph#dm	4_ENERGY_WHITE,{
+	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
+		mes("[East Glyph]");
+		mes("The glyph burns with a steady blue light.");
+		close();
+	}
+	mes("[East Glyph]");
+	mes("An old guild inscription. It seems part of a sequence.");
+	next();
+	if (select("Channel magic", "Leave it") == 2) close();
+	
+	if (dm_arc04_puzzle_1 == 0 && dm_arc04_puzzle_2 == 0 && dm_arc04_puzzle_3 == 0) {
+		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_1", 1);
+		mes("The glyph lights up with a steady hum.");
+	} else {
+		mes("The glyph flares red and sparks. The sequence is broken.");
+		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
+	}
+	close();
+}
+
+gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
+	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
+		mes("[North Glyph]");
+		mes("The glyph burns with a steady blue light.");
+		close();
+	}
+	mes("[North Glyph]");
+	mes("An old guild inscription. It seems part of a sequence.");
+	next();
+	if (select("Channel magic", "Leave it") == 2) close();
+	
+	if (dm_arc04_puzzle_1 == 1 && dm_arc04_puzzle_2 == 0 && dm_arc04_puzzle_3 == 0) {
+		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_2", 1);
+		mes("The glyph lights up with a steady hum.");
+	} else {
+		mes("The glyph flares red and sparks. The sequence is broken.");
+		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
+	}
+	close();
+}
+
+gef_dun02,209,212,4	script	West Seal Glyph#dm	4_ENERGY_WHITE,{
+	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
+		mes("[West Glyph]");
+		mes("The glyph burns with a steady blue light.");
+		close();
+	}
+	mes("[West Glyph]");
+	mes("An old guild inscription. It seems part of a sequence.");
+	next();
+	if (select("Channel magic", "Leave it") == 2) close();
+	
+	if (dm_arc04_puzzle_1 == 1 && dm_arc04_puzzle_2 == 1 && dm_arc04_puzzle_3 == 0) {
+		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_3", 1);
+		mes("The final glyph lights up. A heavy stone grinding noise comes from the center of the vault.");
+		mapannounce "gef_dun02", "The outer seal sequence is complete. The vault center is accessible.", bc_map, 0x3355FF;
+	} else {
+		mes("The glyph flares red and sparks. The sequence is broken.");
+		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
+	}
+	close();
 }
