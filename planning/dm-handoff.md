@@ -276,11 +276,14 @@ What is still needed:
 
 ## Verification Run
 
-Checked with:
+Run this before each session (and after editing anything under
+`npc/custom/dm_campaign/`). It boots the map-server with `--run-once`, loads
+every configured script, and fails on any parse error — a superset of the old
+`script-checker` pass (catches undefined event labels, over-long NPC names,
+case-typo'd constants, etc.):
 
 ```bash
-bash ./script-checker $(find npc/custom/dm_campaign -name '*.txt' | sort)
-./map-server --run-once
+./tools/check-campaign.sh
 ```
 
 ## Working Checklist
