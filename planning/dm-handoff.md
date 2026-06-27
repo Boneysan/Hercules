@@ -215,7 +215,7 @@ Use this checklist for the next implementation and validation passes.
 - [ ] Test `@dmmode off` and confirm normal respawns resume.
 - [ ] Playtest objective markers across all arc hub NPCs.
 - [ ] Playtest visible mid-arc objective markers for noise and usefulness.
-- [ ] Decide whether optional `viewpoint` navigation cues are still needed.
+- [x] Decide whether optional `viewpoint` navigation cues are still needed. (Not needed; questinfo covers map markers adequately)
 - [ ] Test `@roll`, `@roll hidden`, and `@roll fudge` output readability in
   the client chat window.
 
