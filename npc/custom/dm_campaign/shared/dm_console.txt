@@ -4,19 +4,19 @@
 	end;
 
 OnInit:
-	bindatcmd("dm", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDM", 60, 99, 1);
-	bindatcmd("dmreward", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReward", 60, 99, 1);
-	bindatcmd("dmflag", strnpcinfo(NPC_NAME_UNIQUE)+"::OnFlag", 60, 99, 1);
-	bindatcmd("dmquest", strnpcinfo(NPC_NAME_UNIQUE)+"::OnQuest", 60, 99, 1);
-	bindatcmd("dmbeat", strnpcinfo(NPC_NAME_UNIQUE)+"::OnBeat", 60, 99, 1);
-	bindatcmd("dmstory", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStory", 60, 99, 1);
-	bindatcmd("dmcleanup", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCleanup", 60, 99, 1);
-	bindatcmd("dmwarp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnWarp", 60, 99, 1);
-	bindatcmd("dmrecall", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRecall", 60, 99, 1);
-	bindatcmd("dminstance", strnpcinfo(NPC_NAME_UNIQUE)+"::OnInstance", 60, 99, 1);
-	bindatcmd("dmmode", strnpcinfo(NPC_NAME_UNIQUE)+"::OnMode", 60, 99, 1);
-	bindatcmd("dmhazard", strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazard", 60, 99, 1);
-	bindatcmd("dmexp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnExp", 60, 99, 1);
+	bindatcmd("dm", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDM", 1, 99, 1);
+	bindatcmd("dmreward", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReward", 1, 99, 1);
+	bindatcmd("dmflag", strnpcinfo(NPC_NAME_UNIQUE)+"::OnFlag", 1, 99, 1);
+	bindatcmd("dmquest", strnpcinfo(NPC_NAME_UNIQUE)+"::OnQuest", 1, 99, 1);
+	bindatcmd("dmbeat", strnpcinfo(NPC_NAME_UNIQUE)+"::OnBeat", 1, 99, 1);
+	bindatcmd("dmstory", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStory", 1, 99, 1);
+	bindatcmd("dmcleanup", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCleanup", 1, 99, 1);
+	bindatcmd("dmwarp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnWarp", 1, 99, 1);
+	bindatcmd("dmrecall", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRecall", 1, 99, 1);
+	bindatcmd("dminstance", strnpcinfo(NPC_NAME_UNIQUE)+"::OnInstance", 1, 99, 1);
+	bindatcmd("dmmode", strnpcinfo(NPC_NAME_UNIQUE)+"::OnMode", 1, 99, 1);
+	bindatcmd("dmhazard", strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazard", 1, 99, 1);
+	bindatcmd("dmexp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnExp", 1, 99, 1);
 	bindatcmd("roll", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRoll", 0, 99, 1);
 	end;
 
@@ -197,7 +197,7 @@ OnRoll:
 	.@start_idx = 0;
 
 	if (.@atcmd_parameters$[0] == "fudge" || .@atcmd_parameters$[0] == "override") {
-		if (getgmlevel() < 60) {
+		if (getgmlevel() < 1) {
 			dispbottom("[DM] Roll overrides are for DMs only.");
 			end;
 		}
@@ -217,7 +217,7 @@ OnRoll:
 	}
 
 	if (.@atcmd_parameters$[0] == "hidden") {
-		if (getgmlevel() >= 60) {
+		if (getgmlevel() >= 1) {
 			.@hidden = 1;
 			.@start_idx = 1;
 		} else {

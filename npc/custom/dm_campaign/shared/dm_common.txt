@@ -1,11 +1,11 @@
 // Seal Cascade shared DM helpers.
 
 function	script	DM_IsDM	{
-	return getgmlevel() >= getarg(0, 60);
+	return getgmlevel() >= getarg(0, 1);
 }
 
 function	script	DM_RequireDM	{
-	if (callfunc("DM_IsDM", getarg(0, 60)))
+	if (callfunc("DM_IsDM", getarg(0, 1)))
 		return 1;
 
 	dispbottom("[DM] You do not have permission to use this tool.");
