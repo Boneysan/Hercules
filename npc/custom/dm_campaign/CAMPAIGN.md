@@ -37,6 +37,10 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 hunting quests + 1 story quest. No MVP bosses; story resolution via villain
 dialogue choices.
 
+Arc 4's Baphomet's Seal beat starts the Vault Seal Pressure hazard: three
+pulses around `gef_dun02` 214,212 with curse pressure. The Outer Seal Puzzle
+(`DM_ResetPuzzleFlag`) also unlocks via `@dmbeat` in Arc 4.
+
 **Key flags set:**
 - `dm_arc04_cassell_unmasked` — Cassell's true role revealed (callbacks in Arcs 8, 19)
 - `dm_arc04_seal_reinforced` — Baphomet seal reinforced (callback in Arc 8)
@@ -58,6 +62,9 @@ and political zones.
 Arc 7's RSX-0806 beat starts the Reactivation Bay smoke-pressure hazard: three
 pulses around `ein_dun02` 150,150 with blind pressure. Supporting the strike
 lowers pulse damage from 5% to 3%.
+
+Arc 10's Kiel D-01 beat starts the Kiel Core Pressure hazard: three pulses
+around `lhz_dun04` 150,150 with confusion pressure.
 
 ---
 
@@ -147,6 +154,8 @@ villain confrontation, then an MVP boss spawned via DM console.
   - bargained: Himmelmez holds the dead while party faces finale
   - Himmelmez gates: both hunts must be complete before she will speak
 - Flags: `dm_arc18_himmelmez_killed`, `dm_arc18_himmelmez_bargained`
+- Himmelmez_killed starts the Himmelmez Pressure hazard: three pulses around
+  `nif_in` 150,150 with curse pressure.
 - Himmelmez_bargained → major callback in Arc 19 (unlocks "Queen's Bargain" ending)
 
 ### Arc 19 — Nightmare of Midgard (Morroc Ruins)

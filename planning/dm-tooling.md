@@ -232,9 +232,10 @@ aliases: `poison`, `freeze`, `stun`, `sleep`, `curse`, `confusion`, `blind`,
 
 `DM_HazardArea` applies immediate percent HP loss and/or a status effect to the
 caller's party members in range, and is used by the ticking command above.
-Scripted arc hazards currently use it in Arc 7's Reactivation Bay, Arc 12's
-Rift Anchor, Arc 14's Magma Cathedral, Arc 15's Thanatos Memory, and Arc 19's
-Ash Vacuum Rift.
+Scripted arc hazards currently use it in Arc 4's Vault Seal Pressure, Arc 7's
+Reactivation Bay, Arc 10's Kiel Core Pressure, Arc 12's Rift Anchor, Arc 14's
+Magma Cathedral, Arc 15's Thanatos Memory, Arc 18's Himmelmez Pressure, and
+Arc 19's Ash Vacuum Rift.
 
 ## Campaign Quick Test Path
 
