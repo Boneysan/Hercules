@@ -1,10 +1,11 @@
 #!/bin/bash
-# set-lan-ip.sh — switch server config between localhost and LAN mode.
+# set-lan-ip.sh — switch server config and client between localhost and LAN mode.
 #
 # LAN mode: sets char_ip / map_ip to your machine's LAN IP so players on
-# other machines on the same network can connect.
+# other machines on the same network can connect, and updates the local
+# clientinfo.xml so the host client connects via the same IP.
 #
-# Localhost mode: resets to 127.0.0.1 for single-machine play.
+# Localhost mode: resets everything to 127.0.0.1 for single-machine play.
 #
 # Usage:
 #   ./tools/set-lan-ip.sh lan [IP]   — set LAN IP (auto-detected if omitted)
@@ -14,6 +15,7 @@ set -e
 
 CHAR_CONF="conf/char/char-server.conf"
 MAP_CONF="conf/map/map-server.conf"
+CLIENTINFO="/mnt/h/RO/client/data/clientinfo.xml"
 
 MODE="$1"
 MANUAL_IP="$2"
@@ -44,20 +46,30 @@ else
     usage; exit 1
 fi
 
-# Update char_ip in char-server.conf (client-facing, line ~72).
+# Update char_ip in char-server.conf (client-facing).
 sed -i "s|char_ip: \"[0-9.]*\"|char_ip: \"$TARGET_IP\"|g" "$CHAR_CONF"
 
-# Update map_ip in map-server.conf (client-facing, line ~76).
+# Update map_ip in map-server.conf (client-facing).
 sed -i "s|map_ip: \"[0-9.]*\"|map_ip: \"$TARGET_IP\"|g" "$MAP_CONF"
 
-echo "Set client-facing IPs to: $TARGET_IP"
+echo "Set server client-facing IPs to: $TARGET_IP"
 echo "  $CHAR_CONF  → char_ip"
 echo "  $MAP_CONF   → map_ip"
+
+# Update clientinfo.xml if it exists.
+if [ -f "$CLIENTINFO" ]; then
+    sed -i "s|<address>[0-9.]*</address>|<address>$TARGET_IP</address>|g" "$CLIENTINFO"
+    echo "  $CLIENTINFO  → <address>"
+else
+    echo "  (clientinfo.xml not found at $CLIENTINFO — update manually)"
+fi
+
 echo ""
 if [ "$MODE" = "lan" ]; then
-    echo "Players should set their clientinfo.xml login server to: $TARGET_IP"
+    echo "LAN mode active. Target IP: $TARGET_IP"
+    echo "Other players: set <address> in their clientinfo.xml to $TARGET_IP"
     echo "Restart the server for changes to take effect."
 else
-    echo "Reverted to localhost. Only connections from this machine will work."
+    echo "Localhost mode active. Only connections from this machine will work."
     echo "Restart the server for changes to take effect."
 fi
