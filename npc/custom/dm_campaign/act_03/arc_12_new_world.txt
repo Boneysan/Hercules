@@ -20,6 +20,7 @@
 
 // ── Envoy Aelith — Voice of the New World ──────────────────────────────────
 mid_camp,100,100,5	script	Envoy Aelith#dm	4_F_01,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20161) == 2) {
 		mes("[Envoy Aelith]");
 		if (dm_arc12_vance_helped)
@@ -199,6 +200,7 @@ S_TurnIns:
 
 // ── Captain Roderick Vance — The Wrong Expedition ──────────────────────────
 mid_camp,110,100,5	script	Captain Vance#dm	4_M_03,{
+	if (!$dm_mode) { close; }
 	if (!dm_arc12_started) {
 		mes("[Captain Vance]");
 		mes("This is a restricted survey zone. Move along.");

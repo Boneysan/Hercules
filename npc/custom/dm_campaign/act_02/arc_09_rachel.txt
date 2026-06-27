@@ -21,6 +21,7 @@
 
 // ── Acolyte Naima — The Believer Who Looked Too Closely ────────────────────
 rachel,120,120,5	script	Acolyte Naima#dm	4_F_04,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20131) == 2) {
 		mes("[Acolyte Naima]");
 		if (dm_arc09_karsh_exposed)
@@ -214,6 +215,7 @@ S_TurnIns:
 
 // ── High Prelate Karsh — The Church's Secret Keeper ────────────────────────
 rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
+	if (!$dm_mode) { close; }
 	if (!dm_arc09_started) {
 		mes("[High Prelate Karsh]");
 		mes("The Sanctuary is not a public venue. Present credentials or leave.");

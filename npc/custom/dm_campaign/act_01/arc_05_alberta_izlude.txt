@@ -23,6 +23,7 @@
 
 // Captain Mara - ally, ferry captain, and Arc 5 quest-giver
 alberta,183,151,4	script	Captain Mara#dm	4_F_01,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20030) == 2) {
 		mes("[Captain Mara]");
 		if (dm_arc05_manifest_taken)
@@ -242,6 +243,7 @@ S_TurnIns:
 
 // Smuggler-Baron Brode - logistics villain
 alberta,101,65,4	script	Smuggler-Baron Brode#dm	4_M_03,{
+	if (!$dm_mode) { close; }
 	if (!dm_arc05_started) {
 		mes("[Brode]");
 		mes("Appointments, invoices, or threats. If you have none of those, leave.");
@@ -302,6 +304,7 @@ OnInit:
 
 // Cargo of Souls - locked hold reveal on the Sunken Ship route
 treasure01,153,160,4	script	Exempt Hold#dm	4_TREASURE_BOX,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20029) != 1) {
 		if (questprogress(20029) == 2) {
 			mes("^3355FF*The hold is open. Saltwater washes over empty shackles and broken crate seals.*^000000");
@@ -371,6 +374,7 @@ OnInit:
 
 // Tao Gunka set-piece - Act I finale
 tur_dun04,99,93,4	script	Deep Trench Wake#dm	4_ENERGY_BLUE,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20030) != 1) {
 		if (questprogress(20030) == 2) {
 			mes("^3355FF*The shelf is scarred where Tao Gunka turned over. A sodden crate-seal lies cold in memory.*^000000");

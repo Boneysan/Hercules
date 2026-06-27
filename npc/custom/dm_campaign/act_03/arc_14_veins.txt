@@ -22,6 +22,7 @@
 
 // ── Foreman Dunmar — The Man With Miners ───────────────────────────────────
 veins,100,100,5	script	Foreman Dunmar#dm	4_M_06,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20181) == 2) {
 		mes("[Foreman Dunmar]");
 		mes("Ifrit is gone. The tunnels are cooler. Not cool — cooler. My people are alive. That is what I wanted from this.");
@@ -189,6 +190,7 @@ S_TurnIns:
 
 // ── Prelate Hesma — The Silence Before the Fire ────────────────────────────
 veins,110,100,5	script	Prelate Hesma#dm	4_M_06,{
+	if (!$dm_mode) { close; }
 	if (!dm_arc14_started) {
 		mes("[Prelate Hesma]");
 		mes("Veins's sacred fires are a place of peace and reflection. Please respect the sanctity of the grounds.");

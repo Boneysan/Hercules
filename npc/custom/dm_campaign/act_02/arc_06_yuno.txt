@@ -22,6 +22,7 @@
 
 // ── Doctor Ingrid Vahl — Yuno Atmospheric Researcher ───────────────────────
 yuno,155,185,5	script	Doctor Ingrid Vahl#dm	4_F_02,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20101) == 2) {
 		mes("[Doctor Vahl]");
 		if (dm_arc06_mistress_killed)
@@ -224,6 +225,7 @@ S_TurnIns:
 
 // ── Director Aldous Krenn — The Republic's Money ───────────────────────
 yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
+	if (!$dm_mode) { close; }
 	if (!dm_arc06_started) {
 		mes("[Director Krenn]");
 		mes("The Research Bureau handles appointments. I handle approvals. You require neither.");

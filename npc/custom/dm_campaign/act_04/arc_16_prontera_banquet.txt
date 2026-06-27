@@ -22,6 +22,7 @@
 
 // ── Kronecker G Heine — The Intelligence Director ─────────────────────────
 prontera,150,150,5	script	Kronecker G Heine#dm	4_M_01,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20201) == 2) {
 		mes("[Kronecker G Heine]");
 		if (dm_arc16_rina_defected)
@@ -201,6 +202,7 @@ S_TurnIns:
 
 // ── Matron Rina — The Coordinator ─────────────────────────────────────────
 prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
+	if (!$dm_mode) { close; }
 	if (!dm_arc16_started) {
 		mes("[Matron Rina]");
 		mes("This part of the prison is not open to visitors.");

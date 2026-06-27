@@ -29,6 +29,7 @@
 
 // ── Quartermaster Wynne — Adventurers' Guild handler ───────────────────────
 prontera,156,191,5	script	Quartermaster Wynne#dm	4_F_01,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20005) == 2) {
 		mes("[Quartermaster Wynne]");
 		mes("You went down where the deacons wouldn't. The ledger remembers that.");
@@ -151,6 +152,7 @@ S_Contracts:
 
 // ── Frightened Mother — The Trembling Ground (south gate) ──────────────────
 prontera,156,40,3	script	Frightened Mother#dm	4_F_01,{
+	if (!$dm_mode) { close; }
 	if (!dm_arc01_started) {
 		mes("[Frightened Mother]");
 		mes("Please... the guild handles this sort of thing. Talk to Quartermaster Wynne at the fountain first. They'll vouch for you.");
@@ -215,6 +217,7 @@ OnInit:
 
 // ── Tibbets the Sluice-Keeper — Culvert guide ──────────────────────────────
 prontera,146,193,5	script	Tibbets the Keeper#dm	1_M_SIZ,{
+	if (!$dm_mode) { close; }
 	if (!dm_arc01_started) {
 		mes("[Tibbets]");
 		mes("Eh? Guild business is up at the fountain, friend. Wynne's the one with the ledger.");
@@ -266,6 +269,7 @@ OnInit:
 
 // ── Deacon Holt — The Listening Chamber set-piece (Deviruchi MVP) ───────────
 prt_sewb4,103,100,4	script	Deacon Holt#dm	1_M_PASTOR,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20005) != 1) {
 		if (questprogress(20005) == 2) {
 			mes("^3355FF*The cracked slab is dark and silent. Whatever listened here is gone - for now.*^000000");

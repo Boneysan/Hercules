@@ -21,6 +21,7 @@
 
 // ── Sir Aldric the Unfrocked — Survivor of the Holy Kingdom ────────────────
 geffen,120,120,5	script	Sir Aldric Unfrocked#dm	4_M_03,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20121) == 2) {
 		mes("[Sir Aldric]");
 		mes("The Dark Lord sleeps again. I would call it victory if I did not know we are the ones who made it possible in the first place.");
@@ -182,6 +183,7 @@ S_TurnIns:
 
 // ── Brother Manfred — The Last Bishop ──────────────────────────────────────
 gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
+	if (!$dm_mode) { close; }
 	if (!dm_arc08_started) {
 		mes("[Brother Manfred]");
 		mes("This is holy ground. Outsiders are not welcome in the Kingdom's halls.");

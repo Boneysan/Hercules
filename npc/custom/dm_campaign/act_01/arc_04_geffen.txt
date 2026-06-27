@@ -22,6 +22,7 @@
 
 // Apprentice Elsbeth - Geffen ally and Arc 4 support handler
 geffen,120,100,4	script	Apprentice Elsbeth#dm	4_F_01,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20024) == 2) {
 		mes("[Apprentice Elsbeth]");
 		if (dm_arc04_seal_reinforced)
@@ -219,6 +220,7 @@ S_TurnIns:
 
 // Archmagus Doran - human villain and lower-vault gate
 gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20023) != 1) {
 		if (questprogress(20023) == 2) {
 			mes("[Archmagus Doran]");
@@ -280,6 +282,7 @@ OnInit:
 
 // Baphomet's Seal - main Geffen set-piece
 gef_dun02,214,212,4	script	Baphomet's Seal#dm	4_ENERGY_RED,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20023) != 1) {
 		if (questprogress(20023) == 2) {
 			mes("^3355FF*The cracked keystone still hums where the beast struck it.*^000000");
@@ -380,6 +383,7 @@ OnInit:
 
 // Brother Cassell - the Pilgrim's Offer
 gef_dun02,218,210,4	script	Brother Cassell#dm04	4_M_MONK,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20024) == 2) {
 		mes("[Brother Cassell]");
 		mes("You have already chosen what to do with a key when the door begs to stay closed.");
@@ -471,6 +475,7 @@ OnTimer15000:
 
 // ── Vault Outer Seal Puzzle ────────────────────────────────────────────────
 gef_dun02,219,212,4	script	East Seal Glyph#dm	4_ENERGY_WHITE,{
+	if (!$dm_mode) { close; }
 	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
 		mes("[East Glyph]");
 		mes("The glyph burns with a steady blue light.");
@@ -492,6 +497,7 @@ gef_dun02,219,212,4	script	East Seal Glyph#dm	4_ENERGY_WHITE,{
 }
 
 gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
+	if (!$dm_mode) { close; }
 	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
 		mes("[North Glyph]");
 		mes("The glyph burns with a steady blue light.");
@@ -513,6 +519,7 @@ gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
 }
 
 gef_dun02,209,212,4	script	West Seal Glyph#dm	4_ENERGY_WHITE,{
+	if (!$dm_mode) { close; }
 	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
 		mes("[West Glyph]");
 		mes("The glyph burns with a steady blue light.");

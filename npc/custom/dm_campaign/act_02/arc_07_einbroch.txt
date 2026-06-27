@@ -22,6 +22,7 @@
 
 // ── Greta Holm — Foundry-council Organizer ───────────────────────
 einbroch,145,230,5	script	Greta Holm#dm	4_F_03,{
+	if (!$dm_mode) { close; }
 	if (questprogress(20111) == 2) {
 		mes("[Greta Holm]");
 		if (dm_arc07_strike_supported)
@@ -219,6 +220,7 @@ S_TurnIns:
 
 // ── Supervisor Kessler — The Company Man ───────────────────────────────
 einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
+	if (!$dm_mode) { close; }
 	if (!dm_arc07_started) {
 		mes("[Supervisor Kessler]");
 		mes("This is a restricted area. Move along.");

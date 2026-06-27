@@ -23,6 +23,7 @@
 
 // ── Loki The Voice — The Observer ─────────────────────────────────────────
 moc_ruins,150,150,5	script	Loki The Voice#dm	4_M_04,{
+	if (!$dm_mode) { close; }
 	if (dm_campaign_complete) {
 		mes("[Loki The Voice]");
 		mes("The choice was made. The seal is different now. I watched you understand what that meant while you were doing it. That was the part I did not predict.");
@@ -214,6 +215,7 @@ OnSurtDead:
 
 // ── The Central Choice — The Five Paths ───────────────────────────────────
 moc_fild22,155,150,5	script	The Central Choice#dm	4_M_05,{
+	if (!$dm_mode) { close; }
 	if (dm_campaign_complete) {
 		mes("[The Central Choice]");
 		mes("The choice was made. The seal is different now.");
