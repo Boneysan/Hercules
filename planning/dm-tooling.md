@@ -56,10 +56,13 @@ All commands require GM level 60 or higher.
 @roll override <total> [note]
 ```
 
-`@dm mode on` suppresses normal BOSS/MVP spawns by keeping respawns delayed while
-`$dm_mode` is enabled. Already-active stock BOSS/MVP spawns are removed on their
-next hard or lazy AI tick and then held on the same short retry loop until mode
-is disabled.
+`@dm mode on` does two things: suppresses normal BOSS/MVP spawns server-wide, and
+stores the DM's current party ID in `$dm_active_party`. All 49 visible campaign
+NPCs gate on both `$dm_mode` and party membership — they are silent to any player
+not in the active party, even while a session is running. `@dm mode off` clears
+both `$dm_mode` and `$dm_active_party`, returning all NPCs to silent for everyone.
+Already-active stock BOSS/MVP spawns are removed on their next hard or lazy AI
+tick and held on a short retry loop until mode is disabled.
 
 `@roll` is public map output for players and DMs, including individual dice for
 rolls up to 20 dice. `@roll hidden` requires GM level 60+ and reports only to

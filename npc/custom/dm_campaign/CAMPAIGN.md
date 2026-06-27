@@ -179,6 +179,19 @@ villain confrontation, then an MVP boss spawned via DM console.
 
 ---
 
+## Session Start Checklist
+
+1. Form a party with all players.
+2. Run `@dm mode on` — this enables DnD mode AND locks campaign NPCs to your party.
+   - Only players in your party can interact with campaign NPCs.
+   - Players outside the party see the NPC sprites but get silence if they click.
+3. Run `@dm mode off` at end of session to reset everything.
+
+`$dm_active_party` stores the active party ID. If you need to check which party
+is currently active: `@dm mode` with no argument reports the current state.
+
+---
+
 ## DM Console Beat Handler Reference
 
 Access via `@dm` in-game (DM account only).
