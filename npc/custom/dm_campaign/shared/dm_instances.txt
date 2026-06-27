@@ -48,7 +48,7 @@ function	script	DM_InstanceStart	{
 	}
 
 	instance_init(.@iid);
-	instance_set_timeout(3600, 600, .@iid);    // 1h alive, 10m idle
+	instance_set_timeout(14400, 1800, .@iid);  // 4h alive, 30m idle
 	setd("$dm_inst_" + .@party_id, .@iid);
 
 	instance_warpall(.@map$, .@x, .@y, .@iid);
