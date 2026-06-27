@@ -27,6 +27,44 @@
 //=   dm_arc01_sigil_ring_obtained
 //===========================================================
 
+// ── Session Board — always-visible onboarding notice near the fountain ─────
+prontera,155,185,5	script	Session Board#dm	4_BOARD3,{
+	if ($dm_mode && getcharid(CHAR_ID_PARTY) == $dm_active_party) {
+		// Find which arc the party is on: first in-progress, else last complete.
+		setarray .@q[0], 20001, 20007, 20013, 20019, 20025, 20101, 20111, 20121, 20131, 20141, 20151, 20161, 20171, 20181, 20191, 20201, 20211, 20221, 20231;
+		.@current_arc = 0;
+		for (.@i = 0; .@i < 19; ++.@i) {
+			.@p = questprogress(.@q[.@i]);
+			if (.@p == 1) { .@current_arc = .@i + 1; break; }
+			if (.@p == 2)  .@current_arc = .@i + 1;
+		}
+		mes("[Session Board]");
+		mes("A campaign session is underway.");
+		if (.@current_arc > 0)
+			mes("Your party is currently on Arc " + .@current_arc + " of 19.");
+		else
+			mes("No arc has been started yet. Await the Dungeon Master's signal.");
+		next();
+		mes("[Session Board]");
+		mes("Look for the Quartermaster near the fountain when you're ready to begin.");
+		close();
+	}
+	if ($dm_mode) {
+		mes("[Session Board]");
+		mes("A private session is in progress.");
+		next();
+		mes("[Session Board]");
+		mes("Check with the GM to be added to the active party.");
+		close();
+	}
+	mes("[Session Board]");
+	mes("The Adventurers' Guild is open for business.");
+	next();
+	mes("[Session Board]");
+	mes("Speak to a GM to arrange a campaign session. Form a party before the session starts.");
+	close();
+}
+
 // ── Quartermaster Wynne — Adventurers' Guild handler ───────────────────────
 prontera,156,191,5	script	Quartermaster Wynne#dm	4_F_01,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
