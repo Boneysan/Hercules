@@ -84,6 +84,57 @@ is correct and sufficient.
 
 ---
 
+## Pre-Session Server Setup
+
+### Account Creation
+
+Create player accounts before the session:
+
+```bash
+./tools/create-account.sh <username> <password> [M|F]
+```
+
+### Promoting the DM Account
+
+The DM needs to be in group 5 (Dungeon Master) to use `@dm` commands. After
+creating the DM's account, run:
+
+```bash
+./tools/promote-dm.sh <username>
+```
+
+The account must log out and back in for the group change to take effect. To
+demote or check groups you can also use `@setgroup` from an Admin account
+in-game.
+
+### LAN Mode (Players on Separate Machines)
+
+By default the server advertises itself as `127.0.0.1`, which only works when
+everyone plays on the same machine. For a LAN game night:
+
+**On the server machine**, run once before starting the server:
+
+```bash
+./tools/set-lan-ip.sh lan          # auto-detects your LAN IP
+./tools/set-lan-ip.sh lan 192.168.x.x  # or specify it manually
+```
+
+This updates `char_ip` in `conf/char/char-server.conf` and `map_ip` in
+`conf/map/map-server.conf` — the two IPs the client is told to connect to.
+
+**On each player machine**, open `clientinfo.xml` in the client folder and
+change the login server address to the same LAN IP.
+
+After the session, reset to localhost:
+
+```bash
+./tools/set-lan-ip.sh local
+```
+
+Restart the server after any IP change.
+
+---
+
 ## Open Work
 
 ### 1. DnD Mode Toggle
