@@ -315,3 +315,39 @@ OnKielDead:
 	instance_announce(instance_id(), "^FF6600[DM] Act II is complete. Rekenber measured the cascade, suppressed the data, used the energy, and built a weapon from it. Act III begins in the ruins of what that empire thought it controlled.^000000", bc_all);
 	end;
 }
+
+// ── Lab Containment Pressure Set-piece ──────────────────────────────────────
+lhz_dun04,150,150,0	script	Kiel Core Pressure#dm	HIDDEN_NPC,{
+	end;
+
+OnPressureStart:
+	stopnpctimer;
+	.pressure_map$ = strnpcinfo(NPC_MAP);
+	.pressure_party_id = $@dm_arc10_pressure_party_id;
+	.pressure_damage = $@dm_arc10_pressure_damage;
+	if (.pressure_party_id > 0) {
+		mapannounce .pressure_map$, "[Kiel Core] The containment alarms blare. Kiel D-01 engages active pacification.", bc_map, 0x999999;
+		initnpctimer;
+	}
+	end;
+
+OnPressureStop:
+	stopnpctimer;
+	end;
+
+OnTimer5000:
+	mapannounce .pressure_map$, "[Kiel Core] White noise pulses through the laboratory speakers.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 9, .pressure_damage, SC_CONFUSION, 3000, .pressure_party_id);
+	end;
+
+OnTimer10000:
+	mapannounce .pressure_map$, "[Kiel Core] A flashbang system triggers overhead.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 9, .pressure_damage, SC_STUN, 3000, .pressure_party_id);
+	end;
+
+OnTimer15000:
+	mapannounce .pressure_map$, "[Kiel Core] Kiel D-01 calculates containment is insufficient.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 9, .pressure_damage, SC_CONFUSION, 3000, .pressure_party_id);
+	stopnpctimer;
+	end;
+}

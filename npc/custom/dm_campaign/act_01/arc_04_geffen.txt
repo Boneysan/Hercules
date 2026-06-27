@@ -429,3 +429,39 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20024, 1;
 	end;
 }
+
+// ── Vault Seal Pressure Set-piece ─────────────────────────────────────────────
+gef_dun02,214,212,0	script	Vault Seal Pressure#dm	HIDDEN_NPC,{
+	end;
+
+OnPressureStart:
+	stopnpctimer;
+	.pressure_map$ = strnpcinfo(NPC_MAP);
+	.pressure_party_id = $@dm_arc04_pressure_party_id;
+	.pressure_damage = $@dm_arc04_pressure_damage;
+	if (.pressure_party_id > 0) {
+		mapannounce .pressure_map$, "[Baphomet's Seal] The wards bleed dark energy as the prison struggles.", bc_map, 0x999999;
+		initnpctimer;
+	}
+	end;
+
+OnPressureStop:
+	stopnpctimer;
+	end;
+
+OnTimer5000:
+	mapannounce .pressure_map$, "[Baphomet's Seal] Dark red light pulses from the floor glyphs.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", .pressure_map$, 214, 212, 10, .pressure_damage, SC_CURSE, 4000, .pressure_party_id);
+	end;
+
+OnTimer10000:
+	mapannounce .pressure_map$, "[Baphomet's Seal] The prison-prayer stutters, venting raw curse energy.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", .pressure_map$, 214, 212, 10, .pressure_damage, SC_CURSE, 4000, .pressure_party_id);
+	end;
+
+OnTimer15000:
+	mapannounce .pressure_map$, "[Baphomet's Seal] Another crack forms in the keystone.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", .pressure_map$, 214, 212, 10, .pressure_damage, SC_CURSE, 4000, .pressure_party_id);
+	stopnpctimer;
+	end;
+}

@@ -1,0 +1,45 @@
+[Status]: Memory manager initialized: log/login-server.leaks
+
+                                                                      
+                 Hercules Development Team presents                   
+                _   _                     _                           
+               | | | |                   | |                          
+               | |_| | ___ _ __ ___ _   _| | ___  ___                 
+               |  _  |/ _ \ '__/ __| | | | |/ _ \/ __|                
+               | | | |  __/ | | (__| |_| | |  __/\__ \                
+               \_| |_/\___|_|  \___|\__,_|_|\___||___/                
+                                                                      
+                      http://herc.ws/board/                           
+                                                                      
+[Info]: Hercules 64-bit for Linux
+[Info]: Build revision: '202604000'
+[Info]: Git revision (src): '1d07ca6a2b57fbd68c973b5224e4efcb7589818b'
+[Info]: Git revision (scripts): '(null)'
+[Info]: OS version: 'Ubuntu 24.04.4 LTS [x86_64]'
+[Info]: CPU: '13th Gen Intel(R) Core(TM) i7-1355U [12]'
+[Info]: Compiled with GCC v13.3.0, zlib: 1.3
+[Info]: Compile Flags: -g -O2 -std=c11 -pipe -ffast-math -fno-finite-math-only -Wall -Wextra -Wno-sign-compare -fsigned-char -fcf-protection=none -Wno-unused-parameter -Wno-clobbered -Wempty-body -Wint-conversion -Winit-self -Wpointer-arith -Wswitch-bool -Wenum-conversion -Wformat-security -Wformat -Wformat-signedness -Wformat-y2k -Wformat-overflow=2 -Wformat-diag -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wundef -Wnested-externs -Wold-style-definition -Woverlength-strings -Wredundant-decls -Wmisleading-indentation -Wnull-dereference -Wvla -Wvla-parameter -Wswitch-enum -Wmismatched-dealloc -Wsizeof-array-div -Wstringop-overflow=4 -Wstringop-overread -Wstring-compare -Wzero-length-bounds -Wabsolute-value -Wshift-overflow=2 -Wenum-int-mismatch -Wno-switch -Wno-missing-field-initializers -Wno-discarded-qualifiers -Wno-unused-but-set-variable -Wshadow -fno-strict-aliasing -g -fno-omit-frame-pointer -funwind-tables -fno-var-tracking -DHAVE_EXECINFO -DUSE_HTTP_PARSER -DHTTP_PARSER_INCLUDE= -I../common -DHAS_TLS -DHAVE_SETRLIMIT -DHAVE_STRNLEN -DDEBUG -DHAVE_LIBBACKTRACE -DHAVE_MONOTONIC_CLOCK
+[Info]: Feature Flags: 0x0
+[Info]: Timer Function Type: monotonic clock
+[Info]: Packet version: 20190605 main
+[Info]: Found clock sources: 'tsc hyperv_clocksource_tsc_page hyperv_clocksource_msr acpi_pm '
+[Info]: Using optimal clock source: 'tsc'
+[Info]: Server uses 'select' as event dispatcher
+[Info]: Server supports up to '1024' concurrent connections.
+[Info]: Finished reading conf/login/login-server.conf.
+[Info]: Finished reading conf/import/login-server.conf.
+[Status]: Read information about 1 LAN subnets.
+[Status]: Read information about 1 trusted IP ranges.
+[Status]: Read information about 1 allowed server IP ranges.
+[Warning]: Using a wildcard IP range in the allowed server IPs is NOT RECOMMENDED.
+[Notice]: Please edit your 'conf/network.conf' allowed list to fit your network configuration.
+WARNING: MYSQL_OPT_RECONNECT is deprecated and will be removed in a future version.
+WARNING: MYSQL_OPT_RECONNECT is deprecated and will be removed in a future version.
+WARNING: MYSQL_OPT_RECONNECT is deprecated and will be removed in a future version.
+[Info]: Hercules, Copyright (C) 2012-2025, Hercules Dev Team and others.
+[Info]: Licensed under the GNU General Public License, version 3 or later.
+[Status]: The login-server is ready (Server is listening on the port 6900).
+
+[Info]: Connection request of the char-server 'Hercules' @ 127.0.0.1:6121 (account: 's1', pass: 'p1', ip: '127.0.0.1')
+[Notice]: Authentication accepted (account: s1, id: 1, ip: 127.0.0.1)
+[Status]: Connection of the char-server 'Hercules' accepted.

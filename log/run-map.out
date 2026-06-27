@@ -1,0 +1,380 @@
+[Status]: Memory manager initialized: log/map-server.leaks
+
+                                                                      
+                 Hercules Development Team presents                   
+                _   _                     _                           
+               | | | |                   | |                          
+               | |_| | ___ _ __ ___ _   _| | ___  ___                 
+               |  _  |/ _ \ '__/ __| | | | |/ _ \/ __|                
+               | | | |  __/ | | (__| |_| | |  __/\__ \                
+               \_| |_/\___|_|  \___|\__,_|_|\___||___/                
+                                                                      
+                      http://herc.ws/board/                           
+                                                                      
+[Info]: Hercules 64-bit for Linux
+[Info]: Build revision: '202604000'
+[Info]: Git revision (src): '1d07ca6a2b57fbd68c973b5224e4efcb7589818b'
+[Info]: Git revision (scripts): '(null)'
+[Info]: OS version: 'Ubuntu 24.04.4 LTS [x86_64]'
+[Info]: CPU: '13th Gen Intel(R) Core(TM) i7-1355U [12]'
+[Info]: Compiled with GCC v13.3.0, zlib: 1.3
+[Info]: Compile Flags: -g -O2 -std=c11 -pipe -ffast-math -fno-finite-math-only -Wall -Wextra -Wno-sign-compare -fsigned-char -fcf-protection=none -Wno-unused-parameter -Wno-clobbered -Wempty-body -Wint-conversion -Winit-self -Wpointer-arith -Wswitch-bool -Wenum-conversion -Wformat-security -Wformat -Wformat-signedness -Wformat-y2k -Wformat-overflow=2 -Wformat-diag -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wundef -Wnested-externs -Wold-style-definition -Woverlength-strings -Wredundant-decls -Wmisleading-indentation -Wnull-dereference -Wvla -Wvla-parameter -Wswitch-enum -Wmismatched-dealloc -Wsizeof-array-div -Wstringop-overflow=4 -Wstringop-overread -Wstring-compare -Wzero-length-bounds -Wabsolute-value -Wshift-overflow=2 -Wenum-int-mismatch -Wno-switch -Wno-missing-field-initializers -Wno-discarded-qualifiers -Wno-unused-but-set-variable -Wshadow -fno-strict-aliasing -g -fno-omit-frame-pointer -funwind-tables -fno-var-tracking -DHAVE_EXECINFO -DUSE_HTTP_PARSER -DHTTP_PARSER_INCLUDE= -I../common -DHAS_TLS -DHAVE_SETRLIMIT -DHAVE_STRNLEN -DDEBUG -DHAVE_LIBBACKTRACE -DHAVE_MONOTONIC_CLOCK
+[Info]: Feature Flags: 0x0
+[Info]: Timer Function Type: monotonic clock
+[Info]: Packet version: 20190605 main
+[Info]: Found clock sources: 'tsc hyperv_clocksource_tsc_page hyperv_clocksource_msr acpi_pm '
+[Info]: Using optimal clock source: 'tsc'
+[Info]: Server uses 'select' as event dispatcher
+[Info]: Server supports up to '1024' concurrent connections.
+[Info]: Char Server IP Address : '127.0.0.1' -> '127.0.0.1'.
+[Info]: Map Server IP Address : '127.0.0.1' -> '127.0.0.1'.
+[Warning]: Using the default user/password s1/p1 is NOT RECOMMENDED.
+[Notice]: Please edit your 'login' table to create a proper inter-server user/password (gender 'S')
+[Notice]: and then edit your user/password in conf/map-server.conf (or conf/import/map_conf.txt)
+[Info]: Logging item transactions to table 'picklog'.
+[Info]: Logging chat to table 'chatlog'.
+[Info]: Logging commands to table 'atcommandlog'.
+[Info]: Logging item transactions to table 'picklog'.
+[Info]: Logging chat to table 'chatlog'.
+[Info]: Logging commands to table 'atcommandlog'.
+WARNING: MYSQL_OPT_RECONNECT is deprecated and will be removed in a future version.
+[Info]: Connecting to the Map DB Server....
+[Status]: connect success! (Map Server Connection)
+WARNING: MYSQL_OPT_RECONNECT is deprecated and will be removed in a future version.
+[Info]: [SQL]: Connecting to the Log Database ragnarok At 127.0.0.1...
+[Status]: [SQL]: Successfully 'connected' to Database 'ragnarok'.
+[Info]: map_index file db/map_index.txt
+[Info]: Done reading conf/common/map-index.conf.
+[Status]: Loading maps using map cache files...
+[Info]: Successfully loaded '1156' maps.
+[Status]: Done reading '64' command aliases in 'conf/atcommand.conf'.
+[Status]: Done reading '4' channels in 'conf/channels.conf'.
+[Status]: Done reading '13182' entries in 'db/re/item_db.conf'.
+[Status]: Done reading '1' entries in 'db/item_db2.conf'.
+[Status]: Done reading '189' entries in 'db/item_options.conf'.
+[Status]: Done reading '436' entries in 'db/re/item_combo_db.conf'.
+[Status]: Done reading '57' entries in 'db/re/item_group.conf'.
+[Status]: Done reading '6' entries in 'db/re/item_chain.conf'.
+[Status]: Done reading '270' entries in 'db/re/item_packages.conf' (C).
+[Status]: Done reading '90' entries in 'db/re/item_lapineddukddak.conf'.
+[Status]: Done reading '46' entries in 'db/re/item_lapineupgrade.conf'.
+[Status]: Done reading '9' entries in 'db/re/item_reform_info.conf'.
+[Status]: Done reading '1' entries in 'db/re/item_reform_list.conf'.
+[Status]: Done reading '16' entries in 'db/cashshop_db.conf'.
+[Status]: Done reading '21' entries in 'db/attendance_db.conf'.
+[Status]: Done reading '4' valid clans of '4' entries in 'conf/clans.conf'.
+[Status]: Done reading '1170' entries in 'db/re/skill_db.conf'.
+[Status]: Done reading '0' entries in 'db/skill_db2.conf'.
+[Status]: Done reading '264' entries in 'db/produce_db.txt'.
+[Status]: Done reading '136' entries in 'db/create_arrow_db.txt'.
+[Status]: Done reading '205' entries in 'db/abra_db.txt'.
+[Status]: Done reading '17' entries in 'db/spellbook_db.txt'.
+[Status]: Done reading '23' entries in 'db/magicmushroom_db.txt'.
+[Status]: Done reading '16' entries in 'db/skill_improvise_db.txt'.
+[Status]: Done reading '74' entries in 'db/skill_changematerial_db.txt'.
+[Status]: Done reading '9' entries in 'db/re/autospell_db.conf'.
+[Status]: Done reading '15' zones in 'db/re/map_zone_db.conf'.
+[Status]: Done reading '0' entries in 'db/mob_item_ratio.txt'.
+[Status]: Done reading '0' entries in 'db/option_drop_groups.conf'.
+[Status]: Done reading '40' entries in 'db/mob_chat_db.txt'.
+[Status]: Done reading '1759' entries in 'db/re/mob_db.conf'.
+[Status]: Done reading '0' entries in 'db/mob_db2.conf'.
+[Status]: Done reading '1238' entries in 'db/re/mob_skill_db.conf'.
+[Status]: Done reading '1' entries in 'db/mob_skill_db2.conf'.
+[Status]: Done reading '5' entries in 'db/re/mob_group.conf'.
+[Status]: Done reading '0' entries in 'db/mob_group2.conf'.
+[Status]: Done reading '20' entries in 'db/re/exp_group_db.conf'.
+[Status]: Done reading '35' entries in 'db/re/level_penalty.conf'.
+[Status]: Done reading '400' entries in 'db/re/attr_fix.conf'.
+[Status]: Done reading '175' entries in 'db/re/statpoint.txt'.
+[Status]: Done reading '8' groups in 'conf/groups.conf'.
+[Status]: Done reading '5' entries in 'db/re/refine_db.conf'.
+[Status]: Done reading '4' entries in 'db/re/grade_db.conf'.
+[Status]: Done reading '147' entries in 'db/job_db2.txt'.
+[Status]: Done reading '3' entries in 'db/re/size_fix.txt'.
+[Status]: Done reading '692' entries in 'db/re/sc_config.conf'.
+[Status]: Done reading '13' entries in 'db/re/unit_parameters_db.conf'.
+[Status]: Done reading '130' entries in 'db/re/job_db.conf'.
+[Status]: Done reading '34' entries in 'db/castle_db.conf'.
+[Status]: Done reading '16' entries in 'db/guild_skill_tree.txt'.
+[Status]: Done reading '116' entries in 'db/re/pet_db.conf'.
+[Status]: Done reading '0' entries in 'db/pet_db2.conf'.
+[Status]: Done reading '21' entries in 'db/re/homunculus_db.conf'.
+[Status]: Done reading '0' entries in 'db/homunculus_db2.conf'.
+[Status]: Done reading '82' entries in 'db/homun_skill_tree.txt'.
+[Status]: Done reading '62' entries in 'db/mercenary_db.txt'.
+[Status]: Done reading '157' entries in 'db/mercenary_skill_db.txt'.
+[Status]: Done reading '12' elementals in 'db/elemental_db.txt'.
+[Status]: Done reading '36' entries in 'db/elemental_skill_db.txt'.
+[Error]: db/quest_db.conf:16164 - syntax error
+[Status]: Done reading '342' entries in 'db/re/achievement_db.conf'.
+[Status]: Done reading '11' entries in 'db/achievement_rank_db.conf'.
+[Status]: Done reading '56' entries in 'db/stylist_db.conf'.
+[Status]: Done reading '0' entries in 'db/captcha_db.conf'.
+[Status]: Done reading '53' entries in 'db/re/enchant_db.conf'.
+[Status]: Done reading '2' entries in 'db/goldpc_db.conf'.
+[Status]: Loading NPCs...[Status]: Loading NPC file: npc/other/Global_Functions.txt[Status]: Loading NPC file: npc/other/CashShop_Functions.txt[Status]: Loading NPC file: npc/MOTD.txt[Status]: Loading NPC file: npc/airports/airships.txt[Status]: Loading NPC file: npc/airports/einbroch.txt[Status]: Loading NPC file: npc/airports/hugel.txt[Status]: Loading NPC file: npc/airports/izlude.txt[Status]: Loading NPC file: npc/airports/lighthalzen.txt[Status]: Loading NPC file: npc/airports/rachel.txt[Status]: Loading NPC file: npc/airports/yuno.txt[Status]: Loading NPC file: npc/battleground/flavius/flavius_enter.txt[Status]: Loading NPC file: npc/battleground/flavius/flavius01.txt[Status]: Loading NPC file: npc/battleground/flavius/flavius02.txt[Status]: Loading NPC file: npc/battleground/kvm/kvm_enter.txt[Status]: Loading NPC file: npc/battleground/kvm/kvm_item_pay.txt[Status]: Loading NPC file: npc/battleground/kvm/kvm01.txt[Status]: Loading NPC file: npc/battleground/kvm/kvm02.txt[Status]: Loading NPC file: npc/battleground/kvm/kvm03.txt[Status]: Loading NPC file: npc/battleground/tierra/tierra_enter.txt[Status]: Loading NPC file: npc/battleground/tierra/tierra01.txt[Status]: Loading NPC file: npc/battleground/tierra/tierra02.txt[Status]: Loading NPC file: npc/battleground/bg_common.txt[Status]: Loading NPC file: npc/cities/alberta.txt[Status]: Loading NPC file: npc/cities/aldebaran.txt[Status]: Loading NPC file: npc/cities/amatsu.txt[Status]: Loading NPC file: npc/cities/ayothaya.txt[Status]: Loading NPC file: npc/cities/comodo.txt[Status]: Loading NPC file: npc/cities/einbech.txt[Status]: Loading NPC file: npc/cities/einbroch.txt[Status]: Loading NPC file: npc/cities/geffen.txt[Status]: Loading NPC file: npc/cities/gonryun.txt[Status]: Loading NPC file: npc/cities/hugel.txt[Status]: Loading NPC file: npc/cities/izlude.txt[Status]: Loading NPC file: npc/cities/jawaii.txt[Status]: Loading NPC file: npc/cities/lighthalzen.txt[Status]: Loading NPC file: npc/cities/louyang.txt[Status]: Loading NPC file: npc/cities/lutie.txt[Status]: Loading NPC file: npc/cities/manuk.txt[Status]: Loading NPC file: npc/cities/morocc.txt[Status]: Loading NPC file: npc/cities/moscovia.txt[Status]: Loading NPC file: npc/cities/niflheim.txt[Status]: Loading NPC file: npc/cities/payon.txt[Status]: Loading NPC file: npc/cities/prontera.txt[Status]: Loading NPC file: npc/cities/rachel.txt[Status]: Loading NPC file: npc/cities/splendide.txt[Status]: Loading NPC file: npc/cities/umbala.txt[Status]: Loading NPC file: npc/cities/veins.txt[Status]: Loading NPC file: npc/cities/yuno.txt[Status]: Loading NPC file: npc/events/gdevent_aru.txt[Status]: Loading NPC file: npc/events/gdevent_sch.txt[Status]: Loading NPC file: npc/events/god_se_festival.txt[Status]: Loading NPC file: npc/instances/SealedShrine.txt[Status]: Loading NPC file: npc/instances/EndlessTower.txt[Status]: Loading NPC file: npc/instances/OrcsMemory.txt[Status]: Loading NPC file: npc/instances/NydhoggsNest.txt[Status]: Loading NPC file: npc/kafras/cool_event_corp.txt[Status]: Loading NPC file: npc/kafras/dts_warper.txt[Status]: Loading NPC file: npc/kafras/functions_kafras.txt[Status]: Loading NPC file: npc/kafras/kafras.txt[Status]: Loading NPC file: npc/merchants/advanced_refiner.txt[Status]: Loading NPC file: npc/merchants/alchemist.txt[Status]: Loading NPC file: npc/merchants/ammo_boxes.txt[Status]: Loading NPC file: npc/merchants/ammo_dealer.txt[Status]: Loading NPC file: npc/merchants/buying_shops.txt[Status]: Loading NPC file: npc/merchants/coin_exchange.txt[Status]: Loading NPC file: npc/merchants/dye_maker.txt[Status]: Loading NPC file: npc/merchants/elemental_trader.txt[Status]: Loading NPC file: npc/merchants/enchan_arm.txt[Status]: Loading NPC file: npc/merchants/gemstone.txt[Status]: Loading NPC file: npc/merchants/hair_dyer.txt[Status]: Loading NPC file: npc/merchants/hair_style.txt[Status]: Loading NPC file: npc/merchants/inn.txt[Status]: Loading NPC file: npc/merchants/kunai_maker.txt[Status]: Loading NPC file: npc/merchants/milk_trader.txt[Status]: Loading NPC file: npc/merchants/novice_exchange.txt[Status]: Loading NPC file: npc/merchants/old_pharmacist.txt[Status]: Loading NPC file: npc/merchants/quivers.txt[Status]: Loading NPC file: npc/merchants/refine.txt[Status]: Loading NPC file: npc/merchants/renters.txt[Status]: Loading NPC file: npc/merchants/shops.txt[Status]: Loading NPC file: npc/merchants/socket_enchant.txt[Status]: Loading NPC file: npc/merchants/socket_enchant2.txt[Status]: Loading NPC file: npc/merchants/wander_pet_food.txt[Status]: Loading NPC file: npc/merchants/cashheadgear_dye.txt[Status]: Loading NPC file: npc/other/arena/arena_aco.txt[Status]: Loading NPC file: npc/other/arena/arena_lvl50.txt[Status]: Loading NPC file: npc/other/arena/arena_lvl60.txt[Status]: Loading NPC file: npc/other/arena/arena_lvl70.txt[Status]: Loading NPC file: npc/other/arena/arena_lvl80.txt[Status]: Loading NPC file: npc/other/arena/arena_party.txt[Status]: Loading NPC file: npc/other/arena/arena_point.txt[Status]: Loading NPC file: npc/other/arena/arena_room.txt[Status]: Loading NPC file: npc/other/auction.txt[Status]: Loading NPC file: npc/other/books.txt[Status]: Loading NPC file: npc/other/bulletin_boards.txt[Status]: Loading NPC file: npc/other/comodo_gambling.txt[Status]: Loading NPC file: npc/other/divorce.txt[Status]: Loading NPC file: npc/other/fortune.txt[Status]: Loading NPC file: npc/other/gm_npcs.txt[Status]: Loading NPC file: npc/other/guildpvp.txt[Status]: Loading NPC file: npc/other/gympass.txt[Status]: Loading NPC file: npc/other/hugel_bingo.txt[Status]: Loading NPC file: npc/other/mail.txt[Status]: Loading NPC file: npc/other/marriage.txt[Status]: Loading NPC file: npc/other/mercenary_rent.txt[Status]: Loading NPC file: npc/other/monster_museum.txt[Status]: Loading NPC file: npc/other/monster_race.txt[Status]: Loading NPC file: npc/other/poring_war.txt[Status]: Loading NPC file: npc/other/powernpc.txt[Status]: Loading NPC file: npc/other/pvp.txt[Status]: Loading NPC file: npc/other/turbo_track.txt[Status]: Loading NPC file: npc/other/item_merge.txt[Status]: Loading NPC file: npc/other/private_airship.txt[Status]: Loading NPC file: npc/other/inventory_expansion.txt[Status]: Loading NPC file: npc/other/dynamicnpc_create.txt[Status]: Loading NPC file: npc/other/goldpc.txt[Status]: Loading NPC file: npc/quests/first_class/tu_acolyte.txt[Status]: Loading NPC file: npc/quests/first_class/tu_archer.txt[Status]: Loading NPC file: npc/quests/first_class/tu_magician01.txt[Status]: Loading NPC file: npc/quests/first_class/tu_ma_th01.txt[Status]: Loading NPC file: npc/quests/first_class/tu_merchant.txt[Status]: Loading NPC file: npc/quests/first_class/tu_sword.txt[Status]: Loading NPC file: npc/quests/first_class/tu_thief01.txt[Status]: Loading NPC file: npc/quests/newgears/2004_headgears.txt[Status]: Loading NPC file: npc/quests/newgears/2005_headgears.txt[Status]: Loading NPC file: npc/quests/newgears/2006_headgears.txt[Status]: Loading NPC file: npc/quests/newgears/2008_headgears.txt[Status]: Loading NPC file: npc/quests/newgears/2010_headgears.txt[Status]: Loading NPC file: npc/quests/okolnir.txt[Status]: Loading NPC file: npc/quests/seals/god_global.txt[Status]: Loading NPC file: npc/quests/seals/brisingamen_seal.txt[Status]: Loading NPC file: npc/quests/seals/god_weapon_creation.txt[Status]: Loading NPC file: npc/quests/seals/megingard_seal.txt[Status]: Loading NPC file: npc/quests/seals/mjolnir_seal.txt[Status]: Loading NPC file: npc/quests/seals/sleipnir_seal.txt[Status]: Loading NPC file: npc/quests/seals/seal_status.txt[Status]: Loading NPC file: npc/quests/bard_quest.txt[Status]: Loading NPC file: npc/quests/bunnyband.txt[Status]: Loading NPC file: npc/quests/cooking_quest.txt[Status]: Loading NPC file: npc/quests/counteragent_mixture.txt[Status]: Loading NPC file: npc/quests/doomed_swords.txt[Status]: Loading NPC file: npc/quests/doomed_swords_quest.txt[Status]: Loading NPC file: npc/quests/eye_of_hellion.txt[Status]: Loading NPC file: npc/quests/guildrelay.txt[Status]: Loading NPC file: npc/quests/gunslinger_quests.txt[Status]: Loading NPC file: npc/quests/juice_maker.txt[Status]: Loading NPC file: npc/quests/kiel_hyre_quest.txt[Status]: Loading NPC file: npc/quests/lvl4_weapon_quest.txt[Status]: Loading NPC file: npc/quests/mage_solution.txt[Status]: Loading NPC file: npc/quests/monstertamers.txt[Status]: Loading NPC file: npc/quests/mrsmile.txt[Status]: Loading NPC file: npc/quests/ninja_quests.txt[Status]: Loading NPC file: npc/quests/obb_quest.txt[Status]: Loading NPC file: npc/quests/partyrelay.txt[Status]: Loading NPC file: npc/quests/quests_13_1.txt[Status]: Loading NPC file: npc/quests/quests_13_2.txt[Status]: Loading NPC file: npc/quests/quests_airship.txt[Status]: Loading NPC file: npc/quests/quests_alberta.txt[Status]: Loading NPC file: npc/quests/quests_aldebaran.txt[Status]: Loading NPC file: npc/quests/quests_amatsu.txt[Status]: Loading NPC file: npc/quests/quests_ayothaya.txt[Status]: Loading NPC file: npc/quests/quests_comodo.txt[Status]: Loading NPC file: npc/quests/quests_ein.txt[Status]: Loading NPC file: npc/quests/quests_geffen.txt[Status]: Loading NPC file: npc/quests/quests_gonryun.txt[Status]: Loading NPC file: npc/quests/quests_hugel.txt[Status]: Loading NPC file: npc/quests/quests_izlude.txt[Status]: Loading NPC file: npc/quests/quests_juperos.txt[Status]: Loading NPC file: npc/quests/quests_lighthalzen.txt[Status]: Loading NPC file: npc/quests/quests_louyang.txt[Status]: Loading NPC file: npc/quests/quests_lutie.txt[Status]: Loading NPC file: npc/quests/quests_morocc.txt[Status]: Loading NPC file: npc/quests/quests_moscovia.txt[Status]: Loading NPC file: npc/quests/quests_nameless.txt[Status]: Loading NPC file: npc/quests/quests_niflheim.txt[Status]: Loading NPC file: npc/quests/quests_payon.txt[Status]: Loading NPC file: npc/quests/quests_prontera.txt[Status]: Loading NPC file: npc/quests/quests_rachel.txt[Status]: Loading NPC file: npc/quests/quests_umbala.txt[Status]: Loading NPC file: npc/quests/quests_veins.txt[Status]: Loading NPC file: npc/quests/quests_yuno.txt[Status]: Loading NPC file: npc/quests/thana_quest.txt[Status]: Loading NPC file: npc/quests/the_sign_quest.txt[Status]: Loading NPC file: npc/woe-fe/agit_controller.txt[Status]: Loading NPC file: npc/woe-fe/agit_main.txt[Status]: Loading NPC file: npc/woe-fe/aldeg_cas01.txt[Status]: Loading NPC file: npc/woe-fe/aldeg_cas02.txt[Status]: Loading NPC file: npc/woe-fe/aldeg_cas03.txt[Status]: Loading NPC file: npc/woe-fe/aldeg_cas04.txt[Status]: Loading NPC file: npc/woe-fe/aldeg_cas05.txt[Status]: Loading NPC file: npc/woe-fe/gefg_cas01.txt[Status]: Loading NPC file: npc/woe-fe/gefg_cas02.txt[Status]: Loading NPC file: npc/woe-fe/gefg_cas03.txt[Status]: Loading NPC file: npc/woe-fe/gefg_cas04.txt[Status]: Loading NPC file: npc/woe-fe/gefg_cas05.txt[Status]: Loading NPC file: npc/woe-fe/payg_cas01.txt[Status]: Loading NPC file: npc/woe-fe/payg_cas02.txt[Status]: Loading NPC file: npc/woe-fe/payg_cas03.txt[Status]: Loading NPC file: npc/woe-fe/payg_cas04.txt[Status]: Loading NPC file: npc/woe-fe/payg_cas05.txt[Status]: Loading NPC file: npc/woe-fe/prtg_cas01.txt[Status]: Loading NPC file: npc/woe-fe/prtg_cas02.txt[Status]: Loading NPC file: npc/woe-fe/prtg_cas03.txt[Status]: Loading NPC file: npc/woe-fe/prtg_cas04.txt[Status]: Loading NPC file: npc/woe-fe/prtg_cas05.txt[Status]: Loading NPC file: npc/woe-se/agit_start_se.txt[Status]: Loading NPC file: npc/woe-se/agit_main_se.txt[Status]: Loading NPC file: npc/woe-se/guild_flags.txt[Status]: Loading NPC file: npc/woe-se/arug_cas01.txt[Status]: Loading NPC file: npc/woe-se/arug_cas02.txt[Status]: Loading NPC file: npc/woe-se/arug_cas03.txt[Status]: Loading NPC file: npc/woe-se/arug_cas04.txt[Status]: Loading NPC file: npc/woe-se/arug_cas05.txt[Status]: Loading NPC file: npc/woe-se/schg_cas01.txt[Status]: Loading NPC file: npc/woe-se/schg_cas02.txt[Status]: Loading NPC file: npc/woe-se/schg_cas03.txt[Status]: Loading NPC file: npc/woe-se/schg_cas04.txt[Status]: Loading NPC file: npc/woe-se/schg_cas05.txt[Status]: Loading NPC file: npc/jobs/1-1e/gunslinger.txt[Status]: Loading NPC file: npc/jobs/1-1e/ninja.txt[Status]: Loading NPC file: npc/jobs/1-1e/taekwon.txt[Status]: Loading NPC file: npc/jobs/2-1/assassin.txt[Status]: Loading NPC file: npc/jobs/2-1/blacksmith.txt[Status]: Loading NPC file: npc/jobs/2-1/hunter.txt[Status]: Loading NPC file: npc/jobs/2-1/knight.txt[Status]: Loading NPC file: npc/jobs/2-1/priest.txt[Status]: Loading NPC file: npc/jobs/2-1/wizard.txt[Status]: Loading NPC file: npc/jobs/2-1a/AssassinCross.txt[Status]: Loading NPC file: npc/jobs/2-1a/HighPriest.txt[Status]: Loading NPC file: npc/jobs/2-1a/HighWizard.txt[Status]: Loading NPC file: npc/jobs/2-1a/LordKnight.txt[Status]: Loading NPC file: npc/jobs/2-1a/Sniper.txt[Status]: Loading NPC file: npc/jobs/2-1a/WhiteSmith.txt[Status]: Loading NPC file: npc/jobs/2-1e/StarGladiator.txt[Status]: Loading NPC file: npc/jobs/2-2/alchemist.txt[Status]: Loading NPC file: npc/jobs/2-2/bard.txt[Status]: Loading NPC file: npc/jobs/2-2/crusader.txt[Status]: Loading NPC file: npc/jobs/2-2/dancer.txt[Status]: Loading NPC file: npc/jobs/2-2/monk.txt[Status]: Loading NPC file: npc/jobs/2-2/rogue.txt[Status]: Loading NPC file: npc/jobs/2-2/sage.txt[Status]: Loading NPC file: npc/jobs/2-2a/Champion.txt[Status]: Loading NPC file: npc/jobs/2-2a/Clown.txt[Status]: Loading NPC file: npc/jobs/2-2a/Creator.txt[Status]: Loading NPC file: npc/jobs/2-2a/Gypsy.txt[Status]: Loading NPC file: npc/jobs/2-2a/Paladin.txt[Status]: Loading NPC file: npc/jobs/2-2a/Professor.txt[Status]: Loading NPC file: npc/jobs/2-2a/Stalker.txt[Status]: Loading NPC file: npc/jobs/2-2e/SoulLinker.txt[Status]: Loading NPC file: npc/jobs/novice/supernovice.txt[Status]: Loading NPC file: npc/jobs/valkyrie.txt[Status]: Loading NPC file: npc/quests/skills/acolyte_skills.txt[Status]: Loading NPC file: npc/quests/skills/archer_skills.txt[Status]: Loading NPC file: npc/quests/skills/mage_skills.txt[Status]: Loading NPC file: npc/quests/skills/merchant_skills.txt[Status]: Loading NPC file: npc/quests/skills/swordman_skills.txt[Status]: Loading NPC file: npc/quests/skills/thief_skills.txt[Status]: Loading NPC file: npc/quests/skills/assassin_skills.txt[Status]: Loading NPC file: npc/quests/skills/blacksmith_skills.txt[Status]: Loading NPC file: npc/quests/skills/hunter_skills.txt[Status]: Loading NPC file: npc/quests/skills/knight_skills.txt[Status]: Loading NPC file: npc/quests/skills/priest_skills.txt[Status]: Loading NPC file: npc/quests/skills/rogue_skills.txt[Status]: Loading NPC file: npc/quests/skills/wizard_skills.txt[Status]: Loading NPC file: npc/quests/skills/alchemist_skills.txt[Status]: Loading NPC file: npc/quests/skills/bard_skills.txt[Status]: Loading NPC file: npc/quests/skills/crusader_skills.txt[Status]: Loading NPC file: npc/quests/skills/dancer_skills.txt[Status]: Loading NPC file: npc/quests/skills/monk_skills.txt[Status]: Loading NPC file: npc/quests/skills/sage_skills.txt[Status]: Loading NPC file: npc/mapflag/nopvp.txt[Status]: Loading NPC file: npc/mapflag/gvg.txt[Status]: Loading NPC file: npc/mapflag/jail.txt[Status]: Loading NPC file: npc/mapflag/nightmare.txt[Status]: Loading NPC file: npc/mapflag/nobranch.txt[Status]: Loading NPC file: npc/mapflag/noexp.txt[Status]: Loading NPC file: npc/mapflag/noicewall.txt[Status]: Loading NPC file: npc/mapflag/noloot.txt[Status]: Loading NPC file: npc/mapflag/nomemo.txt[Status]: Loading NPC file: npc/mapflag/nopenalty.txt[Status]: Loading NPC file: npc/mapflag/nosave.txt[Status]: Loading NPC file: npc/mapflag/noteleport.txt[Status]: Loading NPC file: npc/mapflag/noreturn.txt[Status]: Loading NPC file: npc/mapflag/noskill.txt[Status]: Loading NPC file: npc/mapflag/nowarp.txt[Status]: Loading NPC file: npc/mapflag/nowarpto.txt[Status]: Loading NPC file: npc/mapflag/partylock.txt[Status]: Loading NPC file: npc/mapflag/pvp.txt[Status]: Loading NPC file: npc/mapflag/pvp_noparty.txt[Status]: Loading NPC file: npc/mapflag/pvp_noguild.txt[Status]: Loading NPC file: npc/mapflag/night.txt[Status]: Loading NPC file: npc/mapflag/zone.txt[Status]: Loading NPC file: npc/mapflag/battleground.txt[Status]: Loading NPC file: npc/mapflag/novending.txt[Status]: Loading NPC file: npc/mapflag/town.txt[Status]: Loading NPC file: npc/mapflag/reset.txt[Status]: Loading NPC file: npc/mapflag/skillmodifier.txt[Status]: Loading NPC file: npc/mapflag/skillduration.txt[Status]: Loading NPC file: npc/mapflag/notomb.txt[Status]: Loading NPC file: npc/mapflag/private_airship.txt[Status]: Loading NPC file: npc/mapflag/nopet.txt[Status]: Loading NPC file: npc/mobs/citycleaners.txt[Status]: Loading NPC file: npc/mobs/jail.txt[Status]: Loading NPC file: npc/mobs/pvp.txt[Status]: Loading NPC file: npc/mobs/towns.txt[Status]: Loading NPC file: npc/warps/cities/alberta.txt[Status]: Loading NPC file: npc/warps/cities/aldebaran.txt[Status]: Loading NPC file: npc/warps/cities/amatsu.txt[Status]: Loading NPC file: npc/warps/cities/ayothaya.txt[Status]: Loading NPC file: npc/warps/cities/comodo.txt[Status]: Loading NPC file: npc/warps/cities/einbech.txt[Status]: Loading NPC file: npc/warps/cities/einbroch.txt[Status]: Loading NPC file: npc/warps/cities/geffen.txt[Status]: Loading NPC file: npc/warps/cities/gonryun.txt[Status]: Loading NPC file: npc/warps/cities/hugel.txt[Status]: Loading NPC file: npc/warps/cities/lighthalzen.txt[Status]: Loading NPC file: npc/warps/cities/louyang.txt[Status]: Loading NPC file: npc/warps/cities/lutie.txt[Status]: Loading NPC file: npc/warps/cities/manuk.txt[Status]: Loading NPC file: npc/warps/cities/mid_camp.txt[Status]: Loading NPC file: npc/warps/cities/morroc.txt[Status]: Loading NPC file: npc/warps/cities/moscovia.txt[Status]: Loading NPC file: npc/warps/cities/nameless.txt[Status]: Loading NPC file: npc/warps/cities/niflheim.txt[Status]: Loading NPC file: npc/warps/cities/payon.txt[Status]: Loading NPC file: npc/warps/cities/prontera.txt[Status]: Loading NPC file: npc/warps/cities/splendide.txt[Status]: Loading NPC file: npc/warps/cities/umbala.txt[Status]: Loading NPC file: npc/warps/cities/veins.txt[Status]: Loading NPC file: npc/warps/cities/yuno.txt[Status]: Loading NPC file: npc/warps/dungeons/abbey.txt[Status]: Loading NPC file: npc/warps/dungeons/abyss.txt[Status]: Loading NPC file: npc/warps/dungeons/alde_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/ama_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/anthell.txt[Status]: Loading NPC file: npc/warps/dungeons/ayo_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/beach_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/c_tower.txt[Status]: Loading NPC file: npc/warps/dungeons/ein_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/gef_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/gon_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/ice_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/in_sphinx.txt[Status]: Loading NPC file: npc/warps/dungeons/iz_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/juperos.txt[Status]: Loading NPC file: npc/warps/dungeons/kh_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/lhz_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/lou_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/mag_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/mjo_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/moc_pryd.txt[Status]: Loading NPC file: npc/warps/dungeons/mosk_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/odin.txt[Status]: Loading NPC file: npc/warps/dungeons/orcsdun.txt[Status]: Loading NPC file: npc/warps/dungeons/pay_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/prt_maze.txt[Status]: Loading NPC file: npc/warps/dungeons/ra_san.txt[Status]: Loading NPC file: npc/warps/dungeons/tha_t.txt[Status]: Loading NPC file: npc/warps/dungeons/thor_v.txt[Status]: Loading NPC file: npc/warps/dungeons/treasure.txt[Status]: Loading NPC file: npc/warps/dungeons/tur_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/um_dun.txt[Status]: Loading NPC file: npc/warps/dungeons/xmas_dun.txt[Status]: Loading NPC file: npc/warps/fields/abyss_warper.txt[Status]: Loading NPC file: npc/warps/fields/amatsu_fild.txt[Status]: Loading NPC file: npc/warps/fields/ein_fild.txt[Status]: Loading NPC file: npc/warps/fields/gefenia.txt[Status]: Loading NPC file: npc/warps/fields/glastheim.txt[Status]: Loading NPC file: npc/warps/fields/jawaii.txt[Status]: Loading NPC file: npc/warps/fields/lhalzen_fild.txt[Status]: Loading NPC file: npc/warps/fields/lutie_fild.txt[Status]: Loading NPC file: npc/warps/fields/man_fild.txt[Status]: Loading NPC file: npc/warps/fields/mtmjolnir.txt[Status]: Loading NPC file: npc/warps/fields/spl_fild.txt[Status]: Loading NPC file: npc/warps/fields/umbala_fild.txt[Status]: Loading NPC file: npc/warps/other/airplane.txt[Status]: Loading NPC file: npc/warps/other/arena.txt[Status]: Loading NPC file: npc/warps/other/god.txt[Status]: Loading NPC file: npc/warps/other/jobquests.txt[Status]: Loading NPC file: npc/warps/other/kiel.txt[Status]: Loading NPC file: npc/warps/other/other.txt[Status]: Loading NPC file: npc/warps/guildcastles.txt[Status]: Loading NPC file: npc/warps/pvp.txt[Status]: Loading NPC file: npc/re/airports/izlude.txt[Status]: Loading NPC file: npc/re/battleground/bg_common.txt[Status]: Loading NPC file: npc/re/cities/alberta.txt[Status]: Loading NPC file: npc/re/cities/brasilis.txt[Status]: Loading NPC file: npc/re/cities/dewata.txt[Status]: Loading NPC file: npc/re/cities/dicastes.txt[Status]: Loading NPC file: npc/re/cities/eclage.txt[Status]: Loading NPC file: npc/re/cities/izlude.txt[Status]: Loading NPC file: npc/re/cities/jawaii.txt[Status]: Loading NPC file: npc/re/cities/malangdo.txt[Status]: Loading NPC file: npc/re/cities/malaya.txt[Status]: Loading NPC file: npc/re/cities/mora.txt[Status]: Loading NPC file: npc/re/cities/yuno.txt[Status]: Loading NPC file: npc/re/guides/navigation.txt[Status]: Loading NPC file: npc/re/guides/guides_alberta.txt[Status]: Loading NPC file: npc/re/guides/guides_aldebaran.txt[Status]: Loading NPC file: npc/re/guides/guides_amatsu.txt[Status]: Loading NPC file: npc/re/guides/guides_ayothaya.txt[Status]: Loading NPC file: npc/re/guides/guides_brasilis.txt[Status]: Loading NPC file: npc/re/guides/guides_comodo.txt[Status]: Loading NPC file: npc/re/guides/guides_dewata.txt[Status]: Loading NPC file: npc/re/guides/guides_dicastes.txt[Status]: Loading NPC file: npc/re/guides/guides_eclage.txt[Status]: Loading NPC file: npc/re/guides/guides_einbroch.txt[Status]: Loading NPC file: npc/re/guides/guides_geffen.txt[Status]: Loading NPC file: npc/re/guides/guides_gonryun.txt[Status]: Loading NPC file: npc/re/guides/guides_hugel.txt[Status]: Loading NPC file: npc/re/guides/guides_izlude.txt[Status]: Loading NPC file: npc/re/guides/guides_juno.txt[Status]: Loading NPC file: npc/re/guides/guides_lighthalzen.txt[Status]: Loading NPC file: npc/re/guides/guides_louyang.txt[Status]: Loading NPC file: npc/re/guides/guides_lutie.txt[Status]: Loading NPC file: npc/re/guides/guides_malaya.txt[Status]: Loading NPC file: npc/re/guides/guides_mora.txt[Status]: Loading NPC file: npc/re/guides/guides_morroc.txt[Status]: Loading NPC file: npc/re/guides/guides_moscovia.txt[Status]: Loading NPC file: npc/re/guides/guides_niflheim.txt[Status]: Loading NPC file: npc/re/guides/guides_payon.txt[Status]: Loading NPC file: npc/re/guides/guides_prontera.txt[Status]: Loading NPC file: npc/re/guides/guides_rachel.txt[Status]: Loading NPC file: npc/re/guides/guides_umbala.txt[Status]: Loading NPC file: npc/re/guides/guides_veins.txt[Status]: Loading NPC file: npc/re/instances/BakonawaLake.txt[Status]: Loading NPC file: npc/re/instances/BangungotHospital.txt[Status]: Loading NPC file: npc/re/instances/BuwayaCave.txt[Status]: Loading NPC file: npc/re/instances/EclageInterior.txt[Status]: Loading NPC file: npc/re/instances/ghost_palace.txt[Status]: Loading NPC file: npc/re/instances/HazyForest.txt[Status]: Loading NPC file: npc/re/instances/MalangdoCulvert.txt[Status]: Loading NPC file: npc/re/instances/octopus_cave.txt[Status]: Loading NPC file: npc/re/instances/OldGlastHeim.txt[Status]: Loading NPC file: npc/re/instances/saras_memory.txt[Status]: Loading NPC file: npc/re/instances/WolfchevLaboratory.txt[Status]: Loading NPC file: npc/re/kafras/kafras.txt[Status]: Loading NPC file: npc/re/merchants/3rd_trader.txt[Status]: Loading NPC file: npc/re/merchants/advanced_refiner.txt[Status]: Loading NPC file: npc/re/merchants/alchemist.txt[Status]: Loading NPC file: npc/re/merchants/ammo_boxes.txt[Status]: Loading NPC file: npc/re/merchants/ammo_dealer.txt[Status]: Loading NPC file: npc/re/merchants/card_separation.txt[Status]: Loading NPC file: npc/re/merchants/catalog.txt[Status]: Loading NPC file: npc/re/merchants/coin_exchange.txt[Status]: Loading NPC file: npc/re/merchants/diamond.txt[Status]: Loading NPC file: npc/re/merchants/enchan_mal.txt[Status]: Loading NPC file: npc/re/merchants/enchan_mora.txt[Status]: Loading NPC file: npc/re/merchants/enchan_ko.txt[Status]: Loading NPC file: npc/re/merchants/flute.txt[Status]: Loading NPC file: npc/re/merchants/hd_refiner.txt[Status]: Loading NPC file: npc/re/merchants/inn.txt[Status]: Loading NPC file: npc/re/merchants/quivers.txt[Status]: Loading NPC file: npc/re/merchants/refine.txt[Status]: Loading NPC file: npc/re/merchants/renters.txt[Status]: Loading NPC file: npc/re/merchants/shops.txt[Status]: Loading NPC file: npc/re/merchants/ninja_craftsman.txt[Status]: Loading NPC file: npc/re/merchants/shadow_refiner.txt[Status]: Loading NPC file: npc/re/other/bulletin_boards.txt[Status]: Loading NPC file: npc/re/other/dimensional_gap.txt[Status]: Loading NPC file: npc/re/other/mail.txt[Status]: Loading NPC file: npc/re/other/mercenary_rent.txt[Status]: Loading NPC file: npc/re/other/pvp.txt[Status]: Loading NPC file: npc/re/other/resetskill.txt[Status]: Loading NPC file: npc/re/other/stone_change.txt[Status]: Loading NPC file: npc/re/other/turbo_track.txt[Status]: Loading NPC file: npc/re/other/clans.txt[Status]: Loading NPC file: npc/re/other/achievement_treasures.txt[Status]: Loading NPC file: npc/re/other/grader.txt[Status]: Loading NPC file: npc/re/quests/eden/11-25.txt[Status]: Loading NPC file: npc/re/quests/eden/26-40.txt[Status]: Loading NPC file: npc/re/quests/eden/41-55.txt[Status]: Loading NPC file: npc/re/quests/eden/56-70.txt[Status]: Loading NPC file: npc/re/quests/eden/71-85.txt[Status]: Loading NPC file: npc/re/quests/eden/86-90.txt[Status]: Loading NPC file: npc/re/quests/eden/91-99.txt[Status]: Loading NPC file: npc/re/quests/eden/100-110.txt[Status]: Loading NPC file: npc/re/quests/eden/111-120.txt[Status]: Loading NPC file: npc/re/quests/eden/121-130.txt[Status]: Loading NPC file: npc/re/quests/eden/131-140.txt[Status]: Loading NPC file: npc/re/quests/eden/eden_common.txt[Status]: Loading NPC file: npc/re/quests/eden/eden_quests.txt[Status]: Loading NPC file: npc/re/quests/eden/eden_service.txt[Status]: Loading NPC file: npc/re/quests/eden/eden_tutorial.txt[Status]: Loading NPC file: npc/re/quests/first_class/tu_archer.txt[Status]: Loading NPC file: npc/re/quests/homun_s.txt[Status]: Loading NPC file: npc/re/quests/magic_books.txt[Status]: Loading NPC file: npc/re/quests/monstertamers.txt[Status]: Loading NPC file: npc/re/quests/mrsmile.txt[Status]: Loading NPC file: npc/re/quests/pile_bunker.txt[Status]: Loading NPC file: npc/re/quests/quests_13_1.txt[Status]: Loading NPC file: npc/re/quests/quests_aldebaran.txt[Status]: Loading NPC file: npc/re/quests/quests_brasilis.txt[Status]: Loading NPC file: npc/re/quests/quests_dewata.txt[Status]: Loading NPC file: npc/re/quests/quests_dicastes.txt[Status]: Loading NPC file: npc/re/quests/quests_eclage.txt[Status]: Loading NPC file: npc/re/quests/quests_glastheim.txt[Status]: Loading NPC file: npc/re/quests/quests_izlude.txt[Status]: Loading NPC file: npc/re/quests/quests_lighthalzen.txt[Status]: Loading NPC file: npc/re/quests/quests_malangdo.txt[Status]: Loading NPC file: npc/re/quests/quests_malaya.txt[Status]: Loading NPC file: npc/re/quests/quests_mora.txt[Status]: Loading NPC file: npc/re/quests/quests_morocc.txt[Status]: Loading NPC file: npc/re/quests/quests_nameless.txt[Status]: Loading NPC file: npc/re/quests/quests_veins.txt[Status]: Loading NPC file: npc/re/quests/quests_payon.txt[Status]: Loading NPC file: npc/re/quests/rebuilding_morroc_rewards.txt[Status]: Loading NPC file: npc/re/quests/newgears/2012_headgears.txt[Status]: Loading NPC file: npc/re/quests/skills/merchant_skills.txt[Status]: Loading NPC file: npc/re/woe-fe/invest_main.txt[Status]: Loading NPC file: npc/re/woe-fe/invest_npc.txt[Status]: Loading NPC file: npc/re/jobs/1-1/acolyte.txt[Status]: Loading NPC file: npc/re/jobs/1-1/archer.txt[Status]: Loading NPC file: npc/re/jobs/1-1/mage.txt[Status]: Loading NPC file: npc/re/jobs/1-1/merchant.txt[Status]: Loading NPC file: npc/re/jobs/1-1/swordman.txt[Status]: Loading NPC file: npc/re/jobs/1-1/thief.txt[Status]: Loading NPC file: npc/re/jobs/1-1e/taekwon.txt[Status]: Loading NPC file: npc/re/jobs/2e/kagerou_oboro.txt[Status]: Loading NPC file: npc/re/jobs/2e/rebellion.txt[Status]: Loading NPC file: npc/re/jobs/3-1/archbishop.txt[Status]: Loading NPC file: npc/re/jobs/3-1/mechanic.txt[Status]: Loading NPC file: npc/re/jobs/3-1/ranger.txt[Status]: Loading NPC file: npc/re/jobs/3-1/rune_knight.txt[Status]: Loading NPC file: npc/re/jobs/3-1/warlock.txt[Status]: Loading NPC file: npc/re/jobs/3-1/guillotine_cross.txt[Status]: Loading NPC file: npc/re/jobs/3-2/genetic.txt[Status]: Loading NPC file: npc/re/jobs/3-2/minstrel.txt[Status]: Loading NPC file: npc/re/jobs/3-2/royal_guard.txt[Status]: Loading NPC file: npc/re/jobs/3-2/shadow_chaser.txt[Status]: Loading NPC file: npc/re/jobs/3-2/sorcerer.txt[Status]: Loading NPC file: npc/re/jobs/3-2/sura.txt[Status]: Loading NPC file: npc/re/jobs/3-2/wanderer.txt[Status]: Loading NPC file: npc/re/jobs/novice/academy.txt[Status]: Loading NPC file: npc/re/jobs/novice/supernovice_ex.txt[Status]: Loading NPC file: npc/re/jobs/repair.txt[Status]: Loading NPC file: npc/re/mapflag/gvg.txt[Status]: Loading NPC file: npc/re/mapflag/zone.txt[Status]: Loading NPC file: npc/re/mobs/citycleaners.txt[Status]: Loading NPC file: npc/re/mobs/towns.txt[Status]: Loading NPC file: npc/re/mobs/champion.txt[Status]: Loading NPC file: npc/re/mobs/int_land.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/abbey.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/abyss.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/alde_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/ama_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/anthell.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/ayo_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/beach_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/bra_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/c_tower.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/dew_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/dic_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/ecl_tdun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/ein_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/gef_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/gefenia.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/glastheim.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/gld_dunSE.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/gld_re.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/gon_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/ice_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/in_sphinx.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/iz_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/juperos.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/kh_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/lhz_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/lou_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/ma_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/mag_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/mal_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/mjo_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/moc_pryd.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/mosk_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/nyd_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/odin.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/orcsdun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/pay_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/prt_maze.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/prt_sew.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/ra_san.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/tha_t.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/thor_v.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/treasure.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/tur_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/xmas_dun.txt[Status]: Loading NPC file: npc/re/mobs/dungeons/yggdrasil.txt[Status]: Loading NPC file: npc/re/mobs/fields/amatsu.txt[Status]: Loading NPC file: npc/re/mobs/fields/ayothaya.txt[Status]: Loading NPC file: npc/re/mobs/fields/bifrost.txt[Status]: Loading NPC file: npc/re/mobs/fields/brasilis.txt[Status]: Loading NPC file: npc/re/mobs/fields/comodo.txt[Status]: Loading NPC file: npc/re/mobs/fields/dewata.txt[Status]: Loading NPC file: npc/re/mobs/fields/dicastes.txt[Status]: Loading NPC file: npc/re/mobs/fields/eclage.txt[Status]: Loading NPC file: npc/re/mobs/fields/einbroch.txt[Status]: Loading NPC file: npc/re/mobs/fields/geffen.txt[Status]: Loading NPC file: npc/re/mobs/fields/gonryun.txt[Status]: Loading NPC file: npc/re/mobs/fields/hugel.txt[Status]: Loading NPC file: npc/re/mobs/fields/lighthalzen.txt[Status]: Loading NPC file: npc/re/mobs/fields/louyang.txt[Status]: Loading NPC file: npc/re/mobs/fields/lutie.txt[Status]: Loading NPC file: npc/re/mobs/fields/malaya.txt[Status]: Loading NPC file: npc/re/mobs/fields/manuk.txt[Status]: Loading NPC file: npc/re/mobs/fields/mjolnir.txt[Status]: Loading NPC file: npc/re/mobs/fields/morocc.txt[Status]: Loading NPC file: npc/re/mobs/fields/moscovia.txt[Status]: Loading NPC file: npc/re/mobs/fields/niflheim.txt[Status]: Loading NPC file: npc/re/mobs/fields/payon.txt[Status]: Loading NPC file: npc/re/mobs/fields/prontera.txt[Status]: Loading NPC file: npc/re/mobs/fields/rachel.txt[Status]: Loading NPC file: npc/re/mobs/fields/splendide.txt[Status]: Loading NPC file: npc/re/mobs/fields/umbala.txt[Status]: Loading NPC file: npc/re/mobs/fields/veins.txt[Status]: Loading NPC file: npc/re/mobs/fields/yuno.txt[Status]: Loading NPC file: npc/re/warps/cities/brasilis.txt[Status]: Loading NPC file: npc/re/warps/cities/dewata.txt[Status]: Loading NPC file: npc/re/warps/cities/dicastes.txt[Status]: Loading NPC file: npc/re/warps/cities/eclage.txt[Status]: Loading NPC file: npc/re/warps/cities/izlude.txt[Status]: Loading NPC file: npc/re/warps/cities/malangdo.txt[Status]: Loading NPC file: npc/re/warps/cities/malaya.txt[Status]: Loading NPC file: npc/re/warps/cities/rachel.txt[Status]: Loading NPC file: npc/re/warps/cities/yggdrasil.txt[Status]: Loading NPC file: npc/re/warps/dungeons/bra_dun.txt[Status]: Loading NPC file: npc/re/warps/dungeons/dic_dun.txt[Status]: Loading NPC file: npc/re/warps/dungeons/ecl_dun.txt[Status]: Loading NPC file: npc/re/warps/dungeons/iz_dun.txt[Status]: Loading NPC file: npc/re/warps/dungeons/moc_pryd.txt[Status]: Loading NPC file: npc/re/warps/fields/bif_fild.txt[Status]: Loading NPC file: npc/re/warps/fields/bra_fild.txt[Status]: Loading NPC file: npc/re/warps/fields/com_fild.txt[Status]: Loading NPC file: npc/re/warps/fields/dic_fild.txt[Status]: Loading NPC file: npc/re/warps/fields/geffen_fild.txt[Status]: Loading NPC file: npc/re/warps/fields/hugel_fild.txt[Status]: Loading NPC file: npc/re/warps/fields/morroc_fild.txt[Status]: Loading NPC file: npc/re/warps/fields/payon_fild.txt[Status]: Loading NPC file: npc/re/warps/fields/prontera_fild.txt[Status]: Loading NPC file: npc/re/warps/fields/rachel_fild.txt[Status]: Loading NPC file: npc/re/warps/fields/veins_fild.txt[Status]: Loading NPC file: npc/re/warps/fields/yuno_fild.txt[Status]: Loading NPC file: npc/re/warps/other/arena.txt[Status]: Loading NPC file: npc/re/warps/other/dimensional_gap.txt[Status]: Loading NPC file: npc/re/warps/other/jobquests.txt[Status]: Loading NPC file: npc/re/warps/other/paradise.txt[Status]: Loading NPC file: npc/re/warps/other/s_workshop.txt[Status]: Loading NPC file: npc/re/warps/other/sign.txt[Status]: Loading NPC file: npc/re/warps/guildcastles.txt[Status]: Loading NPC file: npc/custom/dm_campaign/shared/dm_common.txt[Status]: Loading NPC file: npc/custom/dm_campaign/shared/dm_flags.txt[Status]: Loading NPC file: npc/custom/dm_campaign/shared/dm_rewards.txt[Status]: Loading NPC file: npc/custom/dm_campaign/shared/dm_storyteller.txt[Status]: Loading NPC file: npc/custom/dm_campaign/shared/dm_session.txt[Status]: Loading NPC file: npc/custom/dm_campaign/shared/dm_quests.txt[Status]: Loading NPC file: npc/custom/dm_campaign/shared/dm_instances.txt[Status]: Loading NPC file: npc/custom/dm_campaign/shared/dm_console.txt[Error]: npc_parsesrcfile: Unknown syntax in file 'npc/custom/dm_campaign/shared/dm_console.txt', line '863'. Stopping...
+ * w1=S_BeatArc06:
+ * w2=
+ * w3=
+ * w4=
+[Status]: Loading NPC file: npc/custom/dm_campaign/act_01/arc_01_prontera.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_01/arc_02_payon.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_01/arc_03_morroc.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_01/arc_04_geffen.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_01/arc_05_alberta_izlude.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_02/arc_06_yuno.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_02/arc_07_einbroch.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_02/arc_08_glast_heim.txt[Warning]: npc_parsename: Name 'Sir Aldric the Unfrocked#dm' is too long (len=27) in file 'npc/custom/dm_campaign/act_02/arc_08_glast_heim.txt', line '8'. Truncating to 24 characters.
+[Status]: Loading NPC file: npc/custom/dm_campaign/act_02/arc_09_rachel.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_02/arc_10_lighthalzen.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_03/arc_11_hugel.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_03/arc_12_new_world.txt[Warning]: npc_parsename: Name 'Captain Roderick Vance#dm' is too long (len=25) in file 'npc/custom/dm_campaign/act_03/arc_12_new_world.txt', line '16'. Truncating to 24 characters.
+[Status]: Loading NPC file: npc/custom/dm_campaign/act_03/arc_13_nameless_island.txt[Warning]: npc_parsename: Name 'Father Quill the Doorkeeper#dm' is too long (len=30) in file 'npc/custom/dm_campaign/act_03/arc_13_nameless_island.txt', line '8'. Truncating to 24 characters.
+[Status]: Loading NPC file: npc/custom/dm_campaign/act_03/arc_14_veins.txt[Warning]: npc_parseview: Invalid NPC constant '4_M_07' specified in file 'npc/custom/dm_campaign/act_03/arc_14_veins.txt', line '16'. Defaulting to INVISIBLE_CLASS.
+[Status]: Loading NPC file: npc/custom/dm_campaign/act_04/arc_15_thanatos.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_04/arc_16_prontera_banquet.txt[Warning]: npc_parsename: Name 'Underground Prison Vault#dm' is too long (len=27) in file 'npc/custom/dm_campaign/act_04/arc_16_prontera_banquet.txt', line '16'. Truncating to 24 characters.
+[Status]: Loading NPC file: npc/custom/dm_campaign/act_04/arc_17_varmundt.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_04/arc_18_niflheim.txt[Status]: Loading NPC file: npc/custom/dm_campaign/act_04/arc_19_finale.txt[Info]: Done loading '16728' NPCs:
+	-'3489' Warps
+	-'2' Shops
+	-'13237' Scripts
+	-'3391' Spawn sets
+	-'49276' Mobs Cached
+	-'0' Mobs Not Cached
+[Warning]: buildin_setquestinfo: invalid quest given (21001).
+[Debug]: Source (NPC): noviship#room1-1d at iz_int04 (27,30)
+[Warning]: buildin_setquestinfo: invalid quest given (21001).
+[Debug]: Source (NPC): noviship#room1-1c at iz_int03 (27,30)
+[Warning]: buildin_setquestinfo: invalid quest given (21001).
+[Debug]: Source (NPC): noviship#room1-1b at iz_int02 (27,30)
+[Warning]: buildin_setquestinfo: invalid quest given (21001).
+[Debug]: Source (NPC): noviship#room1-1a at iz_int01 (27,30)
+[Warning]: buildin_setquestinfo: invalid quest given (21001).
+[Debug]: Source (NPC): noviship#room1-1 at iz_int (27,30)
+[Info]: consolemes: GM script loaded: Job Repair
+[Warning]: buildin_setquestinfo: invalid quest given (2298).
+[Debug]: Source (NPC): Adept Adventurer#ac_d at iz_ac01_d (45,80)
+[Warning]: buildin_setquestinfo: invalid quest given (2298).
+[Debug]: Source (NPC): Adept Adventurer#ac_c at iz_ac01_c (45,80)
+[Warning]: buildin_setquestinfo: invalid quest given (2298).
+[Debug]: Source (NPC): Adept Adventurer#ac_b at iz_ac01_b (45,80)
+[Warning]: buildin_setquestinfo: invalid quest given (2298).
+[Debug]: Source (NPC): Adept Adventurer#ac_a at iz_ac01_a (45,80)
+[Warning]: buildin_setquestinfo: invalid quest given (2298).
+[Debug]: Source (NPC): Adept Adventurer#ac at iz_ac01 (45,80)
+[Warning]: buildin_setquestinfo: invalid quest given (14154).
+[Debug]: Source (NPC): Dacquoise#ac_d at iz_ac01_d (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14155).
+[Debug]: Source (NPC): Dacquoise#ac_d at iz_ac01_d (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14156).
+[Debug]: Source (NPC): Dacquoise#ac_d at iz_ac01_d (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14157).
+[Debug]: Source (NPC): Dacquoise#ac_d at iz_ac01_d (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14154).
+[Debug]: Source (NPC): Dacquoise#ac_c at iz_ac01_c (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14155).
+[Debug]: Source (NPC): Dacquoise#ac_c at iz_ac01_c (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14156).
+[Debug]: Source (NPC): Dacquoise#ac_c at iz_ac01_c (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14157).
+[Debug]: Source (NPC): Dacquoise#ac_c at iz_ac01_c (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14154).
+[Debug]: Source (NPC): Dacquoise#ac_b at iz_ac01_b (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14155).
+[Debug]: Source (NPC): Dacquoise#ac_b at iz_ac01_b (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14156).
+[Debug]: Source (NPC): Dacquoise#ac_b at iz_ac01_b (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14157).
+[Debug]: Source (NPC): Dacquoise#ac_b at iz_ac01_b (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14154).
+[Debug]: Source (NPC): Dacquoise#ac_a at iz_ac01_a (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14155).
+[Debug]: Source (NPC): Dacquoise#ac_a at iz_ac01_a (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14156).
+[Debug]: Source (NPC): Dacquoise#ac_a at iz_ac01_a (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14157).
+[Debug]: Source (NPC): Dacquoise#ac_a at iz_ac01_a (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14154).
+[Debug]: Source (NPC): Dacquoise#ac at iz_ac01 (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14155).
+[Debug]: Source (NPC): Dacquoise#ac at iz_ac01 (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14156).
+[Debug]: Source (NPC): Dacquoise#ac at iz_ac01 (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (14157).
+[Debug]: Source (NPC): Dacquoise#ac at iz_ac01 (147,50)
+[Warning]: buildin_setquestinfo: invalid quest given (2299).
+[Debug]: Source (NPC): Attribute Expert#ac_d at iz_ac01_d (53,74)
+[Warning]: buildin_setquestinfo: invalid quest given (2299).
+[Debug]: Source (NPC): Attribute Expert#ac_c at iz_ac01_c (53,74)
+[Warning]: buildin_setquestinfo: invalid quest given (2299).
+[Debug]: Source (NPC): Attribute Expert#ac_b at iz_ac01_b (53,74)
+[Warning]: buildin_setquestinfo: invalid quest given (2299).
+[Debug]: Source (NPC): Attribute Expert#ac_a at iz_ac01_a (53,74)
+[Warning]: buildin_setquestinfo: invalid quest given (2299).
+[Debug]: Source (NPC): Attribute Expert#ac at iz_ac01 (53,74)
+[Warning]: buildin_setquestinfo: invalid quest given (1237).
+[Debug]: Source (NPC): Shop Helper#iz_d at izlude_d (115,181)
+[Warning]: buildin_setquestinfo: invalid quest given (1237).
+[Debug]: Source (NPC): Shop Helper#iz_c at izlude_c (115,181)
+[Warning]: buildin_setquestinfo: invalid quest given (1237).
+[Debug]: Source (NPC): Shop Helper#iz_b at izlude_b (115,181)
+[Warning]: buildin_setquestinfo: invalid quest given (1237).
+[Debug]: Source (NPC): Shop Helper#iz_a at izlude_a (115,181)
+[Warning]: buildin_setquestinfo: invalid quest given (1237).
+[Debug]: Source (NPC): Shop Helper#iz at izlude (115,181)
+[Warning]: buildin_setquestinfo: invalid quest given (4269).
+[Debug]: Source (NPC): Academy Receptionist#1_d at iz_ac01_d (100,39)
+[Warning]: buildin_setquestinfo: invalid quest given (4269).
+[Debug]: Source (NPC): Academy Receptionist#1_c at iz_ac01_c (100,39)
+[Warning]: buildin_setquestinfo: invalid quest given (4269).
+[Debug]: Source (NPC): Academy Receptionist#1_b at iz_ac01_b (100,39)
+[Warning]: buildin_setquestinfo: invalid quest given (4269).
+[Debug]: Source (NPC): Academy Receptionist#1_a at iz_ac01_a (100,39)
+[Warning]: buildin_setquestinfo: invalid quest given (4269).
+[Debug]: Source (NPC): Academy Receptionist#1 at iz_ac01 (100,39)
+[Warning]: buildin_setquestinfo: invalid quest given (15001).
+[Debug]: Source (NPC): Instructor Argos#iz_d at izlude_d (140,260)
+[Warning]: buildin_setquestinfo: invalid quest given (15001).
+[Debug]: Source (NPC): Instructor Argos#iz_c at izlude_c (140,260)
+[Warning]: buildin_setquestinfo: invalid quest given (15001).
+[Debug]: Source (NPC): Instructor Argos#iz_b at izlude_b (140,260)
+[Warning]: buildin_setquestinfo: invalid quest given (15001).
+[Debug]: Source (NPC): Instructor Argos#iz_a at izlude_a (140,260)
+[Warning]: buildin_setquestinfo: invalid quest given (15001).
+[Debug]: Source (NPC): Instructor Argos#iz at izlude (140,260)
+[Warning]: buildin_setquestinfo: invalid quest given (7473).
+[Debug]: Source (NPC): Criatura Academy Staff#d at izlude_d (122,207)
+[Warning]: buildin_setquestinfo: invalid quest given (7473).
+[Debug]: Source (NPC): Criatura Academy Staff#c at izlude_c (122,207)
+[Warning]: buildin_setquestinfo: invalid quest given (7473).
+[Debug]: Source (NPC): Criatura Academy Staff#b at izlude_b (122,207)
+[Warning]: buildin_setquestinfo: invalid quest given (7473).
+[Debug]: Source (NPC): Criatura Academy Staff#a at izlude_a (122,207)
+[Warning]: buildin_setquestinfo: invalid quest given (7473).
+[Debug]: Source (NPC): Criatura Academy Staff#0 at izlude (122,207)
+[Warning]: buildin_setquestinfo: invalid quest given (7472).
+[Debug]: Source (NPC): Captain Carocc#iz_d at izlude_d (198,213)
+[Warning]: buildin_setquestinfo: invalid quest given (7472).
+[Debug]: Source (NPC): Captain Carocc#iz_c at izlude_c (198,213)
+[Warning]: buildin_setquestinfo: invalid quest given (7472).
+[Debug]: Source (NPC): Captain Carocc#iz_b at izlude_b (198,213)
+[Warning]: buildin_setquestinfo: invalid quest given (7472).
+[Debug]: Source (NPC): Captain Carocc#iz_a at izlude_a (198,213)
+[Warning]: buildin_setquestinfo: invalid quest given (7472).
+[Debug]: Source (NPC): Captain Carocc#iz at izlude (198,213)
+[Warning]: buildin_setquestinfo: invalid quest given (7471).
+[Debug]: Source (NPC): Lumin#iz_int04 at int_land04 (73,100)
+[Warning]: buildin_setquestinfo: invalid quest given (7471).
+[Debug]: Source (NPC): Lumin#iz_int03 at int_land03 (73,100)
+[Warning]: buildin_setquestinfo: invalid quest given (7471).
+[Debug]: Source (NPC): Lumin#iz_int02 at int_land02 (73,100)
+[Warning]: buildin_setquestinfo: invalid quest given (7471).
+[Debug]: Source (NPC): Lumin#iz_int01 at int_land01 (73,100)
+[Warning]: buildin_setquestinfo: invalid quest given (7471).
+[Debug]: Source (NPC): Lumin#iz_int at int_land (73,100)
+[Warning]: buildin_setquestinfo: invalid quest given (21002).
+[Debug]: Source (NPC): Captain Carocc#iz_int04 at int_land04 (78,103)
+[Warning]: buildin_setquestinfo: invalid quest given (21002).
+[Debug]: Source (NPC): Captain Carocc#iz_int03 at int_land03 (78,103)
+[Warning]: buildin_setquestinfo: invalid quest given (21002).
+[Debug]: Source (NPC): Captain Carocc#iz_int02 at int_land02 (78,103)
+[Warning]: buildin_setquestinfo: invalid quest given (21002).
+[Debug]: Source (NPC): Captain Carocc#iz_int01 at int_land01 (78,103)
+[Warning]: buildin_setquestinfo: invalid quest given (21002).
+[Debug]: Source (NPC): Captain Carocc#int_land at int_land (78,103)
+[Warning]: buildin_setquestinfo: invalid quest given (21002).
+[Debug]: Source (NPC): Sailor#int_land04 at int_land04 (58,69)
+[Warning]: buildin_setquestinfo: invalid quest given (21002).
+[Debug]: Source (NPC): Sailor#int_land03 at int_land03 (58,69)
+[Warning]: buildin_setquestinfo: invalid quest given (21002).
+[Debug]: Source (NPC): Sailor#int_land02 at int_land02 (58,69)
+[Warning]: buildin_setquestinfo: invalid quest given (21002).
+[Debug]: Source (NPC): Sailor#int_land01 at int_land01 (58,69)
+[Warning]: buildin_setquestinfo: invalid quest given (21002).
+[Debug]: Source (NPC): Sailor#int_land at int_land (58,69)
+[Warning]: buildin_setquestinfo: invalid quest given (21001).
+[Debug]: Source (NPC): Wounded Swordsman#izintd at iz_int04 (56,32)
+[Warning]: buildin_setquestinfo: invalid quest given (21001).
+[Debug]: Source (NPC): Wounded Swordsman#izintc at iz_int03 (56,32)
+[Warning]: buildin_setquestinfo: invalid quest given (21001).
+[Debug]: Source (NPC): Wounded Swordsman#izintb at iz_int02 (56,32)
+[Warning]: buildin_setquestinfo: invalid quest given (21001).
+[Debug]: Source (NPC): Wounded Swordsman#izinta at iz_int01 (56,32)
+[Warning]: buildin_setquestinfo: invalid quest given (21001).
+[Debug]: Source (NPC): Wounded Swordsman#izint at iz_int (56,32)
+[Info]: consolemes: GM script loaded: Button Girl#sura
+[Info]: consolemes: GM script loaded: sorcereryal
+[Info]: consolemes: GM script loaded: #GMhelper02_gc
+[Info]: consolemes: GM script loaded: #GMhelper01_gc
+[Info]: consolemes: GM script loaded: Button Girl#wl
+[Info]: consolemes: GM script loaded: #renshucheck
+[Info]: consolemes: GM script loaded: R.Knight Job Manager
+[Info]: consolemes: GM script loaded: Worker#job_ranger
+[Info]: consolemes: GM script loaded: control#arch
+[Info]: consolemes: GM script loaded: Guide#ko_helper
+[Info]: consolemes: GM script loaded: Battle Test Control#ko
+[Info]: consolemes: GM script loaded: Investment_total#fund00
+[Info]: consolemes: GM script loaded: Initializing Mora Sanjo
+[Info]: consolemes: GM script loaded: Theore Set Guid
+[Info]: consolemes: GM script loaded: Field Bush Switch
+[Info]: consolemes: GM script loaded: Pintados Manager#pin
+[Info]: consolemes: GM script loaded: Bakonawa Intro Helper
+[Info]: consolemes: GM script loaded: Guidance for quest#ml
+[Info]: consolemes: GM script loaded: 13.3 Related Reset
+[Info]: consolemes: GM script loaded: Scaraba Dungeon Entrance
+[Info]: consolemes: GM script loaded: Assistant#para_suvquest
+[Info]: consolemes: GM script loaded: Bangungot Gate
+[Info]: consolemes: GM script loaded: Bakonawa's Rage
+[Info]: consolemes: GM script loaded: #arenacontrol
+[Info]: consolemes: GM script loaded: Soul Linker Var
+[Info]: consolemes: GM script loaded: Extra Story Patch
+[Info]: consolemes: GM script loaded: boss_aru_monas
+[Info]: consolemes: GM script loaded: Koshei GlobalVar#admin
+[Info]: consolemes: GM script loaded: MorrocAdmin_moc
+[Info]: consolemes: GM script loaded: MorrocAdmin_sec
+[Info]: consolemes: GM script loaded: #LyozienSwitch
+[Info]: consolemes: GM script loaded: lght_boss_admin
+[Info]: consolemes: GM script loaded: Juperos Manager
+[Info]: consolemes: GM script loaded: Factory Quest Test
+[Info]: consolemes: GM script loaded: ep13_nd2f_mng
+[Info]: consolemes: GM script loaded: Translator Preparation#1
+[Info]: consolemes: GM script loaded: Piece of crack#sec
+[Info]: consolemes: GM script loaded: #timer_alba01
+[Info]: consolemes: GM script loaded: Allied Manager#gm
+[Info]: consolemes: GM script loaded: Godly Item Quests#god
+[Info]: consolemes: GM script loaded: Golbal var
+[Info]: consolemes: GM script loaded: 1st Job Quest Reset
+[Info]: consolemes: GM script loaded: Monster Race Manager
+[Info]: consolemes: GM script loaded: Remarry Staff
+[Info]: consolemes: GM script loaded: Divorce Staff
+[Info]: consolemes: GM script loaded: The King of Midgart
+[Info]: consolemes: GM script loaded: Live Broadcast#arena
+[Info]: consolemes: GM script loaded: Picture Manager#arena
+[Info]: consolemes: GM script loaded: Reward Manager#arena
+[Info]: consolemes: GM script loaded: Arena Manager#arena
+[Info]: consolemes: GM script loaded: acolink#arena
+[Info]: consolemes: GM script loaded: log-on-aco#arena
+[Info]: consolemes: GM script loaded: Vote Globalvar Girl#yuno
+[Info]: consolemes: GM script loaded: Purification Admin#nyd2
+[Info]: consolemes: GM script loaded: Nidhoggur Manager
+[Info]: consolemes: GM script loaded: #Manager Mode5
+[Info]: consolemes: GM script loaded: #Manager Mode4
+[Info]: consolemes: GM script loaded: #Manager Mode3
+[Info]: consolemes: GM script loaded: #Manager Mode2
+[Info]: consolemes: GM script loaded: #Manager Mode1
+[Info]: consolemes: GM script loaded: Purification Stone#et2
+[Info]: consolemes: GM script loaded: #102Administrator Mode
+[Info]: consolemes: GM script loaded: Festival Manager#gq_fes2
+[Info]: consolemes: GM script loaded: Festival Manager#gq_fes0
+[Info]: consolemes: GM script loaded: Event controller#sch_gd
+[Info]: consolemes: GM script loaded: Event controller#aru_gd
+[Info]: consolemes: GM script loaded: Switch#batgnd
+[Info]: consolemes: GM script loaded: Release all#a02
+[Info]: consolemes: GM script loaded: Release all#a01
+[Info]: consolemes: GM script loaded: Release all#b02
+[Info]: consolemes: GM script loaded: Release all#b01
+[Status]: Event 'OnInit' executed with '2413' NPCs.
+[Info]: Hercules, Copyright (C) 2012-2025, Hercules Dev Team and others.
+[Info]: Licensed under the GNU General Public License, version 3 or later.
+[Status]: Server is 'ready' and listening on port '5121'.
+
+[Status]: Attempting to connect to Char Server. Please wait.
+[Status]: Connecting to 127.0.0.1:6121
+[Status]: Logging in to char server...
+[Status]: Successfully logged on to Char Server (Connection: '8').
+[Status]: Sending maps to char server...
+[Status]: Event 'OnInterIfInit' executed with '0' NPCs.
+[Status]: Event 'OnInterIfInitOnce' executed with '0' NPCs.
+[Status]: Requested '34' guild castles from char-server...
+[Status]: Map Server is now online.
+[Info]: Received Fame List of '0' characters.
+[Status]: Received '34' guild castles from char-server.

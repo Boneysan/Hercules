@@ -912,7 +912,7 @@ S_BeatArc04:
 	mes("[Arc 4 - The City Above the Beast]");
 	mes("Pick the NPC/location or story beat.");
 	next();
-	switch (select("Warp: Apprentice Elsbeth", "Beat: Elsbeth starts contracts", "Beat: Elsbeth branch", "Warp: Archmagus Doran", "Beat: Doran branch", "Warp: Baphomet's Seal", "Beat: Start Vault set-piece", "Beat: Complete Vault", "Warp: Brother Cassell", "Beat: Complete Arc 4", "Back")) {
+	switch (select("Warp: Apprentice Elsbeth", "Beat: Elsbeth starts contracts", "Beat: Elsbeth branch", "Warp: Archmagus Doran", "Beat: Doran branch", "Warp: Baphomet's Seal", "Beat: Start Vault set-piece", "Beat: Complete Vault", "Warp: Brother Cassell", "Beat: Complete Arc 4", "Beat: Vault seal pressure", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "geffen", 120, 100);
 		mes("Party warped to Apprentice Elsbeth.");
@@ -1014,6 +1014,15 @@ S_BeatArc04:
 		mes("Arc 4 marked complete for the current party.");
 		break;
 	case 11:
+		$@dm_arc04_pressure_party_id = getcharid(CHAR_ID_PARTY);
+		$@dm_arc04_pressure_damage = 4;
+		donpcevent "Vault Seal Pressure#dm::OnPressureStart";
+		if ($@dm_arc04_pressure_party_id <= 0)
+			dispbottom("[DM] No party detected; Vault seal pressure did not start.");
+		dispbottom("[DM] Vault seal pressure started.");
+		mes("Vault seal pressure started.");
+		break;
+	case 12:
 		callsub(S_Beat);
 		break;
 	}
@@ -1402,7 +1411,7 @@ S_BeatArc10:
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 10 - Lighthalzen (The Lab Beneath)");
 	next();
-	switch (select("Warp: Doctor Reuter", "Beat: Start Arc 10", "Beat: Reise Confronted", "Beat: Echo Freed", "Warp: Director Reise", "Warp: Kiel Core", "Beat: Spawn Kiel D-01", "Beat: Kiel slain (Act II Complete)", "Back")) {
+	switch (select("Warp: Doctor Reuter", "Beat: Start Arc 10", "Beat: Reise Confronted", "Beat: Echo Freed", "Warp: Director Reise", "Warp: Kiel Core", "Beat: Spawn Kiel D-01", "Beat: Kiel slain (Act II Complete)", "Beat: Lab containment pressure", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "lighthalzen", 120, 120);
 		mes("Party warped to Doctor Reuter.");
@@ -1457,6 +1466,15 @@ S_BeatArc10:
 		mes("Act II marked complete for the current party.");
 		break;
 	case 9:
+		$@dm_arc10_pressure_party_id = getcharid(CHAR_ID_PARTY);
+		$@dm_arc10_pressure_damage = 5;
+		donpcevent "Kiel Core Pressure#dm::OnPressureStart";
+		if ($@dm_arc10_pressure_party_id <= 0)
+			dispbottom("[DM] No party detected; Lab containment pressure did not start.");
+		dispbottom("[DM] Lab containment pressure started.");
+		mes("Lab containment pressure started.");
+		break;
+	case 10:
 		callsub(S_Beat);
 		break;
 	}
@@ -2023,7 +2041,7 @@ S_BeatArc18:
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 18 - Niflheim (The Witch of Death)");
 	next();
-	switch (select("Warp: The Familiar Dead", "Beat: Start Arc 18", "Beat: Himmelmez Killed", "Beat: Himmelmez Bargained", "Warp: Himmelmez", "Beat: Arc 18 Complete", "Back")) {
+	switch (select("Warp: The Familiar Dead", "Beat: Start Arc 18", "Beat: Himmelmez Killed", "Beat: Himmelmez Bargained", "Warp: Himmelmez", "Beat: Arc 18 Complete", "Beat: Himmelmez curse pressure", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "niflheim", 100, 100);
 		mes("Party warped to The Familiar Dead.");
@@ -2065,6 +2083,15 @@ S_BeatArc18:
 		mes("Arc 18 marked complete for the current party.");
 		break;
 	case 7:
+		$@dm_arc18_pressure_party_id = getcharid(CHAR_ID_PARTY);
+		$@dm_arc18_pressure_damage = 3;
+		donpcevent "Himmelmez Pressure#dm::OnPressureStart";
+		if ($@dm_arc18_pressure_party_id <= 0)
+			dispbottom("[DM] No party detected; Himmelmez curse pressure did not start.");
+		dispbottom("[DM] Himmelmez curse pressure started.");
+		mes("Himmelmez curse pressure started.");
+		break;
+	case 8:
 		callsub(S_Beat);
 		break;
 	}

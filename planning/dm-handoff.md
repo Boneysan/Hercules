@@ -250,8 +250,8 @@ Use this checklist for the next implementation and validation passes.
   pressure.
 - [x] Static audit: `DM_HazardArea()` detaches party member RIDs before
   continuing past out-of-range/out-of-map targets.
-- [ ] Add more lower-stakes trap/hazard scenes if boss-only hazards still feel
-  too sparse.
+- [x] Add more lower-stakes trap/hazard scenes if boss-only hazards still feel
+  too sparse. (Added Arc 4, Arc 10, Arc 18)
 - [ ] Add concrete puzzle scripts using `DM_ResetPuzzleFlag()` if the campaign
   needs more non-combat mechanics.
 
