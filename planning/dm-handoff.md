@@ -67,20 +67,38 @@ updates in `npc/custom/dm_campaign/`.
 
 ### Single Active Party
 
-`$dm_active_party` is a single global variable. Only one DM session can run at a
-time on this server. If two groups ever need simultaneous sessions (e.g., two
-GMs running separate campaign parties at the same time), the current gating
-logic would need to change: instead of checking `getcharid(CHAR_ID_PARTY) ==
-$dm_active_party`, it would need to check a per-character or per-party flag
-stored with a key like `$dm_session_<party_id>`. This would require:
-
-1. A `$dm_session_<party_id>` global per party (set 1 on mode on, cleared on mode off).
-2. NPC gates checking `getd("$dm_session_" + getcharid(CHAR_ID_PARTY))` instead of
-   the single `$dm_active_party` equality.
-3. The console tracking its own party's session state rather than a global slot.
-
 For the intended single-DM use case (one game night group), the current design
-is correct and sufficient.
+is correct and sufficient. This note records what multi-party would actually
+take, because it is a **smaller change than it first appears** — the campaign's
+*game state* is already per-party:
+
+- **Story flags** (`dm_arc01_*`) are per-character — `DM_PartyApplyFlag`
+  (dm_quests.txt) attaches each party member's RID and `setd`s the flag on them.
+- **Quest progress** is per-character (engine quest log).
+- **Instances** are already keyed per party as `$dm_inst_<party_id>`
+  (dm_instances.txt).
+
+The *only* state hard-coding "one party at a time" is the session gate:
+
+1. `$dm_mode` — a single global on/off switch.
+2. `$dm_active_party` — a single global slot holding the one active party id.
+3. The gate expression `!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party`
+   is **copy-pasted across ~49 NPC sites** in the arc files.
+
+To support simultaneous sessions (e.g., two GMs running separate parties), the
+contained change would be:
+
+1. Collapse the 49 duplicated gates into one helper, e.g.
+   `DM_PartyActive()` returning `getd("$dm_session_" + getcharid(CHAR_ID_PARTY))`.
+2. Have `@dm mode on/off` set/clear `$dm_session_<party_id>` (mirroring the
+   existing `$dm_inst_<party_id>` pattern) instead of overwriting the single
+   `$dm_active_party` slot.
+3. Update `@dm status`/`@dm reset` and the Session Board to report per-party
+   session state rather than the single global slot.
+
+No engine or data-model changes are needed — the per-party plumbing already
+exists. The work is the helper + the gate swap, then an in-client playtest with
+two parties active at once.
 
 ---
 
