@@ -22,7 +22,7 @@
 
 // ── Keeper Lysandra — The Archivist ────────────────────────────────────────
 aldebaran,100,100,5	script	Keeper Lysandra#dm	4_F_01,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20191) == 2) {
 		mes("[Keeper Lysandra]");
 		if (dm_arc15_pratt_challenged)
@@ -191,7 +191,7 @@ S_TurnIns:
 
 // ── Scholar Pratt — The Method Without the Cost ────────────────────────────
 aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc15_started) {
 		mes("[Scholar Pratt]");
 		mes("The Tower's archives are restricted to approved researchers. I suggest you speak to Keeper Lysandra.");

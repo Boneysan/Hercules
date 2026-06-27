@@ -21,7 +21,7 @@
 
 // ── Father Quill the Doorkeeper — The Last Ward ────────────────────────────
 nameless_i,100,100,5	script	Father Quill#dm	4_M_04,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20171) == 2) {
 		mes("[Father Quill]");
 		if (dm_arc13_carrion_bribed)
@@ -208,7 +208,7 @@ S_TurnIns:
 
 // ── The Broker Carrion — The Deal That Shouldn't Be Tempting ───────────────
 nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc13_started) {
 		mes("[The Broker Carrion]");
 		mes("Not yet. Come back when you have seen what Father Quill is protecting.");

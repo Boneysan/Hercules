@@ -22,7 +22,7 @@
 
 // ── Doctor Sabine Reuter — The Whistleblower ───────────────────────────────
 lighthalzen,120,120,5	script	Doctor Sabine Reuter#dm	4_F_05,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20141) == 2) {
 		mes("[Doctor Reuter]");
 		if (dm_arc10_echo_freed)
@@ -216,7 +216,7 @@ S_TurnIns:
 
 // ── Director Hallan Reise — The Architect ──────────────────────────────────
 lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc10_started) {
 		mes("[Director Reise]");
 		mes("Lighthalzen's executive facilities are not open to the public.");

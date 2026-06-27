@@ -21,7 +21,7 @@
 
 // ── Priest Eadric — The Faithful Witness ───────────────────────────────────
 hugel,100,100,5	script	Priest Eadric#dm	4_M_01,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20151) == 2) {
 		mes("[Priest Eadric]");
 		if (dm_arc11_bjorn_joined)
@@ -204,7 +204,7 @@ S_TurnIns:
 
 // ── Zealot Bjorn — The Man Who Was Right for the Wrong Reasons ─────────────
 hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc11_started) {
 		mes("[Zealot Bjorn]");
 		mes("Midgard sleeps. The reckoning approaches and no one watches the horizon.");

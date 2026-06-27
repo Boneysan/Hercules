@@ -23,7 +23,7 @@
 
 // Rashid - tomb-guide and Arc 3 quest-giver
 morocc,159,97,4	script	Rashid the Guide#dm	4_M_ORIENT02,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20018) == 2) {
 		mes("[Rashid]");
 		if (dm_arc03_rashid_mocked)
@@ -240,7 +240,7 @@ S_TurnIns:
 
 // Mother Sabra - relief mission leader and human villain
 moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc03_started) {
 		mes("[Mother Sabra]");
 		mes("If you need water, take water. If you need a sermon, I have no strength left for one.");
@@ -295,7 +295,7 @@ moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
 
 // Osiris - side tomb-court set-piece
 moc_pryd04,100,92,4	script	Osiris's Court#dm	4_M_NFDEADMAN,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20017) != 1) {
 		if (questprogress(20017) == 2) {
 			mes("^3355FF*The sand-drowned court is still. A gold mask lies warm only in memory.*^000000");
@@ -357,7 +357,7 @@ OnInit:
 
 // Amon Ra - main Pyramid set-piece
 moc_pryd06,102,85,4	script	Amon Ra's Lid#dm	4_M_CRU_HEAD,{
-	if (!$dm_mode) { close; }
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20018) != 1) {
 		if (questprogress(20018) == 2) {
 			mes("^3355FF*Behind the throne, the cult-cut shaft remains sealed. It breathes cold air from far below.*^000000");

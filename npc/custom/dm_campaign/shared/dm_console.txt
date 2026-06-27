@@ -309,15 +309,18 @@ S_Mode:
 	.@action$ = .@atcmd_parameters$[.@offset];
 	if (.@action$ == "on") {
 		$dm_mode = 1;
+		$dm_active_party = getcharid(CHAR_ID_PARTY);
 		dispbottom("[DM] DnD mode enabled. MVP spawns will be suppressed.");
+		dispbottom("[DM] Campaign NPCs are active for party " + $dm_active_party + ".");
 		return;
 	}
 	if (.@action$ == "off") {
 		$dm_mode = 0;
+		$dm_active_party = 0;
 		dispbottom("[DM] DnD mode disabled. MVP spawns will resume naturally.");
 		return;
 	}
-	dispbottom("[DM] Mode is currently " + ($dm_mode ? "ON" : "OFF"));
+	dispbottom("[DM] Mode is currently " + ($dm_mode ? "ON" : "OFF") + ($dm_mode ? " (party " + $dm_active_party + ")" : ""));
 	dispbottom("[DM] Usage: @dm mode <on|off>");
 	return;
 
