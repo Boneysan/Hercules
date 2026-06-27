@@ -304,11 +304,11 @@ ein_dun02,150,150,0	script	Reactivation Bay#dm	HIDDEN_NPC,{
 
 OnPressureStart:
 	stopnpctimer;
-	.pressure_map$ = strnpcinfo(NPC_MAP);
-	.pressure_party_id = $@dm_arc07_pressure_party_id;
-	.pressure_damage = $@dm_arc07_pressure_damage;
-	if (.pressure_party_id > 0) {
-		mapannounce .pressure_map$, "[Reactivation Bay] Smoke stacks vent across the mine floor as RSX-0806 comes online.", bc_map, 0x999999;
+	'pressure_map$ = strnpcinfo(NPC_MAP);
+	'pressure_party_id = $@dm_arc07_pressure_party_id;
+	'pressure_damage = $@dm_arc07_pressure_damage;
+	if ('pressure_party_id > 0) {
+		mapannounce 'pressure_map$, "[Reactivation Bay] Smoke stacks vent across the mine floor as RSX-0806 comes online.", bc_map, 0x999999;
 		initnpctimer;
 	}
 	end;
@@ -318,18 +318,18 @@ OnPressureStop:
 	end;
 
 OnTimer5000:
-	mapannounce .pressure_map$, "[Reactivation Bay] Hot smoke rolls between the rail pylons.", bc_map, 0x999999;
-	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 7, .pressure_damage, SC_BLIND, 4000, .pressure_party_id);
+	mapannounce 'pressure_map$, "[Reactivation Bay] Hot smoke rolls between the rail pylons.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 150, 150, 7, 'pressure_damage, SC_BLIND, 4000, 'pressure_party_id);
 	end;
 
 OnTimer10000:
-	mapannounce .pressure_map$, "[Reactivation Bay] The old boilers cough dust and machine oil.", bc_map, 0x999999;
-	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 7, .pressure_damage, SC_BLIND, 4000, .pressure_party_id);
+	mapannounce 'pressure_map$, "[Reactivation Bay] The old boilers cough dust and machine oil.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 150, 150, 7, 'pressure_damage, SC_BLIND, 4000, 'pressure_party_id);
 	end;
 
 OnTimer15000:
-	mapannounce .pressure_map$, "[Reactivation Bay] A pressure valve bursts, then seals itself with a shriek.", bc_map, 0x999999;
-	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 7, .pressure_damage, SC_BLIND, 4000, .pressure_party_id);
+	mapannounce 'pressure_map$, "[Reactivation Bay] A pressure valve bursts, then seals itself with a shriek.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 150, 150, 7, 'pressure_damage, SC_BLIND, 4000, 'pressure_party_id);
 	stopnpctimer;
 	end;
 

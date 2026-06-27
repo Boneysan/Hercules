@@ -274,11 +274,11 @@ thor_v03,150,150,0	script	Magma Cathedral#dm	HIDDEN_NPC,{
 
 OnMagmaStart:
 	stopnpctimer;
-	.magma_map$ = strnpcinfo(NPC_MAP);
-	.magma_party_id = $@dm_arc14_magma_party_id;
-	.magma_damage = $@dm_arc14_magma_damage;
-	if (.magma_party_id > 0) {
-		mapannounce .magma_map$, "[Magma Cathedral] The floor begins to pulse with Surt's heat.", bc_map, 0xFF6600;
+	'magma_map$ = strnpcinfo(NPC_MAP);
+	'magma_party_id = $@dm_arc14_magma_party_id;
+	'magma_damage = $@dm_arc14_magma_damage;
+	if ('magma_party_id > 0) {
+		mapannounce 'magma_map$, "[Magma Cathedral] The floor begins to pulse with Surt's heat.", bc_map, 0xFF6600;
 		initnpctimer;
 	}
 	end;
@@ -288,28 +288,28 @@ OnMagmaStop:
 	end;
 
 OnTimer8000:
-	mapannounce .magma_map$, "[Magma Cathedral] A ring of heat rolls out from the seal.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", .magma_map$, 150, 150, 8, .magma_damage, 0, 0, .magma_party_id);
+	mapannounce 'magma_map$, "[Magma Cathedral] A ring of heat rolls out from the seal.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 8, 'magma_damage, 0, 0, 'magma_party_id);
 	end;
 
 OnTimer16000:
-	mapannounce .magma_map$, "[Magma Cathedral] The seal vents another furnace breath.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", .magma_map$, 150, 150, 8, .magma_damage, 0, 0, .magma_party_id);
+	mapannounce 'magma_map$, "[Magma Cathedral] The seal vents another furnace breath.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 8, 'magma_damage, 0, 0, 'magma_party_id);
 	end;
 
 OnTimer24000:
-	mapannounce .magma_map$, "[Magma Cathedral] The lava channels brighten underfoot.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", .magma_map$, 150, 150, 8, .magma_damage, 0, 0, .magma_party_id);
+	mapannounce 'magma_map$, "[Magma Cathedral] The lava channels brighten underfoot.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 8, 'magma_damage, 0, 0, 'magma_party_id);
 	end;
 
 OnTimer32000:
-	mapannounce .magma_map$, "[Magma Cathedral] Surt's pressure hammers the chamber again.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", .magma_map$, 150, 150, 8, .magma_damage, 0, 0, .magma_party_id);
+	mapannounce 'magma_map$, "[Magma Cathedral] Surt's pressure hammers the chamber again.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 8, 'magma_damage, 0, 0, 'magma_party_id);
 	end;
 
 OnTimer40000:
-	mapannounce .magma_map$, "[Magma Cathedral] The cathedral spends its last stored heat.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", .magma_map$, 150, 150, 8, .magma_damage, 0, 0, .magma_party_id);
+	mapannounce 'magma_map$, "[Magma Cathedral] The cathedral spends its last stored heat.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 8, 'magma_damage, 0, 0, 'magma_party_id);
 	stopnpctimer;
 	end;
 

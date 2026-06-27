@@ -292,13 +292,13 @@ thana_boss,150,150,0	script	Memory of Thanatos#dm	HIDDEN_NPC,{
 
 OnResonanceStart:
 	stopnpctimer;
-	.resonance_map$ = strnpcinfo(NPC_MAP);
-	.resonance_party_id = $@dm_arc15_resonance_party_id;
-	.resonance_damage = $@dm_arc15_resonance_damage;
-	.resonance_status = $@dm_arc15_resonance_status;
-	.resonance_status_ms = $@dm_arc15_resonance_status_ms;
-	if (.resonance_party_id > 0) {
-		mapannounce .resonance_map$, "[Thanatos Memory] The tower begins replaying the cost of the seal.", bc_map, 0xCC99FF;
+	'resonance_map$ = strnpcinfo(NPC_MAP);
+	'resonance_party_id = $@dm_arc15_resonance_party_id;
+	'resonance_damage = $@dm_arc15_resonance_damage;
+	'resonance_status = $@dm_arc15_resonance_status;
+	'resonance_status_ms = $@dm_arc15_resonance_status_ms;
+	if ('resonance_party_id > 0) {
+		mapannounce 'resonance_map$, "[Thanatos Memory] The tower begins replaying the cost of the seal.", bc_map, 0xCC99FF;
 		initnpctimer;
 	}
 	end;
@@ -308,23 +308,23 @@ OnResonanceStop:
 	end;
 
 OnTimer6000:
-	mapannounce .resonance_map$, "[Thanatos Memory] A remembered oath crushes the chamber.", bc_map, 0xCC99FF;
-	callfunc("DM_HazardArea", .resonance_map$, 150, 150, 9, .resonance_damage, .resonance_status, .resonance_status_ms, .resonance_party_id);
+	mapannounce 'resonance_map$, "[Thanatos Memory] A remembered oath crushes the chamber.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", 'resonance_map$, 150, 150, 9, 'resonance_damage, 'resonance_status, 'resonance_status_ms, 'resonance_party_id);
 	end;
 
 OnTimer12000:
-	mapannounce .resonance_map$, "[Thanatos Memory] Four absent volunteers answer in echo.", bc_map, 0xCC99FF;
-	callfunc("DM_HazardArea", .resonance_map$, 150, 150, 9, .resonance_damage, .resonance_status, .resonance_status_ms, .resonance_party_id);
+	mapannounce 'resonance_map$, "[Thanatos Memory] Four absent volunteers answer in echo.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", 'resonance_map$, 150, 150, 9, 'resonance_damage, 'resonance_status, 'resonance_status_ms, 'resonance_party_id);
 	end;
 
 OnTimer18000:
-	mapannounce .resonance_map$, "[Thanatos Memory] The seal's pressure finds every living heartbeat.", bc_map, 0xCC99FF;
-	callfunc("DM_HazardArea", .resonance_map$, 150, 150, 9, .resonance_damage, .resonance_status, .resonance_status_ms, .resonance_party_id);
+	mapannounce 'resonance_map$, "[Thanatos Memory] The seal's pressure finds every living heartbeat.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", 'resonance_map$, 150, 150, 9, 'resonance_damage, 'resonance_status, 'resonance_status_ms, 'resonance_party_id);
 	end;
 
 OnTimer24000:
-	mapannounce .resonance_map$, "[Thanatos Memory] The tower resonance fractures and fades.", bc_map, 0xCC99FF;
-	callfunc("DM_HazardArea", .resonance_map$, 150, 150, 9, .resonance_damage, .resonance_status, .resonance_status_ms, .resonance_party_id);
+	mapannounce 'resonance_map$, "[Thanatos Memory] The tower resonance fractures and fades.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", 'resonance_map$, 150, 150, 9, 'resonance_damage, 'resonance_status, 'resonance_status_ms, 'resonance_party_id);
 	stopnpctimer;
 	end;
 

@@ -277,13 +277,13 @@ spl_fild01,150,150,0	script	Rift Anchor#dm	HIDDEN_NPC,{
 
 OnRiftStart:
 	stopnpctimer;
-	.rift_map$ = strnpcinfo(NPC_MAP);
-	.rift_party_id = $@dm_arc12_rift_party_id;
-	.rift_damage = $@dm_arc12_rift_damage;
-	.rift_status = $@dm_arc12_rift_status;
-	.rift_status_ms = $@dm_arc12_rift_status_ms;
-	if (.rift_party_id > 0) {
-		mapannounce .rift_map$, "[Rift Anchor] The membrane thins. Space pulls toward the wound.", bc_map, 0x66CCFF;
+	'rift_map$ = strnpcinfo(NPC_MAP);
+	'rift_party_id = $@dm_arc12_rift_party_id;
+	'rift_damage = $@dm_arc12_rift_damage;
+	'rift_status = $@dm_arc12_rift_status;
+	'rift_status_ms = $@dm_arc12_rift_status_ms;
+	if ('rift_party_id > 0) {
+		mapannounce 'rift_map$, "[Rift Anchor] The membrane thins. Space pulls toward the wound.", bc_map, 0x66CCFF;
 		initnpctimer;
 	}
 	end;
@@ -293,23 +293,23 @@ OnRiftStop:
 	end;
 
 OnTimer7000:
-	mapannounce .rift_map$, "[Rift Anchor] A crosswind from the Ash Vacuum tears through the anchor.", bc_map, 0x66CCFF;
-	callfunc("DM_HazardArea", .rift_map$, 150, 150, 7, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	mapannounce 'rift_map$, "[Rift Anchor] A crosswind from the Ash Vacuum tears through the anchor.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 7, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	end;
 
 OnTimer14000:
-	mapannounce .rift_map$, "[Rift Anchor] The horizon folds inward and snaps back.", bc_map, 0x66CCFF;
-	callfunc("DM_HazardArea", .rift_map$, 150, 150, 7, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	mapannounce 'rift_map$, "[Rift Anchor] The horizon folds inward and snaps back.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 7, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	end;
 
 OnTimer21000:
-	mapannounce .rift_map$, "[Rift Anchor] Static crawls over the wound in the world.", bc_map, 0x66CCFF;
-	callfunc("DM_HazardArea", .rift_map$, 150, 150, 7, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	mapannounce 'rift_map$, "[Rift Anchor] Static crawls over the wound in the world.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 7, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	end;
 
 OnTimer28000:
-	mapannounce .rift_map$, "[Rift Anchor] The rift exhales one last unstable pressure wave.", bc_map, 0x66CCFF;
-	callfunc("DM_HazardArea", .rift_map$, 150, 150, 7, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	mapannounce 'rift_map$, "[Rift Anchor] The rift exhales one last unstable pressure wave.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 7, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	stopnpctimer;
 	end;
 

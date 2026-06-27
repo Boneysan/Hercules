@@ -301,7 +301,7 @@ moc_pryd04,100,92,4	script	Osiris's Court#dm	4_M_NFDEADMAN,{
 		mes("^3355FF*The court has not convened for you yet. Rashid must name the dead king first.*^000000");
 		close();
 	}
-	if (.boss_up) {
+	if ('boss_up) {
 		mes("^3355FF*Osiris's court is already rising. Break the court before the king.*^000000");
 		close();
 	}
@@ -324,7 +324,7 @@ moc_pryd04,100,92,4	script	Osiris's Court#dm	4_M_NFDEADMAN,{
 
 	.@map$ = strnpcinfo(NPC_MAP);
 	getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
-	.boss_up = 1;
+	'boss_up = 1;
 	mapannounce .@map$, "[Osiris's Court] The dead king rises. His court shields him.", bc_map, 0xFFAA33;
 	areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Sand Court", 1165, 4, "Osiris's Court#dm::OnCourtDead";
 	areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Buried Knife", 1119, 2, "Osiris's Court#dm::OnCourtDead";
@@ -335,7 +335,7 @@ OnCourtDead:
 	end;
 
 OnOsirisDead:
-	.boss_up = 0;
+	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Osiris's Court#dm::OnCourtDead";
 	callfunc("DM_InstanceQuestComplete", 20017);
@@ -349,7 +349,7 @@ OnOsirisDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20017, 1;
-	.boss_up = 0;
+	'boss_up = 0;
 	end;
 }
 
@@ -363,7 +363,7 @@ moc_pryd06,102,85,4	script	Amon Ra's Lid#dm	4_M_CRU_HEAD,{
 		mes("^3355FF*Amon Ra's chamber is not ready to reveal what it covers. Speak with Rashid first.*^000000");
 		close();
 	}
-	if (.boss_up) {
+	if ('boss_up) {
 		mes("^3355FF*The god-king is awake. The lid-stone groans behind him.*^000000");
 		close();
 	}
@@ -405,7 +405,7 @@ moc_pryd06,102,85,4	script	Amon Ra's Lid#dm	4_M_CRU_HEAD,{
 	if (.@adds < 1)
 		.@adds = 1;
 
-	.boss_up = 1;
+	'boss_up = 1;
 	mapannounce .@map$, "[Amon Ra's Lid] The tomb is only a lid. The king beneath the king wakes.", bc_map, 0xFFAA33;
 	monster .@map$, .@x, .@y, "Amon Ra", 1511, 1, "Amon Ra's Lid#dm::OnAmonDead";
 	areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Seal Digger", 1041, .@adds, "Amon Ra's Lid#dm::OnAddDead";
@@ -415,7 +415,7 @@ OnAddDead:
 	end;
 
 OnAmonDead:
-	.boss_up = 0;
+	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Amon Ra's Lid#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20018);
@@ -431,6 +431,6 @@ OnAmonDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20018, 1;
-	.boss_up = 0;
+	'boss_up = 0;
 	end;
 }

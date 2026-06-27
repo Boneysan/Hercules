@@ -292,7 +292,7 @@ gef_dun02,214,212,4	script	Baphomet's Seal#dm	4_ENERGY_RED,{
 		mes("^3355FF*The inner vault is protected by an outer glyph sequence. You must align the three outer glyphs before approaching the center.*^000000");
 		close();
 	}
-	if (.boss_up) {
+	if ('boss_up) {
 		mes("^3355FF*Baphomet is already battering the seal. Survive the prayer.*^000000");
 		close();
 	}
@@ -343,7 +343,7 @@ gef_dun02,214,212,4	script	Baphomet's Seal#dm	4_ENERGY_RED,{
 	if (.@adds < 1)
 		.@adds = 1;
 
-	.boss_up = 1;
+	'boss_up = 1;
 	mapannounce .@map$, "[Baphomet's Seal] The prison-prayer breaks rhythm. Baphomet answers.", bc_map, 0xFFAA33;
 	monster .@map$, .@x, .@y, "Baphomet", 1039, 1, "Baphomet's Seal#dm::OnBaphometDead";
 	monster .@map$, .@x + 2, .@y + 2, "Doppelganger", 1046, 1, "Baphomet's Seal#dm::OnDoppelDead";
@@ -359,7 +359,7 @@ OnDoppelDead:
 	end;
 
 OnBaphometDead:
-	.boss_up = 0;
+	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Baphomet's Seal#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20023);
@@ -375,7 +375,7 @@ OnBaphometDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20023, 1;
-	.boss_up = 0;
+	'boss_up = 0;
 	end;
 }
 
@@ -440,11 +440,11 @@ gef_dun02,214,212,0	script	Vault Seal Pressure#dm	HIDDEN_NPC,{
 
 OnPressureStart:
 	stopnpctimer;
-	.pressure_map$ = strnpcinfo(NPC_MAP);
-	.pressure_party_id = $@dm_arc04_pressure_party_id;
-	.pressure_damage = $@dm_arc04_pressure_damage;
-	if (.pressure_party_id > 0) {
-		mapannounce .pressure_map$, "[Baphomet's Seal] The wards bleed dark energy as the prison struggles.", bc_map, 0x999999;
+	'pressure_map$ = strnpcinfo(NPC_MAP);
+	'pressure_party_id = $@dm_arc04_pressure_party_id;
+	'pressure_damage = $@dm_arc04_pressure_damage;
+	if ('pressure_party_id > 0) {
+		mapannounce 'pressure_map$, "[Baphomet's Seal] The wards bleed dark energy as the prison struggles.", bc_map, 0x999999;
 		initnpctimer;
 	}
 	end;
@@ -454,18 +454,18 @@ OnPressureStop:
 	end;
 
 OnTimer5000:
-	mapannounce .pressure_map$, "[Baphomet's Seal] Dark red light pulses from the floor glyphs.", bc_map, 0x999999;
-	callfunc("DM_HazardArea", .pressure_map$, 214, 212, 10, .pressure_damage, SC_CURSE, 4000, .pressure_party_id);
+	mapannounce 'pressure_map$, "[Baphomet's Seal] Dark red light pulses from the floor glyphs.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 214, 212, 10, 'pressure_damage, SC_CURSE, 4000, 'pressure_party_id);
 	end;
 
 OnTimer10000:
-	mapannounce .pressure_map$, "[Baphomet's Seal] The prison-prayer stutters, venting raw curse energy.", bc_map, 0x999999;
-	callfunc("DM_HazardArea", .pressure_map$, 214, 212, 10, .pressure_damage, SC_CURSE, 4000, .pressure_party_id);
+	mapannounce 'pressure_map$, "[Baphomet's Seal] The prison-prayer stutters, venting raw curse energy.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 214, 212, 10, 'pressure_damage, SC_CURSE, 4000, 'pressure_party_id);
 	end;
 
 OnTimer15000:
-	mapannounce .pressure_map$, "[Baphomet's Seal] Another crack forms in the keystone.", bc_map, 0x999999;
-	callfunc("DM_HazardArea", .pressure_map$, 214, 212, 10, .pressure_damage, SC_CURSE, 4000, .pressure_party_id);
+	mapannounce 'pressure_map$, "[Baphomet's Seal] Another crack forms in the keystone.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 214, 212, 10, 'pressure_damage, SC_CURSE, 4000, 'pressure_party_id);
 	stopnpctimer;
 	end;
 }
@@ -527,7 +527,7 @@ gef_dun02,209,212,4	script	West Seal Glyph#dm	4_ENERGY_WHITE,{
 	if (dm_arc04_puzzle_1 == 1 && dm_arc04_puzzle_2 == 1 && dm_arc04_puzzle_3 == 0) {
 		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_3", 1);
 		mes("The final glyph lights up. A heavy stone grinding noise comes from the center of the vault.");
-		mapannounce "gef_dun02", "The outer seal sequence is complete. The vault center is accessible.", bc_map, 0x3355FF;
+		mapannounce strnpcinfo(NPC_MAP), "The outer seal sequence is complete. The vault center is accessible.", bc_map, 0x3355FF;
 	} else {
 		mes("The glyph flares red and sparks. The sequence is broken.");
 		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);

@@ -20,7 +20,7 @@ function	script	DM_RollRewardItem	{
 			return callfunc("F_Rand", Yellow_Potion, Center_Potion, Awakening_Potion, Grape, Rough_Oridecon, Rough_Elunium);
 		if (.@tier == 2)
 			return callfunc("F_Rand", White_Potion, Blue_Potion, Old_Blue_Box, Seed_Of_Yggdrasil, Oridecon, Elunium);
-		return callfunc("F_Rand", Old_Violet_Box, Yggdrasilberry, Old_Blue_Box, Gold, Elunium, Oridecon);
+		return callfunc("F_Rand", Old_Blue_Box, Gold, Elunium, Oridecon);
 	}
 
 	if (.@level < 81) {
@@ -30,7 +30,7 @@ function	script	DM_RollRewardItem	{
 			return callfunc("F_Rand", White_Potion, Awakening_Potion, Berserk_Potion, Wing_Of_Butterfly, Blue_Potion, Royal_Jelly);
 		if (.@tier == 2)
 			return callfunc("F_Rand", Old_Blue_Box, Seed_Of_Yggdrasil, Yggdrasilberry, Oridecon, Elunium, Gold);
-		return callfunc("F_Rand", Old_Violet_Box, Old_Card_Album, Yggdrasilberry, Elunium, Oridecon, Treasure_Box, EMPELIUM);
+		return callfunc("F_Rand", Old_Blue_Box, Yggdrasilberry, Elunium, Oridecon, Gold);
 	}
 
 	if (.@tier <= 0)
@@ -51,27 +51,27 @@ function	script	DM_RollArcRewardItem	{
 		if (.@tier <= 0) return callfunc("F_Rand", Red_Potion, Green_Herb, Jellopy, Sticky_Mucus, Wing_Of_Fly, Apple, Meat, Iron_Ore, Phracon);
 		if (.@tier == 1) return callfunc("F_Rand", Orange_Potion, Yellow_Potion, Center_Potion, Awakening_Potion, Wing_Of_Butterfly, Grape, Strawberry, Rough_Oridecon, Rough_Elunium);
 		if (.@tier == 2) return callfunc("F_Rand", White_Potion, Blue_Potion, Old_Blue_Box, Seed_Of_Yggdrasil, Oridecon, Elunium, Royal_Jelly);
-		return callfunc("F_Rand", Old_Violet_Box, Yggdrasilberry, Old_Blue_Box, Elunium, Oridecon, Gold, Royal_Jelly);
+		return callfunc("F_Rand", Old_Blue_Box, Elunium, Oridecon, Gold, Royal_Jelly);
 	case 2:
 		if (.@tier <= 0) return callfunc("F_Rand", Green_Herb, Red_Potion, Orange_Potion, Grape, Strawberry, Wing_Of_Fly);
 		if (.@tier == 1) return callfunc("F_Rand", Yellow_Potion, White_Potion, Blue_Potion, Royal_Jelly, Wing_Of_Butterfly);
 		if (.@tier == 2) return callfunc("F_Rand", Seed_Of_Yggdrasil, Old_Blue_Box, Elunium, Oridecon, Royal_Jelly);
-		return callfunc("F_Rand", Yggdrasilberry, Old_Violet_Box, Old_Blue_Box, Gold);
+		return callfunc("F_Rand", Old_Blue_Box, Gold);
 	case 3:
 		if (.@tier <= 0) return callfunc("F_Rand", Wing_Of_Fly, Meat, Iron_Ore, Phracon, Red_Potion, Orange_Potion);
 		if (.@tier == 1) return callfunc("F_Rand", Wing_Of_Butterfly, Center_Potion, Rough_Oridecon, Rough_Elunium, Yellow_Potion);
 		if (.@tier == 2) return callfunc("F_Rand", Oridecon, Elunium, Old_Blue_Box, Seed_Of_Yggdrasil, Gold);
-		return callfunc("F_Rand", Old_Blue_Box, Gold, Old_Violet_Box, Yggdrasilberry, Elunium);
+		return callfunc("F_Rand", Old_Blue_Box, Gold, Elunium);
 	case 4:
 		if (.@tier <= 0) return callfunc("F_Rand", Blue_Potion, Green_Herb, Sticky_Mucus, Wing_Of_Fly, Iron);
 		if (.@tier == 1) return callfunc("F_Rand", White_Potion, Awakening_Potion, Rough_Elunium, Rough_Oridecon, Royal_Jelly);
 		if (.@tier == 2) return callfunc("F_Rand", Elunium, Oridecon, Old_Blue_Box, Seed_Of_Yggdrasil, Gold);
-		return callfunc("F_Rand", Old_Blue_Box, Old_Violet_Box, Elunium, Oridecon, Gold);
+		return callfunc("F_Rand", Old_Blue_Box, Elunium, Oridecon, Gold);
 	case 5:
 		if (.@tier <= 0) return callfunc("F_Rand", Meat, Orange_Potion, Yellow_Potion, Wing_Of_Fly, Iron_Ore);
 		if (.@tier == 1) return callfunc("F_Rand", White_Potion, Blue_Potion, Awakening_Potion, Rough_Oridecon, Rough_Elunium);
 		if (.@tier == 2) return callfunc("F_Rand", Old_Blue_Box, Seed_Of_Yggdrasil, Oridecon, Elunium, Gold);
-		return callfunc("F_Rand", Old_Blue_Box, Old_Violet_Box, Yggdrasilberry, EMPELIUM, Gold);
+		return callfunc("F_Rand", Old_Blue_Box, Gold);
 	case 6:
 		if (.@tier <= 0) return callfunc("F_Rand", Blue_Potion, Center_Potion, Rough_Elunium, Wing_Of_Butterfly);
 		if (.@tier == 1) return callfunc("F_Rand", White_Potion, Awakening_Potion, Oridecon, Elunium);

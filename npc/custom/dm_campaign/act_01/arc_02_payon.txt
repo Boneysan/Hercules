@@ -278,7 +278,7 @@ pay_dun04,120,115,4	script	Scholar Voss#dm	4_M_SCIENCE,{
 		mes("Not now. Field work is most easily spoiled by footsteps.");
 		close();
 	}
-	if (.boss_up) {
+	if ('boss_up) {
 		mes("[Scholar Voss]");
 		mes("Do try not to contaminate the sample while it is blooming.");
 		close();
@@ -358,7 +358,7 @@ pay_dun04,120,115,4	script	Scholar Voss#dm	4_M_SCIENCE,{
 	if (.@adds < 1)
 		.@adds = 1;
 
-	.boss_up = 1;
+	'boss_up = 1;
 	if (dm_arc02_conduits_severed)
 		mapannounce .@map$, "[Moonlit Grove] The conduits snap. The Flower fights hungry and diminished.", bc_map, 0x88CCFF;
 	else
@@ -375,7 +375,7 @@ OnAddKilled:
 	end;
 
 OnMoonlightDead:
-	.boss_up = 0;
+	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Scholar Voss#dm::OnAddKilled";
 	callfunc("DM_PartyQuestComplete", 20012, getcharid(CHAR_ID_PARTY));
@@ -390,6 +390,6 @@ OnMoonlightDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20012, 1;
-	.boss_up = 0;
+	'boss_up = 0;
 	end;
 }

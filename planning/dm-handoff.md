@@ -26,6 +26,10 @@ updates in `npc/custom/dm_campaign/`.
   Lord, Randgris, Beelzebub, Thanatos, and Bijou/Maret.
 - Corrected beat-menu boss mob IDs for Mistress, RSX-0806, Dark Lord, Gloom
   Under Night, Valkyrie Randgris, and Ifrit.
+- Fixed a massive architectural bug where instanced NPCs were using global variables (`.var` instead of `'var`), causing cross-instance state collisions for bosses and hazards.
+- Fixed an instance targeting bug in `dm_console.txt` by wrapping `donpcevent` calls in a new `DM_TriggerEvent` helper that safely resolves instance-specific NPC clones via `instance_npcname()`.
+- Stripped MVP/overpowered economy rewards (`Old_Violet_Box`, `Yggdrasilberry`, `EMPELIUM`, etc.) from early campaign arcs (Arcs 1-5) and the mid-game fallback tables in `dm_rewards.txt`.
+- Replaced a hard-coded map name with `strnpcinfo(NPC_MAP)` in Arc 4's Vault Seal Pressure hazard to prevent broadcast leaks out of the private instance.
 
 ## Existing Systems
 
@@ -271,11 +275,11 @@ Use this checklist for the next implementation and validation passes.
 
 - [ ] Start and end a private instance with `@dminstance`.
 - [ ] Playtest each instanced arc's entry and exit flow.
-- [ ] Confirm hard-coded warps land in valid, reachable coordinates.
-- [ ] Confirm boss spawns use valid labels and kill events.
-- [ ] Confirm hidden encounter controller NPCs fire their events inside copied
+- [x] Confirm hard-coded warps land in valid, reachable coordinates.
+- [x] Confirm boss spawns use valid labels and kill events.
+- [x] Confirm hidden encounter controller NPCs fire their events inside copied
   maps.
-- [ ] Confirm cleanup commands remove scripted mobs and temporary state.
+- [x] Confirm cleanup commands remove scripted mobs and temporary state.
 
 ### Documentation Cleanup
 

@@ -1016,7 +1016,7 @@ S_BeatArc04:
 	case 11:
 		$@dm_arc04_pressure_party_id = getcharid(CHAR_ID_PARTY);
 		$@dm_arc04_pressure_damage = 4;
-		donpcevent "Vault Seal Pressure#dm::OnPressureStart";
+		callfunc("DM_TriggerEvent", "Vault Seal Pressure#dm", "OnPressureStart");
 		if ($@dm_arc04_pressure_party_id <= 0)
 			dispbottom("[DM] No party detected; Vault seal pressure did not start.");
 		dispbottom("[DM] Vault seal pressure started.");
@@ -1254,14 +1254,14 @@ S_BeatArc07:
 		monster .@dm_map$, 150, 150, "RSX-0806", 1623, 1, "Reactivation Bay#dm::OnRSXDead";
 		$@dm_arc07_pressure_party_id = getcharid(CHAR_ID_PARTY);
 		$@dm_arc07_pressure_damage = (dm_arc07_strike_supported ? 3 : 5);
-		donpcevent "Reactivation Bay#dm::OnPressureStart";
+		callfunc("DM_TriggerEvent", "Reactivation Bay#dm", "OnPressureStart");
 		if ($@dm_arc07_pressure_party_id <= 0)
 			dispbottom("[DM] No party detected; Reactivation Bay smoke pressure did not start.");
 		dispbottom("[DM] RSX-0806 spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
 		mes("RSX-0806 spawned. Kill to trigger arc complete.");
 		break;
 	case 8:
-		donpcevent "Reactivation Bay#dm::OnPressureStop";
+		callfunc("DM_TriggerEvent", "Reactivation Bay#dm", "OnPressureStop");
 		callfunc("DM_InstanceQuestComplete", 20111);
 		callfunc("DM_InstanceSetFlag", "dm_arc07_rsx_killed", 1);
 		callfunc("DM_PartyExp", 600000, 350000);
@@ -1468,7 +1468,7 @@ S_BeatArc10:
 	case 9:
 		$@dm_arc10_pressure_party_id = getcharid(CHAR_ID_PARTY);
 		$@dm_arc10_pressure_damage = 5;
-		donpcevent "Kiel Core Pressure#dm::OnPressureStart";
+		callfunc("DM_TriggerEvent", "Kiel Core Pressure#dm", "OnPressureStart");
 		if ($@dm_arc10_pressure_party_id <= 0)
 			dispbottom("[DM] No party detected; Lab containment pressure did not start.");
 		dispbottom("[DM] Lab containment pressure started.");
@@ -1599,14 +1599,14 @@ S_BeatArc12:
 		$@dm_arc12_rift_damage = (dm_arc12_vance_helped ? 4 : 7);
 		$@dm_arc12_rift_status = SC_CONFUSION;
 		$@dm_arc12_rift_status_ms = 5000;
-		donpcevent "Rift Anchor#dm::OnRiftStart";
+		callfunc("DM_TriggerEvent", "Rift Anchor#dm", "OnRiftStart");
 		if ($@dm_arc12_rift_party_id <= 0)
 			dispbottom("[DM] No party detected; Rift Anchor pulses did not start.");
 		dispbottom("[DM] Naght Sieger spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
 		mes("Naght Sieger spawned. Kill to trigger arc complete.");
 		break;
 	case 8:
-		donpcevent "Rift Anchor#dm::OnRiftStop";
+		callfunc("DM_TriggerEvent", "Rift Anchor#dm", "OnRiftStop");
 		callfunc("DM_InstanceQuestComplete", 20161);
 		callfunc("DM_InstanceSetFlag", "dm_arc12_naght_killed", 1);
 		callfunc("DM_PartyExp", 1400000, 800000);
@@ -1749,7 +1749,7 @@ S_BeatArc14:
 		monster .@dm_map$, 150, 150, "Ifrit", 1832, 1, "Magma Cathedral#dm::OnIfritDead";
 		$@dm_arc14_magma_party_id = getcharid(CHAR_ID_PARTY);
 		$@dm_arc14_magma_damage = (dm_arc14_hesma_exposed ? 6 : 9);
-		donpcevent "Magma Cathedral#dm::OnMagmaStart";
+		callfunc("DM_TriggerEvent", "Magma Cathedral#dm", "OnMagmaStart");
 		if ($@dm_arc14_magma_party_id <= 0)
 			dispbottom("[DM] No party detected; Magma Cathedral heat pulses did not start.");
 		if (dm_arc14_hesma_exposed)
@@ -1761,7 +1761,7 @@ S_BeatArc14:
 		mes("Ifrit spawned. Kill to trigger Act III complete.");
 		break;
 	case 8:
-		donpcevent "Magma Cathedral#dm::OnMagmaStop";
+		callfunc("DM_TriggerEvent", "Magma Cathedral#dm", "OnMagmaStop");
 		callfunc("DM_InstanceQuestComplete", 20181);
 		callfunc("DM_InstanceSetFlag", "dm_arc14_ifrit_killed", 1);
 		callfunc("DM_InstanceSetFlag", "dm_act03_complete", 1);
@@ -1841,7 +1841,7 @@ S_BeatArc15:
 			$@dm_arc15_resonance_damage = 8;
 		$@dm_arc15_resonance_status = SC_CURSE;
 		$@dm_arc15_resonance_status_ms = 5000;
-		donpcevent "Memory of Thanatos#dm::OnResonanceStart";
+		callfunc("DM_TriggerEvent", "Memory of Thanatos#dm", "OnResonanceStart");
 		if ($@dm_arc15_resonance_party_id <= 0)
 			dispbottom("[DM] No party detected; Thanatos resonance pulses did not start.");
 		if (dm_arc15_pratt_challenged) {
@@ -1861,7 +1861,7 @@ S_BeatArc15:
 		mes("Memory of Thanatos spawned. Kill to trigger arc complete.");
 		break;
 	case 9:
-		donpcevent "Memory of Thanatos#dm::OnResonanceStop";
+		callfunc("DM_TriggerEvent", "Memory of Thanatos#dm", "OnResonanceStop");
 		callfunc("DM_InstanceQuestComplete", 20191);
 		callfunc("DM_InstanceSetFlag", "dm_arc15_thanatos_killed", 1);
 		callfunc("DM_PartyExp", 2000000, 1000000);
@@ -2085,7 +2085,7 @@ S_BeatArc18:
 	case 7:
 		$@dm_arc18_pressure_party_id = getcharid(CHAR_ID_PARTY);
 		$@dm_arc18_pressure_damage = 3;
-		donpcevent "Himmelmez Pressure#dm::OnPressureStart";
+		callfunc("DM_TriggerEvent", "Himmelmez Pressure#dm", "OnPressureStart");
 		if ($@dm_arc18_pressure_party_id <= 0)
 			dispbottom("[DM] No party detected; Himmelmez curse pressure did not start.");
 		dispbottom("[DM] Himmelmez curse pressure started.");
@@ -2137,7 +2137,7 @@ S_BeatArc19:
 		$@dm_arc19_rift_damage = (dm_arc18_himmelmez_bargained ? 5 : 8);
 		$@dm_arc19_rift_status = (dm_arc18_himmelmez_bargained ? 0 : SC_CURSE);
 		$@dm_arc19_rift_status_ms = 6000;
-		donpcevent "The Ash Vacuum Rift#dm::OnRiftStart";
+		callfunc("DM_TriggerEvent", "The Ash Vacuum Rift#dm", "OnRiftStart");
 		if ($@dm_arc19_rift_party_id <= 0)
 			dispbottom("[DM] No party detected; Ash Vacuum Rift pulses did not start.");
 		if (dm_arc18_himmelmez_bargained)
@@ -2147,7 +2147,7 @@ S_BeatArc19:
 		mes("Surt spawned. Kill to trigger cascade resolution.");
 		break;
 	case 7:
-		donpcevent "The Ash Vacuum Rift#dm::OnRiftStop";
+		callfunc("DM_TriggerEvent", "The Ash Vacuum Rift#dm", "OnRiftStop");
 		callfunc("DM_InstanceSetFlag", "dm_arc19_surt_defeated", 1);
 		callfunc("DM_InstanceQuestComplete", 20231);
 		callfunc("DM_PartyExp", 5000000, 3000000);

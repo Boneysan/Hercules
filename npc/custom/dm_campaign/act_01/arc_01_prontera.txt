@@ -275,7 +275,7 @@ prt_sewb4,103,100,4	script	Deacon Holt#dm	1_M_PASTOR,{
 		mes("This is no place for you. Go back to the surface... please. Speak to the guild first.");
 		close();
 	}
-	if (.boss_up) {
+	if ('boss_up) {
 		mes("[Deacon Holt]");
 		mes("Blood for the listener! Protect the conduit!");
 		close();
@@ -351,7 +351,7 @@ prt_sewb4,103,100,4	script	Deacon Holt#dm	1_M_PASTOR,{
 	.@map$ = strnpcinfo(NPC_MAP);
 	getmapxy(.@m$, .@hx, .@hy, UNITTYPE_NPC);
 
-	.boss_up = 1;
+	'boss_up = 1;
 	if (dm_arc01_holt_spared)
 		mapannounce .@map$, "[The Listening Chamber] Unfed by the seal, the Deviruchi thrashes - weaker than it should be.", bc_map, 0x88CCFF;
 	else
@@ -366,7 +366,7 @@ OnAddKilled:
 	end;
 
 OnDeviruchiDead:
-	.boss_up = 0;
+	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Deacon Holt#dm::OnAddKilled";
 	// Party-wide quest credit and EXP, not just the killer.
@@ -379,6 +379,6 @@ OnDeviruchiDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20005, 1;
-	.boss_up = 0;
+	'boss_up = 0;
 	end;
 }

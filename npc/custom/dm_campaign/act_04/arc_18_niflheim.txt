@@ -238,11 +238,11 @@ nif_in,150,150,0	script	Himmelmez Pressure#dm	HIDDEN_NPC,{
 
 OnPressureStart:
 	stopnpctimer;
-	.pressure_map$ = strnpcinfo(NPC_MAP);
-	.pressure_party_id = $@dm_arc18_pressure_party_id;
-	.pressure_damage = $@dm_arc18_pressure_damage;
-	if (.pressure_party_id > 0) {
-		mapannounce .pressure_map$, "[Himmelmez] The throne cracks. The dead reach through the floor.", bc_map, 0x999999;
+	'pressure_map$ = strnpcinfo(NPC_MAP);
+	'pressure_party_id = $@dm_arc18_pressure_party_id;
+	'pressure_damage = $@dm_arc18_pressure_damage;
+	if ('pressure_party_id > 0) {
+		mapannounce 'pressure_map$, "[Himmelmez] The throne cracks. The dead reach through the floor.", bc_map, 0x999999;
 		initnpctimer;
 	}
 	end;
@@ -252,18 +252,18 @@ OnPressureStop:
 	end;
 
 OnTimer5000:
-	mapannounce .pressure_map$, "[Himmelmez] Cold whispers bite at your mind.", bc_map, 0x999999;
-	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 9, .pressure_damage, SC_CURSE, 3000, .pressure_party_id);
+	mapannounce 'pressure_map$, "[Himmelmez] Cold whispers bite at your mind.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 150, 150, 9, 'pressure_damage, SC_CURSE, 3000, 'pressure_party_id);
 	end;
 
 OnTimer10000:
-	mapannounce .pressure_map$, "[Himmelmez] Himmelmez draws the cascade directly into the hall.", bc_map, 0x999999;
-	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 9, .pressure_damage, SC_CURSE, 3000, .pressure_party_id);
+	mapannounce 'pressure_map$, "[Himmelmez] Himmelmez draws the cascade directly into the hall.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 150, 150, 9, 'pressure_damage, SC_CURSE, 3000, 'pressure_party_id);
 	end;
 
 OnTimer15000:
-	mapannounce .pressure_map$, "[Himmelmez] The chill settles deep into your bones.", bc_map, 0x999999;
-	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 9, .pressure_damage, SC_CURSE, 3000, .pressure_party_id);
+	mapannounce 'pressure_map$, "[Himmelmez] The chill settles deep into your bones.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", 'pressure_map$, 150, 150, 9, 'pressure_damage, SC_CURSE, 3000, 'pressure_party_id);
 	stopnpctimer;
 	end;
 }
