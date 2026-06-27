@@ -8,13 +8,14 @@ without recompiling the server.
 ## Loaded Scripts
 
 - `dm_common.txt` - shared permission, party, map, reward-tier, and party-warp helpers.
-- `dm_flags.txt` - persistent campaign flag helpers and Arc 1-5 flag shortcuts.
+- `dm_flags.txt` - persistent campaign flag helpers and Arc 1-19 flag shortcuts.
 - `dm_rewards.txt` - curated arc/level/tier reward generator and party delivery.
 - `dm_storyteller.txt` - map and global narration helpers.
 - `dm_session.txt` - encounter cleanup helpers.
 - `dm_quests.txt` - party-wide quest set/complete/erase plus party/instance story flag wrappers.
 - `dm_instances.txt` - script-driven private dungeon instances (create/attach/init/warp/destroy; no instance_db needed).
 - `dm_console.txt` - GM-facing bound commands.
+- `dm_traps.txt` - reusable hazard, puzzle reset, and encounter cleanup helpers.
 
 ## GM Commands
 
@@ -22,10 +23,12 @@ All commands require GM level 60 or higher.
 
 ```text
 @dm help
-@dm reward [arc] [common|uncommon|rare|boss] [dryrun]
-@dmreward [arc] [common|uncommon|rare|boss] [dryrun]
-@dm flag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05> [name] [value]
-@dmflag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05> [name] [value]
+@dm mode <on|off>
+@dmmode <on|off>
+@dm reward [arc] [common|uncommon|rare|boss] [preview|dryrun|1]
+@dmreward [arc] [common|uncommon|rare|boss] [preview|dryrun|1]
+@dm flag <get|set|clear|arc01..arc19|cleararc01..cleararc19> [name] [value]
+@dmflag <get|set|clear|arc01..arc19|cleararc01..cleararc19> [name] [value]
 @dm quest <start|complete|erase> <quest_id>
 @dmquest <start|complete|erase> <quest_id>
 @dm beat
@@ -34,6 +37,10 @@ All commands require GM level 60 or higher.
 @dmstory <message>
 @dm globalstory <message>
 @dm spawn <mob_id> [count] [name]
+@dm hazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms]
+@dm hazard clear
+@dmhazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms]
+@dmhazard clear
 @dm cleanup
 @dmcleanup
 @dm warp <map> [x] [y]
@@ -44,7 +51,20 @@ All commands require GM level 60 or higher.
 @dm instance end
 @dminstance start <source_map> [x] [y] [label]
 @dminstance end
+@roll [hidden] <NdX[+/-mod]>
+@roll fudge <total> [note]
+@roll override <total> [note]
 ```
+
+`@dm mode on` suppresses normal BOSS/MVP spawns by keeping respawns delayed while
+`$dm_mode` is enabled. Already-active stock BOSS/MVP spawns are removed on their
+next hard or lazy AI tick and then held on the same short retry loop until mode
+is disabled.
+
+`@roll` is public map output for players and DMs, including individual dice for
+rolls up to 20 dice. `@roll hidden` requires GM level 60+ and reports only to
+the roller. `@roll fudge` / `@roll override` are transparent DM-only set-result
+commands; they announce that the result was set rather than rolled.
 
 ## Live Questline Flow
 
@@ -80,10 +100,25 @@ Current scripted arc entry points:
 | 3 | Rashid, Morroc | Amon Ra's Lid, `moc_pryd06` | 20013-20018 |
 | 4 | Apprentice Elsbeth, Geffen | Baphomet's Seal, `gef_dun02` | 20019-20024 |
 | 5 | Captain Mara, Alberta | Deep Trench Wake / Tao Gunka, `tur_dun04` | 20025-20030 |
+| 6 | Vahl, Yuno | Mistress, `mjolnir_04` | 20101-20105 |
+| 7 | Foreman Jori, Einbroch | RSX-0806, `ein_dun02` | 20111-20115 |
+| 8 | Sister Margot, Glast Heim | Dark Lord, `gl_chyard` | 20121-20124 |
+| 9 | Sister Ilya, Rachel | Gloom Under Night, `ra_san05` | 20131-20134 |
+| 10 | Doctor Reuter, Lighthalzen | Kiel D-01, `kh_dun02` | 20141-20144 |
+| 11 | Priest Eadric, Hugel | Randgris, `abyss_03` | 20151-20155 |
+| 12 | Quartermaster Lian, New World | Naght Sieger, `spl_fild01` | 20161-20165 |
+| 13 | Scholar Nadir, Nameless Island | Beelzebub / coalition deal, `abbey03` | 20171-20175 |
+| 14 | Foreman Dunmar, Veins | Ifrit / Magma Cathedral, `thor_v03` | 20181-20185 |
+| 15 | Keeper Lysandra, Aldebaran | Thanatos Memory, `thana_boss` | 20191-20194 |
+| 16 | Kronecker G Heine, Prontera | Prison Vault / Bijou-Maret, `prt_q` | 20201-20204 |
+| 17 | Doctor Mira Tressa, Biolabs | Biosphere Core / Amdarais, `ba_pw03` | 20211-20214 |
+| 18 | The Familiar Dead, Niflheim | Himmelmez choice, `nif_in` | 20221-20223 |
+| 19 | Loki The Voice, Morroc Ruins | Surt / Central Choice, `moc_fild22` | 20231-20233 |
 
-`@dmbeat` has matching menus for Arc 1 through Arc 5. Each menu can warp the
-current party to the relevant NPC/location, start or complete the arc quests, set
-branch flags, announce story text, and write `dm_story_beat`.
+`@dmbeat` has matching menus for Arc 1 through Arc 19. Each menu can warp the
+current party to the relevant NPC/location, start or complete arc quests, set
+branch flags, announce story text, spawn scripted bosses, start scripted
+hazards, and write `dm_story_beat`.
 
 ## Party Warp And Instances
 
@@ -114,13 +149,18 @@ keeps rewards level-appropriate and campaign-themed.
 
 Current behavior:
 
-- Arc 1 has its own early-game loot pools.
-- Other arcs fall back to level-band pools.
+- Arcs 1-10 have per-arc pools; Acts III and IV use tighter act-specific pools.
+- Unknown arcs still fall back to level-band pools.
+- `@dmreward` uses an arc-expected reward level for zeny instead of the GM's
+  character level, so low arcs do not overpay when tested by a high-level DM.
 - Reward tiers are `common`, `uncommon`, `rare`, and `boss`.
 - Rewards include both item rolls and zeny.
+- Zeny is awarded per online member. It is not multiplied by party size before
+  being handed to every member.
 - Party rewards are delivered to online party members when the GM has a party;
   otherwise the attached GM/test character receives the reward.
-- Passing `dryrun` as `1` rolls and reports the reward without giving it.
+- Passing `preview`, `dryrun`, `roll`, or `1` rolls and reports the reward
+  without giving it.
 - `DM_PartyExp(base, job{, party_id{, dryrun}})` grants base/job EXP to every
   online party member (used by the Arc 1 boss-death burst).
 
@@ -128,6 +168,7 @@ Examples:
 
 ```text
 @dmreward 1 common 1
+@dmreward 12 rare preview
 @dmreward 1 boss
 @dm reward 1 rare
 ```
@@ -149,11 +190,8 @@ Examples:
 
 Arc helper shortcuts currently available:
 
-- `@dmflag arc01` / `@dmflag cleararc01`
-- `@dmflag arc02` / `@dmflag cleararc02`
-- `@dmflag arc03` / `@dmflag cleararc03`
-- `@dmflag arc04` / `@dmflag cleararc04`
-- `@dmflag arc05` / `@dmflag cleararc05`
+- `@dmflag arc01` through `@dmflag arc19`
+- `@dmflag cleararc01` through `@dmflag cleararc19`
 
 Generic `@dmflag set` and `@dmflag clear` are party-scoped through
 `DM_InstanceSetFlag` / `DM_InstanceClearFlag`.
@@ -164,15 +202,44 @@ Use `@dmstory` or `@dm story` for map-local narration. Use
 `@dm globalstory` only for campaign-wide beats.
 
 Use `@dm spawn` for quick live pacing near the GM's current position. More
-specific arc encounter staging should live in per-arc scripts once those arcs
-exist.
+specific arc encounter staging should live in per-arc scripts or `@dmbeat`
+variants so branch behavior remains repeatable.
 
 Use `@dmcleanup` to remove monsters spawned with the DM console labels from the
 current map.
 
-## Act I Quick Test Path
+## Trap And Hazard Helpers
 
-Use the beat director for a fast smoke test of the whole playable Act I surface:
+Shared helpers in `dm_traps.txt` are script-facing primitives for future
+encounters:
+
+```text
+DM_HazardArea("<map>", x, y, range, hp_percent_loss, status_type, status_duration{, party_id})
+DM_ResetPuzzleFlag("<flag_prefix>", count)
+DM_CleanupEncounter("<label>", "<map>")
+```
+
+`@dm hazard` places a ticking party-scoped hazard at the DM's current position.
+Defaults are range 3, 0% HP damage, 3 ticks, and 3000ms between ticks. Range is
+capped at 20, ticks at 60, and interval has a 1000ms floor. `@dm hazard clear`
+stops the caller's active hazard timer and cancels any pending hazard tick. The
+hazard is pinned to the DM's party when placed, so later party changes do not
+retarget it.
+
+The optional `status` argument accepts either a numeric SC ID or one of these
+aliases: `poison`, `freeze`, `stun`, `sleep`, `curse`, `confusion`, `blind`,
+`none`. The matching `sc_*` forms also work, for example `sc_poison`.
+
+`DM_HazardArea` applies immediate percent HP loss and/or a status effect to the
+caller's party members in range, and is used by the ticking command above.
+Scripted arc hazards currently use it in Arc 7's Reactivation Bay, Arc 12's
+Rift Anchor, Arc 14's Magma Cathedral, Arc 15's Thanatos Memory, and Arc 19's
+Ash Vacuum Rift.
+
+## Campaign Quick Test Path
+
+Use the beat director for a fast smoke test of the campaign surface. The menu is
+organized by act, then arc:
 
 ```text
 @dmbeat
@@ -186,6 +253,12 @@ Use the beat director for a fast smoke test of the whole playable Act I surface:
   Act I / Arc 4 - Geffen -> Beat: Complete Arc 4
   Act I / Arc 5 - Alberta -> Beat: Mara starts contracts
   Act I / Arc 5 - Alberta -> Beat: Complete Act I
+  Act II / Arc 6 - Yuno -> Beat: Start Arc 6
+  Act II / Arc 10 - Lighthalzen -> Beat: Kiel slain (Act II Complete)
+  Act III / Arc 12 - New World -> Beat: Spawn Naght Sieger
+  Act III / Arc 14 - Veins -> Beat: Ifrit slain (Act III Complete)
+  Act IV / Arc 15 - Thanatos -> Beat: Spawn Thanatos
+  Act IV / Arc 19 - Finale -> Beat: Campaign Complete
 ```
 
 For a real playthrough, use the NPC conversations and hunting objectives instead
@@ -197,7 +270,8 @@ branch, or stage a scene quickly during live play.
 The scripts were checked with:
 
 ```bash
-bash ./script-checker npc/custom/dm_campaign/shared/dm_common.txt npc/custom/dm_campaign/shared/dm_flags.txt npc/custom/dm_campaign/shared/dm_rewards.txt npc/custom/dm_campaign/shared/dm_storyteller.txt npc/custom/dm_campaign/shared/dm_session.txt npc/custom/dm_campaign/shared/dm_quests.txt npc/custom/dm_campaign/shared/dm_instances.txt npc/custom/dm_campaign/shared/dm_console.txt npc/custom/dm_campaign/act_01/arc_01_prontera.txt npc/custom/dm_campaign/act_01/arc_02_payon.txt npc/custom/dm_campaign/act_01/arc_03_morroc.txt npc/custom/dm_campaign/act_01/arc_04_geffen.txt npc/custom/dm_campaign/act_01/arc_05_alberta_izlude.txt
+bash ./script-checker $(find npc/custom/dm_campaign -name '*.txt' | sort)
+./map-server --run-once
 ```
 
 A full `map-server --run-once` startup parse should load every `dm_campaign`

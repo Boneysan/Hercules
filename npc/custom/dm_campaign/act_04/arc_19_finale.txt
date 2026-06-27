@@ -43,6 +43,13 @@ moc_ruins,150,150,5	script	Loki The Voice#dm	4_M_04,{
 	callsub(S_Progress);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20231, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20231, 1;
+	end;
+
 S_StartArc:
 	mes("[Loki The Voice]");
 	mes("You came to Morroc's ruins. That means you have done what needed to be done. Or close enough that the difference does not matter anymore.");
@@ -152,7 +159,46 @@ S_FinalAudience:
 moc_fild22,150,150,0	script	The Ash Vacuum Rift#dm	HIDDEN_NPC,{
 	end;
 
+OnRiftStart:
+	stopnpctimer;
+	.rift_map$ = strnpcinfo(NPC_MAP);
+	.rift_party_id = $@dm_arc19_rift_party_id;
+	.rift_damage = $@dm_arc19_rift_damage;
+	.rift_status = $@dm_arc19_rift_status;
+	.rift_status_ms = $@dm_arc19_rift_status_ms;
+	if (.rift_party_id > 0) {
+		mapannounce .rift_map$, "[Ash Vacuum Rift] The focal point is open. The seal is screaming.", bc_map, 0xFF6600;
+		initnpctimer;
+	}
+	end;
+
+OnRiftStop:
+	stopnpctimer;
+	end;
+
+OnTimer8000:
+	mapannounce .rift_map$, "[Ash Vacuum Rift] The cascade hammers against the old seal.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", .rift_map$, 150, 150, 10, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	end;
+
+OnTimer16000:
+	mapannounce .rift_map$, "[Ash Vacuum Rift] A pressure wave rolls out from Surt's focal point.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", .rift_map$, 150, 150, 10, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	end;
+
+OnTimer24000:
+	mapannounce .rift_map$, "[Ash Vacuum Rift] The old lock flexes and nearly gives way.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", .rift_map$, 150, 150, 10, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	end;
+
+OnTimer32000:
+	mapannounce .rift_map$, "[Ash Vacuum Rift] The rift spends its last violent surge.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", .rift_map$, 150, 150, 10, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	stopnpctimer;
+	end;
+
 OnSurtDead:
+	stopnpctimer;
 	callfunc("DM_InstanceQuestComplete", 20231);
 	callfunc("DM_InstanceSetFlag", "dm_arc19_surt_defeated", 1);
 	callfunc("DM_PartyExp", 5000000, 3000000);
@@ -221,4 +267,9 @@ moc_fild22,155,150,5	script	The Central Choice#dm	4_M_05,{
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1999);
 	announce("[DM] The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", bc_all, 0xFF6600);
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20233, 1;
+	end;
 }

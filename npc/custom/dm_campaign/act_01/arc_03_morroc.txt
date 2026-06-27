@@ -43,6 +43,13 @@ morocc,159,97,4	script	Rashid the Guide#dm	4_M_ORIENT02,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20013, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20013, 1;
+	end;
+
 S_StartArc:
 	mes("[Rashid]");
 	mes("Morroc laughs at the demon under the sand because laughter is cheaper than moving.");
@@ -340,6 +347,8 @@ OnOsirisDead:
 	end;
 
 OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20017, 1;
 	.boss_up = 0;
 	end;
 }
@@ -420,6 +429,8 @@ OnAmonDead:
 	end;
 
 OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20018, 1;
 	.boss_up = 0;
 	end;
 }

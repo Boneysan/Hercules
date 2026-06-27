@@ -37,6 +37,13 @@ niflheim,100,100,5	script	The Familiar Dead#dm	4_M_03,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20221, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20221, 1;
+	end;
+
 S_StartArc:
 	mes("[The Familiar Dead]");
 	mes("You made it this far. That means something. Most things that cross the cascade's shadow do not.");
@@ -218,4 +225,9 @@ nif_in,150,150,5	script	Himmelmez#dm	4_F_02,{
 		break;
 	}
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20221, 1;
+	end;
 }

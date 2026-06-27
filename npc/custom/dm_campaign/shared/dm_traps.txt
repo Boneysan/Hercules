@@ -1,0 +1,95 @@
+// Seal Cascade Trap and Hazard Helpers
+//
+// These functions provide standard puzzle resets, area hazards,
+// and trigger tile abstractions for the DM campaign.
+
+// DM_HazardArea("<map>", x, y, range, hp_percent_loss, status_type, status_duration{, party_id})
+// Inflicts damage and/or status effects to the caller's party in the area.
+function	script	DM_HazardArea	{
+	.@map$ = getarg(0);
+	.@x = getarg(1);
+	.@y = getarg(2);
+	.@range = getarg(3);
+	.@percent_damage = getarg(4, 0);
+	.@status_type = getarg(5, 0);
+	.@status_dur = getarg(6, 10000);
+	.@party_id = getarg(7, getcharid(CHAR_ID_PARTY));
+
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@party_id <= 0) {
+		getmapxy(.@pc_map$, .@pc_x, .@pc_y, UNITTYPE_PC);
+		.@dx = .@pc_x - .@x;
+		.@dy = .@pc_y - .@y;
+		if (.@dx < 0)
+			.@dx = -.@dx;
+		if (.@dy < 0)
+			.@dy = -.@dy;
+		if (.@pc_map$ == .@map$ && .@dx <= .@range && .@dy <= .@range) {
+			if (.@percent_damage > 0)
+				percentheal -(.@percent_damage), 0;
+			if (.@status_type > 0)
+				sc_start .@status_type, .@status_dur, 1;
+			return 1;
+		}
+		return 0;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@party_count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@party_count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+
+		getmapxy(.@pc_map$, .@pc_x, .@pc_y, UNITTYPE_PC);
+		.@dx = .@pc_x - .@x;
+		.@dy = .@pc_y - .@y;
+		if (.@dx < 0)
+			.@dx = -.@dx;
+		if (.@dy < 0)
+			.@dy = -.@dy;
+		if (.@pc_map$ != .@map$ || .@dx > .@range || .@dy > .@range) {
+			detachrid();
+			continue;
+		}
+
+		if (.@percent_damage > 0)
+			percentheal -(.@percent_damage), 0;
+		if (.@status_type > 0)
+			sc_start .@status_type, .@status_dur, 1;
+		++.@hit;
+		detachrid();
+	}
+
+	if (.@origin_aid > 0)
+		attachrid(.@origin_aid);
+	else
+		detachrid();
+
+	return .@hit;
+}
+
+// DM_ResetPuzzleFlag("<flag_prefix>", count)
+// Sets a sequence of indexed flags back to 0. Useful for resettable puzzles.
+function	script	DM_ResetPuzzleFlag	{
+	.@prefix$ = getarg(0);
+	.@count = getarg(1);
+	for (.@i = 1; .@i <= .@count; ++.@i) {
+		callfunc("DM_InstanceClearFlag", .@prefix$ + .@i);
+	}
+	return 1;
+}
+
+// DM_CleanupEncounter("<label>", "<map>")
+// A reusable path to kill monsters spawned by an encounter label.
+function	script	DM_CleanupEncounter	{
+	.@label$ = getarg(0);
+	.@map$ = getarg(1);
+	if (.@map$ == "")
+		.@map$ = strnpcinfo(NPC_MAP);
+	killmonster .@map$, .@label$;
+	return 1;
+}

@@ -36,6 +36,13 @@ veins,100,100,5	script	Foreman Dunmar#dm	4_M_06,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20181, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20181, 1;
+	end;
+
 S_StartArc:
 	mes("[Foreman Dunmar]");
 	mes("You are not from Veins. Good. Everyone from Veins has been told there is no problem.");
@@ -181,7 +188,7 @@ S_TurnIns:
 }
 
 // ── Prelate Hesma — The Silence Before the Fire ────────────────────────────
-veins,110,100,5	script	Prelate Hesma#dm	4_M_07,{
+veins,110,100,5	script	Prelate Hesma#dm	4_M_06,{
 	if (!dm_arc14_started) {
 		mes("[Prelate Hesma]");
 		mes("Veins's sacred fires are a place of peace and reflection. Please respect the sanctity of the grounds.");
@@ -254,13 +261,60 @@ veins,110,100,5	script	Prelate Hesma#dm	4_M_07,{
 	next();
 	mes("^3355FF[The Prelate's Silence resolved. Descend to thor_v03 and face Ifrit.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20185, 1;
+	end;
 }
 
 // ── Magma Cathedral Set-piece ──────────────────────────────────────────────
 thor_v03,150,150,0	script	Magma Cathedral#dm	HIDDEN_NPC,{
 	end;
 
+OnMagmaStart:
+	stopnpctimer;
+	.magma_map$ = strnpcinfo(NPC_MAP);
+	.magma_party_id = $@dm_arc14_magma_party_id;
+	.magma_damage = $@dm_arc14_magma_damage;
+	if (.magma_party_id > 0) {
+		mapannounce .magma_map$, "[Magma Cathedral] The floor begins to pulse with Surt's heat.", bc_map, 0xFF6600;
+		initnpctimer;
+	}
+	end;
+
+OnMagmaStop:
+	stopnpctimer;
+	end;
+
+OnTimer8000:
+	mapannounce .magma_map$, "[Magma Cathedral] A ring of heat rolls out from the seal.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", .magma_map$, 150, 150, 8, .magma_damage, 0, 0, .magma_party_id);
+	end;
+
+OnTimer16000:
+	mapannounce .magma_map$, "[Magma Cathedral] The seal vents another furnace breath.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", .magma_map$, 150, 150, 8, .magma_damage, 0, 0, .magma_party_id);
+	end;
+
+OnTimer24000:
+	mapannounce .magma_map$, "[Magma Cathedral] The lava channels brighten underfoot.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", .magma_map$, 150, 150, 8, .magma_damage, 0, 0, .magma_party_id);
+	end;
+
+OnTimer32000:
+	mapannounce .magma_map$, "[Magma Cathedral] Surt's pressure hammers the chamber again.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", .magma_map$, 150, 150, 8, .magma_damage, 0, 0, .magma_party_id);
+	end;
+
+OnTimer40000:
+	mapannounce .magma_map$, "[Magma Cathedral] The cathedral spends its last stored heat.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", .magma_map$, 150, 150, 8, .magma_damage, 0, 0, .magma_party_id);
+	stopnpctimer;
+	end;
+
 OnIfritDead:
+	stopnpctimer;
 	callfunc("DM_InstanceQuestComplete", 20181);
 	callfunc("DM_InstanceSetFlag", "dm_arc14_ifrit_killed", 1);
 	callfunc("DM_InstanceSetFlag", "dm_act03_complete", 1);

@@ -41,6 +41,13 @@ prontera,150,150,5	script	Kronecker G Heine#dm	4_M_01,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20201, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20201, 1;
+	end;
+
 S_StartArc:
 	mes("[Kronecker G Heine]");
 	mes("I need people who have not been in Prontera for the last six months. Everyone here has been breathing the same air.");
@@ -225,6 +232,8 @@ prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
 	next();
 	switch (select("You are exposed. Heine's people are outside.", "Dismantle the network quietly. On our timeline.", "Defect. Tell us how Bijou works and walk free.")) {
 	case 1:
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_rolled");
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_defected");
 		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_exposed", 1);
 		callfunc("DM_InstanceQuestComplete", 20204);
 		mes("[Rina]");
@@ -234,9 +243,11 @@ prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
 		mes("But yes. I cooperate. The cult does not require my loyalty anymore. The sequence is in motion.");
 		next();
 		mes("^3355FF*Rina places her hands on the table and waits.*^000000");
-		mes("^3355FF[DM note: Rina exposed — the public trial will be a cascade-awareness moment for Prontera's court.]^000000");
+		mes("^3355FF[Encounter: Bijou remains a hostile relay and must be silenced.]^000000");
 		break;
 	case 2:
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_exposed");
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_defected");
 		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_rolled", 1);
 		callfunc("DM_InstanceQuestComplete", 20204);
 		mes("[Rina]");
@@ -246,9 +257,11 @@ prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
 		mes("I will give Heine the full list. Every name. I have been keeping records — I expected this conversation eventually.");
 		next();
 		mes("^3355FF*Rina produces a ledger from her jacket. It is organized by court position.*^000000");
-		mes("^3355FF[DM note: Rina rolled — the network dissolves quietly. The court continues without knowing the scope.]^000000");
+		mes("^3355FF[Encounter: Bijou remains a hostile relay, but the court network is already unraveling.]^000000");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_exposed");
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_rolled");
 		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_defected", 1);
 		callfunc("DM_InstanceQuestComplete", 20204);
 		mes("[Rina]");
@@ -261,21 +274,29 @@ prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
 		mes("She does not want to be Bijou. She has not wanted to be Bijou for three years. The cult does not know that because the cascade's transmissions still come through her correctly. She has been trying to introduce errors. Small ones. The kind that slow a sequence down.");
 		next();
 		mes("^3355FF*Rina slides the ledger across the table with Maret's real name written on the first page.*^000000");
-		mes("^3355FF[DM note: Rina defected — the party knows Bijou is Maret, and may try to free her rather than kill her. DM judgment call on the fight.]^000000");
+		mes("^3355FF[Encounter: Bijou can be resolved as Maret freed instead of a simple kill.]^000000");
 		break;
 	}
 	next();
 	mes("^3355FF[Royal House Audience Rounds resolved. Find Bijou in the deepest level of prt_q.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20204, 1;
+	end;
 }
 
 // ── Underground Prison Vault Set-piece ────────────────────────────────────
-prt_q,150,150,0	script	Underground Prison Vault#dm	HIDDEN_NPC,{
+prt_q,150,150,0	script	Prison Vault#dm	HIDDEN_NPC,{
 	end;
 
 OnBijouDead:
 	callfunc("DM_InstanceQuestComplete", 20201);
-	callfunc("DM_InstanceSetFlag", "dm_arc16_bijou_killed", 1);
+	if (dm_arc16_rina_defected)
+		callfunc("DM_InstanceSetFlag", "dm_arc16_maret_freed", 1);
+	else
+		callfunc("DM_InstanceSetFlag", "dm_arc16_bijou_killed", 1);
 	callfunc("DM_PartyExp", 2000000, 1000000);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1699);
 	if (dm_arc16_rina_defected)

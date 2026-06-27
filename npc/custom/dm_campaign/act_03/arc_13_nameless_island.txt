@@ -20,7 +20,7 @@
 //===========================================================
 
 // ── Father Quill the Doorkeeper — The Last Ward ────────────────────────────
-nameless_i,100,100,5	script	Father Quill the Doorkeeper#dm	4_M_04,{
+nameless_i,100,100,5	script	Father Quill#dm	4_M_04,{
 	if (questprogress(20171) == 2) {
 		mes("[Father Quill]");
 		if (dm_arc13_carrion_bribed)
@@ -36,6 +36,13 @@ nameless_i,100,100,5	script	Father Quill the Doorkeeper#dm	4_M_04,{
 	}
 
 	callsub(S_TurnIns);
+	end;
+
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20171, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20171, 1;
 	end;
 
 S_StartArc:
@@ -235,15 +242,19 @@ nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
 	next();
 	switch (select("Kill the messenger. This deal does not exist.", "What is the catch?", "If we take the deal, what happens to the cascade?")) {
 	case 1:
+		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_bribed");
+		callfunc("DM_InstanceClearFlag", "dm_arc13_coalition_deal_honored");
 		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_killed", 1);
 		callfunc("DM_InstanceQuestComplete", 20175);
 		mes("[Carrion]");
 		mes("Mm. The direct approach. I respect it.");
 		next();
 		mes("^3355FF*Carrion dissolves into a scatter of flies. He will reform elsewhere. The inner gate is open.*^000000");
-		mes("^3355FF[DM note: Carrion killed — Beelzebub fights with full coalition adds.]^000000");
+		mes("^3355FF[Encounter: Beelzebub will fight with full coalition support.]^000000");
 		break;
 	case 2:
+		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_bribed");
+		callfunc("DM_InstanceClearFlag", "dm_arc13_coalition_deal_honored");
 		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_killed", 1);
 		callfunc("DM_InstanceQuestComplete", 20175);
 		mes("[Carrion]");
@@ -256,9 +267,11 @@ nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
 		mes("No? Then I will let you through. I will be watching.");
 		next();
 		mes("^3355FF*Carrion dissolves. The inner gate is open. He was always going to let you through.*^000000");
-		mes("^3355FF[DM note: Carrion withdrew — Beelzebub fights at full strength.]^000000");
+		mes("^3355FF[Encounter: Beelzebub will fight at full strength.]^000000");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_killed");
+		callfunc("DM_InstanceClearFlag", "dm_arc13_beelzebub_killed");
 		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_bribed", 1);
 		callfunc("DM_InstanceQuestComplete", 20175);
 		mes("[Carrion]");
@@ -272,12 +285,17 @@ nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
 		next();
 		mes("^3355FF*The deal is struck. The coalition maintains the seals.*^000000");
 		mes("^3355FF*Beelzebub is withdrawn rather than fought. The coordination is dissolved by agreement.*^000000");
-		mes("^3355FF[DM note: deal taken — Beelzebub is not fought. Complete 20171 via beat menu.]^000000");
+		mes("^3355FF[Encounter: the Beelzebub fight is skipped if the coalition deal is honored.]^000000");
 		break;
 	}
 	next();
 	mes("^3355FF[The Broker's Terms resolved.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20175, 1;
+	end;
 }
 
 // ── Beelzebub Sanctum Set-piece ────────────────────────────────────────────
@@ -285,6 +303,7 @@ abbey03,150,150,0	script	Beelzebub Sanctum#dm	HIDDEN_NPC,{
 	end;
 
 OnBeelzebubDead:
+	killmonster strnpcinfo(NPC_MAP), "Beelzebub Sanctum#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20171);
 	callfunc("DM_InstanceSetFlag", "dm_arc13_beelzebub_killed", 1);
 	callfunc("DM_PartyExp", 1600000, 900000);
@@ -292,5 +311,8 @@ OnBeelzebubDead:
 	instance_announce(instance_id(), "^3355FF[DM] Beelzebub falls. The coalition's coordination shatters into a hundred independent grudges.^000000", bc_all);
 	sleep(2000);
 	instance_announce(instance_id(), "^FF6600[DM] The demon lords scatter. But Surt's herald stirs in the volcano. Veins is the last thread before the finale.^000000", bc_all);
+	end;
+
+OnAddDead:
 	end;
 }

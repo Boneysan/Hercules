@@ -37,6 +37,13 @@ mid_camp,100,100,5	script	Envoy Aelith#dm	4_F_01,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20161, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20161, 1;
+	end;
+
 S_StartArc:
 	mes("[Envoy Aelith]");
 	mes("You are not soldiers. Good. The soldiers that came before you are part of why the Naga have stopped distinguishing between Midgard and the cascade as threats.");
@@ -191,7 +198,7 @@ S_TurnIns:
 }
 
 // ── Captain Roderick Vance — The Wrong Expedition ──────────────────────────
-mid_camp,110,100,5	script	Captain Roderick Vance#dm	4_M_03,{
+mid_camp,110,100,5	script	Captain Vance#dm	4_M_03,{
 	if (!dm_arc12_started) {
 		mes("[Captain Vance]");
 		mes("This is a restricted survey zone. Move along.");
@@ -257,13 +264,57 @@ mid_camp,110,100,5	script	Captain Roderick Vance#dm	4_M_03,{
 	next();
 	mes("^3355FF[The Vance Proposal resolved. Proceed to spl_fild01 and face Naght Sieger.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20165, 1;
+	end;
 }
 
 // ── Rift Anchor Set-piece ──────────────────────────────────────────────────
 spl_fild01,150,150,0	script	Rift Anchor#dm	HIDDEN_NPC,{
 	end;
 
+OnRiftStart:
+	stopnpctimer;
+	.rift_map$ = strnpcinfo(NPC_MAP);
+	.rift_party_id = $@dm_arc12_rift_party_id;
+	.rift_damage = $@dm_arc12_rift_damage;
+	.rift_status = $@dm_arc12_rift_status;
+	.rift_status_ms = $@dm_arc12_rift_status_ms;
+	if (.rift_party_id > 0) {
+		mapannounce .rift_map$, "[Rift Anchor] The membrane thins. Space pulls toward the wound.", bc_map, 0x66CCFF;
+		initnpctimer;
+	}
+	end;
+
+OnRiftStop:
+	stopnpctimer;
+	end;
+
+OnTimer7000:
+	mapannounce .rift_map$, "[Rift Anchor] A crosswind from the Ash Vacuum tears through the anchor.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", .rift_map$, 150, 150, 7, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	end;
+
+OnTimer14000:
+	mapannounce .rift_map$, "[Rift Anchor] The horizon folds inward and snaps back.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", .rift_map$, 150, 150, 7, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	end;
+
+OnTimer21000:
+	mapannounce .rift_map$, "[Rift Anchor] Static crawls over the wound in the world.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", .rift_map$, 150, 150, 7, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	end;
+
+OnTimer28000:
+	mapannounce .rift_map$, "[Rift Anchor] The rift exhales one last unstable pressure wave.", bc_map, 0x66CCFF;
+	callfunc("DM_HazardArea", .rift_map$, 150, 150, 7, .rift_damage, .rift_status, .rift_status_ms, .rift_party_id);
+	stopnpctimer;
+	end;
+
 OnNaghtDead:
+	stopnpctimer;
 	callfunc("DM_InstanceQuestComplete", 20161);
 	callfunc("DM_InstanceSetFlag", "dm_arc12_naght_killed", 1);
 	callfunc("DM_PartyExp", 1400000, 800000);

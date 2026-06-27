@@ -51,6 +51,13 @@ payon,181,104,4	script	Sun-Hwa#dm	4_F_SHAMAN,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20007, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20007, 1;
+	end;
+
 S_StartArc:
 	mes("[Sun-Hwa]");
 	mes("You carry a cold thing.");
@@ -381,6 +388,8 @@ OnMoonlightDead:
 	end;
 
 OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20012, 1;
 	.boss_up = 0;
 	end;
 }

@@ -38,6 +38,13 @@ rachel,120,120,5	script	Acolyte Naima#dm	4_F_04,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20131, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20131, 1;
+	end;
+
 S_StartArc:
 	mes("[Acolyte Naima]");
 	mes("You are not pilgrims. Good. Every pilgrim I tell this to walks away faster.");
@@ -287,6 +294,11 @@ rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
 	next();
 	mes("^3355FF[The Prelate's Record resolved. Descend to ice_dun03 and face Gloom Under Night.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20134, 1;
+	end;
 }
 
 // ── Ice Bleed Site Set-piece ───────────────────────────────────────────────

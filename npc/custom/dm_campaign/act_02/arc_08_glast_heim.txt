@@ -20,7 +20,7 @@
 //===========================================================
 
 // ── Sir Aldric the Unfrocked — Survivor of the Holy Kingdom ────────────────
-geffen,120,120,5	script	Sir Aldric the Unfrocked#dm	4_M_03,{
+geffen,120,120,5	script	Sir Aldric Unfrocked#dm	4_M_03,{
 	if (questprogress(20121) == 2) {
 		mes("[Sir Aldric]");
 		mes("The Dark Lord sleeps again. I would call it victory if I did not know we are the ones who made it possible in the first place.");
@@ -33,6 +33,13 @@ geffen,120,120,5	script	Sir Aldric the Unfrocked#dm	4_M_03,{
 	}
 
 	callsub(S_TurnIns);
+	end;
+
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20121, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20121, 1;
 	end;
 
 S_StartArc:
@@ -198,15 +205,17 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 	next();
 	switch (select("The kingdom is gone, Manfred. The faith killed it.", "What would the Twelve actually want here?", "Stand with us. Help us put this to rest.")) {
 	case 1:
+		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_spared");
 		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_killed", 1);
 		callfunc("DM_InstanceQuestComplete", 20124);
 		mes("[Manfred]");
 		mes("Then I am already dead. Take your heresy into the cathedral. The Twelve will judge you there.");
 		next();
 		mes("^3355FF*Manfred stands aside, hollow. His prayers will feed the court's unrest.*^000000");
-		mes("^3355FF[DM note: spawn 2-3 extra undead adds with the Dark Lord to reflect his despair joining the fight.]^000000");
+		mes("^3355FF[Encounter: the Dark Lord will summon a larger undead court.]^000000");
 		break;
 	case 2:
+		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_killed");
 		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
 		callfunc("DM_InstanceQuestComplete", 20124);
 		mes("[Manfred]");
@@ -216,9 +225,10 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 		mes("I have been asking myself that question for thirty years. I never liked the answer. They would want it to stop.");
 		next();
 		mes("^3355FF*Something in Manfred's bearing changes. He steps aside.*^000000");
-		mes("^3355FF[DM note: the Dark Lord fights with its court suppressed — spawn fewer adds, the faith holding them back.]^000000");
+		mes("^3355FF[Encounter: Manfred's faith will suppress part of the Dark Lord's court.]^000000");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_killed");
 		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
 		callfunc("DM_InstanceQuestComplete", 20124);
 		mes("[Manfred]");
@@ -228,12 +238,17 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 		mes("Let me walk ahead. If the faith has any weight left in this place, it will clear your path.");
 		next();
 		mes("^3355FF*Manfred leads the way into the cathedral. His prayers hold the adds at bay.*^000000");
-		mes("^3355FF[DM note: spawn fewer adds with the Dark Lord — Manfred's faith restrains the court.]^000000");
+		mes("^3355FF[Encounter: Manfred's faith will suppress part of the Dark Lord's court.]^000000");
 		break;
 	}
 	next();
 	mes("^3355FF[The Weight of Faith resolved. The cathedral is open.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20124, 1;
+	end;
 }
 
 // ── Glast Heim Abbey Set-piece ─────────────────────────────────────────────
@@ -241,6 +256,7 @@ gl_church,150,150,0	script	Glast Heim Abbey#dm	HIDDEN_NPC,{
 	end;
 
 OnDarkLordDead:
+	killmonster strnpcinfo(NPC_MAP), "Glast Heim Abbey#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20121);
 	callfunc("DM_InstanceSetFlag", "dm_arc08_darklord_killed", 1);
 	callfunc("DM_PartyExp", 700000, 400000);
@@ -251,5 +267,8 @@ OnDarkLordDead:
 		instance_announce(instance_id(), "^3355FF[DM] The Dark Lord is banished. The cursed kingdom finally falls silent.^000000", bc_all);
 	sleep(2000);
 	instance_announce(instance_id(), "^FF6600[DM] The same institutional rot lives on in Rachel. The cascade has a church to feed on next.^000000", bc_all);
+	end;
+
+OnAddDead:
 	end;
 }

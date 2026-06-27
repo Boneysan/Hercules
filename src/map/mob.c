@@ -34,6 +34,7 @@
 #include "map/itemdb.h"
 #include "map/log.h"
 #include "map/map.h"
+#include "map/mapreg.h"
 #include "map/mercenary.h"
 #include "map/npc.h"
 #include "map/party.h"
@@ -1115,6 +1116,27 @@ static int mob_count_sub(struct block_list *bl, va_list ap)
 	return 1; //backward compatibility
 }
 
+static bool mob_dm_mode_should_suppress(struct mob_data *md)
+{
+	static int64 dm_mode_uid = 0;
+
+	if (md == NULL || md->spawn == NULL)
+		return false;
+	if (md->spawn->state.boss != BTYPE_MVP && md->spawn->state.boss != BTYPE_BOSS)
+		return false;
+	if (dm_mode_uid == 0)
+		dm_mode_uid = script->add_variable("$dm_mode");
+
+	return mapreg->readreg(dm_mode_uid) == 1;
+}
+
+static void mob_dm_mode_delay_spawn(struct mob_data *md, int64 tick)
+{
+	if (md->spawn_timer != INVALID_TIMER)
+		timer->delete(md->spawn_timer, mob->delayspawn);
+	md->spawn_timer = timer->add(tick + 10000, mob->delayspawn, md->bl.id, 0);
+}
+
 /*==========================================
  * Mob spawning. Initialization is also variously here.
  *------------------------------------------*/
@@ -1136,6 +1158,11 @@ static int mob_spawn(struct mob_data *md)
 	}
 
 	if (md->spawn) { //Respawn data
+		if (mob_dm_mode_should_suppress(md)) {
+			mob_dm_mode_delay_spawn(md, tick);
+			return 0;
+		}
+
 		md->bl.m = md->spawn->m;
 		md->bl.x = md->spawn->x;
 		md->bl.y = md->spawn->y;
@@ -1725,6 +1752,12 @@ static bool mob_ai_sub_hard(struct mob_data *md, int64 tick)
 
 	md->last_thinktime = tick;
 
+	if (mob_dm_mode_should_suppress(md)) {
+		unit->remove_map(&md->bl, CLR_RESPAWN, ALC_MARK);
+		mob_dm_mode_delay_spawn(md, tick);
+		return false;
+	}
+
 	if (md->ud.skilltimer != INVALID_TIMER)
 		return false;
 
@@ -2034,6 +2067,12 @@ static int mob_ai_sub_lazy(struct mob_data *md, va_list args)
 		return 0;
 
 	tick = va_arg(args, int64);
+
+	if (mob_dm_mode_should_suppress(md)) {
+		unit->remove_map(&md->bl, CLR_RESPAWN, ALC_MARK);
+		mob_dm_mode_delay_spawn(md, tick);
+		return 0;
+	}
 
 	if (battle_config.mob_ai&0x20 && map->list[md->bl.m].users>0)
 		return (int)mob->ai_sub_hard(md, tick);

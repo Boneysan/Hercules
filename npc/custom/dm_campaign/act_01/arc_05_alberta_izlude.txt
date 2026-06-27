@@ -40,6 +40,13 @@ alberta,183,151,4	script	Captain Mara#dm	4_F_01,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20025, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20025, 1;
+	end;
+
 S_StartArc:
 	mes("[Captain Mara]");
 	mes("Welcome to Alberta. Smells like salt, tar, fish, and men pretending cargo has no conscience.");
@@ -286,6 +293,11 @@ alberta,101,65,4	script	Smuggler-Baron Brode#dm	4_M_03,{
 	next();
 	mes("^3355FF*Brode's Manifest lists ports and dates forward into places you have not yet visited.*^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20029, 1;
+	end;
 }
 
 // Cargo of Souls - locked hold reveal on the Sunken Ship route
@@ -352,6 +364,8 @@ OnCrewDead:
 	end;
 
 OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20029, 1;
 	.boss_up = 0;
 	end;
 }
@@ -443,6 +457,8 @@ OnTaoDead:
 	end;
 
 OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20030, 1;
 	.boss_up = 0;
 	end;
 }

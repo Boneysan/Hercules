@@ -42,6 +42,13 @@ ba_in01,100,100,5	script	Doctor Mira Tressa#dm	4_F_03,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20211, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20211, 1;
+	end;
+
 S_StartArc:
 	mes("[Doctor Mira Tressa]");
 	mes("The Biolabs are still running. I came to document and found an active research program. Three centuries active. Varmundt never stopped his work — he just stopped being the one doing it.");
@@ -140,14 +147,14 @@ S_TurnIns:
 
 	if (questprogress(20212) == 2 && questprogress(20213) == 2 && questprogress(20214) == 0) {
 		mes("[Tressa]");
-		mes("The outer and inner corridors are clear. The Administrator's terminal is in the core — ba_in04. The system is aware you are here. It has been aware since you entered.");
+		mes("The outer and inner corridors are clear. The Administrator's terminal is in the power wing — ba_pw03. The system is aware you are here. It has been aware since you entered.");
 		next();
 		mes("[Tressa]");
 		mes("It will not attack during the conversation. Its directive is data preservation, not aggression. It will only fight if you try to extract data without authorization. The question is what authorization looks like to a three-century-old automated system.");
 		callfunc("DM_InstanceQuestStart", 20214);
 		next();
 		mes("^3355FF[Quest started: Biosphere Sample Rotation]^000000");
-		mes("^3355FFConfront the Administrator at ba_in04. Then face the Biosphere Core.^000000");
+		mes("^3355FFConfront the Administrator at ba_pw03. Then face the Biosphere Core.^000000");
 		close();
 	}
 
@@ -159,7 +166,7 @@ S_TurnIns:
 
 	if (questprogress(20214) == 1 && (dm_arc17_admin_purged || dm_arc17_admin_negotiated || dm_arc17_admin_running)) {
 		mes("[Tressa]");
-		mes("The core is handled. The Biosphere defense construct is still active — it operates on a separate system from the Administrator. The Administrator considers it a contingency it cannot override. ba_in04, inner chamber.");
+		mes("The core is handled. The Biosphere defense construct is still active — it operates on a separate system from the Administrator. The Administrator considers it a contingency it cannot override. ba_pw03, inner chamber.");
 		close();
 	}
 
@@ -177,7 +184,7 @@ S_TurnIns:
 	else if (questprogress(20213) == 1)
 		mes("Tartaros Dive is still open. Celia constructs in the inner corridors.");
 	else
-		mes("Both done. The Administrator's terminal is in ba_in04.");
+		mes("Both done. The Administrator's terminal is in ba_pw03.");
 	close();
 }
 
@@ -217,6 +224,8 @@ ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
 	next();
 	switch (select("Authorization override: research transfer complete. Shut down.", "Your mission is to preserve the data. Help us receive it properly.", "Leave the core running. We will work with you remotely after.")) {
 	case 1:
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
 		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_purged", 1);
 		callfunc("DM_InstanceQuestComplete", 20214);
 		mes("[The Administrator]");
@@ -226,9 +235,11 @@ ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
 		mes("It has been a long directive. I am satisfied with the fulfillment.");
 		next();
 		mes("^3355FF*The Administrator terminal goes dark.*^000000");
-		mes("^3355FF[DM note: Admin purged — clean data transfer. The Biosphere Core remains active.]^000000");
+		mes("^3355FF[Outcome: clean data transfer. The Biosphere Core remains active.]^000000");
 		break;
 	case 2:
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
 		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_negotiated", 1);
 		callfunc("DM_InstanceQuestComplete", 20214);
 		mes("[The Administrator]");
@@ -238,9 +249,11 @@ ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
 		mes("During the fourteen minutes: the Biosphere Core will engage. I suggest you use that time productively.");
 		next();
 		mes("^3355FF*The terminal begins sorting Varmundt's complete research archive by campaign-relevant priority.*^000000");
-		mes("^3355FF[DM note: Admin negotiated — richer data yield; the Administrator remains active to answer queries.]^000000");
+		mes("^3355FF[Outcome: richer data yield. The Administrator remains active to answer queries.]^000000");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
 		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_running", 1);
 		callfunc("DM_InstanceQuestComplete", 20214);
 		mes("[The Administrator]");
@@ -250,16 +263,21 @@ ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
 		mes("That figure will be useful context at Morroc's ruins.");
 		next();
 		mes("^3355FF*The Administrator continues running. Its cascade analysis begins transmitting.*^000000");
-		mes("^3355FF[DM note: Admin running — callbacks available in Arc 19; Varmundt's system provides real-time cascade data at the finale.]^000000");
+		mes("^3355FF[Outcome: Varmundt's system provides real-time cascade data at the finale.]^000000");
 		break;
 	}
 	next();
-	mes("^3355FF[Biosphere Sample Rotation resolved. The Biosphere Core is in the inner chamber of ba_in04.]^000000");
+	mes("^3355FF[Biosphere Sample Rotation resolved. The Biosphere Core is in the inner chamber of ba_pw03.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20214, 1;
+	end;
 }
 
 // ── Biosphere Core Set-piece ───────────────────────────────────────────────
-ba_in04,150,150,0	script	Biosphere Core#dm	HIDDEN_NPC,{
+ba_pw03,150,150,0	script	Biosphere Core#dm	HIDDEN_NPC,{
 	end;
 
 OnBetaDead:

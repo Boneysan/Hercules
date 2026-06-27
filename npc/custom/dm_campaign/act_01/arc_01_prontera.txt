@@ -3,7 +3,7 @@
 //===== By: ==================================================
 //= Seal Cascade DM tooling
 //===== Description: =========================================
-//= First playable vertical slice of the Seal Cascade campaign.
+//= Original Act I entry arc for the Seal Cascade campaign.
 //= Town-hub NPCs (Quartermaster Wynne, a refugee mother, and
 //= Tibbets the sluice-keeper) drive the guild loop and set the
 //= story flags. Deacon Holt runs the Listening Chamber set-piece
@@ -42,6 +42,13 @@ prontera,156,191,5	script	Quartermaster Wynne#dm	4_F_01,{
 		end;
 	}
 	callsub(S_Contracts);
+	end;
+
+OnInit:
+	questinfo QTYPE_QUEST, 1; // Marker color 1 (yellow)
+	setquestinfo QINFO_QUEST, 20001, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20001, 1;
 	end;
 
 S_SwearIn:
@@ -197,6 +204,13 @@ prontera,156,40,3	script	Frightened Mother#dm	4_F_01,{
 		mes("^3355FF[The Trembling Ground complete.]^000000");
 		close();
 	}
+
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20004, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20004, 1;
+	end;
 }
 
 // ── Tibbets the Sluice-Keeper — Culvert guide ──────────────────────────────
@@ -243,6 +257,11 @@ prontera,146,193,5	script	Tibbets the Keeper#dm	1_M_SIZ,{
 		mes("(clamming up) ...Gladly. Don't go to the lowest chamber. It's not just rats down there anymore.");
 		close();
 	}
+
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20005, 1;
+	end;
 }
 
 // ── Deacon Holt — The Listening Chamber set-piece (Deviruchi MVP) ───────────
@@ -358,6 +377,8 @@ OnDeviruchiDead:
 	end;
 
 OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20005, 1;
 	.boss_up = 0;
 	end;
 }

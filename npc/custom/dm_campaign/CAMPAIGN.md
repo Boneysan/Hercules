@@ -10,19 +10,19 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 | Arc | Title | Hub NPC / Map | Boss | Quest IDs |
 |-----|-------|---------------|------|-----------|
 | 01 | The Broken Gate | Prontera | — | 20001–20004 |
-| 02 | River of Ash | Payon | — | 20011–20014 |
-| 03 | The Scar | Morroc | — | 20021–20024 |
-| 04 | The Warden's Brand | Geffen | — | 20031–20034 |
-| 05 | The Leviathan Compact | Alberta / Izlude | — | 20041–20044 |
-| 06 | The Council's Edge | Yuno | — | 20051–20054 |
-| 07 | Iron Congregation | Einbroch | — | 20061–20064 |
-| 08 | Cathedral of Chains | Glast Heim | — | 20071–20074 |
-| 09 | The Sealed Oracle | Rachel | — | 20081–20084 |
-| 10 | The Living Key | Lighthalzen | — | 20091–20094 |
-| 11 | Veil of the Valkyrie | Hugel | Randgris (1752) | 20151–20155 |
+| 02 | River of Ash | Payon | — | 20007–20012 |
+| 03 | The Scar | Morroc | — | 20013–20018 |
+| 04 | The Warden's Brand | Geffen | — | 20019–20024 |
+| 05 | The Leviathan Compact | Alberta / Izlude | — | 20025–20030 |
+| 06 | The Council's Edge | Yuno | Mistress (1059) | 20101–20104 |
+| 07 | Iron Congregation | Einbroch | RSX-0806 (1623) | 20111–20115 |
+| 08 | Cathedral of Chains | Glast Heim | Dark Lord (1272) | 20121–20124 |
+| 09 | The Sealed Oracle | Rachel | Gloom Under Night (1768) | 20131–20134 |
+| 10 | The Living Key | Lighthalzen | Kiel D-01 (1734) | 20141–20144 |
+| 11 | Veil of the Valkyrie | Hugel | Randgris (1751) | 20151–20155 |
 | 12 | The New World Rift | New World | Naght Sieger (1956) | 20161–20165 |
 | 13 | The Nameless Pact | Nameless Island | Beelzebub (1874) | 20171–20175 |
-| 14 | The Magma Seal | Veins | Ifrit (1833) | 20181–20185 |
+| 14 | The Magma Seal | Veins | Ifrit (1832) | 20181–20185 |
 | 15 | The Method's Price | Aldebaran | Thanatos (1708) | 20191–20194 |
 | 16 | The Prontera Banquet | Prontera | Doppelganger/Bijou (1046) | 20201–20204 |
 | 17 | The Sage's Legacy | Biolabs | Amdarais (2476) | 20211–20214 |
@@ -55,6 +55,10 @@ and political zones.
 - `dm_arc09_karsh_deal` — Oracle Karsh made a deal
 - `dm_arc10_echo_freed` — Lighthalzen prototype Echo freed (callbacks in Arcs 17, 18)
 
+Arc 7's RSX-0806 beat starts the Reactivation Bay smoke-pressure hazard: three
+pulses around `ein_dun02` 150,150 with blind pressure. Supporting the strike
+lowers pulse damage from 5% to 3%.
+
 ---
 
 ## Act III (Arcs 11–14) — The Living Seals
@@ -67,27 +71,32 @@ villain confrontation, then an MVP boss spawned via DM console.
 - Villain: Bjorn — subdued / persuaded / **joined**
 - Boss: Randgris at `abyss_03`
 - Flags: `dm_arc11_bjorn_subdued`, `dm_arc11_bjorn_joined`
-- Bjorn_joined unlocks unique Randgris spawn flavor
+- Bjorn_joined reduces Randgris court adds; Bjorn_subdued spawns the full court.
 
 ### Arc 12 — Captain Vance (New World)
 - Hunting: Cornus (1992 × 15), Naga (1993 × 15)
 - Villain: Vance — exposed / **helped**
 - Boss: Naght Sieger (1956) at `spl_fild01`
 - Flags: `dm_arc12_vance_exposed`, `dm_arc12_vance_helped`
+- Naght Sieger starts the Rift Anchor pressure hazard: four pulses around
+  `spl_fild01` 150,150. Helping Vance lowers pulse damage from 7% to 4%.
 - Vance_helped → callback in Arc 15 (Lysandra)
 
 ### Arc 13 — Broker Carrion (Nameless Island)
-- Hunting: Zombie Slaughter (? × 15), Ragged Zombie (? × 20)
+- Hunting: Banshee (1868 × 20 / 20173), Zombie Slaughter (1865 × 20 / 20174)
 - Villain: Carrion — killed / **bribed**
 - Boss: Beelzebub (1874) at `abbey03`
 - Flags: `dm_arc13_carrion_killed`, `dm_arc13_carrion_bribed`
-- Carrion_bribed → callback in Arc 19 (Loki's full reveal speech)
+- Carrion_killed spawns full coalition adds. Carrion_bribed can complete the arc
+  without spawning Beelzebub and sets `dm_arc13_coalition_deal_honored`.
 
 ### Arc 14 — Prelate Hesma (Veins)
-- Hunting: Imp (? × 15), Lava Golem (? × 20)
+- Hunting: Salamander (1832 × 20 / 20183), Lava Golem (1367 × 20 / 20184)
 - Villain: Hesma — exposed / **bribed**
-- Boss: Ifrit (1833) at `thor_v03`
+- Boss: Ifrit (1832) at `thor_v03`
 - Flags: `dm_arc14_hesma_exposed`, `dm_arc14_hesma_bribed`
+- Ifrit starts the Magma Cathedral heat pulse hazard: five pulses around
+  `thor_v03` 150,150. Exposing Hesma lowers pulse damage from 9% to 6%.
 - Arc 14 complete sets `dm_act03_complete` and beat 1499
 
 ---
@@ -102,7 +111,11 @@ villain confrontation, then an MVP boss spawned via DM console.
 - Boss: Thanatos (1708) at `thana_boss`
 - HIDDEN_NPC: `Memory of Thanatos#dm` at `thana_boss,150,150`
 - Flags: `dm_arc15_pratt_exposed`, `dm_arc15_pratt_challenged`
-- Pratt_challenged → callbacks in Arcs 18 (Familiar Dead) and 19 (Loki)
+- Pratt_exposed/challenged alter the Thanatos echo adds. Pratt_challenged also
+  callbacks in Arcs 18 (Familiar Dead) and 19 (Loki).
+- Thanatos starts the tower resonance hazard: four pulses around `thana_boss`
+  150,150. Pratt_challenged lowers pulse damage to 4%; Pratt_exposed lowers it
+  to 6%; the unresolved default is 8%.
 
 ### Arc 16 — The Prontera Banquet (Prontera)
 - Hub: Kronecker G Heine (`prontera,150,150`)
@@ -110,18 +123,21 @@ villain confrontation, then an MVP boss spawned via DM console.
 - Villain: Matron Rina (`prt_q,100,100`) — exposed / rolled / **defected**
   - defected: Bijou is Maret, trying to introduce cascade errors from inside
 - Boss: Doppelganger (1046) as Bijou at `prt_q,150,150`
-- HIDDEN_NPC: `Underground Prison Vault#dm` at `prt_q,150,150`
-- Flags: `dm_arc16_rina_exposed`, `dm_arc16_rina_defected`
-- Rina_defected → callback in Arc 18 (Familiar Dead / Maret lore)
+- HIDDEN_NPC: `Prison Vault#dm` at `prt_q,150,150`
+- Flags: `dm_arc16_rina_exposed`, `dm_arc16_rina_rolled`,
+  `dm_arc16_rina_defected`, `dm_arc16_bijou_killed`, `dm_arc16_maret_freed`
+- Rina_defected resolves Bijou as Maret freed instead of a simple kill, and
+  callbacks in Arc 18 (Familiar Dead / Maret lore).
 
 ### Arc 17 — The Sage's Legacy (Biolabs)
 - Hub: Doctor Mira Tressa (`ba_in01,100,100`)
 - Hunting: Aliza (1737 × 20 / 20212), Celia (2223 × 15 / 20213)
 - Villain: The Administrator (`ba_in01,110,100`) — purged / negotiated / **running**
   - running: sends cascade analysis updates; creates Arc 19 callback
-- Boss: Amdarais (2476) at `ba_in04` (Biosphere Core)
-- HIDDEN_NPC: `Biosphere Core#dm` at `ba_in04,150,150`
-- Flags: `dm_arc17_admin_purged`, `dm_arc17_admin_negotiated`, `dm_arc17_admin_running`, `dm_arc17_beta_killed`
+- Boss: Amdarais (2476) at `ba_pw03` (Biosphere Core)
+- HIDDEN_NPC: `Biosphere Core#dm` at `ba_pw03,150,150`
+- Flags: `dm_arc17_admin_purged`, `dm_arc17_admin_negotiated`,
+  `dm_arc17_admin_running`, `dm_arc17_beta_killed`
 - Admin_running → callback in Arc 19 (Loki cites 847% cascade deviation)
 
 ### Arc 18 — The Witch of Death (Niflheim)
@@ -140,6 +156,9 @@ villain confrontation, then an MVP boss spawned via DM console.
 - Revelation: Loki explains cascade = Thanatos's seal in harmonic decay
 - Boss: Garm (1252) as Surt at `moc_fild22,150,150`
 - HIDDEN_NPC: `The Ash Vacuum Rift#dm` at `moc_fild22,150,150`
+- Surt starts the Ash Vacuum Rift hazard: four pulses around `moc_fild22`
+  150,150. Himmelmez_bargained lowers pulse damage from 8% to 5% and removes
+  the curse rider.
 - Final NPC: The Central Choice (`moc_fild22,155,150`) — gated on `dm_arc19_surt_defeated`
 - Five endings (each sets a `dm_finale_*` flag):
   1. `dm_finale_shared_seal` — distributed resonance network
@@ -193,10 +212,14 @@ Arc 18: himmelmez_bargained → Arc 19 boss flavor, unlocks queens_bargain endin
 
 | Mob | ID | Notes |
 |-----|----|-------|
-| Randgris | 1752 | VALKYRIE_RANDGRIS |
+| Mistress | 1059 | MISTRESS |
+| RSX-0806 | 1623 | RSX_0806 |
+| Dark Lord | 1272 | DARK_LORD |
+| Gloom Under Night | 1768 | GLOOMUNDERNIGHT |
+| Randgris | 1751 | VALKYRIE_RANDGRIS |
 | Naght Sieger | 1956 | NAGHT_SIEGER (not 1957 ENTWEIHEN) |
 | Beelzebub | 1874 | BEELZEBUB |
-| Ifrit | 1833 | IFRIT |
+| Ifrit | 1832 | IFRIT |
 | Thanatos | 1708 | THANATOS |
 | Doppelganger (Bijou) | 1046 | DOPPELGANGER — no BIJOU mob in 2019 db |
 | Amdarais (Biosphere) | 2476 | MG_AMDARAIS |

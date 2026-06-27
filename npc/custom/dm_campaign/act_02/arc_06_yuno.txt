@@ -42,6 +42,13 @@ yuno,155,185,5	script	Doctor Ingrid Vahl#dm	4_F_02,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20101, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20101, 1;
+	end;
+
 S_StartArc:
 	mes("[Doctor Vahl]");
 	mes("You are not Rekenber's private security. That is already better than most of my visitors today.");
@@ -272,6 +279,11 @@ yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
 	next();
 	mes("^3355FF[The Number Nobody Wants resolved. The Juperos set-piece is now accessible.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20102, 1;
+	end;
 }
 
 // ── Juperos Vault Set-piece ────────────────────────────────────────────────

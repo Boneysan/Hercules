@@ -39,6 +39,13 @@ aldebaran,100,100,5	script	Keeper Lysandra#dm	4_F_01,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20191, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20191, 1;
+	end;
+
 S_StartArc:
 	mes("[Keeper Lysandra]");
 	mes("You ascended the Tower. Most who attempt that are looking for power or absolution. You look like neither.");
@@ -217,6 +224,8 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 	next();
 	switch (select("Name your volunteers. What they agreed to was not informed consent.", "Present your findings to the council before you proceed with any human subjects.", "What do you know about the cost that is not in the official record?")) {
 	case 1:
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
 		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_exposed", 1);
 		callfunc("DM_InstanceQuestComplete", 20194);
 		mes("[Pratt]");
@@ -229,9 +238,11 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 		mes("Candidate names. Yes. I will provide them to Lysandra. The volunteer commitments are... rescinded.");
 		next();
 		mes("^3355FF*Pratt writes the names. His hand is steady. His face is not.*^000000");
-		mes("^3355FF[DM note: Pratt exposed — the cascade resonance at thana_boss may recognize the party's refusal to replicate the cycle.]^000000");
+		mes("^3355FF[Encounter: the Tower's resonance weakens because the cycle will not be repeated.]^000000");
 		break;
 	case 2:
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
 		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_delayed", 1);
 		callfunc("DM_InstanceQuestComplete", 20194);
 		mes("[Pratt]");
@@ -244,9 +255,11 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 		mes("I understand you understand that.");
 		next();
 		mes("^3355FF*Pratt files the council review paperwork. The method survives, delayed.*^000000");
-		mes("^3355FF[DM note: Pratt delayed — he will brief the council. The method remains on the table.]^000000");
+		mes("^3355FF[Encounter: the Tower's resonance remains unstable while the method survives.]^000000");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
 		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_challenged", 1);
 		callfunc("DM_InstanceQuestComplete", 20194);
 		mes("[Pratt]");
@@ -260,19 +273,64 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 		next();
 		mes("^3355FF*Pratt closes his research notes.*^000000");
 		mes("^3355FF*He does not open them again.*^000000");
-		mes("^3355FF[DM note: Pratt challenged — the full cost is known. The party descends knowing what Thanatos still experiences.]^000000");
+		mes("^3355FF[Encounter: Thanatos recognizes that the party understands the living-lock cost.]^000000");
 		break;
 	}
 	next();
 	mes("^3355FF[The Method's Price resolved. Descend to thana_boss and face the Memory of Thanatos.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20194, 1;
+	end;
 }
 
 // ── Memory of Thanatos Set-piece ───────────────────────────────────────────
 thana_boss,150,150,0	script	Memory of Thanatos#dm	HIDDEN_NPC,{
 	end;
 
+OnResonanceStart:
+	stopnpctimer;
+	.resonance_map$ = strnpcinfo(NPC_MAP);
+	.resonance_party_id = $@dm_arc15_resonance_party_id;
+	.resonance_damage = $@dm_arc15_resonance_damage;
+	.resonance_status = $@dm_arc15_resonance_status;
+	.resonance_status_ms = $@dm_arc15_resonance_status_ms;
+	if (.resonance_party_id > 0) {
+		mapannounce .resonance_map$, "[Thanatos Memory] The tower begins replaying the cost of the seal.", bc_map, 0xCC99FF;
+		initnpctimer;
+	}
+	end;
+
+OnResonanceStop:
+	stopnpctimer;
+	end;
+
+OnTimer6000:
+	mapannounce .resonance_map$, "[Thanatos Memory] A remembered oath crushes the chamber.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", .resonance_map$, 150, 150, 9, .resonance_damage, .resonance_status, .resonance_status_ms, .resonance_party_id);
+	end;
+
+OnTimer12000:
+	mapannounce .resonance_map$, "[Thanatos Memory] Four absent volunteers answer in echo.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", .resonance_map$, 150, 150, 9, .resonance_damage, .resonance_status, .resonance_status_ms, .resonance_party_id);
+	end;
+
+OnTimer18000:
+	mapannounce .resonance_map$, "[Thanatos Memory] The seal's pressure finds every living heartbeat.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", .resonance_map$, 150, 150, 9, .resonance_damage, .resonance_status, .resonance_status_ms, .resonance_party_id);
+	end;
+
+OnTimer24000:
+	mapannounce .resonance_map$, "[Thanatos Memory] The tower resonance fractures and fades.", bc_map, 0xCC99FF;
+	callfunc("DM_HazardArea", .resonance_map$, 150, 150, 9, .resonance_damage, .resonance_status, .resonance_status_ms, .resonance_party_id);
+	stopnpctimer;
+	end;
+
 OnThanatosDead:
+	stopnpctimer;
+	killmonster strnpcinfo(NPC_MAP), "Memory of Thanatos#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20191);
 	callfunc("DM_InstanceSetFlag", "dm_arc15_thanatos_killed", 1);
 	callfunc("DM_PartyExp", 2000000, 1000000);
@@ -283,5 +341,8 @@ OnThanatosDead:
 		instance_announce(instance_id(), "^3355FF[DM] The Memory fades. Thanatos did not slay Morroc. He became the seal. He is still in there. He has been in there for three hundred years.^000000", bc_all);
 	sleep(2000);
 	instance_announce(instance_id(), "^FF6600[DM] The truth is yours. The next seal must be different. Prontera's court is the next thread.^000000", bc_all);
+	end;
+
+OnAddDead:
 	end;
 }

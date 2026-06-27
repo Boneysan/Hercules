@@ -38,6 +38,13 @@ hugel,100,100,5	script	Priest Eadric#dm	4_M_01,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20151, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20151, 1;
+	end;
+
 S_StartArc:
 	mes("[Priest Eadric]");
 	mes("You came from the south. Good. Everything coming from the north has been trying to kill us.");
@@ -219,6 +226,7 @@ hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
 	next();
 	switch (select("The Valkyries are not judging us. They are malfunctioning.", "You may be right about Midgard's failures. That is not what this is.", "Then stand with us and do something about those failures.")) {
 	case 1:
+		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_joined");
 		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_subdued", 1);
 		callfunc("DM_InstanceQuestComplete", 20155);
 		mes("[Bjorn]");
@@ -231,9 +239,10 @@ hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
 		mes("What if you are right? What if I spent fifteen years calling the instrument what I wished to hear?");
 		next();
 		mes("^3355FF*Bjorn does not move. But he does not block the path.*^000000");
-		mes("^3355FF[DM note: Bjorn subdued — Randgris fights with full court adds.]^000000");
+		mes("^3355FF[Encounter: Randgris will fight with her full court.]^000000");
 		break;
 	case 2:
+		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_joined");
 		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_subdued", 1);
 		callfunc("DM_InstanceQuestComplete", 20155);
 		mes("[Bjorn]");
@@ -243,9 +252,10 @@ hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
 		mes("Then what are you doing here? If the diagnosis is correct but the medicine is wrong, what is your alternative?");
 		next();
 		mes("^3355FF*Bjorn steps aside to hear the answer in Randgris's death. He will be watching.*^000000");
-		mes("^3355FF[DM note: Bjorn subdued — Randgris fights with full court adds.]^000000");
+		mes("^3355FF[Encounter: Randgris will fight with her full court.]^000000");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_subdued");
 		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_joined", 1);
 		callfunc("DM_InstanceQuestComplete", 20155);
 		mes("[Bjorn]");
@@ -258,12 +268,17 @@ hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
 		mes("All right. I have been mourning it for fifteen years. Let me try your approach for an hour.");
 		next();
 		mes("^3355FF*Bjorn picks up his crook and walks toward the temple gate.*^000000");
-		mes("^3355FF[DM note: Bjorn joined — his faith restrains Randgris's court adds. Spawn fewer.]^000000");
+		mes("^3355FF[Encounter: Bjorn's faith will restrain part of Randgris's court.]^000000");
 		break;
 	}
 	next();
 	mes("^3355FF[The Zealot's Testimony resolved. The temple gate is open.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20155, 1;
+	end;
 }
 
 // ── Valkyrie Hall Set-piece ─────────────────────────────────────────────────
@@ -271,6 +286,7 @@ abyss_03,150,150,0	script	Valkyrie Hall#dm	HIDDEN_NPC,{
 	end;
 
 OnRandgrisDead:
+	killmonster strnpcinfo(NPC_MAP), "Valkyrie Hall#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20151);
 	callfunc("DM_InstanceSetFlag", "dm_arc11_randgris_killed", 1);
 	callfunc("DM_PartyExp", 1200000, 700000);
@@ -281,5 +297,8 @@ OnRandgrisDead:
 		instance_announce(instance_id(), "^3355FF[DM] Valkyrie Randgris falls. A dying Valkyrie hears Loki laugh from somewhere that has no direction.^000000", bc_all);
 	sleep(2000);
 	instance_announce(instance_id(), "^FF6600[DM] The divine signal is unblocked. But Odin remains silent. The New World's wound is the next thread.^000000", bc_all);
+	end;
+
+OnAddDead:
 	end;
 }

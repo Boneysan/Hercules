@@ -39,6 +39,13 @@ lighthalzen,120,120,5	script	Doctor Sabine Reuter#dm	4_F_05,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20141, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20141, 1;
+	end;
+
 S_StartArc:
 	mes("[Doctor Reuter]");
 	mes("Lighthalzen's public face is the city of prosperity. I know what's under it. I've been in there for three years.");
@@ -283,6 +290,11 @@ lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
 	next();
 	mes("^3355FF[Echo's Protocol resolved. Descend to lhz_dun04 and destroy Kiel D-01.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20144, 1;
+	end;
 }
 
 // ── Kiel Core Set-piece ────────────────────────────────────────────────────

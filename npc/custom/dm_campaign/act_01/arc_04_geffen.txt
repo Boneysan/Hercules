@@ -41,6 +41,13 @@ geffen,120,100,4	script	Apprentice Elsbeth#dm	4_F_01,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20019, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20019, 1;
+	end;
+
 S_StartArc:
 	mes("[Apprentice Elsbeth]");
 	mes("Everyone calls Geffen the city of spellcraft. No one says what the craft is chained to.");
@@ -264,6 +271,11 @@ gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
 	next();
 	mes("^3355FF*The vault door opens below him. The air smells like old candles and wet fur.*^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20023, 1;
+	end;
 }
 
 // Baphomet's Seal - main Geffen set-piece
@@ -357,6 +369,8 @@ OnBaphometDead:
 	end;
 
 OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20023, 1;
 	.boss_up = 0;
 	end;
 }
@@ -409,4 +423,9 @@ gef_dun02,218,210,4	script	Brother Cassell#dm04	4_M_MONK,{
 	next();
 	mes("^3355FF[Arc 4 complete: The City Above the Beast]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20024, 1;
+	end;
 }

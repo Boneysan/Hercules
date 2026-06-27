@@ -41,6 +41,13 @@ einbroch,145,230,5	script	Greta Holm#dm	4_F_03,{
 	callsub(S_TurnIns);
 	end;
 
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20111, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20111, 1;
+	end;
+
 S_Introduction:
 	mes("[Greta Holm]");
 	mes("You don't look like Rekenber's private security. Good. We've had enough of those today.");
@@ -284,13 +291,50 @@ einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
 	next();
 	mes("^3355FF[Whose Side the Smoke Is On resolved. Descend to ein_dun02 and face RSX-0806.]^000000");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20112, 1;
+	end;
 }
 
 // ── Reactivation Bay Set-piece ─────────────────────────────────────────────
 ein_dun02,150,150,0	script	Reactivation Bay#dm	HIDDEN_NPC,{
 	end;
 
+OnPressureStart:
+	stopnpctimer;
+	.pressure_map$ = strnpcinfo(NPC_MAP);
+	.pressure_party_id = $@dm_arc07_pressure_party_id;
+	.pressure_damage = $@dm_arc07_pressure_damage;
+	if (.pressure_party_id > 0) {
+		mapannounce .pressure_map$, "[Reactivation Bay] Smoke stacks vent across the mine floor as RSX-0806 comes online.", bc_map, 0x999999;
+		initnpctimer;
+	}
+	end;
+
+OnPressureStop:
+	stopnpctimer;
+	end;
+
+OnTimer5000:
+	mapannounce .pressure_map$, "[Reactivation Bay] Hot smoke rolls between the rail pylons.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 7, .pressure_damage, SC_BLIND, 4000, .pressure_party_id);
+	end;
+
+OnTimer10000:
+	mapannounce .pressure_map$, "[Reactivation Bay] The old boilers cough dust and machine oil.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 7, .pressure_damage, SC_BLIND, 4000, .pressure_party_id);
+	end;
+
+OnTimer15000:
+	mapannounce .pressure_map$, "[Reactivation Bay] A pressure valve bursts, then seals itself with a shriek.", bc_map, 0x999999;
+	callfunc("DM_HazardArea", .pressure_map$, 150, 150, 7, .pressure_damage, SC_BLIND, 4000, .pressure_party_id);
+	stopnpctimer;
+	end;
+
 OnRSXDead:
+	stopnpctimer;
 	callfunc("DM_InstanceQuestComplete", 20111);
 	callfunc("DM_InstanceSetFlag", "dm_arc07_rsx_killed", 1);
 	callfunc("DM_PartyExp", 600000, 350000);

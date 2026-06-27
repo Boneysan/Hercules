@@ -14,6 +14,9 @@ OnInit:
 	bindatcmd("dmwarp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnWarp", 60, 99, 1);
 	bindatcmd("dmrecall", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRecall", 60, 99, 1);
 	bindatcmd("dminstance", strnpcinfo(NPC_NAME_UNIQUE)+"::OnInstance", 60, 99, 1);
+	bindatcmd("dmmode", strnpcinfo(NPC_NAME_UNIQUE)+"::OnMode", 60, 99, 1);
+	bindatcmd("dmhazard", strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazard", 60, 99, 1);
+	bindatcmd("roll", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRoll", 0, 99, 1);
 	end;
 
 OnDM:
@@ -93,6 +96,16 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "mode") {
+		callsub(S_Mode, 1);
+		end;
+	}
+
+	if (.@sub$ == "hazard") {
+		callsub(S_Hazard, 1);
+		end;
+	}
+
 	dispbottom("[DM] Unknown subcommand: " + .@sub$);
 	callsub(S_Help);
 	end;
@@ -154,6 +167,103 @@ OnInstance:
 	callsub(S_Instance, 0);
 	end;
 
+OnMode:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Mode, 0);
+	end;
+
+OnHazard:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Hazard, 0);
+	end;
+
+OnRoll:
+	.@input$ = "";
+	.@hidden = 0;
+	.@start_idx = 0;
+
+	if (.@atcmd_parameters$[0] == "fudge" || .@atcmd_parameters$[0] == "override") {
+		if (getgmlevel() < 60) {
+			dispbottom("[DM] Roll overrides are for DMs only.");
+			end;
+		}
+		.@total = atoi(.@atcmd_parameters$[1]);
+		if (.@atcmd_parameters$[1] == "") {
+			dispbottom("[DM] Usage: @roll fudge <total> [note]");
+			end;
+		}
+		.@note$ = "";
+		for (.@i = 2; .@i < .@atcmd_numparameters; ++.@i)
+			.@note$ += (.@i > 2 ? " " : "") + .@atcmd_parameters$[.@i];
+		.@msg$ = "[Roll] " + strcharinfo(PC_NAME) + " set a DM override result: " + .@total;
+		if (.@note$ != "")
+			.@msg$ += " (" + .@note$ + ")";
+		mapannounce strcharinfo(PC_MAP), .@msg$, bc_map, 0xFFAA33;
+		end;
+	}
+
+	if (.@atcmd_parameters$[0] == "hidden") {
+		if (getgmlevel() >= 60) {
+			.@hidden = 1;
+			.@start_idx = 1;
+		} else {
+			dispbottom("[DM] Hidden rolls are for DMs only.");
+			end;
+		}
+	}
+
+	for (.@i = .@start_idx; .@i < .@atcmd_numparameters; ++.@i)
+		.@input$ += .@atcmd_parameters$[.@i];
+
+	if (.@input$ == "") {
+		dispbottom("[DM] Usage: @roll [hidden] <NdX[+/-mod]> (e.g. 1d20+3)");
+		end;
+	}
+
+	.@num = 1;
+	.@sides = 20;
+	.@mod = 0;
+
+	if (sscanf(.@input$, "%dd%d+%d", .@num, .@sides, .@mod) >= 3) {
+	} else if (sscanf(.@input$, "%dd%d-%d", .@num, .@sides, .@mod) >= 3) {
+		.@mod = -.@mod;
+	} else if (sscanf(.@input$, "%dd%d", .@num, .@sides) >= 2) {
+		.@mod = 0;
+	} else {
+		dispbottom("[DM] Usage: @roll [hidden] <NdX[+/-mod]> (e.g. 1d20+3)");
+		end;
+	}
+
+	if (.@num < 1) .@num = 1;
+	if (.@num > 100) .@num = 100;
+	if (.@sides < 2) .@sides = 2;
+	if (.@sides > 1000) .@sides = 1000;
+
+	.@sum = 0;
+	.@detail$ = "";
+	for (.@i = 0; .@i < .@num; ++.@i) {
+		.@roll = rand(1, .@sides);
+		.@sum += .@roll;
+		if (.@num <= 20)
+			.@detail$ += (.@i > 0 ? ", " : "") + .@roll;
+	}
+
+	.@total = .@sum + .@mod;
+
+	.@msg$ = "[Roll] " + strcharinfo(PC_NAME) + " rolled " + .@input$ + ": " + .@total;
+	if (.@detail$ != "")
+		.@msg$ += " [" + .@detail$ + "]";
+	if (.@mod != 0 || .@num > 20)
+		.@msg$ += " (Base: " + .@sum + ( .@mod != 0 ? " Mod: " + (.@mod > 0 ? "+" : "") + .@mod : "" ) + ")";
+
+	if (.@hidden)
+		dispbottom("[Hidden] " + .@msg$);
+	else
+		mapannounce strcharinfo(PC_MAP), .@msg$, bc_map, 0xFFAA33;
+	end;
+
 OnDMKilled:
 	end;
 
@@ -164,17 +274,135 @@ OnDMBossKilled:
 OnDMCleanup:
 	end;
 
+OnHazardTick:
+	if (@dm_hazard_ticks <= 0)
+		end;
+
+	callfunc("DM_HazardArea", @dm_hazard_map$, @dm_hazard_x, @dm_hazard_y, @dm_hazard_range, @dm_hazard_damage, @dm_hazard_status, @dm_hazard_status_ms, @dm_hazard_party_id);
+	--@dm_hazard_ticks;
+
+	if (@dm_hazard_ticks > 0)
+		addtimer(@dm_hazard_interval, strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazardTick");
+	else
+		dispbottom("[DM] Hazard expired.");
+	end;
+
 S_Help:
-	dispbottom("[DM] @dm reward [arc] [tier] [dryrun]");
+	dispbottom("[DM] @dm mode <on|off>");
+	dispbottom("[DM] @dm reward [arc] [tier] [preview|dryrun|1]");
+	dispbottom("[DM] @roll [hidden] <NdX[+/-mod]> | @roll fudge <total> [note]");
 	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
 	dispbottom("[DM] @dm quest <start|complete|erase> <quest_id>   (current party)");
 	dispbottom("[DM] @dm beat                 (menu: location/NPC/story tracking)");
 	dispbottom("[DM] @dm story <message> | @dm globalstory <message>");
 	dispbottom("[DM] @dm spawn <mob_id> [count] [name]");
+	dispbottom("[DM] @dm hazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms] | clear");
+	dispbottom("[DM] Status aliases: poison, freeze, stun, sleep, curse, confusion, blind.");
 	dispbottom("[DM] @dm warp <map> [x] [y]   (warps your whole party)");
 	dispbottom("[DM] @dm recall              (pulls party to you)");
 	dispbottom("[DM] @dm instance <start <map> [x] [y] [label] | end>");
-	dispbottom("[DM] Shortcuts: @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance");
+	return;
+
+S_Mode:
+	.@offset = getarg(0, 0);
+	.@action$ = .@atcmd_parameters$[.@offset];
+	if (.@action$ == "on") {
+		$dm_mode = 1;
+		dispbottom("[DM] DnD mode enabled. MVP spawns will be suppressed.");
+		return;
+	}
+	if (.@action$ == "off") {
+		$dm_mode = 0;
+		dispbottom("[DM] DnD mode disabled. MVP spawns will resume naturally.");
+		return;
+	}
+	dispbottom("[DM] Mode is currently " + ($dm_mode ? "ON" : "OFF"));
+	dispbottom("[DM] Usage: @dm mode <on|off>");
+	return;
+
+S_HazardStatus:
+	.@status$ = strtolower(getarg(0, ""));
+	if (.@status$ == "" || .@status$ == "0" || .@status$ == "none")
+		return 0;
+	if (.@status$ == "poison" || .@status$ == "sc_poison")
+		return SC_POISON;
+	if (.@status$ == "freeze" || .@status$ == "frozen" || .@status$ == "sc_freeze")
+		return SC_FREEZE;
+	if (.@status$ == "stun" || .@status$ == "stunned" || .@status$ == "sc_stun")
+		return SC_STUN;
+	if (.@status$ == "sleep" || .@status$ == "sc_sleep")
+		return SC_SLEEP;
+	if (.@status$ == "curse" || .@status$ == "cursed" || .@status$ == "sc_curse")
+		return SC_CURSE;
+	if (.@status$ == "confusion" || .@status$ == "confused" || .@status$ == "sc_confusion")
+		return SC_CONFUSION;
+	if (.@status$ == "blind" || .@status$ == "sc_blind")
+		return SC_BLIND;
+	.@status = atoi(.@status$);
+	if (.@status > 0)
+		return .@status;
+	return -1;
+
+S_Hazard:
+	.@offset = getarg(0, 0);
+	.@action$ = .@atcmd_parameters$[.@offset];
+
+	if (.@action$ == "clear" || .@action$ == "stop") {
+		deltimer(strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazardTick");
+		@dm_hazard_ticks = 0;
+		dispbottom("[DM] Hazard cleared.");
+		return;
+	}
+
+	.@range = atoi(.@atcmd_parameters$[.@offset]);
+	.@damage = atoi(.@atcmd_parameters$[.@offset + 1]);
+	.@ticks = atoi(.@atcmd_parameters$[.@offset + 2]);
+	.@interval = atoi(.@atcmd_parameters$[.@offset + 3]);
+	.@status = callsub(S_HazardStatus, .@atcmd_parameters$[.@offset + 4]);
+	.@status_ms = atoi(.@atcmd_parameters$[.@offset + 5]);
+
+	if (.@status < 0) {
+		dispbottom("[DM] Unknown hazard status: " + .@atcmd_parameters$[.@offset + 4]);
+		dispbottom("[DM] Use a numeric SC id, or: poison, freeze, stun, sleep, curse, confusion, blind, none.");
+		return;
+	}
+
+	if (.@range <= 0)
+		.@range = 3;
+	if (.@range > 20)
+		.@range = 20;
+	if (.@damage < 0)
+		.@damage = 0;
+	if (.@damage > 100)
+		.@damage = 100;
+	if (.@ticks <= 0)
+		.@ticks = 3;
+	if (.@ticks > 60)
+		.@ticks = 60;
+	if (.@interval <= 0)
+		.@interval = 3000;
+	if (.@interval < 1000)
+		.@interval = 1000;
+	if (.@status_ms <= 0)
+		.@status_ms = 10000;
+
+	deltimer(strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazardTick");
+	getmapxy(@dm_hazard_map$, @dm_hazard_x, @dm_hazard_y, UNITTYPE_PC);
+	@dm_hazard_range = .@range;
+	@dm_hazard_damage = .@damage;
+	@dm_hazard_ticks = .@ticks;
+	@dm_hazard_interval = .@interval;
+	@dm_hazard_status = .@status;
+	@dm_hazard_status_ms = .@status_ms;
+	@dm_hazard_party_id = getcharid(CHAR_ID_PARTY);
+
+	dispbottom("[DM] Hazard placed at " + @dm_hazard_map$ + " " + @dm_hazard_x + "," + @dm_hazard_y + " for " + .@ticks + " tick(s).");
+	callfunc("DM_HazardArea", @dm_hazard_map$, @dm_hazard_x, @dm_hazard_y, @dm_hazard_range, @dm_hazard_damage, @dm_hazard_status, @dm_hazard_status_ms, @dm_hazard_party_id);
+	--@dm_hazard_ticks;
+
+	if (@dm_hazard_ticks > 0)
+		addtimer(@dm_hazard_interval, strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazardTick");
 	return;
 
 S_Warp:
@@ -236,10 +464,12 @@ S_Reward:
 		.@arc = 1;
 
 	.@tier = callfunc("DM_ParseTier", .@atcmd_parameters$[.@offset + 1]);
-	.@dryrun = atoi(.@atcmd_parameters$[.@offset + 2]);
+	.@mode$ = strtolower(.@atcmd_parameters$[.@offset + 2]);
+	.@dryrun = (.@mode$ == "preview" || .@mode$ == "dryrun" || .@mode$ == "roll" || atoi(.@mode$) > 0);
 	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@reward_level = callfunc("DM_RewardArcLevel", .@arc);
 
-	callfunc("DM_GenerateLoot", .@arc, BaseLevel, .@tier, .@party_id, .@dryrun);
+	callfunc("DM_GenerateLoot", .@arc, .@reward_level, .@tier, .@party_id, .@dryrun);
 	return;
 
 S_Flag:
@@ -908,7 +1138,6 @@ S_Spawn:
 	areamonster(.@map$, .@x - 3, .@y - 3, .@x + 3, .@y + 3, .@name$, .@mob_id, .@count, "DM_Console::OnDMKilled");
 	dispbottom("[DM] Spawned " + .@count + " mob(s) near you on " + .@map$ + ".");
 	return;
-}
 
 S_BeatArc06:
 	mes("[DM Beat Director]");
@@ -952,7 +1181,7 @@ S_BeatArc06:
 		break;
 	case 7:
 		.@dm_map$ = strcharinfo(3);
-		monster .@dm_map$, 150, 150, "Mistress", 1060, 1, "Juperos Vault#dm::OnMistressDead";
+		monster .@dm_map$, 150, 150, "Mistress", 1059, 1, "Juperos Vault#dm::OnMistressDead";
 		dispbottom("[DM] Mistress spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
 		mes("Mistress spawned. Kill to trigger arc complete.");
 		break;
@@ -1013,11 +1242,17 @@ S_BeatArc07:
 		break;
 	case 7:
 		.@dm_map$ = strcharinfo(3);
-		monster .@dm_map$, 150, 150, "RSX-0806", 1624, 1, "Reactivation Bay#dm::OnRSXDead";
+		monster .@dm_map$, 150, 150, "RSX-0806", 1623, 1, "Reactivation Bay#dm::OnRSXDead";
+		$@dm_arc07_pressure_party_id = getcharid(CHAR_ID_PARTY);
+		$@dm_arc07_pressure_damage = (dm_arc07_strike_supported ? 3 : 5);
+		donpcevent "Reactivation Bay#dm::OnPressureStart";
+		if ($@dm_arc07_pressure_party_id <= 0)
+			dispbottom("[DM] No party detected; Reactivation Bay smoke pressure did not start.");
 		dispbottom("[DM] RSX-0806 spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
 		mes("RSX-0806 spawned. Kill to trigger arc complete.");
 		break;
 	case 8:
+		donpcevent "Reactivation Bay#dm::OnPressureStop";
 		callfunc("DM_InstanceQuestComplete", 20111);
 		callfunc("DM_InstanceSetFlag", "dm_arc07_rsx_killed", 1);
 		callfunc("DM_PartyExp", 600000, 350000);
@@ -1050,6 +1285,7 @@ S_BeatArc08:
 		mes("Arc 8 started for the current party.");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_killed");
 		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
 		callfunc("DM_InstanceQuestComplete", 20124);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 802);
@@ -1057,6 +1293,7 @@ S_BeatArc08:
 		mes("Manfred spared. Weight of Faith complete.");
 		break;
 	case 4:
+		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_spared");
 		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_killed", 1);
 		callfunc("DM_InstanceQuestComplete", 20124);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 803);
@@ -1073,13 +1310,18 @@ S_BeatArc08:
 		break;
 	case 7:
 		.@dm_map$ = strcharinfo(3);
-		monster .@dm_map$, 150, 150, "Dark Lord", 1273, 1, "Glast Heim Abbey#dm::OnDarkLordDead";
-		if (dm_arc08_manfred_spared)
-			dispbottom("[DM] Dark Lord spawned. Manfred was spared — spawn fewer court adds (faith restrains them).");
-		else if (dm_arc08_manfred_killed)
-			dispbottom("[DM] Dark Lord spawned. Manfred was killed — spawn 3 extra court adds (his despair joins them).");
-		else
-			dispbottom("[DM] Dark Lord spawned. Manfred's fate unknown — use judgment on adds.");
+		monster .@dm_map$, 150, 150, "Dark Lord", 1272, 1, "Glast Heim Abbey#dm::OnDarkLordDead";
+		if (dm_arc08_manfred_spared) {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Restrained Court", 1291, 2, "Glast Heim Abbey#dm::OnAddDead";
+			dispbottom("[DM] Dark Lord spawned with 2 restrained court adds.");
+		} else if (dm_arc08_manfred_killed) {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Despairing Court", 1291, 5, "Glast Heim Abbey#dm::OnAddDead";
+			areamonster .@dm_map$, 145, 145, 155, 155, "Oathbound Knight", 1132, 3, "Glast Heim Abbey#dm::OnAddDead";
+			dispbottom("[DM] Dark Lord spawned with 8 court adds; Manfred's despair empowers them.");
+		} else {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Restless Court", 1291, 3, "Glast Heim Abbey#dm::OnAddDead";
+			dispbottom("[DM] Dark Lord spawned with default court adds.");
+		}
 		mes("Dark Lord spawned. Kill to trigger arc complete.");
 		break;
 	case 8:
@@ -1138,7 +1380,7 @@ S_BeatArc09:
 		break;
 	case 7:
 		.@dm_map$ = strcharinfo(3);
-		monster .@dm_map$, 150, 150, "Gloom Under Night", 1769, 1, "Ice Bleed Site#dm::OnGloomDead";
+		monster .@dm_map$, 150, 150, "Gloom Under Night", 1768, 1, "Ice Bleed Site#dm::OnGloomDead";
 		dispbottom("[DM] Gloom Under Night spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
 		mes("Gloom Under Night spawned. Kill to trigger arc complete.");
 		break;
@@ -1239,6 +1481,7 @@ S_BeatArc11:
 		mes("Arc 11 started for the current party.");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_joined");
 		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_subdued", 1);
 		callfunc("DM_InstanceQuestComplete", 20155);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1102);
@@ -1246,6 +1489,7 @@ S_BeatArc11:
 		mes("Bjorn subdued. Zealot's Testimony complete.");
 		break;
 	case 4:
+		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_subdued");
 		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_joined", 1);
 		callfunc("DM_InstanceQuestComplete", 20155);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1103);
@@ -1262,13 +1506,18 @@ S_BeatArc11:
 		break;
 	case 7:
 		.@dm_map$ = strcharinfo(3);
-		monster .@dm_map$, 150, 150, "Randgris", 1752, 1, "Valkyrie Hall#dm::OnRandgrisDead";
-		if (dm_arc11_bjorn_joined)
-			dispbottom("[DM] Randgris spawned. Bjorn joined — his faith restrains adds, spawn fewer.");
-		else if (dm_arc11_bjorn_subdued)
-			dispbottom("[DM] Randgris spawned. Bjorn subdued — spawn full Valkyrie court adds.");
-		else
-			dispbottom("[DM] Randgris spawned. Bjorn's fate unknown — use judgment on court adds.");
+		monster .@dm_map$, 150, 150, "Valkyrie Randgris", 1751, 1, "Valkyrie Hall#dm::OnRandgrisDead";
+		if (dm_arc11_bjorn_joined) {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Restrained Skeggiold", 1754, 2, "Valkyrie Hall#dm::OnAddDead";
+			dispbottom("[DM] Randgris spawned with 2 restrained court adds.");
+		} else if (dm_arc11_bjorn_subdued) {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Valkyrie Court", 1754, 4, "Valkyrie Hall#dm::OnAddDead";
+			areamonster .@dm_map$, 145, 145, 155, 155, "Valkyrie Herald", 1765, 1, "Valkyrie Hall#dm::OnAddDead";
+			dispbottom("[DM] Randgris spawned with her full court.");
+		} else {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Valkyrie Court", 1754, 3, "Valkyrie Hall#dm::OnAddDead";
+			dispbottom("[DM] Randgris spawned with default court adds.");
+		}
 		mes("Randgris spawned. Kill to trigger arc complete.");
 		break;
 	case 8:
@@ -1328,10 +1577,18 @@ S_BeatArc12:
 	case 7:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Naght Sieger", 1956, 1, "Rift Anchor#dm::OnNaghtDead";
+		$@dm_arc12_rift_party_id = getcharid(CHAR_ID_PARTY);
+		$@dm_arc12_rift_damage = (dm_arc12_vance_helped ? 4 : 7);
+		$@dm_arc12_rift_status = SC_CONFUSION;
+		$@dm_arc12_rift_status_ms = 5000;
+		donpcevent "Rift Anchor#dm::OnRiftStart";
+		if ($@dm_arc12_rift_party_id <= 0)
+			dispbottom("[DM] No party detected; Rift Anchor pulses did not start.");
 		dispbottom("[DM] Naght Sieger spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
 		mes("Naght Sieger spawned. Kill to trigger arc complete.");
 		break;
 	case 8:
+		donpcevent "Rift Anchor#dm::OnRiftStop";
 		callfunc("DM_InstanceQuestComplete", 20161);
 		callfunc("DM_InstanceSetFlag", "dm_arc12_naght_killed", 1);
 		callfunc("DM_PartyExp", 1400000, 800000);
@@ -1349,7 +1606,7 @@ S_BeatArc13:
 	mes("[DM Beat Director]");
 	mes("Act III / Arc 13 - Nameless Island (Island of the Damned)");
 	next();
-	switch (select("Warp: Father Quill", "Beat: Start Arc 13", "Beat: Carrion Killed", "Beat: Carrion Bribed", "Warp: Broker Carrion", "Warp: Beelzebub Sanctum", "Beat: Spawn Beelzebub", "Beat: Beelzebub slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Father Quill", "Beat: Start Arc 13", "Beat: Carrion Killed", "Beat: Carrion Bribed", "Warp: Broker Carrion", "Warp: Beelzebub Sanctum", "Beat: Spawn Beelzebub", "Beat: Complete Arc 13", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "nameless_i", 100, 100);
 		mes("Party warped to Father Quill.");
@@ -1364,6 +1621,8 @@ S_BeatArc13:
 		mes("Arc 13 started for the current party.");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_bribed");
+		callfunc("DM_InstanceClearFlag", "dm_arc13_coalition_deal_honored");
 		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_killed", 1);
 		callfunc("DM_InstanceQuestComplete", 20175);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1302);
@@ -1371,11 +1630,13 @@ S_BeatArc13:
 		mes("Carrion killed. Broker's Terms complete.");
 		break;
 	case 4:
+		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_killed");
+		callfunc("DM_InstanceClearFlag", "dm_arc13_beelzebub_killed");
 		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_bribed", 1);
 		callfunc("DM_InstanceQuestComplete", 20175);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1303);
 		callfunc("DM_MapStory", "A deal is struck. The coalition enforces its own containment.");
-		mes("Carrion bribed. Broker's Terms complete. (If Beelzebub not fought, complete arc via Beat option.)");
+		mes("Carrion bribed. Broker's Terms complete. Complete Arc 13 will honor the no-combat deal.");
 		break;
 	case 5:
 		callfunc("DM_WarpParty", "nameless_i", 110, 100);
@@ -1387,22 +1648,37 @@ S_BeatArc13:
 		break;
 	case 7:
 		.@dm_map$ = strcharinfo(3);
+		if (dm_arc13_carrion_bribed) {
+			dispbottom("[DM] Coalition deal is active; Beelzebub withdraws if the deal is honored. Use Complete Arc 13 to resolve without combat.");
+			mes("Coalition deal active. Beelzebub not spawned.");
+			break;
+		}
 		monster .@dm_map$, 150, 150, "Beelzebub", 1874, 1, "Beelzebub Sanctum#dm::OnBeelzebubDead";
-		if (dm_arc13_carrion_killed)
-			dispbottom("[DM] Beelzebub spawned. Carrion killed — full coalition adds, no broker to restrain them.");
-		else if (dm_arc13_carrion_bribed)
-			dispbottom("[DM] Beelzebub spawned (deal override). Use arc complete beat when done.");
-		else
-			dispbottom("[DM] Beelzebub spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
+		if (dm_arc13_carrion_killed) {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Coalition Banshee", 1867, 4, "Beelzebub Sanctum#dm::OnAddDead";
+			areamonster .@dm_map$, 145, 145, 155, 155, "Coalition Necromancer", 1870, 2, "Beelzebub Sanctum#dm::OnAddDead";
+			dispbottom("[DM] Beelzebub spawned with full coalition support.");
+		} else {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Demon Coalition", 1867, 3, "Beelzebub Sanctum#dm::OnAddDead";
+			dispbottom("[DM] Beelzebub spawned with default coalition adds.");
+		}
 		mes("Beelzebub spawned. Kill to trigger arc complete.");
 		break;
 	case 8:
 		callfunc("DM_InstanceQuestComplete", 20171);
-		callfunc("DM_InstanceSetFlag", "dm_arc13_beelzebub_killed", 1);
+		if (dm_arc13_carrion_bribed)
+			callfunc("DM_InstanceSetFlag", "dm_arc13_coalition_deal_honored", 1);
+		else
+			callfunc("DM_InstanceSetFlag", "dm_arc13_beelzebub_killed", 1);
 		callfunc("DM_PartyExp", 1600000, 900000);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1399);
-		callfunc("DM_MapStory", "Beelzebub falls. The coalition's coordination shatters. Surt's herald stirs in the volcano.");
-		mes("Arc 13 marked complete for the current party.");
+		if (dm_arc13_carrion_bribed) {
+			callfunc("DM_MapStory", "The coalition honors the bargain and withdraws Beelzebub. Surt's herald stirs in the volcano.");
+			mes("Arc 13 marked complete via coalition deal.");
+		} else {
+			callfunc("DM_MapStory", "Beelzebub falls. The coalition's coordination shatters. Surt's herald stirs in the volcano.");
+			mes("Arc 13 marked complete for the current party.");
+		}
 		break;
 	case 9:
 		callsub(S_Beat);
@@ -1452,7 +1728,12 @@ S_BeatArc14:
 		break;
 	case 7:
 		.@dm_map$ = strcharinfo(3);
-		monster .@dm_map$, 150, 150, "Ifrit", 1833, 1, "Magma Cathedral#dm::OnIfritDead";
+		monster .@dm_map$, 150, 150, "Ifrit", 1832, 1, "Magma Cathedral#dm::OnIfritDead";
+		$@dm_arc14_magma_party_id = getcharid(CHAR_ID_PARTY);
+		$@dm_arc14_magma_damage = (dm_arc14_hesma_exposed ? 6 : 9);
+		donpcevent "Magma Cathedral#dm::OnMagmaStart";
+		if ($@dm_arc14_magma_party_id <= 0)
+			dispbottom("[DM] No party detected; Magma Cathedral heat pulses did not start.");
 		if (dm_arc14_hesma_exposed)
 			dispbottom("[DM] Ifrit spawned. Hesma confessed — evacuation is underway. Race the clock.");
 		else if (dm_arc14_hesma_bribed)
@@ -1462,6 +1743,7 @@ S_BeatArc14:
 		mes("Ifrit spawned. Kill to trigger Act III complete.");
 		break;
 	case 8:
+		donpcevent "Magma Cathedral#dm::OnMagmaStop";
 		callfunc("DM_InstanceQuestComplete", 20181);
 		callfunc("DM_InstanceSetFlag", "dm_arc14_ifrit_killed", 1);
 		callfunc("DM_InstanceSetFlag", "dm_act03_complete", 1);
@@ -1480,7 +1762,7 @@ S_BeatArc15:
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 15 - Thanatos Tower (The Hero's Tomb)");
 	next();
-	switch (select("Warp: Keeper Lysandra", "Beat: Start Arc 15", "Beat: Pratt Exposed", "Beat: Pratt Challenged", "Warp: Scholar Pratt", "Warp: Memory of Thanatos", "Beat: Spawn Thanatos", "Beat: Thanatos slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Keeper Lysandra", "Beat: Start Arc 15", "Beat: Pratt Exposed", "Beat: Pratt Delayed", "Beat: Pratt Challenged", "Warp: Scholar Pratt", "Warp: Memory of Thanatos", "Beat: Spawn Thanatos", "Beat: Thanatos slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "aldebaran", 100, 100);
 		mes("Party warped to Keeper Lysandra.");
@@ -1495,6 +1777,8 @@ S_BeatArc15:
 		mes("Arc 15 started for the current party.");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
 		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_exposed", 1);
 		callfunc("DM_InstanceQuestComplete", 20194);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1502);
@@ -1502,30 +1786,64 @@ S_BeatArc15:
 		mes("Pratt exposed. The Method's Price complete.");
 		break;
 	case 4:
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
+		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_delayed", 1);
+		callfunc("DM_InstanceQuestComplete", 20194);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1504);
+		callfunc("DM_MapStory", "Pratt delays the procedure for council review. The method survives, unstable and waiting.");
+		mes("Pratt delayed. The Method's Price complete.");
+		break;
+	case 5:
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
+		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
 		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_challenged", 1);
 		callfunc("DM_InstanceQuestComplete", 20194);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1503);
 		callfunc("DM_MapStory", "The full cost is known. Thanatos is still in the seal. Pratt does not open his notes again.");
 		mes("Pratt challenged. The Method's Price complete.");
 		break;
-	case 5:
+	case 6:
 		callfunc("DM_WarpParty", "aldebaran", 110, 100);
 		mes("Party warped to Scholar Pratt.");
 		break;
-	case 6:
+	case 7:
 		callfunc("DM_WarpParty", "thana_boss", 150, 150);
 		mes("Party warped to Memory of Thanatos.");
 		break;
-	case 7:
+	case 8:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Memory of Thanatos", 1708, 1, "Memory of Thanatos#dm::OnThanatosDead";
+		$@dm_arc15_resonance_party_id = getcharid(CHAR_ID_PARTY);
 		if (dm_arc15_pratt_challenged)
-			dispbottom("[DM] Thanatos spawned. Pratt challenged — the party knows Thanatos is still inside. He may respond to that knowledge differently.");
+			$@dm_arc15_resonance_damage = 4;
+		else if (dm_arc15_pratt_exposed)
+			$@dm_arc15_resonance_damage = 6;
 		else
-			dispbottom("[DM] Memory of Thanatos spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
+			$@dm_arc15_resonance_damage = 8;
+		$@dm_arc15_resonance_status = SC_CURSE;
+		$@dm_arc15_resonance_status_ms = 5000;
+		donpcevent "Memory of Thanatos#dm::OnResonanceStart";
+		if ($@dm_arc15_resonance_party_id <= 0)
+			dispbottom("[DM] No party detected; Thanatos resonance pulses did not start.");
+		if (dm_arc15_pratt_challenged) {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Thanatos Echo", 1707, 1, "Memory of Thanatos#dm::OnAddDead";
+			dispbottom("[DM] Thanatos spawned with 1 subdued echo; the party knows the living-lock cost.");
+		} else if (dm_arc15_pratt_exposed) {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Thanatos Echo", 1704, 1, "Memory of Thanatos#dm::OnAddDead";
+			areamonster .@dm_map$, 145, 145, 155, 155, "Thanatos Echo", 1706, 1, "Memory of Thanatos#dm::OnAddDead";
+			dispbottom("[DM] Thanatos spawned with 2 weakened echoes; Pratt's volunteers were released.");
+		} else {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Thanatos Echo", 1704, 1, "Memory of Thanatos#dm::OnAddDead";
+			areamonster .@dm_map$, 145, 145, 155, 155, "Thanatos Echo", 1705, 1, "Memory of Thanatos#dm::OnAddDead";
+			areamonster .@dm_map$, 145, 145, 155, 155, "Thanatos Echo", 1706, 1, "Memory of Thanatos#dm::OnAddDead";
+			areamonster .@dm_map$, 145, 145, 155, 155, "Thanatos Echo", 1707, 1, "Memory of Thanatos#dm::OnAddDead";
+			dispbottom("[DM] Thanatos spawned with all 4 echoes.");
+		}
 		mes("Memory of Thanatos spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 9:
+		donpcevent "Memory of Thanatos#dm::OnResonanceStop";
 		callfunc("DM_InstanceQuestComplete", 20191);
 		callfunc("DM_InstanceSetFlag", "dm_arc15_thanatos_killed", 1);
 		callfunc("DM_PartyExp", 2000000, 1000000);
@@ -1533,7 +1851,7 @@ S_BeatArc15:
 		callfunc("DM_MapStory", "The Memory fades. Thanatos is still in the seal. He has been there for three hundred years.");
 		mes("Arc 15 marked complete for the current party.");
 		break;
-	case 9:
+	case 10:
 		callsub(S_Beat);
 		break;
 	}
@@ -1543,7 +1861,7 @@ S_BeatArc16:
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 16 - Prontera (The Royal Banquet)");
 	next();
-	switch (select("Warp: Kronecker G Heine", "Beat: Start Arc 16", "Beat: Rina Exposed", "Beat: Rina Defected", "Warp: Matron Rina", "Warp: Underground Prison Vault", "Beat: Spawn Bijou", "Beat: Bijou slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Kronecker G Heine", "Beat: Start Arc 16", "Beat: Rina Exposed", "Beat: Rina Rolled", "Beat: Rina Defected", "Warp: Matron Rina", "Warp: Prison Vault", "Beat: Spawn Bijou", "Beat: Resolve Bijou (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "prontera", 150, 150);
 		mes("Party warped to Kronecker G Heine.");
@@ -1558,6 +1876,8 @@ S_BeatArc16:
 		mes("Arc 16 started for the current party.");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_rolled");
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_defected");
 		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_exposed", 1);
 		callfunc("DM_InstanceQuestComplete", 20204);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1602);
@@ -1565,38 +1885,59 @@ S_BeatArc16:
 		mes("Rina exposed. Royal House Audience Rounds complete.");
 		break;
 	case 4:
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_exposed");
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_defected");
+		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_rolled", 1);
+		callfunc("DM_InstanceQuestComplete", 20204);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1604);
+		callfunc("DM_MapStory", "Rina dismantles the court network quietly. The royal house stays functional, but compromised names are in hand.");
+		mes("Rina rolled the network. Royal House Audience Rounds complete.");
+		break;
+	case 5:
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_exposed");
+		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_rolled");
 		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_defected", 1);
 		callfunc("DM_InstanceQuestComplete", 20204);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1603);
 		callfunc("DM_MapStory", "Rina defected. The party knows Bijou is Maret — a person, not an oracle.");
 		mes("Rina defected. Royal House Audience Rounds complete.");
 		break;
-	case 5:
+	case 6:
 		callfunc("DM_WarpParty", "prt_q", 100, 100);
 		mes("Party warped to Matron Rina.");
 		break;
-	case 6:
-		callfunc("DM_WarpParty", "prt_q", 150, 150);
-		mes("Party warped to Underground Prison Vault.");
-		break;
 	case 7:
+		callfunc("DM_WarpParty", "prt_q", 150, 150);
+		mes("Party warped to Prison Vault.");
+		break;
+	case 8:
 		.@dm_map$ = strcharinfo(3);
-		monster .@dm_map$, 150, 150, "Bijou", 1046, 1, "Underground Prison Vault#dm::OnBijouDead";
+		monster .@dm_map$, 150, 150, "Bijou", 1046, 1, "Prison Vault#dm::OnBijouDead";
 		if (dm_arc16_rina_defected)
-			dispbottom("[DM] Bijou spawned. Rina defected — the party knows Bijou is Maret. DM judgment: combat as freeing rather than killing.");
+			dispbottom("[DM] Bijou spawned as Maret. Kill event resolves as freeing her from the cascade relay.");
+		else if (dm_arc16_rina_rolled)
+			dispbottom("[DM] Bijou spawned. Rina rolled the network quietly; the court web is already collapsing.");
 		else
 			dispbottom("[DM] Bijou spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
 		mes("Bijou spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 9:
 		callfunc("DM_InstanceQuestComplete", 20201);
-		callfunc("DM_InstanceSetFlag", "dm_arc16_bijou_killed", 1);
+		if (dm_arc16_rina_defected)
+			callfunc("DM_InstanceSetFlag", "dm_arc16_maret_freed", 1);
+		else
+			callfunc("DM_InstanceSetFlag", "dm_arc16_bijou_killed", 1);
 		callfunc("DM_PartyExp", 2000000, 1000000);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1699);
-		callfunc("DM_MapStory", "Bijou falls silent. The cascade loses its court relay. Prontera's army is secured.");
-		mes("Arc 16 marked complete for the current party.");
+		if (dm_arc16_rina_defected) {
+			callfunc("DM_MapStory", "Maret is freed. The cascade loses its court relay. Prontera's army is secured.");
+			mes("Arc 16 marked complete; Maret freed.");
+		} else {
+			callfunc("DM_MapStory", "Bijou falls silent. The cascade loses its court relay. Prontera's army is secured.");
+			mes("Arc 16 marked complete for the current party.");
+		}
 		break;
-	case 9:
+	case 10:
 		callsub(S_Beat);
 		break;
 	}
@@ -1606,7 +1947,7 @@ S_BeatArc17:
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 17 - Varmundt Biolabs (The Sage's Legacy)");
 	next();
-	switch (select("Warp: Doctor Tressa", "Beat: Start Arc 17", "Beat: Admin Purged", "Beat: Admin Running", "Warp: The Administrator", "Warp: Biosphere Core", "Beat: Spawn Amdarais", "Beat: Biosphere Core slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Doctor Tressa", "Beat: Start Arc 17", "Beat: Admin Purged", "Beat: Admin Negotiated", "Beat: Admin Running", "Warp: The Administrator", "Warp: Biosphere Core", "Beat: Spawn Amdarais", "Beat: Biosphere Core slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "ba_in01", 100, 100);
 		mes("Party warped to Doctor Mira Tressa.");
@@ -1621,6 +1962,8 @@ S_BeatArc17:
 		mes("Arc 17 started for the current party.");
 		break;
 	case 3:
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
 		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_purged", 1);
 		callfunc("DM_InstanceQuestComplete", 20214);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1702);
@@ -1628,21 +1971,32 @@ S_BeatArc17:
 		mes("Admin purged. Biosphere Sample Rotation complete.");
 		break;
 	case 4:
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
+		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_negotiated", 1);
+		callfunc("DM_InstanceQuestComplete", 20214);
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1704);
+		callfunc("DM_MapStory", "The Administrator remains active to organize the archive. The party gains a cleaner Varmundt data yield.");
+		mes("Admin negotiated. Biosphere Sample Rotation complete.");
+		break;
+	case 5:
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
+		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
 		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_running", 1);
 		callfunc("DM_InstanceQuestComplete", 20214);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1703);
 		callfunc("DM_MapStory", "The Administrator continues running. Real-time cascade analysis transmitting. 847 percent above baseline.");
 		mes("Admin running. Biosphere Sample Rotation complete.");
 		break;
-	case 5:
+	case 6:
 		callfunc("DM_WarpParty", "ba_in01", 110, 100);
 		mes("Party warped to The Administrator.");
 		break;
-	case 6:
-		callfunc("DM_WarpParty", "ba_in04", 150, 150);
+	case 7:
+		callfunc("DM_WarpParty", "ba_pw03", 150, 150);
 		mes("Party warped to Biosphere Core.");
 		break;
-	case 7:
+	case 8:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Biosphere Core", 2476, 1, "Biosphere Core#dm::OnBetaDead";
 		if (dm_arc17_admin_running)
@@ -1651,7 +2005,7 @@ S_BeatArc17:
 			dispbottom("[DM] Biosphere Core (Amdarais) spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
 		mes("Biosphere Core spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 9:
 		callfunc("DM_InstanceQuestComplete", 20211);
 		callfunc("DM_InstanceSetFlag", "dm_arc17_beta_killed", 1);
 		callfunc("DM_PartyExp", 2000000, 1000000);
@@ -1659,7 +2013,7 @@ S_BeatArc17:
 		callfunc("DM_MapStory", "The Biosphere Core is shut down. Varmundt's legacy is secured. Niflheim is next.");
 		mes("Arc 17 marked complete for the current party.");
 		break;
-	case 9:
+	case 10:
 		callsub(S_Beat);
 		break;
 	}
@@ -1752,6 +2106,13 @@ S_BeatArc19:
 	case 6:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Surt", 1252, 1, "The Ash Vacuum Rift#dm::OnSurtDead";
+		$@dm_arc19_rift_party_id = getcharid(CHAR_ID_PARTY);
+		$@dm_arc19_rift_damage = (dm_arc18_himmelmez_bargained ? 5 : 8);
+		$@dm_arc19_rift_status = (dm_arc18_himmelmez_bargained ? 0 : SC_CURSE);
+		$@dm_arc19_rift_status_ms = 6000;
+		donpcevent "The Ash Vacuum Rift#dm::OnRiftStart";
+		if ($@dm_arc19_rift_party_id <= 0)
+			dispbottom("[DM] No party detected; Ash Vacuum Rift pulses did not start.");
 		if (dm_arc18_himmelmez_bargained)
 			dispbottom("[DM] Surt spawned as Garm (1252). Himmelmez bargained — the dead hold in Niflheim. Surt's necromantic support is cut.");
 		else
@@ -1759,6 +2120,7 @@ S_BeatArc19:
 		mes("Surt spawned. Kill to trigger cascade resolution.");
 		break;
 	case 7:
+		donpcevent "The Ash Vacuum Rift#dm::OnRiftStop";
 		callfunc("DM_InstanceSetFlag", "dm_arc19_surt_defeated", 1);
 		callfunc("DM_InstanceQuestComplete", 20231);
 		callfunc("DM_PartyExp", 5000000, 3000000);
@@ -1783,3 +2145,4 @@ S_BeatArc19:
 		break;
 	}
 	return;
+}
