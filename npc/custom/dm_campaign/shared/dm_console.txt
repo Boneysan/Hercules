@@ -16,6 +16,7 @@ OnInit:
 	bindatcmd("dminstance", strnpcinfo(NPC_NAME_UNIQUE)+"::OnInstance", 60, 99, 1);
 	bindatcmd("dmmode", strnpcinfo(NPC_NAME_UNIQUE)+"::OnMode", 60, 99, 1);
 	bindatcmd("dmhazard", strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazard", 60, 99, 1);
+	bindatcmd("dmexp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnExp", 60, 99, 1);
 	bindatcmd("roll", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRoll", 0, 99, 1);
 	end;
 
@@ -106,6 +107,11 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "exp") {
+		callsub(S_Exp, 1);
+		end;
+	}
+
 	dispbottom("[DM] Unknown subcommand: " + .@sub$);
 	callsub(S_Help);
 	end;
@@ -177,6 +183,12 @@ OnHazard:
 	if (!callfunc("DM_RequireDM"))
 		end;
 	callsub(S_Hazard, 0);
+	end;
+
+OnExp:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Exp, 0);
 	end;
 
 OnRoll:
@@ -298,10 +310,26 @@ S_Help:
 	dispbottom("[DM] @dm spawn <mob_id> [count] [name]");
 	dispbottom("[DM] @dm hazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms] | clear");
 	dispbottom("[DM] Status aliases: poison, freeze, stun, sleep, curse, confusion, blind.");
+	dispbottom("[DM] @dm exp <base> [job]    (grants EXP to your whole party)");
 	dispbottom("[DM] @dm warp <map> [x] [y]   (warps your whole party)");
 	dispbottom("[DM] @dm recall              (pulls party to you)");
 	dispbottom("[DM] @dm instance <start <map> [x] [y] [label] | end>");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp");
+	return;
+
+S_Exp:
+	.@offset = getarg(0, 0);
+	.@base = atoi(.@atcmd_parameters$[.@offset]);
+	.@job  = atoi(.@atcmd_parameters$[.@offset + 1]);
+
+	if (.@base <= 0 && .@job <= 0) {
+		dispbottom("[DM] Usage: @dm exp <base> [job]");
+		dispbottom("[DM] Example: @dm exp 50000 20000");
+		return;
+	}
+
+	.@given = callfunc("DM_PartyExp", .@base, .@job);
+	dispbottom("[DM] Granted " + .@base + " base / " + .@job + " job EXP to " + .@given + " party member(s).");
 	return;
 
 S_Mode:
