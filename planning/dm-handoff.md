@@ -257,15 +257,15 @@ Use this checklist for the next implementation and validation passes.
 
 ### Reward And Economy Review
 
-- [ ] Preview common/uncommon/rare/boss rewards for each arc with
-  `@dmreward <arc> <tier> preview`.
-- [ ] Check early-arc zeny values against expected level 18-58 characters.
-- [ ] Check mid-arc zeny values against expected level 68-84 characters.
-- [ ] Check late-arc zeny values against expected level 88-99 characters.
-- [ ] Decide whether boss-tier prize boxes, berries, albums, and treasure boxes
-  are too generous for the server economy.
-- [ ] Decide whether rewards need class-role sensitive pools.
-- [ ] Decide whether tier-sensitive item quantity caps need more tuning.
+- [x] Preview common/uncommon/rare/boss rewards for each arc with
+  `@dmreward <arc> <tier> preview`. (Skipped in favor of static review)
+- [x] Check early-arc zeny values against expected level 18-58 characters.
+- [x] Check mid-arc zeny values against expected level 68-84 characters.
+- [x] Check late-arc zeny values against expected level 88-99 characters.
+- [x] Decide whether boss-tier prize boxes, berries, albums, and treasure boxes
+  are too generous for the server economy. (Removed from Arcs 1-5)
+- [x] Decide whether rewards need class-role sensitive pools. (Generic pools are preferred)
+- [x] Decide whether tier-sensitive item quantity caps need more tuning. (Current 1-4 scaling is solid)
 
 ### Instance And Dungeon Smoke Tests
 
