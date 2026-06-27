@@ -17,6 +17,8 @@ OnInit:
 	bindatcmd("dmmode", strnpcinfo(NPC_NAME_UNIQUE)+"::OnMode", 1, 99, 1);
 	bindatcmd("dmhazard", strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazard", 1, 99, 1);
 	bindatcmd("dmexp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnExp", 1, 99, 1);
+	bindatcmd("dmreset", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReset", 1, 99, 1);
+	bindatcmd("dmstatus", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStatus", 1, 99, 1);
 	bindatcmd("roll", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRoll", 0, 99, 1);
 	end;
 
@@ -112,6 +114,16 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "reset") {
+		callsub(S_Reset, 1);
+		end;
+	}
+
+	if (.@sub$ == "status") {
+		callsub(S_Status);
+		end;
+	}
+
 	dispbottom("[DM] Unknown subcommand: " + .@sub$);
 	callsub(S_Help);
 	end;
@@ -189,6 +201,18 @@ OnExp:
 	if (!callfunc("DM_RequireDM"))
 		end;
 	callsub(S_Exp, 0);
+	end;
+
+OnReset:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Reset, 0);
+	end;
+
+OnStatus:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Status);
 	end;
 
 OnRoll:
@@ -314,7 +338,104 @@ S_Help:
 	dispbottom("[DM] @dm warp <map> [x] [y]   (warps your whole party)");
 	dispbottom("[DM] @dm recall              (pulls party to you)");
 	dispbottom("[DM] @dm instance <start <map> [x] [y] [label] | end>");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp");
+	dispbottom("[DM] @dm status              (arc progress + key flags at a glance)");
+	dispbottom("[DM] @dm reset confirm       (wipe all campaign flags for a fresh run)");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmstatus, @dmreset");
+	return;
+
+S_Reset:
+	.@offset = getarg(0, 0);
+	.@confirm$ = .@atcmd_parameters$[.@offset];
+	if (.@confirm$ != "confirm") {
+		dispbottom("[DM] @dm reset confirm — wipes all campaign flags and quests for a fresh playthrough.");
+		dispbottom("[DM] Warning: clears all 19 arcs for every online party member. Cannot be undone.");
+		return;
+	}
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	if (.@party_id > 0) {
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+				continue;
+			if (!attachrid(.@accid[.@i]))
+				continue;
+			callfunc("DM_ClearArc01Flags"); callfunc("DM_ClearArc02Flags"); callfunc("DM_ClearArc03Flags");
+			callfunc("DM_ClearArc04Flags"); callfunc("DM_ClearArc05Flags"); callfunc("DM_ClearArc06Flags");
+			callfunc("DM_ClearArc07Flags"); callfunc("DM_ClearArc08Flags"); callfunc("DM_ClearArc09Flags");
+			callfunc("DM_ClearArc10Flags"); callfunc("DM_ClearArc11Flags"); callfunc("DM_ClearArc12Flags");
+			callfunc("DM_ClearArc13Flags"); callfunc("DM_ClearArc14Flags"); callfunc("DM_ClearArc15Flags");
+			callfunc("DM_ClearArc16Flags"); callfunc("DM_ClearArc17Flags"); callfunc("DM_ClearArc18Flags");
+			callfunc("DM_ClearArc19Flags");
+			detachrid();
+			++.@cleared;
+		}
+		if (.@origin_aid)
+			attachrid(.@origin_aid);
+	} else {
+		callfunc("DM_ClearArc01Flags"); callfunc("DM_ClearArc02Flags"); callfunc("DM_ClearArc03Flags");
+		callfunc("DM_ClearArc04Flags"); callfunc("DM_ClearArc05Flags"); callfunc("DM_ClearArc06Flags");
+		callfunc("DM_ClearArc07Flags"); callfunc("DM_ClearArc08Flags"); callfunc("DM_ClearArc09Flags");
+		callfunc("DM_ClearArc10Flags"); callfunc("DM_ClearArc11Flags"); callfunc("DM_ClearArc12Flags");
+		callfunc("DM_ClearArc13Flags"); callfunc("DM_ClearArc14Flags"); callfunc("DM_ClearArc15Flags");
+		callfunc("DM_ClearArc16Flags"); callfunc("DM_ClearArc17Flags"); callfunc("DM_ClearArc18Flags");
+		callfunc("DM_ClearArc19Flags");
+		.@cleared = 1;
+	}
+	for (.@q = 20001; .@q <= 20030; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20101; .@q <= 20105; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20111; .@q <= 20115; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20121; .@q <= 20124; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20131; .@q <= 20134; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20141; .@q <= 20144; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20151; .@q <= 20155; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20161; .@q <= 20165; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20171; .@q <= 20175; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20181; .@q <= 20185; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20191; .@q <= 20194; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20201; .@q <= 20204; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20211; .@q <= 20214; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20221; .@q <= 20223; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20231; .@q <= 20233; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	if (.@party_id > 0)
+		setd("$dm_inst_" + .@party_id, 0);
+	$dm_mode = 0;
+	$dm_active_party = 0;
+	dispbottom("[DM] Campaign reset complete for " + .@cleared + " member(s). All arcs cleared, mode off.");
+	return;
+
+S_Status:
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	dispbottom("[DM] Mode=" + ($dm_mode ? "ON" : "OFF") + "  Session party=" + $dm_active_party + "  Your party=" + .@party_id);
+	setarray .@q[0], 20001, 20007, 20013, 20019, 20025, 20101, 20111, 20121, 20131, 20141, 20151, 20161, 20171, 20181, 20191, 20201, 20211, 20221, 20231;
+	.@line$ = "[Arcs 01-05] ";
+	for (.@i = 0; .@i < 5; ++.@i) {
+		.@n = .@i + 1;
+		.@line$ += (.@n < 10 ? "A0" : "A") + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	}
+	dispbottom(.@line$);
+	.@line$ = "[Arcs 06-10] ";
+	for (.@i = 5; .@i < 10; ++.@i) {
+		.@n = .@i + 1;
+		.@line$ += (.@n < 10 ? "A0" : "A") + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	}
+	dispbottom(.@line$);
+	.@line$ = "[Arcs 11-15] ";
+	for (.@i = 10; .@i < 15; ++.@i) {
+		.@n = .@i + 1;
+		.@line$ += "A" + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	}
+	dispbottom(.@line$);
+	.@line$ = "[Arcs 16-19] ";
+	for (.@i = 15; .@i < 19; ++.@i) {
+		.@n = .@i + 1;
+		.@line$ += "A" + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	}
+	dispbottom(.@line$);
+	dispbottom("[DM] (quest: 0=not started  1=in progress  2=complete)");
+	dispbottom("[Flags] cassell=" + dm_arc04_cassell_unmasked + " bjorn_joined=" + dm_arc11_bjorn_joined + " carrion_bribed=" + dm_arc13_carrion_bribed);
+	dispbottom("[Flags] himmelmez_bargained=" + dm_arc18_himmelmez_bargained + " campaign_complete=" + dm_campaign_complete);
 	return;
 
 S_Exp:
@@ -340,6 +461,7 @@ S_Mode:
 		$dm_active_party = getcharid(CHAR_ID_PARTY);
 		dispbottom("[DM] DnD mode enabled. MVP spawns will be suppressed.");
 		dispbottom("[DM] Campaign NPCs are active for party " + $dm_active_party + ".");
+		mapannounce "prontera", "A campaign session has begun. Check the Session Board near the fountain.", bc_map, 0xFFAA33;
 		return;
 	}
 	if (.@action$ == "off") {
