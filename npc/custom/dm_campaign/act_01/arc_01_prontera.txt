@@ -379,6 +379,5 @@ OnDeviruchiDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20005, 1;
-	'boss_up = 0;
 	end;
 }

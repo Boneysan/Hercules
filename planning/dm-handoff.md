@@ -27,7 +27,8 @@ updates in `npc/custom/dm_campaign/`.
 - Corrected beat-menu boss mob IDs for Mistress, RSX-0806, Dark Lord, Gloom
   Under Night, Valkyrie Randgris, and Ifrit.
 - Fixed a massive architectural bug where instanced NPCs were using global variables (`.var` instead of `'var`), causing cross-instance state collisions for bosses and hazards.
-- Fixed an instance targeting bug in `dm_console.txt` by wrapping `donpcevent` calls in a new `DM_TriggerEvent` helper that safely resolves instance-specific NPC clones via `instance_npcname()`.
+- Fixed an instance targeting bug in `dm_console.txt` by wrapping `donpcevent` calls in a new `DM_TriggerEvent` helper that safely resolves instance-specific NPC clones via `instance_npcname()`. The function was subsequently written in `shared/dm_common.txt` after it was found missing (all 13 call sites were wired but the definition was never committed).
+- Fixed seven `'boss_up = 0` writes inside `OnInit:` blocks in Arcs 1–5 boss-controller NPCs. Instance variables default to 0 and cannot be written outside an instance context; the redundant init caused parse-time errors on every server start.
 - Stripped MVP/overpowered economy rewards (`Old_Violet_Box`, `Yggdrasilberry`, `EMPELIUM`, etc.) from early campaign arcs (Arcs 1-5) and the mid-game fallback tables in `dm_rewards.txt`.
 - Replaced a hard-coded map name with `strnpcinfo(NPC_MAP)` in Arc 4's Vault Seal Pressure hazard to prevent broadcast leaks out of the private instance.
 

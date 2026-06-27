@@ -349,7 +349,6 @@ OnOsirisDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20017, 1;
-	'boss_up = 0;
 	end;
 }
 
@@ -431,6 +430,5 @@ OnAmonDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20018, 1;
-	'boss_up = 0;
 	end;
 }

@@ -110,3 +110,23 @@ function	script	DM_Color	{
 
 	return 0xAAFFAA;
 }
+
+// Fire an event on a hazard/encounter NPC by name, resolving to the
+// instance-specific clone when the caller's party has a live instance.
+function	script	DM_TriggerEvent	{
+	.@npc$   = getarg(0);
+	.@label$ = getarg(1);
+
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	if (.@party_id > 0) {
+		.@iid = getd("$dm_inst_" + .@party_id);
+		if (.@iid > 0) {
+			.@inst_npc$ = instance_npcname(.@npc$, .@iid);
+			if (.@inst_npc$ != "")
+				.@npc$ = .@inst_npc$;
+		}
+	}
+
+	donpcevent(.@npc$ + "::" + .@label$);
+	return;
+}
