@@ -157,6 +157,17 @@ villain confrontation, then an MVP boss spawned via DM console.
 - Himmelmez_killed starts the Himmelmez Pressure hazard: three pulses around
   `nif_in` 150,150 with curse pressure.
 - Himmelmez_bargained → major callback in Arc 19 (unlocks "Queen's Bargain" ending)
+- **Design note — no scripted boss fight (intentional).** Unlike every other
+  boss arc, Arc 18 has no "Beat: Spawn Himmelmez" and no `OnHimmelmezDead`
+  handler, because **there is no Himmelmez mob in the 2019-era `mob_db.conf`**
+  (mob 1929 is Baphomet, not Himmelmez). Rather than reskin a stand-in as was
+  done for Bijou and Surt, the Witch of Death is run as a **narrative
+  kill-or-bargain choice**: the DM resolves it with the "Himmelmez Killed" or
+  "Himmelmez Bargained" beat (each grants quest credit + EXP), and the
+  Himmelmez Pressure hazard supplies the mechanical tension. If a fightable
+  Himmelmez is ever wanted, mirror Arc 6: pick a stand-in mob, add a
+  "Beat: Spawn Himmelmez" in `dm_beats.txt`, and an `OnHimmelmezDead` handler
+  in `arc_18_niflheim.txt`.
 
 ### Arc 19 — Nightmare of Midgard (Morroc Ruins)
 - Hub: Loki The Voice (`moc_ruins,150,150`) — no traditional villain
@@ -189,6 +200,43 @@ villain confrontation, then an MVP boss spawned via DM console.
 
 `$dm_active_party` stores the active party ID. If you need to check which party
 is currently active: `@dm mode` with no argument reports the current state.
+
+---
+
+## How Encounters Work
+
+Boss fights are **DM-driven**, not auto-triggered by player progress. There are
+two spawn patterns plus a manual fallback:
+
+**Act I (arcs 1–5) — in-world spawns.** The climactic MVP is spawned by the
+story NPC itself once players reach the set-piece through dialogue (e.g., Deacon
+Holt drops the Deviruchi in the Listening Chamber). Adds **scale down with the
+party's mercy/ally choices** (helping the refugees and befriending Tibbets each
+remove adds), and the boss's `On<Boss>Dead` handler grants party-wide quest
+credit + EXP automatically. These spawn map-relative so they also work inside a
+private DM instance.
+
+**Acts II–IV (arcs 6–17, 19) — Beat Director spawns.** The DM drops the MVP from
+the `@dmbeat` menu via **"Beat: Spawn `<Boss>`"** (defined in
+`shared/dm_beats.txt`). That `monster` call is wired to the arc's
+`On<Boss>Dead` handler in the arc file, so killing it auto-grants the quest
+tracker, EXP, and the closing story announcement — same as Act I, just spawned
+on the DM's cue instead of by player dialogue.
+
+**Manual completion fallback.** Every boss arc also has a
+**"Beat: `<Boss>` slain (Arc Complete)"** option that grants the identical
+rewards directly. Use it if the kill event ever fails to fire — boss despawned,
+party wiped but you want to advance, or you narrated the fight instead of
+running it.
+
+**Stand-in mobs.** Some canonical villains have no mob in the 2019-era
+`mob_db.conf`. Where an actual fight is wanted, a stand-in is used (see the Mob
+IDs table below): **Doppelganger (1046)** for Bijou, **Garm (1252)** for Surt.
+Arc 18 (Himmelmez) is the deliberate exception — see its arc note above.
+
+**Rewards.** Boss-kill EXP is automatic (handler-granted). Loot / level rewards
+are *not* auto-issued by arcs — the DM grants them via `@dmreward`
+(`DM_RewardArcLevel`).
 
 ---
 
