@@ -46,6 +46,8 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20025, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20025, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
@@ -299,6 +301,8 @@ alberta,101,65,4	script	Smuggler-Baron Brode#dm	4_M_03,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20029, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
@@ -369,6 +373,8 @@ OnCrewDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20029, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
@@ -462,5 +468,7 @@ OnTaoDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20030, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }

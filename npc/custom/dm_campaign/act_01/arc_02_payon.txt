@@ -57,6 +57,8 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20007, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20007, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
@@ -392,5 +394,7 @@ OnMoonlightDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20012, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }

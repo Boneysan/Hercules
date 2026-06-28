@@ -47,6 +47,8 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20111, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20111, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_Introduction:
@@ -297,6 +299,8 @@ einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20112, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 

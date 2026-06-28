@@ -47,6 +47,8 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20019, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20019, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
@@ -277,6 +279,8 @@ gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20023, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
@@ -378,6 +382,8 @@ OnBaphometDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20023, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
@@ -434,6 +440,8 @@ gef_dun02,218,210,4	script	Brother Cassell#dm04	4_M_MONK,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20024, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
@@ -494,6 +502,11 @@ gef_dun02,219,212,4	script	East Seal Glyph#dm	4_ENERGY_WHITE,{
 		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
 }
 
 gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
@@ -516,6 +529,11 @@ gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
 		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
 }
 
 gef_dun02,209,212,4	script	West Seal Glyph#dm	4_ENERGY_WHITE,{
@@ -539,4 +557,9 @@ gef_dun02,209,212,4	script	West Seal Glyph#dm	4_ENERGY_WHITE,{
 		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
 }

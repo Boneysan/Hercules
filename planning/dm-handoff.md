@@ -162,7 +162,7 @@ Implemented:
 - `@dm mode on|off` and `@dmmode on|off` set `$dm_mode`.
 - `@dm mode on` also stores the DM's party ID in `$dm_active_party`; `off` clears
   it to 0.
-- All 49 visible campaign NPCs gate on `if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party)` — silent to anyone outside the active party.
+- All 50 visible campaign NPCs gate on `if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party)` — silent to anyone outside the active party.
 - `src/map/mob.c` delays normal BOSS/MVP respawns while `$dm_mode == 1`.
 - Already-active stock BOSS/MVP spawns are removed on their next hard or lazy AI
   tick and held on a short retry loop until mode is disabled.

@@ -45,6 +45,8 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20191, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20191, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
@@ -285,6 +287,8 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20194, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 

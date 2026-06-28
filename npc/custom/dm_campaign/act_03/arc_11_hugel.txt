@@ -44,6 +44,8 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20151, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20151, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
@@ -280,6 +282,8 @@ hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20155, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 

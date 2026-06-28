@@ -409,7 +409,7 @@ S_Reset:
 		callfunc("DM_ClearArc19Flags");
 		.@cleared = 1;
 	}
-	for (.@q = 20001; .@q <= 20030; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
+	for (.@q = 20000; .@q <= 20030; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
 	for (.@q = 20101; .@q <= 20105; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
 	for (.@q = 20111; .@q <= 20115; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
 	for (.@q = 20121; .@q <= 20124; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
@@ -532,14 +532,18 @@ S_Mode:
 	.@offset = getarg(0, 0);
 	.@action$ = .@atcmd_parameters$[.@offset];
 	if (.@action$ == "on") {
+		if ($dm_active_party > 0 && $dm_active_party != getcharid(CHAR_ID_PARTY))
+			callfunc("DM_InstanceQuestErase", 20000, $dm_active_party);
 		$dm_mode = 1;
 		$dm_active_party = getcharid(CHAR_ID_PARTY);
+		callfunc("DM_InstanceQuestStart", 20000, $dm_active_party);
 		dispbottom("[DM] DnD mode enabled. MVP spawns will be suppressed.");
 		dispbottom("[DM] Campaign NPCs are active for party " + $dm_active_party + ".");
 		mapannounce "prontera", "A campaign session has begun. Check the Session Board near the fountain.", bc_map, 0xFFAA33;
 		return;
 	}
 	if (.@action$ == "off") {
+		callfunc("DM_InstanceQuestErase", 20000, $dm_active_party);
 		$dm_mode = 0;
 		$dm_active_party = 0;
 		$@dm_exp_party = 0;

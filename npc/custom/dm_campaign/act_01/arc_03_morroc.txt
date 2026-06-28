@@ -49,6 +49,8 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20013, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20013, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
@@ -291,6 +293,11 @@ moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
 	}
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 325);
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
 }
 
 // Osiris - side tomb-court set-piece
@@ -352,6 +359,8 @@ OnOsirisDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20017, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
@@ -434,5 +443,7 @@ OnAmonDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20018, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
