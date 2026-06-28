@@ -17,6 +17,8 @@ OnInit:
 	bindatcmd("dmmode", strnpcinfo(NPC_NAME_UNIQUE)+"::OnMode", 1, 99, 1);
 	bindatcmd("dmhazard", strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazard", 1, 99, 1);
 	bindatcmd("dmexp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnExp", 1, 99, 1);
+	bindatcmd("dmexprate", strnpcinfo(NPC_NAME_UNIQUE)+"::OnExpRate", 1, 99, 1);
+	bindatcmd("dmlevels", strnpcinfo(NPC_NAME_UNIQUE)+"::OnLevels", 1, 99, 1);
 	bindatcmd("dmreset", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReset", 1, 99, 1);
 	bindatcmd("dmstatus", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStatus", 1, 99, 1);
 	bindatcmd("roll", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRoll", 0, 99, 1);
@@ -114,6 +116,16 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "exprate") {
+		callsub(S_ExpRate, 1);
+		end;
+	}
+
+	if (.@sub$ == "levels") {
+		callsub(S_Levels);
+		end;
+	}
+
 	if (.@sub$ == "reset") {
 		callsub(S_Reset, 1);
 		end;
@@ -201,6 +213,18 @@ OnExp:
 	if (!callfunc("DM_RequireDM"))
 		end;
 	callsub(S_Exp, 0);
+	end;
+
+OnExpRate:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_ExpRate, 0);
+	end;
+
+OnLevels:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Levels);
 	end;
 
 OnReset:
@@ -335,12 +359,14 @@ S_Help:
 	dispbottom("[DM] @dm hazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms] | clear");
 	dispbottom("[DM] Status aliases: poison, freeze, stun, sleep, curse, confusion, blind.");
 	dispbottom("[DM] @dm exp <base> [job]    (grants EXP to your whole party)");
+	dispbottom("[DM] @dm exprate <percent|off|status>  (monster EXP for your party)");
+	dispbottom("[DM] @dm levels              (target finish/reward level by arc)");
 	dispbottom("[DM] @dm warp <map> [x] [y]   (warps your whole party)");
 	dispbottom("[DM] @dm recall              (pulls party to you)");
 	dispbottom("[DM] @dm instance <start <map> [x] [y] [label] | end>");
 	dispbottom("[DM] @dm status              (arc progress + key flags at a glance)");
 	dispbottom("[DM] @dm reset confirm       (wipe all campaign flags for a fresh run)");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmstatus, @dmreset");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset");
 	return;
 
 S_Reset:
@@ -402,6 +428,8 @@ S_Reset:
 		setd("$dm_inst_" + .@party_id, 0);
 	$dm_mode = 0;
 	$dm_active_party = 0;
+	$@dm_exp_party = 0;
+	$@dm_exp_rate = 100;
 	dispbottom("[DM] Campaign reset complete for " + .@cleared + " member(s). All arcs cleared, mode off.");
 	return;
 
@@ -453,6 +481,53 @@ S_Exp:
 	dispbottom("[DM] Granted " + .@base + " base / " + .@job + " job EXP to " + .@given + " party member(s).");
 	return;
 
+S_ExpRate:
+	.@offset = getarg(0, 0);
+	.@action$ = strtolower(.@atcmd_parameters$[.@offset]);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+
+	if (.@action$ == "" || .@action$ == "status") {
+		if ($@dm_exp_party > 0 && $@dm_exp_rate > 0)
+			dispbottom("[DM] Monster EXP rate is " + $@dm_exp_rate + "% for party " + $@dm_exp_party + ".");
+		else
+			dispbottom("[DM] Monster EXP rate is normal.");
+		dispbottom("[DM] Usage: @dm exprate <percent|off|status>  Example: @dm exprate 200");
+		return;
+	}
+
+	if (.@action$ == "off" || .@action$ == "clear" || .@action$ == "normal") {
+		$@dm_exp_party = 0;
+		$@dm_exp_rate = 100;
+		dispbottom("[DM] Monster EXP rate reset to normal.");
+		return;
+	}
+
+	.@rate = atoi(.@action$);
+	if (.@rate < 1 || .@rate > 1000) {
+		dispbottom("[DM] EXP rate must be 1-1000 percent, or off/status. 200 = 2x.");
+		return;
+	}
+
+	if (.@party_id <= 0) {
+		dispbottom("[DM] Join or create a party before setting a party EXP rate.");
+		return;
+	}
+
+	$@dm_exp_party = .@party_id;
+	$@dm_exp_rate = .@rate;
+	dispbottom("[DM] Monster EXP rate set to " + .@rate + "% for party " + .@party_id + ".");
+	dispbottom("[DM] This affects monster/MVP EXP only. Use @dm exprate off to reset.");
+	return;
+
+S_Levels:
+	dispbottom("[DM] Target finish / reward levels by arc:");
+	dispbottom("[DM] A01 18  A02 28  A03 38  A04 48  A05 58");
+	dispbottom("[DM] A06 68  A07 72  A08 76  A09 80  A10 84");
+	dispbottom("[DM] A11 88  A12 90  A13 92  A14 94  A15 95");
+	dispbottom("[DM] A16 96  A17 97  A18 98  A19 99");
+	dispbottom("[DM] These are not start requirements; they drive @dmreward scaling.");
+	return;
+
 S_Mode:
 	.@offset = getarg(0, 0);
 	.@action$ = .@atcmd_parameters$[.@offset];
@@ -467,6 +542,8 @@ S_Mode:
 	if (.@action$ == "off") {
 		$dm_mode = 0;
 		$dm_active_party = 0;
+		$@dm_exp_party = 0;
+		$@dm_exp_rate = 100;
 		dispbottom("[DM] DnD mode disabled. MVP spawns will resume naturally.");
 		return;
 	}

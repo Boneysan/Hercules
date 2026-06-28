@@ -41,6 +41,10 @@ All commands require GM level 60 or higher.
 @dm hazard clear
 @dmhazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms]
 @dmhazard clear
+@dm exprate <percent|off|status>
+@dmexprate <percent|off|status>
+@dm levels
+@dmlevels
 @dm cleanup
 @dmcleanup
 @dm warp <map> [x] [y]
@@ -166,6 +170,25 @@ Current behavior:
   without giving it.
 - `DM_PartyExp(base, job{, party_id{, dryrun}})` grants base/job EXP to every
   online party member (used by the Arc 1 boss-death burst).
+- `@dm exprate <percent>` / `@dmexprate <percent>` sets a monster/MVP EXP
+  multiplier for the GM's current party. Use `100` for normal, `200` for 2x,
+  `500` for 5x. The command is party-scoped, temporary, and reset by
+  `@dm exprate off`, `@dm mode off`, or `@dm reset confirm`. It does not
+  multiply explicit quest/script rewards such as `@dm exp`.
+- Deploying changes to this multiplier requires rebuilding and restarting the
+  `map-server` process because the actual EXP hook is in `src/map/pc.c`.
+- `@dm levels` / `@dmlevels` prints the arc target finish levels in-game. These
+  are reward-scaling targets, not level requirements to start an arc.
+
+Target finish / reward levels:
+
+| Arc | Level | Arc | Level | Arc | Level | Arc | Level |
+| --- | ---: | --- | ---: | --- | ---: | --- | ---: |
+| 1 | 18 | 6 | 68 | 11 | 88 | 16 | 96 |
+| 2 | 28 | 7 | 72 | 12 | 90 | 17 | 97 |
+| 3 | 38 | 8 | 76 | 13 | 92 | 18 | 98 |
+| 4 | 48 | 9 | 80 | 14 | 94 | 19 | 99 |
+| 5 | 58 | 10 | 84 | 15 | 95 |  |  |
 
 Examples:
 
@@ -174,6 +197,8 @@ Examples:
 @dmreward 12 rare preview
 @dmreward 1 boss
 @dm reward 1 rare
+@dm exprate 200
+@dm exprate off
 ```
 
 ## Flag Tools

@@ -43,6 +43,7 @@
 #include "map/log.h"
 #include "map/mail.h"
 #include "map/map.h"
+#include "map/mapreg.h"
 #include "map/mercenary.h"
 #include "map/messages.h"
 #include "map/mob.h" // struct mob_data
@@ -6908,6 +6909,34 @@ static void pc_calcexp(struct map_session_data *sd, uint64 *base_exp, uint64 *jo
 	*base_exp = cap_value(bexp, 1, UINT64_MAX);
 }
 
+static int pc_dm_exp_rate(struct map_session_data *sd)
+{
+	static int64 dm_exp_party_uid = 0;
+	static int64 dm_exp_rate_uid = 0;
+	int party_id, dm_party_id, dm_exp_rate;
+
+	nullpo_ret(sd);
+
+	party_id = sd->status.party_id;
+	if (party_id <= 0)
+		return 100;
+
+	if (dm_exp_party_uid == 0)
+		dm_exp_party_uid = script->add_variable("$@dm_exp_party");
+	if (dm_exp_rate_uid == 0)
+		dm_exp_rate_uid = script->add_variable("$@dm_exp_rate");
+
+	dm_party_id = mapreg->readreg(dm_exp_party_uid);
+	if (dm_party_id != party_id)
+		return 100;
+
+	dm_exp_rate = mapreg->readreg(dm_exp_rate_uid);
+	if (dm_exp_rate <= 0)
+		return 100;
+
+	return dm_exp_rate;
+}
+
 /**
  * Gives a determined EXP amount to sd and calculates remaining EXP for next level
  * @param src if is NULL no bonuses are taken into account
@@ -6931,6 +6960,14 @@ static bool pc_gainexp(struct map_session_data *sd, struct block_list *src, uint
 
 	if (src)
 		pc->calcexp(sd, &base_exp, &job_exp, src, flags);
+
+	if (src != NULL && src->type == BL_MOB && (flags & EXP_FLAG_QUEST) == 0) {
+		int dm_exp_rate = pc_dm_exp_rate(sd);
+		if (dm_exp_rate != 100) {
+			base_exp = apply_percentrate64(base_exp, dm_exp_rate, 100);
+			job_exp = apply_percentrate64(job_exp, dm_exp_rate, 100);
+		}
+	}
 
 	if (sd->status.guild_id > 0)
 		base_exp -= guild->payexp(sd, base_exp);
