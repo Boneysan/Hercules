@@ -45,6 +45,10 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20171, 1;
 	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20173, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20174, 1;
+	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 

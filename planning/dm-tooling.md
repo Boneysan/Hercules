@@ -16,6 +16,11 @@ without recompiling the server.
 - `dm_instances.txt` - script-driven private dungeon instances (create/attach/init/warp/destroy; no instance_db needed).
 - `dm_console.txt` - GM-facing bound commands.
 - `dm_traps.txt` - reusable hazard, puzzle reset, and encounter cleanup helpers.
+- `dm_onboarding.txt` - novice-start campaign guide NPCs that can warp new players
+  from the starting boat/island/Izlude arrival path to the Prontera Session Board.
+- `dm_hunt_markers.txt` - 45 invisible marker NPCs placed at monster spawn zones
+  for every hunt quest across Arcs 1–19. Show yellow minimap arrows while the
+  player has the matching hunt quest active and is on the same map.
 
 ## GM Commands
 
@@ -55,6 +60,12 @@ All commands require GM level 60 or higher.
 @dm instance end
 @dminstance start <source_map> [x] [y] [label]
 @dminstance end
+@dm novice
+@dmnovice
+@dm resetstat
+@dmresetstat
+@dm resetskill
+@dmresetskill
 @roll [hidden] <NdX[+/-mod]>
 @roll fudge <total> [note]
 @roll override <total> [note]
@@ -74,10 +85,62 @@ active, so players in the party can identify campaign NPCs even when a specific
 arc objective marker is not currently pointing at them. `@dm mode off` and
 `@dm reset confirm` erase quest `20000`, clearing the session markers.
 
+New characters still start on the stock novice boat (`iz_int`). Campaign Guide
+NPCs are placed at `iz_int`, `int_land`, and the Izlude arrival point, including
+their duplicate map variants. They are marked for Novices and let campaign
+players either warp directly to the Prontera Session Board or open navigation to
+it, while leaving the standard training route untouched.
+
 `@roll` is public map output for players and DMs, including individual dice for
 rolls up to 20 dice. `@roll hidden` requires GM level 60+ and reports only to
 the roller. `@roll fudge` / `@roll override` are transparent DM-only set-result
 commands; they announce that the result was set rather than rolled.
+
+## New Player Setup
+
+`@dm novice` / `@dmnovice` grants First Aid (`NV_FIRSTAID`) and Play Dead
+(`NV_TRICKDEAD`) to the GM and every online party member, then erases the
+10 Novice Tutorial quest flags (7117–7127) so the game no longer gates those
+skills behind the tutorial chain. Call this once after creating new characters
+so players skip the opening tutorial without losing the two skills.
+
+## Stat and Skill Reset
+
+`@dm resetstat` / `@dmresetstat` resets all distributed stat points for every
+online party member, returning them to zero-spent so they can be reallocated.
+`@dm resetskill` / `@dmresetskill` does the same for skill points. Both commands
+apply party-wide and report how many members were reset. If the GM has no party,
+only the GM character is reset.
+
+## Hunt Zone Markers
+
+`dm_hunt_markers.txt` places 45 invisible (sprite -1) NPC markers on the maps
+where hunt quest targets spawn. Each marker uses `questinfo QTYPE_QUEST2` +
+`setquestinfo QINFO_QUEST` to show a yellow arrow on the minimap **only while
+the player has the matching quest active and is standing on the same map as the
+marker**. Players will not see the arrow on the world map or from another map —
+they need to travel to the field/dungeon first.
+
+The hunt quest journal also has a Navigate button that uses the `MobId` from
+`db/quest_db.conf` to route the player to a known spawn map. Use Navigate from
+the quest journal to cross maps, then follow the yellow minimap arrow once
+inside.
+
+## Quest Journal Descriptions
+
+All 87 campaign quest entries (IDs 20000–20233) have descriptions in
+`/client/System/OngoingQuestInfoList_True_EN.lub`. Each entry includes:
+
+- 2–3 lines of flavor text.
+- `Location: <Map Name> (<map_id>)` — the primary hunt or scene map.
+- `Mob: <Name> x<Count> (Lv XX)` for hunt quests, or `Boss: ...` for boss fights.
+- `Hunt:   @dm warp <map> x y` — DM copy-paste warp to the monster zone.
+- `Return: @dm warp <hub> x y` — DM copy-paste warp back to the quest-turn-in NPC.
+- A one-line Summary.
+
+For story (non-hunt) quests the warp block is a single `Warp:` line to the
+next scene location. The file uses latin-1 encoding and CRLF line endings;
+save it with those settings when editing or the client will reject it.
 
 ## Live Questline Flow
 

@@ -89,10 +89,14 @@ prontera,156,191,5	script	Quartermaster Wynne#dm	4_F_01,{
 	end;
 
 OnInit:
-	questinfo QTYPE_QUEST, 1; // Marker color 1 (yellow)
+	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20001, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20001, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20002, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20003, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;

@@ -14,6 +14,34 @@ updates in `npc/custom/dm_campaign/`.
 
 ## What Was Fixed
 
+- Added `@dm novice` / `@dmnovice` to `shared/dm_console.txt` — grants
+  First Aid and Play Dead to all online party members and erases the 10
+  Novice Tutorial quest flags so players can skip the stock tutorial on new
+  characters.
+- Added `@dm resetstat` / `@dmresetstat` and `@dm resetskill` / `@dmresetskill`
+  to `shared/dm_console.txt` — resets stat or skill points party-wide using
+  `resetstatus()` / `resetskill()` attached to each online member's RID.
+- Fixed `@dm quest refresh` in `shared/dm_console.txt` — the `sync` and
+  `refresh` action checks were placed after the `quest_id` guard, so `refresh`
+  always triggered the usage error because `atoi("")` == 0. Moved both checks
+  above the quest_id guard.
+- Fixed two wrong MobId values in `db/quest_db.conf`:
+  - Quest 20115 (Arc 7): was 1418 (Evil Snake Lord) → corrected to 1616
+    (Pitman, `ein_fild03`), matching the Einbroch storyline.
+  - Quest 20142 (Arc 10): was 1036 (Ghoul) → corrected to 1682 (Remover,
+    `lhz_dun01`), matching the Lighthalzen storyline.
+- Added `Rewards: { Exp: X  Jexp: Y }` blocks to all 47 hunt and boss quests
+  in `db/quest_db.conf`, scaled by arc target level (Arc 1 ~8k base EXP,
+  scaling up to Arc 19 ~800k). Quest journal reward tab now shows EXP/JExp.
+- Added `shared/dm_hunt_markers.txt` — 45 invisible marker NPCs using
+  `questinfo` + `setquestinfo` to display yellow minimap arrows at monster
+  spawn zones while the player has the matching hunt quest active on the same
+  map. Registered in `npc/scripts_custom.conf`.
+- Updated all 87 campaign quest descriptions in
+  `client/System/OngoingQuestInfoList_True_EN.lub` — every entry now includes
+  flavor text, Location (map name + ID), Mob/Boss line with level, copy-paste
+  `@dm warp` lines for Hunt and Return (or Warp for story quests), and a
+  Summary line.
 - Moved the closing brace in `shared/dm_console.txt` so the later arc labels are
   inside the script body.
 - Fixed the Arc 16 Bijou kill event label to match `Prison Vault#dm`.
@@ -45,6 +73,23 @@ updates in `npc/custom/dm_campaign/`.
   boss/MVPs on their next AI tick.
 - Dice rolling is implemented with `@roll [hidden] <NdX[+/-mod]>`.
 - Reusable trap/hazard helper functions are implemented in `shared/dm_traps.txt`.
+- New-player campaign onboarding is implemented in `shared/dm_onboarding.txt`.
+  It places Campaign Guide NPCs on the novice boat, the post-boat island, and
+  the Izlude arrival point so fresh characters can warp to the Prontera Session
+  Board without clearing the stock tutorial path.
+- Novice tutorial skip is implemented with `@dm novice` / `@dmnovice` in
+  `shared/dm_console.txt`. It grants First Aid and Play Dead party-wide and
+  erases the 10 tutorial quest flags so players are not gated by the stock
+  Novice Tutorial.
+- Stat/skill reset is implemented with `@dm resetstat` / `@dm resetskill` in
+  `shared/dm_console.txt`. Both apply party-wide via RID attach.
+- Hunt zone markers are implemented in `shared/dm_hunt_markers.txt` — 45
+  invisible NPCs across all arc hunt maps showing yellow minimap arrows via
+  `questinfo`/`setquestinfo` while the matching quest is active on that map.
+- Quest journal descriptions for all 87 campaign quests (20000–20233) are in
+  `client/System/OngoingQuestInfoList_True_EN.lub`. Each entry has flavor text,
+  map location, mob level, and copy-paste `@dm warp` lines for hunt and return.
+  File uses latin-1 encoding and CRLF line endings.
 - Temporary ticking hazards are implemented with `@dm hazard` / `@dmhazard`.
 - Arc 14's Ifrit beat starts a scripted Magma Cathedral heat pulse hazard using
   `DM_HazardArea()`. Hesma's exposed route lowers the pulse damage from 9% to
@@ -315,8 +360,10 @@ Use this checklist for the next implementation and validation passes.
 - [ ] Confirm the visual timing of removed stock BOSS/MVP mobs is acceptable.
 - [ ] Test `@dmmode off` and confirm normal respawns resume.
 - [ ] Playtest objective markers across all arc hub NPCs.
+- [ ] Playtest hunt zone minimap arrows (dm_hunt_markers.txt) on each arc's field/dungeon map.
 - [ ] Playtest visible mid-arc objective markers for noise and usefulness.
 - [x] Decide whether optional `viewpoint` navigation cues are still needed. (Not needed; questinfo covers map markers adequately)
+- [x] Add quest journal descriptions and `@dm warp` copy-paste lines for all 87 campaign quests. (Done: OngoingQuestInfoList_True_EN.lub)
 - [ ] Test `@roll`, `@roll hidden`, and `@roll fudge` output readability in
   the client chat window.
 
