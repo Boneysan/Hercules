@@ -192,6 +192,11 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "cutscene") {
+		callfunc("DM_Cutscene", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
+		end;
+	}
+
 	dispbottom("[DM] Unknown subcommand: " + .@sub$);
 	callsub(S_Help);
 	end;
@@ -454,7 +459,8 @@ S_Help:
 	dispbottom("[DM] @dm say <speaker> | <text>   (voice a line; @<npc> <text> puppets an NPC)");
 	dispbottom("[DM] @dm check <player|party> <str|agi|vit|int|dex|luk> <DC> [adv|dis]");
 	dispbottom("[DM] @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]  (mood: weather+BGM+cutin)");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dmscene");
+	dispbottom("[DM] @dm cutscene <on|off> [portrait] [seconds]  (freeze/release party movement)");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dmscene, @dmcutscene");
 	return;
 
 S_Reset:
@@ -514,6 +520,7 @@ S_Reset:
 	for (.@q = 20231; .@q <= 20233; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
 	if (.@party_id > 0)
 		setd("$dm_inst_" + .@party_id, 0);
+	callfunc("DM_CutsceneParty", 0, "", 0, .@party_id);
 	$dm_mode = 0;
 	$dm_active_party = 0;
 	$@dm_exp_party = 0;
@@ -635,12 +642,15 @@ S_Mode:
 	}
 	if (.@action$ == "off") {
 		callfunc("DM_InstanceQuestErase", 20000, $dm_active_party);
+		.@released = callfunc("DM_CutsceneParty", 0, "", 0, $dm_active_party);
 		$dm_mode = 0;
 		$dm_active_party = 0;
 		$@dm_exp_party = 0;
 		$@dm_exp_char = 0;
 		$@dm_exp_rate = 100;
 		dispbottom("[DM] DnD mode disabled. MVP spawns will resume naturally.");
+		if (.@released > 0)
+			dispbottom("[DM] Released cutscene lock for " + .@released + " member(s).");
 		return;
 	}
 	dispbottom("[DM] Mode is currently " + ($dm_mode ? "ON" : "OFF") + ($dm_mode ? " (party " + $dm_active_party + ")" : ""));

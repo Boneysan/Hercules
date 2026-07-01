@@ -27,7 +27,7 @@ namespaced `$dm_*` (global) or `dm_*` (per-character).
 
 ## Build status
 
-**Starter trio shipped** (registered in `npc/scripts_custom.conf`):
+**Starter live-table pack shipped** (registered in `npc/scripts_custom.conf`):
 
 - `shared/dm_voice.txt` — `@dm say` / `@dmsay` (improv NPC voice via `unittalk`;
   `@<npc>` puppet form via `npctalk`). ✅
@@ -35,17 +35,18 @@ namespaced `$dm_*` (global) or `dm_*` (per-character).
   DC, party/single, adv/dis, party-facing `mapannounce`). ✅
 - `shared/dm_scene.txt` — `@dm scene` / `@dmscene` (weather mapflags +
   `playbgmall` + party-looped `cutin` presets). ✅
+- `shared/dm_scene.txt` — `@dm cutscene` / `@dmcutscene` (party movement freeze,
+  optional cutin, auto-release, cleanup/mode-off release). ✅
 
-Remaining (not yet built): `@dm cutscene`, inspiration tokens, `@dm scale` +
-bloodied, downed/death-saves, `@dm secret`, initiative/spotlight, tavern hub,
-recap log.
+Remaining (not yet built): inspiration tokens, `@dm scale` + bloodied,
+downed/death-saves, `@dm secret`, initiative/spotlight, tavern hub, recap log.
 
 ## New files
 
 | File | Purpose |
 |------|---------|
 | `shared/dm_voice.txt` ✅   | `@dm say` (+ future `@dm emote`, `@dm secret`) — improv presentation |
-| `shared/dm_scene.txt` ✅   | `@dm scene` (+ future `@dm cutscene`) — ambience + cutscene director |
+| `shared/dm_scene.txt` ✅   | `@dm scene`, `@dm cutscene` — ambience + cutscene director |
 | `shared/dm_checks.txt` ✅  | `@dm check` (+ future inspiration tokens, `@dm initiative`) — tabletop mechanics |
 | `shared/dm_combat.txt`    | `@dm scale`, bloodied watcher — live difficulty dial |
 | `shared/dm_downed.txt`    | downed/death-save mechanic (`OnPCDieEvent` hook) |
@@ -158,19 +159,20 @@ Bundle weather + BGM + effect + portrait into named presets, one command.
 `@dm cleanup`; document which BGM/illustration assets are client-side.
 
 ### 4. `@dm cutscene` — freeze the party for set pieces
-**File:** `dm_scene.txt` · **Effort:** S
+**File:** `dm_scene.txt` · **Effort:** S · **Status:** shipped ✅
 
 ```
-@dm cutscene on [portrait]     // pcblockmove party ON, optional cutin
-@dm cutscene off               // release + clear cutin
+@dm cutscene on [portrait] [seconds]  // freeze party movement, optional cutin
+@dm cutscene off                      // release + clear cutin
 @dmcutscene ...
 ```
 
-- `pcblockmove(<account_id>, true/false)` looped over the online party (attach-RID
-  pattern) freezes movement for reveals/monologues.
-- Optional `viewpoint` nudge to frame a spot; `cutin` for the illustration.
-- **Safety:** auto-release timer (e.g. 60s) so a disconnect/DM slip can't leave
-  players stuck; `@dm cleanup` and `@dm mode off` must force-release everyone.
+- Uses `setpcblock(PCBLOCK_MOVE, true/false)` looped over the online party
+  (attach-RID pattern) to freeze movement for reveals/monologues.
+- Optional `cutin` portrait is shown to the same party members.
+- **Safety:** per-player auto-release defaults to 60s and clamps to 5-300s;
+  `@dm cleanup`, `@dm mode off`, `@dm reset confirm`, and reconnect all
+  force-release movement and clear the portrait.
 
 ---
 
@@ -256,7 +258,7 @@ one-shots.
 ```
 
 - Initiative reuses `@dm check` roll core, sorts, prints the order to the map.
-- Spotlight reuses the `pcblockmove` party loop from `@dm cutscene`, excluding the
+- Spotlight reuses the `setpcblock` party loop from `@dm cutscene`, excluding the
   named player; same auto-release safety timer.
 
 ---
@@ -296,20 +298,18 @@ Matches the stated vision (tavern → dungeon → live GM). A between-arc social
    attach-RID loop already exists for quests/flags) generalized so voice/scene/
    check/downed all share one iterator.
 3. **Auto-release safety net** — `@dm cleanup` and `@dm mode off` must clear:
-   scene mapflags, cutins, `pcblockmove` freezes, downed states, and all live
+   scene mapflags, cutins, `setpcblock` freezes, downed states, and all live
    timers. Centralize in the existing cleanup path.
 
 ---
 
 ## Suggested sequencing
 
-1. **Starter pack (next session):** `@dm say` (#1), `@dm check` (#2), `@dm scene`
-   (#3). Covers improv, mechanics, and mood — the three pillars.
-2. `@dm cutscene` (#4) + inspiration (#5) — small, high-flavor, reuse Phase 1.
-3. Spawn-GID registry → `@dm scale` + bloodied (#9) — the biggest infra item.
-4. Downed/death saves (#6) — most complex; opt-in per fight.
-5. Handouts/secret (#7,#8), initiative/spotlight (#10) — quick wins.
-6. Tavern hub (#11) + recap log (#12) — session-flow polish.
+1. Inspiration (#5) — small, high-flavor, reuses the `@dm check` surface.
+2. Spawn-GID registry → `@dm scale` + bloodied (#9) — the biggest infra item.
+3. Downed/death saves (#6) — most complex; opt-in per fight.
+4. Handouts/secret (#7,#8), initiative/spotlight (#10) — quick wins.
+5. Tavern hub (#11) + recap log (#12) — session-flow polish.
 
 ## Decisions
 
@@ -350,7 +350,7 @@ Adapts D&D 5e death saves to RO. When a hero would die, they instead drop to a
 - **Trigger:** intercept `OnPCDieEvent`. Only engages while `$dm_mode` is on and
   the downed system is enabled (default **off per fight**, DM turns it on with
   `@dm downrule on` for set-piece battles — trash fights stay lethal-free/normal).
-- **Downed state:** player is pinned (`pcblockmove` + Play Dead sprite, reusing the
+- **Downed state:** player is pinned (`setpcblock` + Play Dead sprite, reusing the
   `@dm novice` Play Dead grant), HP locked at 1, cannot act. A visible
   `npctalk`/effect marks them as "Dying."
 - **Death saves:** every 4s, auto-roll `rand(1,20)`:
@@ -365,7 +365,7 @@ Adapts D&D 5e death saves to RO. When a hero would die, they instead drop to a
 - **DM overrides:** `@dm revive <player|party>` (instant full rescue),
   `@dm downrule <on|off>`, `@dm down <player>` (manually down someone for drama).
 - **Safety:** `@dm cleanup` / `@dm mode off` clears all downed states, timers, and
-  `pcblockmove` freezes.
+  `setpcblock` freezes.
 
 Knobs to confirm: default off-per-fight vs. on-in-DM-mode; save interval (4s);
 tiles for ally rescue; and whether "Out" is plain RO death or a softer
@@ -375,5 +375,5 @@ consequence.
 
 Each command needs the same playtest treatment as the current checklist in
 `planning/dm-handoff.md`: verify the GM gate, party-wide behavior with 2+ online
-members, disconnect/reconnect safety (especially `pcblockmove` and downed timers),
+members, disconnect/reconnect safety (especially `setpcblock` and downed timers),
 and that `@dm cleanup` / `@dm mode off` fully reset live state.

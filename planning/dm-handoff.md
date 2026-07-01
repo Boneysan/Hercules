@@ -18,6 +18,10 @@ updates in `npc/custom/dm_campaign/`.
   First Aid and Play Dead to all online party members and erases the 10
   Novice Tutorial quest flags so players can skip the stock tutorial on new
   characters.
+- Added `@dm cutscene` / `@dmcutscene` in `shared/dm_scene.txt` — freezes party
+  movement for set-piece reveals with optional cutin portrait, defaults to a
+  60-second auto-release, clamps manual duration to 5-300 seconds, and releases
+  on `@dm cleanup`, `@dm mode off`, `@dm reset confirm`, or player reconnect.
 - Added `@dm resetstat` / `@dmresetstat` and `@dm resetskill` / `@dmresetskill`
   to `shared/dm_console.txt` — resets stat or skill points party-wide using
   `resetstatus()` / `resetskill()` attached to each online member's RID.
@@ -102,6 +106,9 @@ updates in `npc/custom/dm_campaign/`.
 - Quest markers are implemented for all arc hub NPCs and visible mid-arc
   objective NPCs/set-pieces. Hidden encounter controller NPCs are intentionally
   left unmarked because client marker behavior on hidden NPCs is unreliable.
+- Live-table ambience is implemented with `@dm scene` / `@dmscene` for
+  weather+BGM+party cutins, and `@dm cutscene` / `@dmcutscene` for party
+  movement freezes during set-piece reveals.
 - Branch-specific boss variants are implemented in `@dmbeat`: Dark Lord,
   Randgris, Beelzebub, Thanatos, and Bijou/Maret now use explicit adds or
   non-combat completion flags instead of old judgment-only notes.
@@ -366,6 +373,10 @@ Use this checklist for the next implementation and validation passes.
 - [x] Add quest journal descriptions and `@dm warp` copy-paste lines for all 87 campaign quests. (Done: OngoingQuestInfoList_True_EN.lub)
 - [ ] Test `@roll`, `@roll hidden`, and `@roll fudge` output readability in
   the client chat window.
+- [ ] Test `@dm cutscene on`, optional portrait, auto-release, and manual
+  `@dm cutscene off` with 2+ online party members.
+- [ ] Test that `@dm cleanup`, `@dm mode off`, and reconnect release cutscene
+  movement locks and clear portraits.
 
 ### Encounter And Branch Validation
 

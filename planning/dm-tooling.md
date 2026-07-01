@@ -15,6 +15,9 @@ without recompiling the server.
 - `dm_quests.txt` - party-wide quest set/complete/erase plus party/instance story flag wrappers.
 - `dm_instances.txt` - script-driven private dungeon instances (create/attach/init/warp/destroy; no instance_db needed).
 - `dm_console.txt` - GM-facing bound commands.
+- `dm_voice.txt` - improvised attributed dialogue and NPC puppet voice helpers.
+- `dm_checks.txt` - d20 stat checks and saving throws for live table play.
+- `dm_scene.txt` - weather/BGM/portrait scenes and cutscene movement locks.
 - `dm_traps.txt` - reusable hazard, puzzle reset, and encounter cleanup helpers.
 - `dm_onboarding.txt` - novice-start campaign guide NPCs that can warp new players
   from the starting boat/island/Izlude arrival path to the Prontera Session Board.
@@ -77,6 +80,8 @@ All commands require GM level 60 or higher.
 @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]
 @dm scene weather <fog|snow|sakura|leaves|clouds|clouds2|fireworks|none> [portrait]
 @dmscene <preset|weather ...> [portrait]
+@dm cutscene <on|off> [portrait] [seconds]
+@dmcutscene <on|off> [portrait] [seconds]
 ```
 
 ## Live-table tools (dm_voice / dm_checks / dm_scene)
@@ -94,6 +99,10 @@ campaign. See `planning/dm-live-table.md` for the full roadmap.
   BGM/illustration files are custom client assets — see the asset manifest in
   `planning/dm-live-table.md`. This client cannot stop a BGM from script, so
   `@dm scene clear` clears weather and portrait only.
+- `@dm cutscene` freezes party movement with `setpcblock(PCBLOCK_MOVE)`, optionally
+  shows a party-wide portrait, and auto-releases after 60 seconds by default.
+  `@dm cutscene off`, `@dm cleanup`, `@dm mode off`, `@dm reset confirm`, and
+  reconnect all release the movement lock and clear the cutin.
 
 `@dm mode on` does two things: suppresses normal BOSS/MVP spawns server-wide, and
 stores the DM's current party ID in `$dm_active_party`. All 50 visible campaign

@@ -7,6 +7,7 @@
 //   @dm scene <preset> [portrait]
 //     presets: clear dread boss calm holy ruin snow fest
 //   @dm scene weather <fog|snow|sakura|leaves|clouds|clouds2|fireworks|none> [portrait]
+//   @dm cutscene <on|off> [portrait] [seconds]
 //
 // BGM note: this client (pre-20220504) cannot be told to STOP a BGM from script,
 // so `@dm scene clear` only clears weather + portrait; play a calm scene to
@@ -134,11 +135,104 @@ function	script	DM_Scene	{
 	return 1;
 }
 
+function	script	DM_CutsceneSelf	{
+	.@block = getarg(0, 0);
+	.@portrait$ = getarg(1, "");
+	.@duration_ms = getarg(2, 60000);
+
+	deltimer("DM_SceneConsole::OnCutsceneTimeout");
+	setpcblock(PCBLOCK_MOVE, .@block);
+
+	if (.@block) {
+		dm_cutscene_blocked = 1;
+		if (.@portrait$ != "")
+			cutin(.@portrait$, 2);
+		if (.@duration_ms > 0)
+			addtimer(.@duration_ms, "DM_SceneConsole::OnCutsceneTimeout");
+	} else {
+		dm_cutscene_blocked = 0;
+		cutin("", 255);
+	}
+
+	return 1;
+}
+
+function	script	DM_CutsceneParty	{
+	.@block = getarg(0, 0);
+	.@portrait$ = getarg(1, "");
+	.@duration_ms = getarg(2, 60000);
+	.@party_id = getarg(3, getcharid(CHAR_ID_PARTY));
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@party_id <= 0) {
+		callfunc("DM_CutsceneSelf", .@block, .@portrait$, .@duration_ms);
+		return 1;
+	}
+
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		callfunc("DM_CutsceneSelf", .@block, .@portrait$, .@duration_ms);
+		detachrid();
+		++.@done;
+	}
+
+	if (.@origin)
+		attachrid(.@origin);
+	return .@done;
+}
+
+function	script	DM_Cutscene	{
+	.@sub$ = strtolower(getarg(0, ""));
+	.@a$ = getarg(1, "");
+	.@b$ = getarg(2, "");
+
+	if (.@sub$ == "" || .@sub$ == "help") {
+		dispbottom("[DM] @dm cutscene on [portrait] [seconds]");
+		dispbottom("[DM] @dm cutscene off");
+		return 0;
+	}
+
+	if (.@sub$ == "off" || .@sub$ == "clear" || .@sub$ == "release") {
+		.@done = callfunc("DM_CutsceneParty", 0, "", 0);
+		dispbottom("[DM] Cutscene released for " + .@done + " member(s).");
+		return 1;
+	}
+
+	if (.@sub$ != "on" && .@sub$ != "start" && .@sub$ != "freeze") {
+		dispbottom("[DM] Unknown cutscene action '" + .@sub$ + "'. Use on/off.");
+		return 0;
+	}
+
+	.@portrait$ = .@a$;
+	.@seconds = atoi(.@b$);
+	if (.@seconds <= 0 && atoi(.@a$) > 0) {
+		.@seconds = atoi(.@a$);
+		.@portrait$ = "";
+	}
+	if (.@seconds <= 0)
+		.@seconds = 60;
+	if (.@seconds < 5)
+		.@seconds = 5;
+	if (.@seconds > 300)
+		.@seconds = 300;
+
+	.@done = callfunc("DM_CutsceneParty", 1, .@portrait$, .@seconds * 1000);
+	dispbottom("[DM] Cutscene lock enabled for " + .@done + " member(s), auto-release in " + .@seconds + "s" + (.@portrait$ != "" ? ", portrait=" + .@portrait$ : "") + ".");
+	return 1;
+}
+
 -	script	DM_SceneConsole	FAKE_NPC,{
 	end;
 
 OnInit:
 	bindatcmd("dmscene", strnpcinfo(NPC_NAME_UNIQUE)+"::OnScene", 1, 99, 1);
+	bindatcmd("dmcutscene", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCutscene", 1, 99, 1);
 	end;
 
 OnScene:
@@ -146,5 +240,26 @@ OnScene:
 		end;
 
 	callfunc("DM_Scene", .@atcmd_parameters$[0], .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+	end;
+
+OnCutscene:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	callfunc("DM_Cutscene", .@atcmd_parameters$[0], .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+	end;
+
+OnCutsceneTimeout:
+	if (dm_cutscene_blocked) {
+		callfunc("DM_CutsceneSelf", 0, "", 0);
+		dispbottom("[DM] Cutscene auto-released.");
+	}
+	end;
+
+OnPCLoginEvent:
+	if (dm_cutscene_blocked) {
+		callfunc("DM_CutsceneSelf", 0, "", 0);
+		dispbottom("[DM] Previous cutscene lock cleared on login.");
+	}
 	end;
 }
