@@ -8,6 +8,15 @@
 
 // ── Arc 1 ─────────────────────────────────────────────────────────────────
 
+// Quest 20006: First Field Test (Fluff/Jellopy/Clover) → prt_fild08
+prt_fild08,200,200,0	script	Hunt Marker#dm_h_a01i	-1,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20006, 1;
+	end;
+}
+
 // Quest 20002: Contract: Cellar Vermin (Tarou x10) → prt_sewb2 (60 Tarou)
 prt_sewb2,100,100,0	script	Hunt Marker#dm_h_arc01a	-1,{
 	end;

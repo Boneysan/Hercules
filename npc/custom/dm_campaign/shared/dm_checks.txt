@@ -1,0 +1,125 @@
+// Seal Cascade DM skill checks / saving throws.
+//
+// RO-native math: roll d20 + (stat / 10) versus a DC. A stat of 30 = +3,
+// 99 = +9, so higher-level heroes with more stat points are naturally better.
+//
+//   @dm check <player|party> <stat> <DC> [adv|dis]
+//     stat: str agi vit int dex luk
+//     adv  = roll twice, keep high;  dis = roll twice, keep low
+//
+// Results are announced to everyone on the DM's map so the whole table sees the
+// drama. Nat-20 always succeeds, nat-1 always fails.
+
+function	script	DM_StatConst	{
+	.@s$ = strtolower(getarg(0, ""));
+	if (.@s$ == "str") return bStr;
+	if (.@s$ == "agi") return bAgi;
+	if (.@s$ == "vit") return bVit;
+	if (.@s$ == "int") return bInt;
+	if (.@s$ == "dex") return bDex;
+	if (.@s$ == "luk") return bLuk;
+	return -1;
+}
+
+function	script	DM_Check	{
+	.@target$ = getarg(0, "");
+	.@stat$   = getarg(1, "");
+	.@dc      = getarg(2, 10);
+	.@mode$   = strtolower(getarg(3, ""));
+
+	.@stat = callfunc("DM_StatConst", .@stat$);
+	if (.@stat < 0) {
+		dispbottom("[DM] Usage: @dm check <player|party> <str|agi|vit|int|dex|luk> <DC> [adv|dis]");
+		return 0;
+	}
+	if (.@dc <= 0)
+		.@dc = 10;
+
+	.@label$ = strtoupper(strtolower(.@stat$));
+
+	if (.@target$ == "party" || .@target$ == "all") {
+		.@party_id = getcharid(CHAR_ID_PARTY);
+		if (.@party_id <= 0) {
+			callsub(S_Roll, strcharinfo(PC_NAME), .@stat, .@label$, .@dc, .@mode$);
+			return 1;
+		}
+
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		getpartymember(.@party_id, PT_MEMBER_NAME, .@names$);
+
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+				continue;
+			callsub(S_Roll, .@names$[.@i], .@stat, .@label$, .@dc, .@mode$);
+			++.@done;
+		}
+
+		if (!.@done)
+			dispbottom("[DM] No online party members to check.");
+		return .@done;
+	}
+
+	// Single named player (must be online for a stat read).
+	if (getcharid(CHAR_ID_ACCOUNT, .@target$) <= 0) {
+		dispbottom("[DM] Player '" + .@target$ + "' is not online.");
+		return 0;
+	}
+	callsub(S_Roll, .@target$, .@stat, .@label$, .@dc, .@mode$);
+	return 1;
+
+S_Roll:
+	.@name$  = getarg(0);
+	.@st     = getarg(1);
+	.@lbl$   = getarg(2);
+	.@dc2    = getarg(3);
+	.@md$    = getarg(4);
+
+	.@d1 = rand(1, 20);
+	.@note$ = "";
+	if (.@md$ == "adv") {
+		.@d2 = rand(1, 20);
+		.@roll = (.@d1 > .@d2 ? .@d1 : .@d2);
+		.@note$ = " adv[" + .@d1 + "/" + .@d2 + "]";
+	} else if (.@md$ == "dis") {
+		.@d2 = rand(1, 20);
+		.@roll = (.@d1 < .@d2 ? .@d1 : .@d2);
+		.@note$ = " dis[" + .@d1 + "/" + .@d2 + "]";
+	} else {
+		.@roll = .@d1;
+	}
+
+	.@mod = readparam(.@st, .@name$) / 10;
+	.@total = .@roll + .@mod;
+	.@pass = (.@total >= .@dc2);
+
+	.@res$ = (.@pass ? "SUCCESS" : "FAILURE");
+	if (.@roll == 20) {
+		.@pass = 1;
+		.@res$ = "CRIT SUCCESS";
+	} else if (.@roll == 1) {
+		.@pass = 0;
+		.@res$ = "CRIT FAIL";
+	}
+
+	.@modstr$ = (.@mod >= 0 ? "+" : "") + .@mod;
+	.@msg$ = "[Check] " + .@name$ + "  " + .@lbl$ + " vs DC" + .@dc2 + ":  d20=" + .@roll + .@note$ + " " + .@modstr$ + " = " + .@total + "  -> " + .@res$;
+
+	mapannounce strcharinfo(PC_MAP), .@msg$, bc_map, (.@pass ? 0x66FF66 : 0xFF6666);
+	return;
+}
+
+-	script	DM_CheckConsole	FAKE_NPC,{
+	end;
+
+OnInit:
+	bindatcmd("dmcheck", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCheck", 1, 99, 1);
+	end;
+
+OnCheck:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	callfunc("DM_Check", .@atcmd_parameters$[0], .@atcmd_parameters$[1], atoi(.@atcmd_parameters$[2]), .@atcmd_parameters$[3]);
+	end;
+}

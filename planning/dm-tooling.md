@@ -69,7 +69,31 @@ All commands require GM level 60 or higher.
 @roll [hidden] <NdX[+/-mod]>
 @roll fudge <total> [note]
 @roll override <total> [note]
+@dm say <speaker> | <text>
+@dm say @<npcname> <text>
+@dmsay <speaker> | <text>
+@dm check <player|party> <str|agi|vit|int|dex|luk> <DC> [adv|dis]
+@dmcheck <player|party> <stat> <DC> [adv|dis]
+@dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]
+@dm scene weather <fog|snow|sakura|leaves|clouds|clouds2|fireworks|none> [portrait]
+@dmscene <preset|weather ...> [portrait]
 ```
+
+## Live-table tools (dm_voice / dm_checks / dm_scene)
+
+The "live-table" layer supports improvised DM play alongside the scripted
+campaign. See `planning/dm-live-table.md` for the full roadmap.
+
+- `@dm say` voices attributed dialogue over the DM (`unittalk`) or puppets a named
+  on-map NPC (`npctalk`), so lines can be improvised instead of pre-scripted.
+- `@dm check` rolls a d20 plus an RO-native `stat/10` modifier against a DC for one
+  player or the whole party, announcing pass/fail to the map. Nat-20 always
+  succeeds, nat-1 always fails; `adv`/`dis` roll twice.
+- `@dm scene` sets mood on the DM's map: weather (map-wide mapflags), a custom BGM
+  track (`playbgmall`), and an optional party-wide illustration (`cutin`). Preset
+  BGM/illustration files are custom client assets — see the asset manifest in
+  `planning/dm-live-table.md`. This client cannot stop a BGM from script, so
+  `@dm scene clear` clears weather and portrait only.
 
 `@dm mode on` does two things: suppresses normal BOSS/MVP spawns server-wide, and
 stores the DM's current party ID in `$dm_active_party`. All 50 visible campaign

@@ -83,7 +83,23 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "holdspawn") {
+		callsub(S_HoldSpawn, 1);
+		end;
+	}
+
+	if (.@sub$ == "release") {
+		callsub(S_Release, 1);
+		end;
+	}
+
+	if (.@sub$ == "holdclear") {
+		callsub(S_HoldClear);
+		end;
+	}
+
 	if (.@sub$ == "cleanup") {
+		callsub(S_HoldClear);
 		callfunc("DM_CleanupMap");
 		end;
 	}
@@ -153,6 +169,29 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "savepoint") {
+		callsub(S_SavePoint);
+		end;
+	}
+
+	if (.@sub$ == "say") {
+		.@text$ = "";
+		for (.@i = 1; .@i < .@atcmd_numparameters; ++.@i)
+			.@text$ += (.@i > 1 ? " " : "") + .@atcmd_parameters$[.@i];
+		callfunc("DM_Say", .@text$);
+		end;
+	}
+
+	if (.@sub$ == "check") {
+		callfunc("DM_Check", .@atcmd_parameters$[1], .@atcmd_parameters$[2], atoi(.@atcmd_parameters$[3]), .@atcmd_parameters$[4]);
+		end;
+	}
+
+	if (.@sub$ == "scene") {
+		callfunc("DM_Scene", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
+		end;
+	}
+
 	dispbottom("[DM] Unknown subcommand: " + .@sub$);
 	callsub(S_Help);
 	end;
@@ -199,6 +238,7 @@ OnStory:
 OnCleanup:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	callsub(S_HoldClear);
 	callfunc("DM_CleanupMap");
 	end;
 
@@ -395,6 +435,8 @@ S_Help:
 	dispbottom("[DM] @dm beat                 (menu: location/NPC/story tracking)");
 	dispbottom("[DM] @dm story <message> | @dm globalstory <message>");
 	dispbottom("[DM] @dm spawn <mob_id> [count] [name]");
+	dispbottom("[DM] @dm holdspawn <mob_id> [count] [name]  (passive staged mobs)");
+	dispbottom("[DM] @dm release [all|last] | @dm holdclear");
 	dispbottom("[DM] @dm hazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms] | clear");
 	dispbottom("[DM] Status aliases: poison, freeze, stun, sleep, curse, confusion, blind.");
 	dispbottom("[DM] @dm exp <base> [job]    (grants EXP to your whole party)");
@@ -407,8 +449,12 @@ S_Help:
 	dispbottom("[DM] @dm novice              (grant First Aid + Play Dead to party; clear tutorial quest flags)");
 	dispbottom("[DM] @dm resetstat           (reset status points for all online party members)");
 	dispbottom("[DM] @dm resetskill          (reset skill points for all online party members)");
+	dispbottom("[DM] @dm savepoint           (set party save/home point to your current location)");
 	dispbottom("[DM] @dm reset confirm       (wipe all campaign flags for a fresh run)");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset");
+	dispbottom("[DM] @dm say <speaker> | <text>   (voice a line; @<npc> <text> puppets an NPC)");
+	dispbottom("[DM] @dm check <player|party> <str|agi|vit|int|dex|luk> <DC> [adv|dis]");
+	dispbottom("[DM] @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]  (mood: weather+BGM+cutin)");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dmscene");
 	return;
 
 S_Reset:
@@ -471,6 +517,7 @@ S_Reset:
 	$dm_mode = 0;
 	$dm_active_party = 0;
 	$@dm_exp_party = 0;
+	$@dm_exp_char = 0;
 	$@dm_exp_rate = 100;
 	dispbottom("[DM] Campaign reset complete for " + .@cleared + " member(s). All arcs cleared, mode off.");
 	return;
@@ -531,6 +578,8 @@ S_ExpRate:
 	if (.@action$ == "" || .@action$ == "status") {
 		if ($@dm_exp_party > 0 && $@dm_exp_rate > 0)
 			dispbottom("[DM] Monster EXP rate is " + $@dm_exp_rate + "% for party " + $@dm_exp_party + ".");
+		else if ($@dm_exp_char > 0 && $@dm_exp_rate > 0)
+			dispbottom("[DM] Monster EXP rate is " + $@dm_exp_rate + "% for character " + $@dm_exp_char + ".");
 		else
 			dispbottom("[DM] Monster EXP rate is normal.");
 		dispbottom("[DM] Usage: @dm exprate <percent|off|status>  Example: @dm exprate 200");
@@ -539,6 +588,7 @@ S_ExpRate:
 
 	if (.@action$ == "off" || .@action$ == "clear" || .@action$ == "normal") {
 		$@dm_exp_party = 0;
+		$@dm_exp_char = 0;
 		$@dm_exp_rate = 100;
 		dispbottom("[DM] Monster EXP rate reset to normal.");
 		return;
@@ -550,14 +600,13 @@ S_ExpRate:
 		return;
 	}
 
-	if (.@party_id <= 0) {
-		dispbottom("[DM] Join or create a party before setting a party EXP rate.");
-		return;
-	}
-
-	$@dm_exp_party = .@party_id;
+	$@dm_exp_party = (.@party_id > 0) ? .@party_id : 0;
+	$@dm_exp_char = (.@party_id > 0) ? 0 : getcharid(CHAR_ID_CHAR);
 	$@dm_exp_rate = .@rate;
-	dispbottom("[DM] Monster EXP rate set to " + .@rate + "% for party " + .@party_id + ".");
+	if (.@party_id > 0)
+		dispbottom("[DM] Monster EXP rate set to " + .@rate + "% for party " + .@party_id + ".");
+	else
+		dispbottom("[DM] Monster EXP rate set to " + .@rate + "% for you.");
 	dispbottom("[DM] This affects monster/MVP EXP only. Use @dm exprate off to reset.");
 	return;
 
@@ -589,6 +638,7 @@ S_Mode:
 		$dm_mode = 0;
 		$dm_active_party = 0;
 		$@dm_exp_party = 0;
+		$@dm_exp_char = 0;
 		$@dm_exp_rate = 100;
 		dispbottom("[DM] DnD mode disabled. MVP spawns will resume naturally.");
 		return;
@@ -1117,6 +1167,34 @@ S_ResetSkill:
 	dispbottom("[DM] Skill points reset for " + .@done + " member(s).");
 	return;
 
+S_SavePoint:
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	getmapxy(.@save_map$, .@save_x, .@save_y, UNITTYPE_PC);
+	.@done = 0;
+
+	if (.@party_id > 0) {
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+				continue;
+			if (!attachrid(.@accid[.@i]))
+				continue;
+			savepoint(.@save_map$, .@save_x, .@save_y);
+			detachrid();
+			++.@done;
+		}
+		if (.@origin_aid)
+			attachrid(.@origin_aid);
+	} else {
+		savepoint(.@save_map$, .@save_x, .@save_y);
+		.@done = 1;
+	}
+
+	dispbottom("[DM] Save point set to " + .@save_map$ + " " + .@save_x + "," + .@save_y + " for " + .@done + " member(s).");
+	return;
+
 S_Novice:
 	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
 	.@party_id = getcharid(CHAR_ID_PARTY);
@@ -1174,6 +1252,97 @@ S_Spawn:
 	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
 	areamonster(.@map$, .@x - 3, .@y - 3, .@x + 3, .@y + 3, .@name$, .@mob_id, .@count, "DM_Console::OnDMKilled");
 	dispbottom("[DM] Spawned " + .@count + " mob(s) near you on " + .@map$ + ".");
+	return;
+
+S_HoldSpawn:
+	.@offset = getarg(0, 0);
+	.@mob_id = atoi(.dm_params$[.@offset]);
+	.@count = atoi(.dm_params$[.@offset + 1]);
+	.@name$ = .dm_params$[.@offset + 2];
+
+	if (.@mob_id <= 0) {
+		dispbottom("[DM] Usage: @dm holdspawn <mob_id> [count] [name]");
+		return;
+	}
+
+	if (.@count <= 0)
+		.@count = 1;
+	if (.@name$ == "")
+		.@name$ = "--ja--";
+
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		.@sx = .@x + rand(7) - 3;
+		.@sy = .@y + rand(7) - 3;
+		if (.@sx < 1)
+			.@sx = .@x;
+		if (.@sy < 1)
+			.@sy = .@y;
+
+		.@gid = monster(.@map$, .@sx, .@sy, .@name$, .@mob_id, 1, "DM_Console::OnDMKilled");
+		if (.@gid <= 0)
+			continue;
+
+		.@mode = getunitdata(.@gid, UDT_MODE);
+		@dm_hold_gid[@dm_hold_count] = .@gid;
+		@dm_hold_mode[@dm_hold_count] = .@mode;
+		++@dm_hold_count;
+
+		setunitdata(.@gid, UDT_MODE, .@mode & ~(MD_AGGRESSIVE|MD_ANGRY|MD_CANATTACK));
+	}
+
+	dispbottom("[DM] Held " + .@count + " staged mob(s). Use @dm release when combat begins.");
+	return;
+
+S_Release:
+	.@offset = getarg(0, 0);
+	.@which$ = .dm_params$[.@offset];
+	if (.@which$ == "")
+		.@which$ = "all";
+
+	if (@dm_hold_count <= 0) {
+		dispbottom("[DM] No held mobs tracked for you.");
+		return;
+	}
+
+	if (.@which$ == "last") {
+		.@start = @dm_hold_count - 1;
+		.@end = @dm_hold_count;
+	} else {
+		.@start = 0;
+		.@end = @dm_hold_count;
+	}
+
+	for (.@i = .@start; .@i < .@end; ++.@i) {
+		if (@dm_hold_gid[.@i] <= 0)
+			continue;
+		setunitdata(@dm_hold_gid[.@i], UDT_MODE, @dm_hold_mode[.@i] | MD_AGGRESSIVE | MD_CANATTACK | MD_CANMOVE);
+		++.@released;
+	}
+
+	if (.@which$ == "last") {
+		--@dm_hold_count;
+	} else {
+		deletearray @dm_hold_gid[0], getarraysize(@dm_hold_gid);
+		deletearray @dm_hold_mode[0], getarraysize(@dm_hold_mode);
+		@dm_hold_count = 0;
+	}
+
+	dispbottom("[DM] Released " + .@released + " held mob(s).");
+	return;
+
+S_HoldClear:
+	if (@dm_hold_count <= 0)
+		return;
+
+	for (.@i = 0; .@i < @dm_hold_count; ++.@i) {
+		if (@dm_hold_gid[.@i] > 0)
+			unitkill(@dm_hold_gid[.@i]);
+	}
+	deletearray @dm_hold_gid[0], getarraysize(@dm_hold_gid);
+	deletearray @dm_hold_mode[0], getarraysize(@dm_hold_mode);
+	@dm_hold_count = 0;
+	dispbottom("[DM] Cleared held staged mobs.");
 	return;
 
 }

@@ -6912,22 +6912,24 @@ static void pc_calcexp(struct map_session_data *sd, uint64 *base_exp, uint64 *jo
 static int pc_dm_exp_rate(struct map_session_data *sd)
 {
 	static int64 dm_exp_party_uid = 0;
+	static int64 dm_exp_char_uid = 0;
 	static int64 dm_exp_rate_uid = 0;
-	int party_id, dm_party_id, dm_exp_rate;
+	int party_id, dm_party_id, dm_char_id, dm_exp_rate;
 
 	nullpo_ret(sd);
 
 	party_id = sd->status.party_id;
-	if (party_id <= 0)
-		return 100;
 
 	if (dm_exp_party_uid == 0)
 		dm_exp_party_uid = script->add_variable("$@dm_exp_party");
+	if (dm_exp_char_uid == 0)
+		dm_exp_char_uid = script->add_variable("$@dm_exp_char");
 	if (dm_exp_rate_uid == 0)
 		dm_exp_rate_uid = script->add_variable("$@dm_exp_rate");
 
 	dm_party_id = mapreg->readreg(dm_exp_party_uid);
-	if (dm_party_id != party_id)
+	dm_char_id = mapreg->readreg(dm_exp_char_uid);
+	if ((party_id <= 0 || dm_party_id != party_id) && dm_char_id != sd->status.char_id)
 		return 100;
 
 	dm_exp_rate = mapreg->readreg(dm_exp_rate_uid);
