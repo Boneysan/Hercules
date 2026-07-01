@@ -12,6 +12,21 @@ updates in `npc/custom/dm_campaign/`.
 - The campaign is script-first and runs through `dm_console.txt` plus the
   shared helpers in `npc/custom/dm_campaign/shared/`.
 
+## Latest Local Validation
+
+July 1, 2026:
+
+- `bash ./script-checker $(find npc/custom/dm_campaign -name "*.txt" | sort)`
+  passes for the DM campaign scripts. It still prints the existing
+  `socket_getips` warning and the known numeric `-1` view warnings from
+  `shared/dm_hunt_markers.txt`.
+- `git diff --check` passes, and the new `shared/dm_combat.txt` was checked
+  separately because it is currently a new untracked file.
+- `timeout 35 ./map-server --run-once` reaches DB startup and then stops at the
+  local environment blocker: `Can't connect to MySQL server on
+  '127.0.0.1:3306' (111)`. Because of that, the new encounter controls still
+  need the live-client checklist below once MySQL/server startup is available.
+
 ## What Was Fixed
 
 - Added `@dm novice` / `@dmnovice` to `shared/dm_console.txt` — grants
@@ -26,6 +41,12 @@ updates in `npc/custom/dm_campaign/`.
   per-character `dm_inspiration` tokens, lists current party tokens, supports
   grant/spend/clear/set, and automatically consumes one token when `@dm check`
   is rolled with `adv`.
+- Added `shared/dm_combat.txt` and registered it in `npc/scripts_custom.conf`.
+  `@dm spawn` / `@dm holdspawn` now maintain a temporary DM-owned spawn-GID
+  registry; `@dm encounter` lists/clears/kills tracked handles and sets the boss
+  pointer; `@dm scale` live-scales tracked HP or attack; `@dm bloodied` arms a
+  one-shot 50% HP callout. Kill credit remains with the player who kills the
+  monster.
 - Added `@dm resetstat` / `@dmresetstat` and `@dm resetskill` / `@dmresetskill`
   to `shared/dm_console.txt` — resets stat or skill points party-wide using
   `resetstatus()` / `resetskill()` attached to each online member's RID.
@@ -115,6 +136,10 @@ updates in `npc/custom/dm_campaign/`.
   movement freezes during set-piece reveals.
 - Live-table checks now include Inspiration tokens through `@dm inspire` /
   `@dminspire`; advantaged `@dm check` rolls consume one token when available.
+- Live encounter controls are implemented in `shared/dm_combat.txt`:
+  `@dm encounter` / `@dmencounter`, `@dm scale` / `@dmscale`, and
+  `@dm bloodied` / `@dmbloodied`. Cleanup, mode-off, and reset clear the
+  DM-owned encounter registry and bloodied watcher.
 - Branch-specific boss variants are implemented in `@dmbeat`: Dark Lord,
   Randgris, Beelzebub, Thanatos, and Bijou/Maret now use explicit adds or
   non-combat completion flags instead of old judgment-only notes.
@@ -385,6 +410,18 @@ Use this checklist for the next implementation and validation passes.
   `@dm cutscene off` with 2+ online party members.
 - [ ] Test that `@dm cleanup`, `@dm mode off`, and reconnect release cutscene
   movement locks and clear portraits.
+- [ ] Live-test the spawn-GID registry and encounter controls:
+  `@dm spawn 1002 2 Test Poring`, `@dm encounter status`,
+  `@dm encounter boss last`, `@dm scale hp 150 boss`,
+  `@dm scale damage 75 all`, `@dm bloodied on boss`.
+- [ ] Confirm the bloodied watcher fires once when the tracked boss crosses 50%
+  HP, then clears itself.
+- [ ] Confirm held-spawn bookkeeping with `@dm holdspawn 1002 2 Held Poring`,
+  `@dm release last`, `@dm holdclear`, and `@dm encounter status`.
+- [ ] Confirm `@dm cleanup`, `@dm mode off`, and `@dm reset confirm` clear the
+  DM-owned encounter registry and any active bloodied watcher.
+- [ ] Confirm player kill credit remains normal for DM-spawned mobs: EXP, drops,
+  quest kill progress, and kill callbacks still belong to the killing player.
 
 ### Encounter And Branch Validation
 

@@ -18,6 +18,7 @@ without recompiling the server.
 - `dm_voice.txt` - improvised attributed dialogue and NPC puppet voice helpers.
 - `dm_checks.txt` - d20 stat checks and saving throws for live table play.
 - `dm_scene.txt` - weather/BGM/portrait scenes and cutscene movement locks.
+- `dm_combat.txt` - spawn-GID registry, live HP/damage scaling, and bloodied callouts.
 - `dm_traps.txt` - reusable hazard, puzzle reset, and encounter cleanup helpers.
 - `dm_onboarding.txt` - novice-start campaign guide NPCs that can warp new players
   from the starting boat/island/Izlude arrival path to the Prontera Session Board.
@@ -45,6 +46,15 @@ All commands require GM level 60 or higher.
 @dmstory <message>
 @dm globalstory <message>
 @dm spawn <mob_id> [count] [name]
+@dm holdspawn <mob_id> [count] [name]
+@dm release [all|last]
+@dm holdclear
+@dm encounter [status|clear|kill|boss <last|gid>]
+@dmencounter [status|clear|kill|boss <last|gid>]
+@dm scale <hp|damage> <percent> [all|boss|last|gid]
+@dmscale <hp|damage> <percent> [all|boss|last|gid]
+@dm bloodied <on|off|status> [boss|last|gid]
+@dmbloodied <on|off|status> [boss|last|gid]
 @dm hazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms]
 @dm hazard clear
 @dmhazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms]
@@ -87,7 +97,7 @@ All commands require GM level 60 or higher.
 @dmcutscene <on|off> [portrait] [seconds]
 ```
 
-## Live-table tools (dm_voice / dm_checks / dm_scene)
+## Live-table tools (dm_voice / dm_checks / dm_scene / dm_combat)
 
 The "live-table" layer supports improvised DM play alongside the scripted
 campaign. See `planning/dm-live-table.md` for the full roadmap.
@@ -109,6 +119,14 @@ campaign. See `planning/dm-live-table.md` for the full roadmap.
   shows a party-wide portrait, and auto-releases after 60 seconds by default.
   `@dm cutscene off`, `@dm cleanup`, `@dm mode off`, `@dm reset confirm`, and
   reconnect all release the movement lock and clear the cutin.
+- `@dm spawn` and `@dm holdspawn` register each spawned monster GID on the DM
+  character who issued the command. `@dm encounter status` lists live tracked
+  GIDs, HP, mob IDs, held status, and the current boss pointer.
+- `@dm scale hp 150 boss` adjusts tracked monsters' max/current HP from their
+  original spawned baseline while preserving the current HP ratio. `@dm scale
+  damage 75 all` scales `UDT_ATKMIN`/`UDT_ATKMAX` from the same baseline.
+- `@dm bloodied on boss` arms a one-shot 50% HP watcher for the boss/last/GID
+  target. It announces to the DM's current map and clears itself after firing.
 
 `@dm mode on` does two things: suppresses normal BOSS/MVP spawns server-wide, and
 stores the DM's current party ID in `$dm_active_party`. All 50 visible campaign
@@ -341,8 +359,49 @@ Use `@dm spawn` for quick live pacing near the GM's current position. More
 specific arc encounter staging should live in per-arc scripts or `@dmbeat`
 variants so branch behavior remains repeatable.
 
+Use `@dm encounter status` after `@dm spawn` / `@dm holdspawn` to see the live
+spawn-GID registry. `@dm encounter boss last` marks the latest tracked mob as the
+boss target for `@dm scale ... boss` and `@dm bloodied on boss`; a numeric GID can
+be supplied instead.
+
 Use `@dmcleanup` to remove monsters spawned with the DM console labels from the
-current map.
+current map. Cleanup, `@dm mode off`, and `@dm reset confirm` also clear the
+DM-owned encounter registry and any active bloodied watcher.
+
+### Live Encounter Test Script
+
+Run this in a real client with a DM-capable character. Use a harmless low-level
+mob first so the HP/damage changes are easy to observe.
+
+```text
+@dm spawn 1002 2 Test Poring
+@dm encounter status
+@dm encounter boss last
+@dm scale hp 150 boss
+@dm scale damage 75 all
+@dm bloodied on boss
+```
+
+Fight the marked boss until it crosses 50% HP and confirm the map receives the
+one-shot bloodied announcement. Then run:
+
+```text
+@dm bloodied status
+@dm encounter status
+@dm holdspawn 1002 2 Held Poring
+@dm encounter status
+@dm release last
+@dm encounter status
+@dm holdclear
+@dm encounter status
+@dm cleanup
+@dm encounter status
+```
+
+Expected result: normal and held spawns both show GIDs, released mobs lose their
+`held` tag, `holdclear` forgets staged mobs, and cleanup clears the registry and
+watcher. Player kill credit should remain normal because the registry is only DM
+bookkeeping.
 
 ## Trap And Hazard Helpers
 
@@ -408,6 +467,7 @@ The scripts were checked with:
 
 ```bash
 bash ./script-checker $(find npc/custom/dm_campaign -name '*.txt' | sort)
+git diff --check
 ./map-server --run-once
 ```
 
@@ -415,3 +475,8 @@ A full `map-server --run-once` startup parse should load every `dm_campaign`
 script from `npc/scripts_custom.conf` and all campaign quest IDs from
 `db/quest_db.conf`. The default `s1/p1` inter-server credential warning is
 expected in the local dev database until those credentials are changed.
+
+July 1, 2026 local validation: `script-checker` and `git diff --check` passed.
+`map-server --run-once` could not complete because local MySQL was not reachable
+at `127.0.0.1:3306`; run the Live Encounter Test Script above in a real client
+once the server stack is available.

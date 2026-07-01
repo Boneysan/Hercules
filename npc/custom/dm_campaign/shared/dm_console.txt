@@ -93,6 +93,21 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "encounter") {
+		callfunc("DM_EncounterCommand", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
+		end;
+	}
+
+	if (.@sub$ == "scale") {
+		callfunc("DM_Scale", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
+		end;
+	}
+
+	if (.@sub$ == "bloodied") {
+		callfunc("DM_Bloodied", .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+		end;
+	}
+
 	if (.@sub$ == "holdclear") {
 		callsub(S_HoldClear);
 		end;
@@ -447,6 +462,9 @@ S_Help:
 	dispbottom("[DM] @dm spawn <mob_id> [count] [name]");
 	dispbottom("[DM] @dm holdspawn <mob_id> [count] [name]  (passive staged mobs)");
 	dispbottom("[DM] @dm release [all|last] | @dm holdclear");
+	dispbottom("[DM] @dm encounter [status|clear|kill|boss <last|gid>]");
+	dispbottom("[DM] @dm scale <hp|damage> <percent> [all|boss|last|gid]");
+	dispbottom("[DM] @dm bloodied <on|off|status> [boss|last|gid]");
 	dispbottom("[DM] @dm hazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms] | clear");
 	dispbottom("[DM] Status aliases: poison, freeze, stun, sleep, curse, confusion, blind.");
 	dispbottom("[DM] @dm exp <base> [job]    (grants EXP to your whole party)");
@@ -466,7 +484,7 @@ S_Help:
 	dispbottom("[DM] @dm inspire <player> [+n|spend|clear|set n] | party");
 	dispbottom("[DM] @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]  (mood: weather+BGM+cutin)");
 	dispbottom("[DM] @dm cutscene <on|off> [portrait] [seconds]  (freeze/release party movement)");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dminspire, @dmscene, @dmcutscene");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dminspire, @dmscene, @dmcutscene, @dmencounter, @dmscale, @dmbloodied");
 	return;
 
 S_Reset:
@@ -532,6 +550,7 @@ S_Reset:
 	$@dm_exp_party = 0;
 	$@dm_exp_char = 0;
 	$@dm_exp_rate = 100;
+	callfunc("DM_EncounterReset");
 	dispbottom("[DM] Campaign reset complete for " + .@cleared + " member(s). All arcs cleared, mode off.");
 	return;
 
@@ -654,6 +673,7 @@ S_Mode:
 		$@dm_exp_party = 0;
 		$@dm_exp_char = 0;
 		$@dm_exp_rate = 100;
+		callfunc("DM_EncounterReset");
 		dispbottom("[DM] DnD mode disabled. MVP spawns will resume naturally.");
 		if (.@released > 0)
 			dispbottom("[DM] Released cutscene lock for " + .@released + " member(s).");
@@ -1266,8 +1286,21 @@ S_Spawn:
 		.@name$ = "--ja--";
 
 	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
-	areamonster(.@map$, .@x - 3, .@y - 3, .@x + 3, .@y + 3, .@name$, .@mob_id, .@count, "DM_Console::OnDMKilled");
-	dispbottom("[DM] Spawned " + .@count + " mob(s) near you on " + .@map$ + ".");
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		.@sx = .@x + rand(7) - 3;
+		.@sy = .@y + rand(7) - 3;
+		if (.@sx < 1)
+			.@sx = .@x;
+		if (.@sy < 1)
+			.@sy = .@y;
+
+		.@gid = monster(.@map$, .@sx, .@sy, .@name$, .@mob_id, 1, "DM_Console::OnDMKilled");
+		if (.@gid <= 0)
+			continue;
+		callfunc("DM_EncounterTrack", .@gid, .@name$, .@mob_id, 0);
+		++.@spawned;
+	}
+	dispbottom("[DM] Spawned " + .@spawned + " mob(s) near you on " + .@map$ + ". Use @dm encounter status for GIDs.");
 	return;
 
 S_HoldSpawn:
@@ -1303,11 +1336,13 @@ S_HoldSpawn:
 		@dm_hold_gid[@dm_hold_count] = .@gid;
 		@dm_hold_mode[@dm_hold_count] = .@mode;
 		++@dm_hold_count;
+		++.@held;
 
+		callfunc("DM_EncounterTrack", .@gid, .@name$, .@mob_id, 1);
 		setunitdata(.@gid, UDT_MODE, .@mode & ~(MD_AGGRESSIVE|MD_ANGRY|MD_CANATTACK));
 	}
 
-	dispbottom("[DM] Held " + .@count + " staged mob(s). Use @dm release when combat begins.");
+	dispbottom("[DM] Held " + .@held + " staged mob(s). Use @dm release when combat begins, or @dm encounter status for GIDs.");
 	return;
 
 S_Release:
@@ -1333,6 +1368,7 @@ S_Release:
 		if (@dm_hold_gid[.@i] <= 0)
 			continue;
 		setunitdata(@dm_hold_gid[.@i], UDT_MODE, @dm_hold_mode[.@i] | MD_AGGRESSIVE | MD_CANATTACK | MD_CANMOVE);
+		callfunc("DM_EncounterMarkHeld", @dm_hold_gid[.@i], 0);
 		++.@released;
 	}
 
@@ -1352,8 +1388,10 @@ S_HoldClear:
 		return;
 
 	for (.@i = 0; .@i < @dm_hold_count; ++.@i) {
-		if (@dm_hold_gid[.@i] > 0)
+		if (@dm_hold_gid[.@i] > 0) {
 			unitkill(@dm_hold_gid[.@i]);
+			callfunc("DM_EncounterForgetGid", @dm_hold_gid[.@i]);
+		}
 	}
 	deletearray @dm_hold_gid[0], getarraysize(@dm_hold_gid);
 	deletearray @dm_hold_mode[0], getarraysize(@dm_hold_mode);

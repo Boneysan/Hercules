@@ -39,9 +39,12 @@ namespaced `$dm_*` (global) or `dm_*` (per-character).
   `playbgmall` + party-looped `cutin` presets). ✅
 - `shared/dm_scene.txt` — `@dm cutscene` / `@dmcutscene` (party movement freeze,
   optional cutin, auto-release, cleanup/mode-off release). ✅
+- `shared/dm_combat.txt` — spawn-GID registry, `@dm encounter` /
+  `@dmencounter`, `@dm scale` / `@dmscale`, and `@dm bloodied` /
+  `@dmbloodied`. ✅
 
-Remaining (not yet built): `@dm scale` + bloodied, downed/death-saves,
-`@dm secret`, initiative/spotlight, tavern hub, recap log.
+Remaining (not yet built): downed/death-saves, `@dm secret`,
+initiative/spotlight, tavern hub, recap log.
 
 ## New files
 
@@ -50,7 +53,7 @@ Remaining (not yet built): `@dm scale` + bloodied, downed/death-saves,
 | `shared/dm_voice.txt` ✅   | `@dm say` (+ future `@dm emote`, `@dm secret`) — improv presentation |
 | `shared/dm_scene.txt` ✅   | `@dm scene`, `@dm cutscene` — ambience + cutscene director |
 | `shared/dm_checks.txt` ✅  | `@dm check`, `@dm inspire` (+ future `@dm initiative`) — tabletop mechanics |
-| `shared/dm_combat.txt`    | `@dm scale`, bloodied watcher — live difficulty dial |
+| `shared/dm_combat.txt` ✅ | spawn-GID registry, `@dm encounter`, `@dm scale`, bloodied watcher — live difficulty dial |
 | `shared/dm_downed.txt`    | downed/death-save mechanic (`OnPCDieEvent` hook) |
 | `shared/dm_session_log.txt` | `@dm log`, "Previously on…" recap |
 | `act_00/tavern_hub.txt`   | between-arc social hub map + `@dm rest` |
@@ -235,24 +238,39 @@ is ever wanted, render via `readbook`/`messagebox` with keyed lore in a
 
 ## Phase 3 — Pacing & difficulty
 
-### 9. Live difficulty dial + bloodied callout
-**File:** `dm_combat.txt` · **Effort:** M (depends on spawn GID tracking)
+### 9. Live difficulty dial + bloodied callout ✅
+**File:** `dm_combat.txt` · **Effort:** shipped
 
 ```
-@dm scale <hp%|dmg%> [target]     // adjust the active/last-spawned encounter live
-@dm scale boss <hp%>              // just the tracked boss
+@dm encounter [status|clear|kill|boss <last|gid>]
+@dm scale <hp|damage> <percent> [all|boss|last|gid]
+@dm bloodied <on|off|status> [boss|last|gid]
+@dmencounter ...
+@dmscale ...
+@dmbloodied ...
 ```
 
-- Requires a **spawned-mob GID table**. Verify whether `@dm spawn`/`holdspawn`
-  already records GIDs; if not, add a `$dm_spawn_gid[]` array on spawn. This table
-  is shared infrastructure that also powers `@dm say @unit` (Phase 1.1).
-- Adjust via `setunitdata(<gid>, UDT_MAXHP, …)` / `UDT_HP` / `UDT_ATKMIN/ATKMAX`.
-- **Bloodied watcher:** a timer polling `getunitdata(<gid>, UDT_HP)` against max;
-  on crossing 50% fire a one-shot `npctalk`/`specialeffect` for drama. Auto-stops
-  when the GID dies (`OnNPCKillEvent`) or on `@dm cleanup`.
+- `@dm spawn` now loops through `monster(..., 1, ...)` instead of using
+  `areamonster`, so every normal spawn returns a GID. `@dm holdspawn` registers
+  held staged mobs the same way.
+- The registry is temporary and DM-owned (`@dm_enc_*` character vars). Kill credit
+  remains normal: the player who kills the monster still owns EXP, drops, quest
+  kill tracking, and the kill callback RID.
+- `@dm encounter status` prunes stale/dead handles and lists GID, mob ID, HP,
+  held state, and boss pointer. `clear` forgets handles; `kill` kills tracked
+  mobs and clears the registry; `boss <last|gid>` sets the boss target.
+- HP scaling uses `setunitdata(<gid>, UDT_MAXHP, ...)` and `UDT_HP`, preserving
+  the current HP ratio against the original spawned HP baseline. Damage scaling
+  uses `UDT_ATKMIN`/`UDT_ATKMAX` from the original spawned attack baseline.
+- The bloodied watcher polls the selected GID every two seconds and fires a
+  one-shot map announcement when current HP crosses 50%. It clears on firing,
+  target death/stale GID, `@dm cleanup`, `@dm mode off`, `@dm reset confirm`, or
+  `@dm encounter clear`.
 
-**Edge cases:** GID reuse after death; MVP summon-adds; cap scaling to avoid
-one-shots.
+**Remaining edge cases:** MVP summon-adds are not automatically registered unless
+they are spawned through the DM console; stale dead GIDs are pruned by DM status
+or scale commands because Hercules kill labels expose the monster class as
+`killedrid`, not the exact slain GID.
 
 ### 10. Spotlight / initiative
 **File:** `dm_checks.txt` · **Effort:** M
@@ -298,8 +316,9 @@ Matches the stated vision (tavern → dungeon → live GM). A between-arc social
 
 ## Shared infrastructure (do first, unblocks the rest)
 
-1. **Spawned-mob GID registry** — needed by `@dm scale`, the bloodied watcher, and
-   `@dm say @unit`. Audit `S_Spawn`/`S_HoldSpawn`; add `$dm_spawn_gid[]` if absent.
+1. **Spawned-mob GID registry** ✅ — `@dm spawn` / `@dm holdspawn` now store
+   temporary DM-owned GID handles used by `@dm encounter`, `@dm scale`, and
+   `@dm bloodied`. This can also back a future `@dm say @unit` target resolver.
 2. **Party-loop helper for presentation** — a `DM_PartyForEach`-style wrapper (the
    attach-RID loop already exists for quests/flags) generalized so voice/scene/
    check/downed all share one iterator.
@@ -311,10 +330,9 @@ Matches the stated vision (tavern → dungeon → live GM). A between-arc social
 
 ## Suggested sequencing
 
-1. Spawn-GID registry → `@dm scale` + bloodied (#9) — the biggest infra item.
-2. Downed/death saves (#6) — most complex; opt-in per fight.
-3. Handouts/secret (#7,#8), initiative/spotlight (#10) — quick wins.
-4. Tavern hub (#11) + recap log (#12) — session-flow polish.
+1. Downed/death saves (#6) — most complex; opt-in per fight.
+2. Handouts/secret (#7,#8), initiative/spotlight (#10) — quick wins.
+3. Tavern hub (#11) + recap log (#12) — session-flow polish.
 
 ## Decisions
 
