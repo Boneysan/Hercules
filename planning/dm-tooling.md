@@ -77,6 +77,9 @@ All commands require GM level 60 or higher.
 @dmsay <speaker> | <text>
 @dm check <player|party> <str|agi|vit|int|dex|luk> <DC> [adv|dis]
 @dmcheck <player|party> <stat> <DC> [adv|dis]
+@dm inspire <player> [+n|spend|clear|set n]
+@dm inspire party
+@dminspire <player> [+n|spend|clear|set n]
 @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]
 @dm scene weather <fog|snow|sakura|leaves|clouds|clouds2|fireworks|none> [portrait]
 @dmscene <preset|weather ...> [portrait]
@@ -93,7 +96,10 @@ campaign. See `planning/dm-live-table.md` for the full roadmap.
   on-map NPC (`npctalk`), so lines can be improvised instead of pre-scripted.
 - `@dm check` rolls a d20 plus an RO-native `stat/10` modifier against a DC for one
   player or the whole party, announcing pass/fail to the map. Nat-20 always
-  succeeds, nat-1 always fails; `adv`/`dis` roll twice.
+  succeeds, nat-1 always fails; `adv`/`dis` roll twice. If the target has
+  `dm_inspiration`, rolling with `adv` consumes one token automatically.
+- `@dm inspire` grants, spends, clears, sets, or lists per-character Inspiration
+  tokens. `@dm inspire party` lists current tokens for online party members.
 - `@dm scene` sets mood on the DM's map: weather (map-wide mapflags), a custom BGM
   track (`playbgmall`), and an optional party-wide illustration (`cutin`). Preset
   BGM/illustration files are custom client assets — see the asset manifest in

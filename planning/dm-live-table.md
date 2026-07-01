@@ -33,13 +33,15 @@ namespaced `$dm_*` (global) or `dm_*` (per-character).
   `@<npc>` puppet form via `npctalk`). ✅
 - `shared/dm_checks.txt` — `@dm check` / `@dmcheck` (RO-native d20 + stat/10 vs
   DC, party/single, adv/dis, party-facing `mapannounce`). ✅
+- `shared/dm_checks.txt` — `@dm inspire` / `@dminspire` (per-character
+  Inspiration tokens consumed by advantaged checks). ✅
 - `shared/dm_scene.txt` — `@dm scene` / `@dmscene` (weather mapflags +
   `playbgmall` + party-looped `cutin` presets). ✅
 - `shared/dm_scene.txt` — `@dm cutscene` / `@dmcutscene` (party movement freeze,
   optional cutin, auto-release, cleanup/mode-off release). ✅
 
-Remaining (not yet built): inspiration tokens, `@dm scale` + bloodied,
-downed/death-saves, `@dm secret`, initiative/spotlight, tavern hub, recap log.
+Remaining (not yet built): `@dm scale` + bloodied, downed/death-saves,
+`@dm secret`, initiative/spotlight, tavern hub, recap log.
 
 ## New files
 
@@ -47,7 +49,7 @@ downed/death-saves, `@dm secret`, initiative/spotlight, tavern hub, recap log.
 |------|---------|
 | `shared/dm_voice.txt` ✅   | `@dm say` (+ future `@dm emote`, `@dm secret`) — improv presentation |
 | `shared/dm_scene.txt` ✅   | `@dm scene`, `@dm cutscene` — ambience + cutscene director |
-| `shared/dm_checks.txt` ✅  | `@dm check` (+ future inspiration tokens, `@dm initiative`) — tabletop mechanics |
+| `shared/dm_checks.txt` ✅  | `@dm check`, `@dm inspire` (+ future `@dm initiative`) — tabletop mechanics |
 | `shared/dm_combat.txt`    | `@dm scale`, bloodied watcher — live difficulty dial |
 | `shared/dm_downed.txt`    | downed/death-save mechanic (`OnPCDieEvent` hook) |
 | `shared/dm_session_log.txt` | `@dm log`, "Previously on…" recap |
@@ -179,19 +181,23 @@ Bundle weather + BGM + effect + portrait into named presets, one command.
 ## Phase 2 — Table-feel mechanics
 
 ### 5. Inspiration / fate tokens
-**File:** `dm_checks.txt` · **Effort:** S
+**File:** `dm_checks.txt` · **Effort:** S · **Status:** shipped ✅
 
 Reward roleplay with a spendable token that grants advantage or a reroll.
 
 ```
-@dm inspire <player> [+n]      // grant
+@dm inspire <player> [+n]      // grant; default is +1
 @dm inspire <player> spend     // manual burn (or auto via `@dm check … adv`)
+@dm inspire <player> clear
+@dm inspire <player> set <n>
 @dm inspire party              // list current tokens
+@dminspire ...
 ```
 
 - Store on a per-character var `dm_inspiration` (party-safe via attach-RID).
-- `@dm check` consumes one for `adv` automatically when available; a floating
-  "Inspiration!" `npctalk` sells it to the table.
+- `@dm check` consumes one for `adv` automatically when available and marks the
+  public check line with `Inspiration`.
+- Token counts are clamped to 0-9 to keep the mechanic bounded.
 
 ### 6. Downed & death saves
 **File:** `dm_downed.txt` · **Effort:** M–L
@@ -305,11 +311,10 @@ Matches the stated vision (tavern → dungeon → live GM). A between-arc social
 
 ## Suggested sequencing
 
-1. Inspiration (#5) — small, high-flavor, reuses the `@dm check` surface.
-2. Spawn-GID registry → `@dm scale` + bloodied (#9) — the biggest infra item.
-3. Downed/death saves (#6) — most complex; opt-in per fight.
-4. Handouts/secret (#7,#8), initiative/spotlight (#10) — quick wins.
-5. Tavern hub (#11) + recap log (#12) — session-flow polish.
+1. Spawn-GID registry → `@dm scale` + bloodied (#9) — the biggest infra item.
+2. Downed/death saves (#6) — most complex; opt-in per fight.
+3. Handouts/secret (#7,#8), initiative/spotlight (#10) — quick wins.
+4. Tavern hub (#11) + recap log (#12) — session-flow polish.
 
 ## Decisions
 

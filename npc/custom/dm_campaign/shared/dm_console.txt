@@ -187,6 +187,11 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "inspire") {
+		callfunc("DM_Inspire", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
+		end;
+	}
+
 	if (.@sub$ == "scene") {
 		callfunc("DM_Scene", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
 		end;
@@ -458,9 +463,10 @@ S_Help:
 	dispbottom("[DM] @dm reset confirm       (wipe all campaign flags for a fresh run)");
 	dispbottom("[DM] @dm say <speaker> | <text>   (voice a line; @<npc> <text> puppets an NPC)");
 	dispbottom("[DM] @dm check <player|party> <str|agi|vit|int|dex|luk> <DC> [adv|dis]");
+	dispbottom("[DM] @dm inspire <player> [+n|spend|clear|set n] | party");
 	dispbottom("[DM] @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]  (mood: weather+BGM+cutin)");
 	dispbottom("[DM] @dm cutscene <on|off> [portrait] [seconds]  (freeze/release party movement)");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dmscene, @dmcutscene");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dminspire, @dmscene, @dmcutscene");
 	return;
 
 S_Reset:
