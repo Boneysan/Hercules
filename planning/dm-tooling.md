@@ -7,7 +7,7 @@ without recompiling the server.
 
 ## Loaded Scripts
 
-- `dm_common.txt` - shared permission, party, map, reward-tier, and party-warp helpers.
+- `dm_common.txt` - shared permission, party, map, reward-tier, party-warp helpers, and `DM_PartyActive()` gate (single source of truth for session visibility).
 - `dm_flags.txt` - persistent campaign flag helpers and Arc 1-19 flag shortcuts.
 - `dm_rewards.txt` - curated arc/level/tier reward generator and party delivery.
 - `dm_storyteller.txt` - map and global narration helpers.
@@ -20,6 +20,8 @@ without recompiling the server.
 - `dm_scene.txt` - weather/BGM/portrait scenes and cutscene movement locks.
 - `dm_combat.txt` - spawn-GID registry, live HP/damage scaling, and bloodied callouts.
 - `dm_traps.txt` - reusable hazard, puzzle reset, and encounter cleanup helpers.
+- `dm_symptoms.txt` - Obsidian-sourced per-arc symptom pulses and boss
+  read-aloud helpers.
 - `dm_onboarding.txt` - novice-start campaign guide NPCs that can warp new players
   from the starting boat/island/Izlude arrival path to the Prontera Session Board.
 - `dm_hunt_markers.txt` - 45 invisible marker NPCs placed at monster spawn zones
@@ -59,6 +61,8 @@ All commands require GM level 60 or higher.
 @dm hazard clear
 @dmhazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms]
 @dmhazard clear
+@dm symptom <arc> [pulse|setup|read|clear]
+@dmsymptom <arc> [pulse|setup|read|clear]
 @dm exprate <percent|off|status>
 @dmexprate <percent|off|status>
 @dm levels
@@ -127,6 +131,11 @@ campaign. See `planning/dm-live-table.md` for the full roadmap.
   damage 75 all` scales `UDT_ATKMIN`/`UDT_ATKMAX` from the same baseline.
 - `@dm bloodied on boss` arms a one-shot 50% HP watcher for the boss/last/GID
   target. It announces to the DM's current map and clears itself after firing.
+- `@dm symptom <arc> pulse` converts the updated Obsidian "MVP Encounter &
+  Symptom Mechanics" notes into an RO-native live effect near the DM: checks,
+  hazard/status pulses, fog/ash weather, or patrol/spirit spawns depending on
+  the arc. `setup` announces the tabletop rule without applying effects, `read`
+  prints concise boss read-aloud lines, and `clear` removes symptom weather.
 
 `@dm mode on` does two things: suppresses normal BOSS/MVP spawns server-wide, and
 stores the DM's current party ID in `$dm_active_party`. All 50 visible campaign
@@ -185,8 +194,13 @@ inside.
 
 ## Quest Journal Descriptions
 
-All 87 campaign quest entries (IDs 20000–20233) have descriptions in
-`/client/System/OngoingQuestInfoList_True_EN.lub`. Each entry includes:
+All 89 campaign quest entries (IDs 20000–20234) are maintained in source form:
+
+- `planning/campaign_quest_journal_entries.lua`
+- Ready-to-merge `planning/SealCascade_QuestList_addon.lua`
+- Merge helper: `python3 tools/campaign_quest_merge.py --patch ...`
+
+Copy the QuestList blocks into your decompiled `/client/System/OngoingQuestInfoList_True_EN.lub` (or equivalent). Each entry includes:
 
 - 2–3 lines of flavor text.
 - `Location: <Map Name> (<map_id>)` — the primary hunt or scene map.

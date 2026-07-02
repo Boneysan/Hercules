@@ -7,27 +7,32 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 
 ## Quick Reference
 
-| Arc | Title | Hub NPC / Map | Boss | Quest IDs |
-|-----|-------|---------------|------|-----------|
-| 01 | The Broken Gate | Prontera | — | 20001–20004 |
-| 02 | River of Ash | Payon | — | 20007–20012 |
-| 03 | The Scar | Morroc | — | 20013–20018 |
-| 04 | The Warden's Brand | Geffen | — | 20019–20024 |
-| 05 | The Leviathan Compact | Alberta / Izlude | — | 20025–20030 |
-| 06 | The Council's Edge | Yuno | Mistress (1059) | 20101–20104 |
-| 07 | Iron Congregation | Einbroch | RSX-0806 (1623) | 20111–20115 |
-| 08 | Cathedral of Chains | Glast Heim | Dark Lord (1272) | 20121–20124 |
-| 09 | The Sealed Oracle | Rachel | Gloom Under Night (1768) | 20131–20134 |
-| 10 | The Living Key | Lighthalzen | Kiel D-01 (1734) | 20141–20144 |
-| 11 | Veil of the Valkyrie | Hugel | Randgris (1751) | 20151–20155 |
-| 12 | The New World Rift | New World | Naght Sieger (1956) | 20161–20165 |
-| 13 | The Nameless Pact | Nameless Island | Beelzebub (1874) | 20171–20175 |
-| 14 | The Magma Seal | Veins | Ifrit (1832) | 20181–20185 |
-| 15 | The Method's Price | Aldebaran | Thanatos (1708) | 20191–20194 |
-| 16 | The Prontera Banquet | Prontera | Doppelganger/Bijou (1046) | 20201–20204 |
-| 17 | The Sage's Legacy | Biolabs | Amdarais (2476) | 20211–20214 |
-| 18 | The Witch of Death | Niflheim | — (Himmelmez dialogue) | 20221–20223 |
-| 19 | Nightmare of Midgard | Morroc Ruins | Garm/Surt (1252) | 20231–20233 |
+| Arc | Title (vault) | Hub / Map | Boss | Quest IDs |
+|-----|---------------|-----------|------|-----------|
+| 01 | Omens at the Fountain | Prontera (Wynne / Frightened Mother / Tibbets / Culvert) | Deviruchi (1109) | 20001–20006 (+ session 20000) |
+| 02 | The Sleeping Forest | Payon (Sun-Hwa / Voss) | Moonlight Flower (1150) | 20007–20012 |
+| 03 | Sand and Whispers | Morroc (Rashid / Mother Sabra) | Amon Ra / Osiris | 20013–20018 |
+| 04 | City Above the Beast | Geffen (Elsbeth / Doran) | Baphomet | 20019–20024 |
+| 05 | Tides and Trade | Alberta / Izlude (Mara / Brode) | Tao Gunka | 20025–20030 |
+| 06 | The Floating Republic | Yuno | Mistress (1059) | 20101–20105 |
+| 07 | Iron and Ash | Einbroch | RSX-0806 (1623) | 20111–20115 |
+| 08 | The Cursed Kingdom | Glast Heim | Dark Lord (1272) | 20121–20124 |
+| 09 | Frozen Faith | Rachel | Gloom Under Night (1768) | 20131–20134 |
+| 10 | The Lab Beneath | Lighthalzen | Kiel D-01 (1734) | 20141–20144 |
+| 11 | Wrath of Heaven | Hugel | Valkyrie Randgris (1751) | 20151–20155 |
+| 12 | Beyond the Horizon | New World | Naght Sieger (1956) | 20161–20165 |
+| 13 | Island of the Damned | Nameless Island | Beelzebub (1874) | 20171–20175 |
+| 14 | The Fire That Ends the World | Veins | Ifrit (1832) | 20181–20185 |
+| 15 | The Hero's Tomb | Aldebaran / Thanatos | Memory of Thanatos (1708) | 20191–20194 |
+| 16 | The Royal Banquet | Prontera | Bijou / Doppel (1046) | 20201–20204 |
+| 17 | The Sage's Legacy | Biolabs (Varmundt) | Amdarais (2476) | 20211–20214 |
+| 18 | The Witch of Death | Niflheim | Himmelmez | 20221–20223 |
+| 19 | Nightmare of Midgard (Finale) | Morroc Ruins / Ash Vacuum | Surt (via Garm 1252) | 20230–20234 (incl. support + 20231–20233 core) |
+
+**Source of truth for all titles, beats, choices, flags, and quest prose:**  
+H:\Docs\Obsidian Notes\Game Design\Ragnarok_Online\Campaign\ (synced portions in planning/obsidian-campaign/ and this header).
+
+See Choice_Tracker.md for finale gates (Mira Lives, Echo Trusts, etc.) and the 6 possible Arc 19 endings (including Refusal).
 
 ---
 

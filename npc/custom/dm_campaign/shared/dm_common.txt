@@ -130,3 +130,16 @@ function	script	DM_TriggerEvent	{
 	donpcevent(.@npc$ + "::" + .@label$);
 	return;
 }
+
+// Returns true if the caller is in the active DM session party while $dm_mode is on.
+// All campaign NPCs should gate on this (silent close for outsiders).
+// This centralizes the gate so we can evolve the storage later (e.g. to $dm_session_<pid>)
+// without touching 50 call sites.
+function	script	DM_PartyActive	{
+	if ($dm_mode == 0)
+		return 0;
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	if (.@party_id <= 0)
+		return 0;
+	return (.@party_id == $dm_active_party);
+}

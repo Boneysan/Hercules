@@ -528,6 +528,7 @@ function	script	DM_BeatArc06	{
 		callfunc("DM_InstanceQuestStart", 20101);
 		callfunc("DM_InstanceQuestStart", 20103);
 		callfunc("DM_InstanceQuestStart", 20104);
+		callfunc("DM_InstanceQuestStart", 20105);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 601);
 		callfunc("DM_MapStory", "Doctor Vahl presents the impossible readings. The cascade has a number.");
 		mes("Arc 6 started for the current party.");
@@ -1500,11 +1501,13 @@ function	script	DM_BeatArc19	{
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc19_started", 1);
+		callfunc("DM_InstanceQuestStart", 20230);
 		callfunc("DM_InstanceQuestStart", 20231);
 		callfunc("DM_InstanceQuestStart", 20232);
+		callfunc("DM_InstanceQuestStart", 20234);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1901);
 		callfunc("DM_MapStory", "The cascade is the seal. Three centuries of harmonic decay. Loki's voice fills the ruins of Morroc.");
-		mes("Arc 19 started for the current party.");
+		mes("Arc 19 started (with support quests) for the current party.");
 		break;
 	case 3:
 		callfunc("DM_InstanceQuestComplete", 20232);
@@ -1515,8 +1518,8 @@ function	script	DM_BeatArc19	{
 	case 4:
 		callfunc("DM_InstanceQuestStart", 20233);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1901);
-		callfunc("DM_MapStory", "Loki reveals the full picture. Five ways to close the cascade. The choice is available after Surt.");
-		mes("Loki final audience triggered. 20233 started.");
+		callfunc("DM_MapStory", "Loki reveals the full picture. The Central Choice (six endings including Refusal) is available after Surt.");
+		mes("Loki final audience triggered. 20233 started. Refusal path available if Echo or Pratt evidence exists.");
 		break;
 	case 5:
 		callfunc("DM_WarpParty", "moc_fild22", 150, 150);

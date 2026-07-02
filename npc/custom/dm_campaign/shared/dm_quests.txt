@@ -139,3 +139,54 @@ function	script	DM_InstanceSetFlag	{
 function	script	DM_InstanceClearFlag	{
 	return callfunc("DM_PartyClearFlag", getarg(0), getarg(1, getcharid(CHAR_ID_PARTY)));
 }
+
+// Erases every campaign quest (20000-20233 range blocks) for the caller's party.
+// Used by @dm reset so the list of IDs lives in one place.
+function	script	DM_EraseAllCampaignQuests	{
+	// Session marker + Arc 1
+	for (.@q = 20000; .@q <= 20030; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 6
+	for (.@q = 20101; .@q <= 20105; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 7
+	for (.@q = 20111; .@q <= 20115; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 8
+	for (.@q = 20121; .@q <= 20124; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 9
+	for (.@q = 20131; .@q <= 20134; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 10
+	for (.@q = 20141; .@q <= 20144; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 11
+	for (.@q = 20151; .@q <= 20155; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 12
+	for (.@q = 20161; .@q <= 20165; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 13
+	for (.@q = 20171; .@q <= 20175; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 14
+	for (.@q = 20181; .@q <= 20185; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 15
+	for (.@q = 20191; .@q <= 20194; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 16
+	for (.@q = 20201; .@q <= 20204; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 17
+	for (.@q = 20211; .@q <= 20214; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 18
+	for (.@q = 20221; .@q <= 20223; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	// Arc 19
+	for (.@q = 20231; .@q <= 20233; ++.@q)
+		callfunc("DM_InstanceQuestErase", .@q);
+	return 1;
+}

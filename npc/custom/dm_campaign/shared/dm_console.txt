@@ -144,6 +144,11 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "symptom") {
+		callfunc("DM_Symptom", .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+		end;
+	}
+
 	if (.@sub$ == "exp") {
 		callsub(S_Exp, 1);
 		end;
@@ -467,6 +472,7 @@ S_Help:
 	dispbottom("[DM] @dm bloodied <on|off|status> [boss|last|gid]");
 	dispbottom("[DM] @dm hazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms] | clear");
 	dispbottom("[DM] Status aliases: poison, freeze, stun, sleep, curse, confusion, blind.");
+	dispbottom("[DM] @dm symptom <arc> [pulse|setup|read|clear]  (updated arc symptom mechanics)");
 	dispbottom("[DM] @dm exp <base> [job]    (grants EXP to your whole party)");
 	dispbottom("[DM] @dm exprate <percent|off|status>  (monster EXP for your party)");
 	dispbottom("[DM] @dm levels              (target finish/reward level by arc)");
@@ -484,7 +490,7 @@ S_Help:
 	dispbottom("[DM] @dm inspire <player> [+n|spend|clear|set n] | party");
 	dispbottom("[DM] @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]  (mood: weather+BGM+cutin)");
 	dispbottom("[DM] @dm cutscene <on|off> [portrait] [seconds]  (freeze/release party movement)");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dminspire, @dmscene, @dmcutscene, @dmencounter, @dmscale, @dmbloodied");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dminspire, @dmscene, @dmcutscene, @dmencounter, @dmscale, @dmbloodied");
 	return;
 
 S_Reset:
@@ -505,46 +511,20 @@ S_Reset:
 				continue;
 			if (!attachrid(.@accid[.@i]))
 				continue;
-			callfunc("DM_ClearArc01Flags"); callfunc("DM_ClearArc02Flags"); callfunc("DM_ClearArc03Flags");
-			callfunc("DM_ClearArc04Flags"); callfunc("DM_ClearArc05Flags"); callfunc("DM_ClearArc06Flags");
-			callfunc("DM_ClearArc07Flags"); callfunc("DM_ClearArc08Flags"); callfunc("DM_ClearArc09Flags");
-			callfunc("DM_ClearArc10Flags"); callfunc("DM_ClearArc11Flags"); callfunc("DM_ClearArc12Flags");
-			callfunc("DM_ClearArc13Flags"); callfunc("DM_ClearArc14Flags"); callfunc("DM_ClearArc15Flags");
-			callfunc("DM_ClearArc16Flags"); callfunc("DM_ClearArc17Flags"); callfunc("DM_ClearArc18Flags");
-			callfunc("DM_ClearArc19Flags");
+			callfunc("DM_ClearAllArcFlags");
 			detachrid();
 			++.@cleared;
 		}
 		if (.@origin_aid)
 			attachrid(.@origin_aid);
 	} else {
-		callfunc("DM_ClearArc01Flags"); callfunc("DM_ClearArc02Flags"); callfunc("DM_ClearArc03Flags");
-		callfunc("DM_ClearArc04Flags"); callfunc("DM_ClearArc05Flags"); callfunc("DM_ClearArc06Flags");
-		callfunc("DM_ClearArc07Flags"); callfunc("DM_ClearArc08Flags"); callfunc("DM_ClearArc09Flags");
-		callfunc("DM_ClearArc10Flags"); callfunc("DM_ClearArc11Flags"); callfunc("DM_ClearArc12Flags");
-		callfunc("DM_ClearArc13Flags"); callfunc("DM_ClearArc14Flags"); callfunc("DM_ClearArc15Flags");
-		callfunc("DM_ClearArc16Flags"); callfunc("DM_ClearArc17Flags"); callfunc("DM_ClearArc18Flags");
-		callfunc("DM_ClearArc19Flags");
+		callfunc("DM_ClearAllArcFlags");
 		.@cleared = 1;
 	}
-	for (.@q = 20000; .@q <= 20030; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20101; .@q <= 20105; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20111; .@q <= 20115; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20121; .@q <= 20124; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20131; .@q <= 20134; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20141; .@q <= 20144; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20151; .@q <= 20155; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20161; .@q <= 20165; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20171; .@q <= 20175; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20181; .@q <= 20185; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20191; .@q <= 20194; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20201; .@q <= 20204; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20211; .@q <= 20214; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20221; .@q <= 20223; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20231; .@q <= 20233; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
 	if (.@party_id > 0)
 		setd("$dm_inst_" + .@party_id, 0);
 	callfunc("DM_CutsceneParty", 0, "", 0, .@party_id);
+	callfunc("DM_EraseAllCampaignQuests");
 	$dm_mode = 0;
 	$dm_active_party = 0;
 	$@dm_exp_party = 0;
@@ -584,7 +564,10 @@ S_Status:
 	dispbottom(.@line$);
 	dispbottom("[DM] (quest: 0=not started  1=in progress  2=complete)");
 	dispbottom("[Flags] cassell=" + dm_arc04_cassell_unmasked + " bjorn_joined=" + dm_arc11_bjorn_joined + " carrion_bribed=" + dm_arc13_carrion_bribed);
+	dispbottom("[Gates] mira=" + dm_mira_lives + " echo=" + dm_echo_trusts_party + " prontera=" + dm_prontera_united + " varmundt=" + dm_varmundt_tools_stabilized + " himmelmez=" + dm_himmelmez_bargain);
+	dispbottom("[Finale] refusal_proof=" + (dm_arc10_echo_freed || dm_arc15_pratt_challenged) + " (echo or pratt for Refusal path)");
 	dispbottom("[Flags] himmelmez_bargained=" + dm_arc18_himmelmez_bargained + " campaign_complete=" + dm_campaign_complete);
+	dispbottom("[DM] Reminder: Ensure players have the merged client journal (89 campaign quests) for @dm warp lines and flavor.");
 	return;
 
 S_Exp:

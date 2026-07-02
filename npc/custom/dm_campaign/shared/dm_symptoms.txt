@@ -1,0 +1,338 @@
+// Seal Cascade arc symptom director.
+//
+// Converts the updated Obsidian per-arc "MVP Encounter & Symptom Mechanics"
+// notes into live DM tools:
+//
+//   @dm symptom <arc> [pulse|setup|read|clear]
+//   @dmsymptom <arc> [pulse|setup|read|clear]
+//
+// `pulse` announces the arc symptom and applies an RO-native proxy near the DM.
+// `setup` only announces the table rule/concept.
+// `read` prints concise boss read-aloud lines for the updated arc climax.
+// `clear` clears map weather created by symptoms such as fog/ash.
+
+function	script	DM_SymptomTitle	{
+	switch (getarg(0, 0)) {
+		case 1: return "The Tremors";
+		case 2: return "Restless Spirits";
+		case 3: return "Unnatural Heat";
+		case 4: return "Wild Magic Surges";
+		case 5: return "The Churning Tides";
+		case 6: return "Failing Gravity";
+		case 7: return "Toxic Smog";
+		case 8: return "Aura of Decay";
+		case 9: return "Oppressive Holiness";
+		case 10: return "Chemical Paranoia";
+		case 11: return "Dragon's Wrath";
+		case 12: return "Dimensional Sickness";
+		case 13: return "The Stifling Fog";
+		case 14: return "Volcanic Ash";
+		case 15: return "Time Anomalies";
+		case 16: return "Martial Law";
+		case 17: return "Rogue Leylines";
+		case 18: return "The Grasp of the Dead";
+		case 19: return "The Apocalypse";
+	}
+	return "";
+}
+
+function	script	DM_SymptomDescribe	{
+	.@arc = getarg(0, 0);
+	.@map$ = getarg(1, "");
+	.@title$ = callfunc("DM_SymptomTitle", .@arc);
+
+	if (.@title$ == "")
+		return 0;
+	if (.@map$ == "")
+		.@map$ = callfunc("DM_CurrentMap");
+
+	mapannounce .@map$, "[Symptom] Arc " + .@arc + " - " + .@title$, bc_map, 0xFFAA33;
+
+	switch (.@arc) {
+		case 1:
+			mapannounce .@map$, "[Symptom] Tremors shake Prontera and the Culverts. RO proxy: party DEX check, light damage, brief stun near the DM.", bc_map, 0xFFAA33;
+			break;
+		case 2:
+			mapannounce .@map$, "[Symptom] Long rests in Payon woods or caves risk spirit interruption. RO proxy: party LUK check and restless undead near the DM.", bc_map, 0xFFAA33;
+			break;
+		case 3:
+			mapannounce .@map$, "[Symptom] Desert and pyramid heat dehydrates the party. RO proxy: party VIT check, light damage, burning pressure.", bc_map, 0xFFAA33;
+			break;
+		case 4:
+			mapannounce .@map$, "[Symptom] Geffen's failing seal disrupts magic. RO proxy: party INT check and a random surge condition near the DM.", bc_map, 0xFFAA33;
+			break;
+		case 5:
+			mapannounce .@map$, "[Symptom] Black rogue tides batter the battlefield. RO proxy: party STR check, light damage, brief stun.", bc_map, 0xFFAA33;
+			break;
+		case 6:
+			mapannounce .@map$, "[Symptom] Yuno's gravity flickers. RO proxy: party DEX check and disorienting slowdown around the DM.", bc_map, 0xFFAA33;
+			break;
+		case 7:
+			mapannounce .@map$, "[Symptom] Einbroch smog poisons exposed lungs. RO proxy: party VIT check and poison cloud.", bc_map, 0xFFAA33;
+			break;
+		case 8:
+			mapannounce .@map$, "[Symptom] Glast Heim's decay saps vitality. RO proxy: curse and light drain near the DM.", bc_map, 0xFFAA33;
+			break;
+		case 9:
+			mapannounce .@map$, "[Symptom] Rachel's hostile holiness crushes dissent. RO proxy: party INT check and fear pressure.", bc_map, 0xFFAA33;
+			break;
+		case 10:
+			mapannounce .@map$, "[Symptom] Bio Lab chemical runoff causes paranoia. RO proxy: party INT check and confusion pressure.", bc_map, 0xFFAA33;
+			break;
+		case 11:
+			mapannounce .@map$, "[Symptom] Abyss Lake erupts with elemental geysers. RO proxy: party DEX check, fire damage, burning pressure.", bc_map, 0xFFAA33;
+			break;
+		case 12:
+			mapannounce .@map$, "[Symptom] New World dimensional sickness causes vertigo. RO proxy: party LUK check and confusion pulse.", bc_map, 0xFFAA33;
+			break;
+		case 13:
+			mapannounce .@map$, "[Symptom] Nameless Island fog crushes visibility. RO proxy: map fog plus blind pressure near the DM.", bc_map, 0xFFAA33;
+			break;
+		case 14:
+			mapannounce .@map$, "[Symptom] Volcanic ash halves reliable range. RO proxy: cloudy ash weather plus blind pressure.", bc_map, 0xFFAA33;
+			break;
+		case 15:
+			mapannounce .@map$, "[Symptom] Thanatos Tower time anomalies punish extremes. RO proxy: party LUK check and temporal slowdown.", bc_map, 0xFFAA33;
+			break;
+		case 16:
+			mapannounce .@map$, "[Symptom] Prontera martial law answers noise with patrols. RO proxy: summons a hostile patrol near the DM.", bc_map, 0xFFAA33;
+			break;
+		case 17:
+			mapannounce .@map$, "[Symptom] Varmundt leylines snare reckless movement. RO proxy: party DEX check and ankle-snare pressure.", bc_map, 0xFFAA33;
+			break;
+		case 18:
+			mapannounce .@map$, "[Symptom] Niflheim's dead grasp at the living. RO proxy: curse plus movement pressure near the DM.", bc_map, 0xFFAA33;
+			break;
+		case 19:
+			mapannounce .@map$, "[Symptom] Reality unravels at the end of each round. RO proxy: unavoidable force-pressure damage near the DM.", bc_map, 0xFFAA33;
+			break;
+	}
+
+	return 1;
+}
+
+function	script	DM_SymptomBossRead	{
+	.@arc = getarg(0, 0);
+
+	switch (.@arc) {
+		case 1:
+			callfunc("DM_MapStory", "The cultists chant until the shadows tear. The chained Deviruchi stands, small and almost comic, until its eyes open like pits of burning malice.");
+			callfunc("DM_MapStory", "Its laugh grinds like stone. The chains snap taut, then shatter, and every shadow in the chamber leaps to serve it.");
+			return 1;
+		case 2:
+			callfunc("DM_MapStory", "The deepest cave blooms with unnatural light. Moonlight Flower turns with sorrow and rage in her fox-spirit eyes.");
+			callfunc("DM_MapStory", "She whispers, 'Why do you disturb the sleeping earth?' The vines answer before you do.");
+			return 1;
+		case 3:
+			callfunc("DM_MapStory", "Beyond the fallen court, Amon Ra's chamber opens like a held breath. Behind his throne, a rough shaft exhales cold air from far below.");
+			callfunc("DM_MapStory", "Amon Ra rises. 'You stand upon the lid of the world,' he says. 'I was set here to keep it closed. So were you all.'");
+			return 1;
+		case 4:
+			callfunc("DM_MapStory", "The cracked seal flares and dims. Through its widest fissure, Baphomet hauls himself upward, goat-headed and crowned in horns.");
+			callfunc("DM_MapStory", "He exhales black ash, braces against the prison-light that still holds him, and points the scythe directly at you.");
+			return 1;
+		case 5:
+			callfunc("DM_MapStory", "The cavern shakes as Tao Gunka uncoils like a living boulder, its rocky hide etched with glowing runes.");
+			callfunc("DM_MapStory", "Its roar rolls through the stone, and the ground beneath your feet shifts as the golem charges.");
+			return 1;
+		case 6:
+			callfunc("DM_MapStory", "The buzzing grows into a roar. Swarms part around Mistress, a hornet queen wearing a mock crown.");
+			callfunc("DM_MapStory", "'Pests,' she sneers, hovering above you with venom dripping from her stinger. 'You dare invade the hive of the sky?'");
+			return 1;
+		case 7:
+			callfunc("DM_MapStory", "The blast doors tear open. RSX-0806 emerges from the smog, all rusted iron, spinning saws, and blazing furnace-light.");
+			callfunc("DM_MapStory", "'TARGET ACQUIRED,' its voice booms. 'COMMENCING DISPOSAL.'");
+			return 1;
+		case 8:
+			callfunc("DM_MapStory", "The temperature drops hard enough to turn breath to ice. The Dark Lord floats above the shattered throne, wrapped in rotting regalia.");
+			callfunc("DM_MapStory", "His tome bleeds black ink onto the floor. 'The living,' he whispers, 'such a fragile, temporary condition.'");
+			return 1;
+		case 9:
+			callfunc("DM_MapStory", "The sanctuary light dies. Gloom Under Night drops from the ceiling as a crushing mass of dark prayer and screaming faces.");
+			callfunc("DM_MapStory", "The thing speaks without words: fanaticism given shadow, secrets given teeth.");
+			return 1;
+		case 10:
+			callfunc("DM_MapStory", "The laboratory is pristine. Kiel D-01 adjusts his cuffs, mechanical joints whirring under a gentleman's suit.");
+			callfunc("DM_MapStory", "'You trespass in the name of morality,' he says calmly. 'I will demonstrate why flesh is obsolete.'");
+			return 1;
+		case 11:
+			callfunc("DM_MapStory", "The clouds part. Valkyrie Randgris descends on blinding wings, armor immaculate, spear humming with divine power.");
+			callfunc("DM_MapStory", "Her eyes are blank, her movements puppet-stiff. 'The Voice commands,' she says. 'The unmaking must proceed.'");
+			return 1;
+		case 12:
+			callfunc("DM_MapStory", "The rift pulses, and Nidhoggr's Shadow emerges, a dragon of jagged darkness and astral force.");
+			callfunc("DM_MapStory", "Its wings blot out the alien sky, and its roar sends a shockwave through reality itself.");
+			return 1;
+		case 13:
+			callfunc("DM_MapStory", "The buzzing becomes a deafening roar. In the desecrated abbey, Beelzebub uncoils, all swollen flesh and insect limbs.");
+			callfunc("DM_MapStory", "Hundreds of eyes lock onto you. Millions of wings speak as one: 'WE HUNGER.'");
+			return 1;
+		case 14:
+			callfunc("DM_MapStory", "The magma erupts upward. Ifrit steps from the pillar of fire, a colossus of molten rock and world-ending heat.");
+			callfunc("DM_MapStory", "'Surt awakens!' he bellows. 'Burn, and be reborn in the ash!'");
+			return 1;
+		case 15:
+			callfunc("DM_MapStory", "At the pinnacle, reality fractures around the Memory of Thanatos, a savior's image trapped at the instant of corruption.");
+			callfunc("DM_MapStory", "'I saved them,' the phantom whispers, lifting a blade that cuts through time. 'Why am I the villain?'");
+			return 1;
+		case 16:
+			callfunc("DM_MapStory", "The banquet hall is a slaughterhouse. Bijou wipes royal blood from her cheek and smiles with empty delight.");
+			callfunc("DM_MapStory", "'It was so easy,' she giggles, raising dead knights around her. 'The King is dead! Long live the cascade!'");
+			return 1;
+		case 17:
+			callfunc("DM_MapStory", "The biosphere shatters. Beta integrates with Silva Papilia, becoming arcane machinery braided through violent, mutated nature.");
+			callfunc("DM_MapStory", "Metallic vines whip through the air. 'UNAUTHORIZED ACCESS,' it screeches. 'EXTERMINATE.'");
+			return 1;
+		case 18:
+			callfunc("DM_MapStory", "Himmelmez lounges on a throne of bone, beautiful and terrible, flanked by the certainty of the grave.");
+			callfunc("DM_MapStory", "'You fought so hard to reach the end,' she says. 'Allow me to reward you with eternal rest.'");
+			return 1;
+		case 19:
+			callfunc("DM_MapStory", "The sky tears open. Satan Morroc rises from the rift, but he is only the herald.");
+			callfunc("DM_MapStory", "Beyond him, the void burns with Surt's fire. The stone beneath your feet starts to vaporize.");
+			return 1;
+	}
+
+	dispbottom("[DM] Usage: @dm symptom <arc 1-19> [pulse|setup|read|clear]");
+	return 0;
+}
+
+function	script	DM_Symptom	{
+	.@arc = atoi(getarg(0, ""));
+	.@mode$ = strtolower(getarg(1, "pulse"));
+
+	if (.@arc < 1 || .@arc > 19 || .@mode$ == "help") {
+		dispbottom("[DM] @dm symptom <arc 1-19> [pulse|setup|read|clear]");
+		dispbottom("[DM] pulse applies an RO proxy near you; setup announces the rule; read prints boss read-aloud.");
+		return 0;
+	}
+
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	if (.@map$ == "") {
+		dispbottom("[DM] Could not resolve your current map.");
+		return 0;
+	}
+
+	if (.@mode$ == "read" || .@mode$ == "boss") {
+		return callfunc("DM_SymptomBossRead", .@arc);
+	}
+
+	if (.@mode$ == "clear" || .@mode$ == "off") {
+		callfunc("DM_SceneWeatherClear", .@map$);
+		dispbottom("[DM] Symptom weather cleared on " + .@map$ + ".");
+		return 1;
+	}
+
+	callfunc("DM_SymptomDescribe", .@arc, .@map$);
+
+	if (.@mode$ == "setup" || .@mode$ == "info")
+		return 1;
+	if (.@mode$ != "pulse") {
+		dispbottom("[DM] Unknown symptom mode '" + .@mode$ + "'. Use pulse, setup, read, or clear.");
+		return 0;
+	}
+
+	.@party_id = getcharid(CHAR_ID_PARTY);
+
+	switch (.@arc) {
+		case 1:
+			callfunc("DM_Check", "party", "dex", 12, "");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 14, 3, SC_STUN, 1500, .@party_id);
+			break;
+		case 2:
+			callfunc("DM_Check", "party", "luk", 13, "");
+			areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Restless Spirit", 1028, rand(2, 4);
+			areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Restless Familiar", 1005, rand(1, 3);
+			break;
+		case 3:
+			callfunc("DM_Check", "party", "vit", 14, "");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 16, 4, SC_BURNING, 4000, .@party_id);
+			break;
+		case 4:
+			callfunc("DM_Check", "party", "int", 12, "");
+			.@status = rand(1, 4);
+			if (.@status == 1) .@sc = SC_CONFUSION;
+			else if (.@status == 2) .@sc = SC_STUN;
+			else if (.@status == 3) .@sc = SC_BLIND;
+			else .@sc = SC_CURSE;
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 12, 0, .@sc, 5000, .@party_id);
+			break;
+		case 5:
+			callfunc("DM_Check", "party", "str", 13, "");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 14, 4, SC_STUN, 1500, .@party_id);
+			break;
+		case 6:
+			callfunc("DM_Check", "party", "dex", 12, "");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 14, 0, SC_SLOWDOWN, 5000, .@party_id);
+			break;
+		case 7:
+			callfunc("DM_Check", "party", "vit", 13, "");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 16, 2, SC_POISON, 10000, .@party_id);
+			break;
+		case 8:
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 16, 3, SC_CURSE, 8000, .@party_id);
+			break;
+		case 9:
+			callfunc("DM_Check", "party", "int", 13, "");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 14, 0, SC_FEAR, 4000, .@party_id);
+			break;
+		case 10:
+			callfunc("DM_Check", "party", "int", 12, "");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 14, 0, SC_CONFUSION, 8000, .@party_id);
+			break;
+		case 11:
+			callfunc("DM_Check", "party", "dex", 14, "");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 10, 5, SC_BURNING, 5000, .@party_id);
+			break;
+		case 12:
+			callfunc("DM_Check", "party", "luk", 12, "");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 16, 0, SC_CONFUSION, 6000, .@party_id);
+			break;
+		case 13:
+			callfunc("DM_SceneWeather", .@map$, "fog");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 18, 0, SC_BLIND, 10000, .@party_id);
+			break;
+		case 14:
+			callfunc("DM_SceneWeather", .@map$, "clouds");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 16, 3, SC_BLIND, 8000, .@party_id);
+			break;
+		case 15:
+			callfunc("DM_Check", "party", "luk", 15, "");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 14, 0, SC_SLOWDOWN, 6000, .@party_id);
+			break;
+		case 16:
+			.@count = rand(2, 5);
+			areamonster .@map$, .@x - 6, .@y - 6, .@x + 6, .@y + 6, "Royal Patrol", 1163, .@count;
+			mapannounce .@map$, "[Martial Law] A patrol answers the disturbance.", bc_map, 0xFFAA33;
+			break;
+		case 17:
+			callfunc("DM_Check", "party", "dex", 14, "");
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 14, 0, SC_ANKLESNARE, 5000, .@party_id);
+			break;
+		case 18:
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 16, 3, SC_SLOWDOWN, 8000, .@party_id);
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 16, 0, SC_CURSE, 8000, .@party_id);
+			break;
+		case 19:
+			callfunc("DM_HazardArea", .@map$, .@x, .@y, 24, 6, 0, 0, .@party_id);
+			break;
+	}
+
+	dispbottom("[DM] Symptom pulse fired for Arc " + .@arc + " on " + .@map$ + ".");
+	return 1;
+}
+
+-	script	DM_SymptomConsole	FAKE_NPC,{
+	end;
+
+OnInit:
+	bindatcmd("dmsymptom", strnpcinfo(NPC_NAME_UNIQUE)+"::OnSymptom", 1, 99, 1);
+	end;
+
+OnSymptom:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	callfunc("DM_Symptom", .@atcmd_parameters$[0], .@atcmd_parameters$[1]);
+	end;
+}
