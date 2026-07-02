@@ -148,3 +148,6 @@ Thumbs.db
 
 # visual studio
 /.vs/
+
+# Campaign database dumps (tools/backup-campaign.sh)
+/backups/

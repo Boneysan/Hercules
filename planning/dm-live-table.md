@@ -48,7 +48,9 @@ namespaced `$dm_*` (global) or `dm_*` (per-character).
   `OnPCDieEvent`; ally-proximity/heal rescue; released by cleanup/mode off). ✅
 
 Remaining (not yet built): `@dm secret`, initiative/spotlight, tavern hub,
-recap log.
+recap log. **Prioritized against the infrastructure work in
+`planning/dm-architecture-review.md` §9 (consolidated roadmap) — pick up
+work from that list, not this one; the feature specs stay in this file.**
 
 ## New files
 

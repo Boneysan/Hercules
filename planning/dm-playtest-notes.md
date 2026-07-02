@@ -105,6 +105,21 @@ intercept; use `@dm exp` to hand it back if it matters.
 - @dm novice for fresh chars (gives skills, clears tutorial flags).
 - Open client Quest window after journal merge to verify 20001 "Omens at the Fountain" shows full flavor + @dm warp lines.
 
+## If the server dies mid-session (recovery runbook)
+1. Restart MariaDB + login/char/map servers; players reconnect.
+2. `$dm_mode` and the active party SURVIVE the restart — the session resumes
+   where it was. Story flags and quests are safe (SQL).
+3. These reset silently and must be re-armed if they were in use:
+   - `@dm exprate <pct>` (back to 100)
+   - `@dm downrule on` (back to off)
+   - encounter registry / bloodied watcher / hazards / cutscene locks (gone —
+     respawn boss adds with `@dm spawn`, re-arm `@dm bloodied`)
+4. Run `@dm status` to see the current state before resuming play.
+5. Worst case (corrupted state): stop servers and restore the latest dump —
+   `ls -t backups/` and the restore line printed by `tools/backup-campaign.sh`.
+   Preflight takes a snapshot every game night; take a labeled one manually
+   before risky operations: `./tools/backup-campaign.sh pre_reset`.
+
 ## Known / Watch For
 - Client journal must be the merged .lub for @dm warps and flavor to appear.
 - Normal MVPs must not linger when mode on.

@@ -13,6 +13,14 @@ echo " Seal Cascade DM Campaign - Server Preflight"
 echo "==============================================="
 echo
 
+echo ">>> 0. Campaign database backup"
+if ./tools/backup-campaign.sh pre_session; then
+    :
+else
+    echo "  [WARN] Backup failed - is MariaDB running? Do NOT start a session without a backup."
+fi
+echo
+
 echo ">>> 1. Parse / load validation (all scripts + DB)"
 ./tools/check-campaign.sh
 echo
