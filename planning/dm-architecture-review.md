@@ -406,6 +406,8 @@ member offline, then `@dm flag sync`).
 
 Goal: the classic trap loop — place, (maybe) detect, (maybe) disarm, spring,
 save — with RO-native check math. DM narrates; script rolls.
+Read `planning/dm-traps-puzzles-guide.md` first — it's the engine cookbook
+(primitives, archetypes, instance-safety rules) this package builds on.
 
 Files: `shared/dm_traps.txt` (extend), `shared/dm_checks.txt` (small
 refactor), `shared/dm_console.txt` (dispatcher + help + cleanup),
@@ -449,6 +451,8 @@ DM relog drops traps (documented, matches hazard behavior).
 
 Goal: new puzzles are instantiated, not hand-rolled; non-combat solutions pay
 XP consistently with the arc's level targets.
+Read `planning/dm-traps-puzzles-guide.md` first — §4 defines the archetypes
+these templates implement (4a lever sequence, 4b riddle, 4f timed variant).
 
 Files: new `shared/dm_puzzles.txt`, `shared/dm_console.txt` (S_Exp + help),
 `npc/scripts_custom.conf`, `CAMPAIGN.md` (how-to section).
@@ -553,6 +557,12 @@ What's missing for the D&D dungeon-crawl feel (F15):
 WP-11 and WP-12 close these. Design rule for both: the trap/puzzle layer must
 stay **DM-narrated first** — script provides the dice, damage, and state;
 the DM provides the description. No auto-generated flavor text.
+
+Full implementation guidance — engine primitives (OnTouch/OnUnTouch trigger
+areas, progressbar, setcell, enable/disable, getareausers), six trap and six
+puzzle archetypes with sketches, stock-script references (Juperos, WoE
+levers), and the instance-safety + playtest checklists — lives in
+`planning/dm-traps-puzzles-guide.md`.
 
 ## 8. What NOT to do (so it doesn't get "improved" by accident)
 
