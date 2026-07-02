@@ -493,19 +493,12 @@ timestamped, optional label, keeps the newest 20) into `backups/`
 the restore one-liner. `campaign-preflight.sh` now runs it as step 0, so
 every game night starts with a snapshot automatically.
 
-Remaining for whoever picks this up:
-
-1. Run it once with MariaDB up and eyeball the dump size (the failure path
-   is verified; the success path needs one live confirmation).
-2. Habit rule, added to the runbook below: run it manually with a label
-   before `@dm reset confirm` and before any `@dm flag sync`
-   (`./tools/backup-campaign.sh pre_reset`).
-3. Optional: copy `backups/` off the WSL disk occasionally (it is the only
-   copy of the campaign).
-
-Acceptance: preflight output shows a dated dump > a few KB; restoring one
-into a scratch DB (`mysql -e "create database scratch"` + the printed
-restore line pointed at `scratch`) produces the campaign tables.
+Remaining: the success path and a restore drill need one run with MariaDB
+up (it was down during the build session; the failure path is verified).
+**The complete step-by-step verification procedure — environment facts,
+expected outputs, restore drill, and what to tick afterward — is in
+`planning/backup-verification-handoff.md`. Hand that file to whoever is at
+the keyboard when the DB is running.**
 
 ---
 
