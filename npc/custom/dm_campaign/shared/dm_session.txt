@@ -9,6 +9,7 @@ function	script	DM_CleanupMap	{
 	@dm_hazard_ticks = 0;
 	callfunc("DM_EncounterReset");
 	callfunc("DM_CutsceneParty", 0, "", 0);
+	callfunc("DM_DownedClearParty");
 	mapannounce(.@map$, "[DM] Encounter cleanup complete.", bc_map, 0xAAAAAA);
 	return 1;
 }

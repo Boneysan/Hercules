@@ -1,0 +1,428 @@
+// Seal Cascade downed & death-save mechanic.
+//
+// D&D 5e death saves adapted to RO. While DM mode is on AND the downed rule is
+// armed (@dm downrule on -- off by default; arm it for set-piece fights, leave
+// trash fights normal), a party member who would die instead drops to Death's
+// Door: pinned in place (Play Dead sprite, immune, HP at the floor) and rolling
+// a d20 every 4 seconds, announced to the whole map:
+//
+//   20   = back on their feet with a surge of HP
+//   10+  = success  (3 successes -> STABLE: safe but unconscious until healed)
+//   2-9  = one failure
+//   1    = two failures
+//   3 failures -> OUT: normal RO death (respawn/resurrect as usual)
+//
+// Rescue: an ally standing within 3 tiles for one tick stabilizes them; any
+// heal landing on them brings them back up immediately.
+//
+//   @dm downrule <on|off|status>   (arm/disarm; status lists downed members)
+//   @dm down <player>              (manually drop someone for drama)
+//   @dm revive <player|party>      (instant full rescue; also fixes real deaths)
+//
+// Safety: @dm cleanup and @dm mode off release every downed party member, and
+// all downed state is char-temporary so a relog clears the pin on its own.
+// Known knob: the normal RO death EXP penalty still applies on the initial
+// drop; use @dm exp to compensate if it matters at the table.
+
+function	script	DM_DownedBlock	{
+	setpcblock(PCBLOCK_MOVE|PCBLOCK_ATTACK|PCBLOCK_SKILL|PCBLOCK_USEITEM|PCBLOCK_SITSTAND|PCBLOCK_IMMUNE, getarg(0, 0));
+	return 1;
+}
+
+// Enter Death's Door. Runs attached to the victim.
+// getarg(0): 1 = intercepted a real death (revive first), 0 = manual @dm down.
+function	script	DM_DownedEnter	{
+	if (getarg(0, 0))
+		recovery(getcharid(CHAR_ID_ACCOUNT));
+	percentheal(-99, 0);
+
+	@dm_downed = 1;
+	@dm_down_succ = 0;
+	@dm_down_fail = 0;
+	@dm_down_hp = Hp;
+
+	callfunc("DM_DownedBlock", 1);
+	sc_start(SC_TRICKDEAD, 600000, 1);
+
+	mapannounce(strcharinfo(PC_MAP), "[DM] " + strcharinfo(PC_NAME) + " is DYING! Stand beside them or heal them before three failed death saves.", bc_map, 0xFF4444);
+	deltimer("DM_DownedConsole::OnDeathSaveTick");
+	addtimer(4000, "DM_DownedConsole::OnDeathSaveTick");
+	return 1;
+}
+
+// Release the pin and get back up. Runs attached to the downed player.
+// getarg(0): percent of max HP to restore (0 = keep current HP).
+// getarg(1): short reason used in the table-facing announcement.
+function	script	DM_DownedWake	{
+	.@heal_pct = getarg(0, 0);
+	.@reason$ = getarg(1, "back on their feet");
+
+	deltimer("DM_DownedConsole::OnDeathSaveTick");
+	@dm_downed = 0;
+	@dm_down_succ = 0;
+	@dm_down_fail = 0;
+	@dm_down_hp = 0;
+
+	callfunc("DM_DownedBlock", 0);
+	sc_end(SC_TRICKDEAD);
+	if (.@heal_pct > 0)
+		percentheal(.@heal_pct, 0);
+
+	mapannounce(strcharinfo(PC_MAP), "[DM] " + strcharinfo(PC_NAME) + " is up -- " + .@reason$ + ".", bc_map, 0x66FF66);
+	return 1;
+}
+
+// Third failed save: release the pin and let normal RO death proceed.
+// Runs attached to the downed player.
+function	script	DM_DownedOut	{
+	deltimer("DM_DownedConsole::OnDeathSaveTick");
+	@dm_downed = 0;
+	@dm_down_succ = 0;
+	@dm_down_fail = 0;
+	@dm_down_hp = 0;
+
+	callfunc("DM_DownedBlock", 0);
+	sc_end(SC_TRICKDEAD);
+
+	mapannounce(strcharinfo(PC_MAP), "[DM] " + strcharinfo(PC_NAME) + " has fallen. (three failed death saves)", bc_map, 0xAA0000);
+	@dm_down_out = 1;
+	atcommand("@die");
+	return 1;
+}
+
+// Is a living, un-downed party member within getarg(0) tiles of the attached
+// (downed) player? Same attach-loop scan as DM_HazardArea, inverted to detect
+// allies instead of victims.
+function	script	DM_DownedAllyNear	{
+	.@range = getarg(0, 3);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	if (.@party_id <= 0)
+		return 0;
+
+	.@self_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@self_cid = getcharid(CHAR_ID_CHAR);
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (.@charid[.@i] == .@self_cid)
+			continue;
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+
+		.@near = 0;
+		if (Hp > 0 && !@dm_downed) {
+			getmapxy(.@pm$, .@px, .@py, UNITTYPE_PC);
+			.@dx = .@px - .@x;
+			.@dy = .@py - .@y;
+			if (.@dx < 0)
+				.@dx = -.@dx;
+			if (.@dy < 0)
+				.@dy = -.@dy;
+			if (.@pm$ == .@map$ && .@dx <= .@range && .@dy <= .@range)
+				.@near = 1;
+		}
+		detachrid();
+		if (.@near) {
+			.@found = 1;
+			break;
+		}
+	}
+
+	attachrid(.@self_aid);
+	return .@found;
+}
+
+// One death-save tick. Runs attached to the downed player.
+function	script	DM_DownedTick	{
+	if (!@dm_downed)
+		return 0;
+
+	.@map$ = strcharinfo(PC_MAP);
+	.@name$ = strcharinfo(PC_NAME);
+
+	// A heal raising HP above the downed floor brings them back up.
+	if (Hp > @dm_down_hp) {
+		callfunc("DM_DownedWake", 0, "revived by healing");
+		return 1;
+	}
+
+	// Stable: unconscious but safe; keep watching for a heal or DM revive.
+	if (@dm_downed == 2) {
+		addtimer(4000, "DM_DownedConsole::OnDeathSaveTick");
+		return 1;
+	}
+
+	if (callfunc("DM_DownedAllyNear", 3)) {
+		@dm_downed = 2;
+		mapannounce(.@map$, "[DM] " + .@name$ + " is stabilized by an ally at their side. (unconscious -- a heal wakes them)", bc_map, 0xFFAA33);
+		addtimer(4000, "DM_DownedConsole::OnDeathSaveTick");
+		return 1;
+	}
+
+	.@d = rand(1, 20);
+	if (.@d == 20) {
+		mapannounce(.@map$, "[Death Save] " + .@name$ + "  d20=20 -> NAT 20!", bc_map, 0x66FF66);
+		callfunc("DM_DownedWake", 10, "surges back into the fight");
+		return 1;
+	}
+
+	if (.@d >= 10) {
+		++@dm_down_succ;
+		mapannounce(.@map$, "[Death Save] " + .@name$ + "  d20=" + .@d + " -> success (" + @dm_down_succ + "/3)", bc_map, 0x66FF66);
+		if (@dm_down_succ >= 3) {
+			@dm_downed = 2;
+			mapannounce(.@map$, "[DM] " + .@name$ + " is STABLE. (unconscious -- a heal or @dm revive wakes them)", bc_map, 0xFFAA33);
+		}
+	} else {
+		@dm_down_fail += (.@d == 1 ? 2 : 1);
+		if (@dm_down_fail > 3)
+			@dm_down_fail = 3;
+		mapannounce(.@map$, "[Death Save] " + .@name$ + "  d20=" + .@d + (.@d == 1 ? " -> NAT 1, two failures" : " -> failure") + " (" + @dm_down_fail + "/3)", bc_map, 0xFF6666);
+		if (@dm_down_fail >= 3) {
+			callfunc("DM_DownedOut");
+			return 1;
+		}
+	}
+
+	addtimer(4000, "DM_DownedConsole::OnDeathSaveTick");
+	return 1;
+}
+
+// Release every downed member of a party (default: caller's party). Called
+// from @dm cleanup and @dm mode off. Returns how many were released.
+function	script	DM_DownedClearParty	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@party_id <= 0) {
+		if (@dm_downed)
+			return callfunc("DM_DownedWake", 5, "released by the DM");
+		return 0;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		if (@dm_downed)
+			.@cleared += callfunc("DM_DownedWake", 5, "released by the DM");
+		detachrid();
+	}
+
+	if (.@origin)
+		attachrid(.@origin);
+	return .@cleared;
+}
+
+function	script	DM_DownRule	{
+	.@action$ = strtolower(getarg(0, ""));
+
+	if (.@action$ == "on" || .@action$ == "arm") {
+		$@dm_downed_rule = 1;
+		mapannounce(strcharinfo(PC_MAP), "[DM] Death's Door is active: dying heroes get death saves. Stand by the fallen or heal them.", bc_map, 0xFFAA33);
+		dispbottom("[DM] Downed rule armed. Party deaths become death saves while DM mode is on.");
+		return 1;
+	}
+
+	if (.@action$ == "off" || .@action$ == "disarm") {
+		$@dm_downed_rule = 0;
+		dispbottom("[DM] Downed rule disarmed. Deaths are normal again (anyone already downed keeps rolling; @dm revive or @dm cleanup releases them).");
+		return 1;
+	}
+
+	if (.@action$ != "" && .@action$ != "status" && .@action$ != "help") {
+		dispbottom("[DM] Unknown downrule action '" + .@action$ + "'. Use on, off, or status.");
+		return 0;
+	}
+
+	dispbottom("[DM] Downed rule is " + ($@dm_downed_rule ? "ARMED" : "off") + ". Usage: @dm downrule <on|off|status>");
+
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	if (.@party_id <= 0)
+		return 1;
+
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	.@line$ = "[DM] Downed:";
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		if (@dm_downed) {
+			.@line$ += " " + strcharinfo(PC_NAME) + (@dm_downed == 2 ? "=stable" : "=dying(" + @dm_down_succ + "s/" + @dm_down_fail + "f)");
+			++.@downed;
+		}
+		detachrid();
+	}
+	if (.@origin)
+		attachrid(.@origin);
+
+	dispbottom(.@downed ? .@line$ : "[DM] No party members are downed.");
+	return 1;
+}
+
+function	script	DM_Down	{
+	.@target$ = getarg(0, "");
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@target$ == "" || .@target$ == "help") {
+		dispbottom("[DM] @dm down <player>   (drop a hero to Death's Door for drama)");
+		return 0;
+	}
+
+	.@accid = getcharid(CHAR_ID_ACCOUNT, .@target$);
+	if (.@accid <= 0) {
+		dispbottom("[DM] Player '" + .@target$ + "' is not online.");
+		return 0;
+	}
+	if (!attachrid(.@accid)) {
+		dispbottom("[DM] Could not attach to '" + .@target$ + "'.");
+		return 0;
+	}
+
+	if (@dm_downed) {
+		detachrid();
+		if (.@origin)
+			attachrid(.@origin);
+		dispbottom("[DM] " + .@target$ + " is already downed.");
+		return 0;
+	}
+	if (Hp <= 0) {
+		detachrid();
+		if (.@origin)
+			attachrid(.@origin);
+		dispbottom("[DM] " + .@target$ + " is dead. Use @dm revive instead.");
+		return 0;
+	}
+
+	callfunc("DM_DownedEnter", 0);
+	detachrid();
+	if (.@origin)
+		attachrid(.@origin);
+	return 1;
+}
+
+function	script	DM_Revive	{
+	.@target$ = getarg(0, "");
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@target$ == "" || .@target$ == "help") {
+		dispbottom("[DM] @dm revive <player|party>   (instant full rescue for downed or dead heroes)");
+		return 0;
+	}
+
+	if (.@target$ == "party" || .@target$ == "all") {
+		.@party_id = getcharid(CHAR_ID_PARTY);
+		if (.@party_id <= 0) {
+			dispbottom("[DM] You are not in a party.");
+			return 0;
+		}
+
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+				continue;
+			if (!attachrid(.@accid[.@i]))
+				continue;
+			if (@dm_downed) {
+				callfunc("DM_DownedWake", 100, "revived by the DM");
+				percentheal(0, 100);
+				++.@revived;
+			} else if (Hp <= 0) {
+				recovery(getcharid(CHAR_ID_ACCOUNT));
+				++.@revived;
+			}
+			detachrid();
+		}
+		if (.@origin)
+			attachrid(.@origin);
+		dispbottom("[DM] Revived " + .@revived + " party member(s).");
+		return .@revived;
+	}
+
+	.@accid = getcharid(CHAR_ID_ACCOUNT, .@target$);
+	if (.@accid <= 0) {
+		dispbottom("[DM] Player '" + .@target$ + "' is not online.");
+		return 0;
+	}
+	if (!attachrid(.@accid)) {
+		dispbottom("[DM] Could not attach to '" + .@target$ + "'.");
+		return 0;
+	}
+
+	if (@dm_downed) {
+		callfunc("DM_DownedWake", 100, "revived by the DM");
+		percentheal(0, 100);
+		.@revived = 1;
+	} else if (Hp <= 0) {
+		recovery(getcharid(CHAR_ID_ACCOUNT));
+		.@revived = 1;
+	}
+	detachrid();
+	if (.@origin)
+		attachrid(.@origin);
+
+	dispbottom(.@revived ? "[DM] " + .@target$ + " revived." : "[DM] " + .@target$ + " is neither downed nor dead.");
+	return .@revived;
+}
+
+-	script	DM_DownedConsole	FAKE_NPC,{
+	end;
+
+OnInit:
+	bindatcmd("dmdownrule", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDownRule", 1, 99, 1);
+	bindatcmd("dmdown", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDown", 1, 99, 1);
+	bindatcmd("dmrevive", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRevive", 1, 99, 1);
+	end;
+
+OnDownRule:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callfunc("DM_DownRule", .@atcmd_parameters$[0]);
+	end;
+
+OnDown:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callfunc("DM_Down", .@atcmd_parameters$[0]);
+	end;
+
+OnRevive:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callfunc("DM_Revive", .@atcmd_parameters$[0]);
+	end;
+
+OnDeathSaveTick:
+	callfunc("DM_DownedTick");
+	end;
+
+OnPCDieEvent:
+	// A third failed save routes back through here as a real death.
+	if (@dm_down_out) {
+		@dm_down_out = 0;
+		end;
+	}
+	if (!$@dm_downed_rule)
+		end;
+	if (!callfunc("DM_PartyActive"))
+		end;
+	if (@dm_downed)
+		end;
+	callfunc("DM_DownedEnter", 1);
+	end;
+}

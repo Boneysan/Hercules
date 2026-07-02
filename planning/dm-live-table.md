@@ -43,8 +43,12 @@ namespaced `$dm_*` (global) or `dm_*` (per-character).
   `@dmencounter`, `@dm scale` / `@dmscale`, and `@dm bloodied` /
   `@dmbloodied`. ✅
 
-Remaining (not yet built): downed/death-saves, `@dm secret`,
-initiative/spotlight, tavern hub, recap log.
+- `shared/dm_downed.txt` — `@dm downrule` / `@dm down` / `@dm revive` +
+  `@dmdownrule` / `@dmdown` / `@dmrevive` (Death's Door death saves via
+  `OnPCDieEvent`; ally-proximity/heal rescue; released by cleanup/mode off). ✅
+
+Remaining (not yet built): `@dm secret`, initiative/spotlight, tavern hub,
+recap log.
 
 ## New files
 
@@ -54,7 +58,7 @@ initiative/spotlight, tavern hub, recap log.
 | `shared/dm_scene.txt` ✅   | `@dm scene`, `@dm cutscene` — ambience + cutscene director |
 | `shared/dm_checks.txt` ✅  | `@dm check`, `@dm inspire` (+ future `@dm initiative`) — tabletop mechanics |
 | `shared/dm_combat.txt` ✅ | spawn-GID registry, `@dm encounter`, `@dm scale`, bloodied watcher — live difficulty dial |
-| `shared/dm_downed.txt`    | downed/death-save mechanic (`OnPCDieEvent` hook) |
+| `shared/dm_downed.txt` ✅ | downed/death-save mechanic (`OnPCDieEvent` hook) |
 | `shared/dm_session_log.txt` | `@dm log`, "Previously on…" recap |
 | `act_00/tavern_hub.txt`   | between-arc social hub map + `@dm rest` |
 
@@ -203,7 +207,7 @@ Reward roleplay with a spendable token that grants advantage or a reroll.
 - Token counts are clamped to 0-9 to keep the mechanic bounded.
 
 ### 6. Downed & death saves
-**File:** `dm_downed.txt` · **Effort:** M–L
+**File:** `dm_downed.txt` · **Effort:** M–L · **Status:** shipped ✅
 
 Replace plain resurrect with tabletop stakes.
 
@@ -349,8 +353,10 @@ Matches the stated vision (tavern → dungeon → live GM). A between-arc social
 
 ## Open questions
 
-- **Downed rules knobs:** default on/off, save cadence, rescue method, and
-  failure consequence — proposed ruleset below, pending confirmation.
+- **Downed rules knobs:** shipped with the proposed defaults — off per fight
+  (`@dm downrule on` arms it), 4s save cadence, 3-tile ally rescue, and "Out" =
+  plain RO death. All four are single constants in `dm_downed.txt` if the table
+  wants them tuned after play.
 
 ## Console architecture
 
@@ -365,7 +371,7 @@ from a single place. To avoid a 2500-line `dm_console.txt`:
 
 Net: unified command surface, logic grouped by domain, each file stays small.
 
-## Downed & death-save ruleset (proposed)
+## Downed & death-save ruleset (shipped ✅ — `shared/dm_downed.txt`)
 
 Adapts D&D 5e death saves to RO. When a hero would die, they instead drop to a
 **downed** state and roll to survive; the party can rescue them.
@@ -373,26 +379,27 @@ Adapts D&D 5e death saves to RO. When a hero would die, they instead drop to a
 - **Trigger:** intercept `OnPCDieEvent`. Only engages while `$dm_mode` is on and
   the downed system is enabled (default **off per fight**, DM turns it on with
   `@dm downrule on` for set-piece battles — trash fights stay lethal-free/normal).
-- **Downed state:** player is pinned (`setpcblock` + Play Dead sprite, reusing the
-  `@dm novice` Play Dead grant), HP locked at 1, cannot act. A visible
-  `npctalk`/effect marks them as "Dying."
+- **Downed state:** player is pinned (`setpcblock` move/attack/skill/item/sit +
+  `PCBLOCK_IMMUNE`, plus `sc_start SC_TRICKDEAD` for the lying sprite), HP dropped
+  to the 1% floor via `percentheal -99`. Map announcements mark them as "Dying."
 - **Death saves:** every 4s, auto-roll `rand(1,20)`:
   - 10+ = success, <10 = fail (nat-20 = instant self-stabilize at low HP;
     nat-1 = two fails, per 5e).
   - **3 successes → Stable** (unconscious but safe; DM or a heal wakes them).
   - **3 fails → Out** (then normal RO death: respawn/resurrect, or a DM-set
     consequence flag).
-- **Rescue:** any online ally standing within N tiles for one tick, OR any heal
-  landing on the downed player, stabilizes them immediately (proximity via the
-  `DM_HazardArea` area-scan inverted to detect allies).
+- **Rescue:** any living un-downed ally standing within 3 tiles for one tick
+  stabilizes them (proximity via the `DM_HazardArea` area-scan inverted to detect
+  allies); any heal landing on the downed player brings them back up immediately.
 - **DM overrides:** `@dm revive <player|party>` (instant full rescue),
   `@dm downrule <on|off>`, `@dm down <player>` (manually down someone for drama).
 - **Safety:** `@dm cleanup` / `@dm mode off` clears all downed states, timers, and
   `setpcblock` freezes.
 
-Knobs to confirm: default off-per-fight vs. on-in-DM-mode; save interval (4s);
-tiles for ally rescue; and whether "Out" is plain RO death or a softer
-consequence.
+Shipped defaults: off per fight, 4s save interval, 3-tile ally rescue, "Out" =
+plain RO death (via `@die`, exempted from re-interception). Note: the initial
+death still applies the normal RO EXP penalty before the intercept revives them;
+compensate with `@dm exp` if it matters at the table.
 
 ## Testing
 

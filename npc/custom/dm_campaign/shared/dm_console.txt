@@ -222,6 +222,21 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "downrule") {
+		callfunc("DM_DownRule", .@atcmd_parameters$[1]);
+		end;
+	}
+
+	if (.@sub$ == "down") {
+		callfunc("DM_Down", .@atcmd_parameters$[1]);
+		end;
+	}
+
+	if (.@sub$ == "revive") {
+		callfunc("DM_Revive", .@atcmd_parameters$[1]);
+		end;
+	}
+
 	dispbottom("[DM] Unknown subcommand: " + .@sub$);
 	callsub(S_Help);
 	end;
@@ -490,7 +505,9 @@ S_Help:
 	dispbottom("[DM] @dm inspire <player> [+n|spend|clear|set n] | party");
 	dispbottom("[DM] @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]  (mood: weather+BGM+cutin)");
 	dispbottom("[DM] @dm cutscene <on|off> [portrait] [seconds]  (freeze/release party movement)");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dminspire, @dmscene, @dmcutscene, @dmencounter, @dmscale, @dmbloodied");
+	dispbottom("[DM] @dm downrule <on|off|status>  (death saves instead of dying; arm per fight)");
+	dispbottom("[DM] @dm down <player> | @dm revive <player|party>");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dminspire, @dmscene, @dmcutscene, @dmencounter, @dmscale, @dmbloodied, @dmdownrule, @dmdown, @dmrevive");
 	return;
 
 S_Reset:
@@ -651,6 +668,8 @@ S_Mode:
 	if (.@action$ == "off") {
 		callfunc("DM_InstanceQuestErase", 20000, $dm_active_party);
 		.@released = callfunc("DM_CutsceneParty", 0, "", 0, $dm_active_party);
+		.@undowned = callfunc("DM_DownedClearParty", $dm_active_party);
+		$@dm_downed_rule = 0;
 		$dm_mode = 0;
 		$dm_active_party = 0;
 		$@dm_exp_party = 0;
@@ -660,6 +679,8 @@ S_Mode:
 		dispbottom("[DM] DnD mode disabled. MVP spawns will resume naturally.");
 		if (.@released > 0)
 			dispbottom("[DM] Released cutscene lock for " + .@released + " member(s).");
+		if (.@undowned > 0)
+			dispbottom("[DM] Released " + .@undowned + " downed member(s).");
 		return;
 	}
 	dispbottom("[DM] Mode is currently " + ($dm_mode ? "ON" : "OFF") + ($dm_mode ? " (party " + $dm_active_party + ")" : ""));

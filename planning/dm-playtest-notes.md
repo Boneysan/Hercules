@@ -79,6 +79,24 @@ Test: move in/out of range, disconnect/reconnect one player, map change.
 
 Clear with `@dm hazard clear` or `@dmcleanup`.
 
+## Sprint 4: Downed / Death Saves (needs 2+ chars in party)
+1. `@dmmode on`, party up DM + 1 test char.
+2. `@dm downrule on` — map should announce Death's Door is active.
+3. Kill the test char (spawn something nasty or `@dm down <name>` for the manual path).
+4. Watch: char stays up at ~1% HP, Play Dead sprite, pinned, immune; death saves roll every 4s in map chat.
+5. Rescue paths to verify separately:
+   - Walk the DM within 3 tiles → "stabilized by an ally" (unconscious, saves stop).
+   - Heal the downed char (any heal) → back on their feet immediately.
+   - Do nothing → 3 successes = STABLE, or 3 fails = real death (respawn normally).
+   - Nat 20 → up with a 10% HP surge.
+6. `@dm revive <name>` and `@dm revive party` — full HP/SP; also revives real deaths.
+7. `@dm downrule status` — lists downed members with save counts.
+8. Safety: with someone downed, run `@dmcleanup` and `@dm mode off` — pin must release both times; relog while downed must also clear the pin.
+9. Confirm normal deaths (rule off, or non-party player) are untouched.
+
+Known knob: the initial death still applies the RO EXP penalty before the
+intercept; use `@dm exp` to hand it back if it matters.
+
 ## Other Quick Tests
 - `@dm inspire <name>`, spend on `adv` check.
 - `@dm spawn`, `@dm encounter`, `@dm scale hp 50 boss`, `@dm bloodied`.
