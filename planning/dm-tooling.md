@@ -30,7 +30,8 @@ without recompiling the server.
 
 ## GM Commands
 
-All commands require GM level 60 or higher.
+All commands require the Dungeon Master group (id 5, group level 1+; assigned
+by `tools/promote-dm.sh`). The gate is `DM_RequireDM` in `dm_common.txt`.
 
 ```text
 @dm help
@@ -158,7 +159,7 @@ players either warp directly to the Prontera Session Board or open navigation to
 it, while leaving the standard training route untouched.
 
 `@roll` is public map output for players and DMs, including individual dice for
-rolls up to 20 dice. `@roll hidden` requires GM level 60+ and reports only to
+rolls up to 20 dice. `@roll hidden` requires the DM group and reports only to
 the roller. `@roll fudge` / `@roll override` are transparent DM-only set-result
 commands; they announce that the result was set rather than rolled.
 

@@ -386,7 +386,7 @@ What is still needed:
 Implemented:
 
 - `@roll <NdX[+/-mod]>` outputs public map rolls.
-- `@roll hidden <NdX[+/-mod]>` outputs DM-only hidden rolls for GM level 60+.
+- `@roll hidden <NdX[+/-mod]>` outputs DM-only hidden rolls (DM group only).
 - Rolls show individual die results for rolls up to 20 dice.
 - `@roll fudge <total> [note]` / `@roll override <total> [note]` provides a
   transparent DM-only override command that announces the set result rather

@@ -74,7 +74,8 @@ back to solo behavior when needed.
 
 ### DM Console
 
-The in-game DM layer is script-first and exposed through GM level 60 commands:
+The in-game DM layer is script-first and exposed through DM-group commands
+(group id 5, via `tools/promote-dm.sh`):
 
 - `@dm` / shortcut commands for mode, reward, flag, quest, beat, story, spawn,
   hazard, cleanup, warp, recall, and instance control
