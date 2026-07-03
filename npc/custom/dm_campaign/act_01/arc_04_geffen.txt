@@ -3,13 +3,11 @@
 //===== By: ==================================================
 //= Seal Cascade DM tooling
 //===== Description: =========================================
-//= Geffen's brilliant tower-magic is overflow from Baphomet's
-//= prison. Apprentice Elsbeth, Archmagus Doran, and Brother
-//= Cassell expose the cost of keeping a city bright.
-//=
-//= Source notes:
-//= H:\Docs\Obsidian Notes\Game Design\Ragnarok_Online\Campaign\
-//=   Act_I_World_at_Peace\Arc_04_City_Above_the_Beast
+//= Geffen's crisis, adapted from the Obsidian Dialogue Script.
+//= Archmage Vella stonewalls at the Guild door. Apprentice
+//= Elsbeth is the inside source. Brother Cassell unmasks
+//= himself at the wards while Archmagus Doran sabotages them
+//= in silence. Baphomet and the Doppelganger close the arc.
 //=
 //= Quests (db/quest_db.conf):
 //=   20019 The City Above the Beast   (arc tracker)
@@ -19,6 +17,49 @@
 //=   20023 The Vault That Prays       (Baphomet)
 //=   20024 The Pilgrim's Offer        (story)
 //===========================================================
+
+// Archmage Vella - Mages' Guild gatekeeper, Scene 1 flavor
+geffen,127,100,4	script	Archmage Vella#dm	4_F_02,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (dm_arc04_vella_met) {
+		mes("[Archmage Vella]");
+		if (dm_arc04_vella_choice == 3)
+			mes("Only a handful of people have that clearance. Archmagus Doran holds one of them. Do not make me regret naming him.");
+		else
+			mes("The door is already open. That has not stopped being the problem.");
+		close();
+	}
+
+	mes("^3355FF*A robed woman paces frantically in front of the tower stair.*^000000");
+	next();
+	mes("[Archmage Vella]");
+	mes("This is an internal guild matter! The Adventurers' Guild has no jurisdiction in the Geffen Tower!");
+	next();
+	switch (select("We have proof the Whisperer cult is operating here. Let us help.", "Wynne sent us. We're getting paid to clear the dungeon. Are you going to open the door?", "Who disabled the wards?")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_vella_choice", 1);
+		mes("[Archmage Vella]");
+		mes("You have proof? ...Fine. My senior enchanters are missing. And the warding seals in the basement — the ones keeping the Geffen Dungeon locked — have been systematically disabled from the inside.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_vella_choice", 2);
+		mes("[Archmage Vella]");
+		mes("The door is already open. That's the problem. The magic holding back the horrors below has been unravelled by someone who knows our highest secrets.");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_vella_choice", 3);
+		mes("[Archmage Vella]");
+		mes("Only a handful of people have that clearance. Archmagus Doran holds one of them — and he has been 'studying' the lower vault for months with a visiting scholar he vouched for personally. A soft-spoken man. In gray robes.");
+		break;
+	}
+	callfunc("DM_InstanceSetFlag", "dm_arc04_vella_met", 1);
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
+}
 
 // Apprentice Elsbeth - Geffen ally and Arc 4 support handler
 geffen,120,100,4	script	Apprentice Elsbeth#dm	4_F_01,{
@@ -226,7 +267,7 @@ S_TurnIns:
 	close();
 }
 
-// Archmagus Doran - human villain and lower-vault gate
+// Archmagus Doran - human villain and lower-vault gate (Cassell unmasks here first)
 gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20023) != 1) {
@@ -249,18 +290,46 @@ gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
 		close();
 	}
 
+	mes("^3355FF*Brother Cassell stands before a massive, glowing arcane lock, methodically dissolving it with counter-magic. Beside him, Archmagus Doran paints sabotage-glyphs onto the seal's anchor-stones with the absorbed calm of a man grading papers. Cassell turns as the party approaches, removing his hood fully for the first time.*^000000");
+	next();
+	if (dm_arc01_holt_spared) {
+		mes("^3355FF*Deacon Holt, come this far as the party's witness, goes pale.*^000000");
+		mes("[Deacon Holt]");
+		mes("That voice. That's him. That's the gray almsman.");
+		next();
+	}
+	mes("[Brother Cassell]");
+	mes("Ah. The heroes of Prontera. And Payon. And Morroc. You are remarkably persistent. And predictably late.");
+	next();
+	switch (select("It's over, Cassell. We know you're trying to break the seal.", "Why do this? What's the point of weakening every seal at once?", "Teach me how the seals work.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_path", 1);
+		mes("[Brother Cassell]");
+		mes("Break this seal? Heavens, no. Baphomet is a brute. If I break his seal completely, Geffen falls, and the other nations panic. I am merely... opening a window. A crack to let the pressure out.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_path", 2);
+		mes("[Brother Cassell]");
+		mes("Because if one seal breaks, humanity rallies and fixes it. If they all break at once... the slate is wiped clean. The Voice demands a new world, and the old one must be cleared away.");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_path", 3);
+		mes("[Brother Cassell]");
+		mes("(Smiles, genuinely pleased) A seeker of knowledge. How refreshing. Not here — not shouted over a dying ward. Survive what is below, and I will pour the tea.");
+		break;
+	}
+	next();
+	mes("^3355FF*Cassell bows and is gone. Doran does not look up from the anchor-stones.*^000000");
+	next();
 	mes("[Archmagus Doran]");
 	mes("I proved the tower runs on seal overflow. They buried the proof and promoted the cowards.");
 	next();
-	mes("[Archmagus Doran]");
-	mes("Cassell understood immediately. A prison is only a machine whose owner refuses to admit it has controls.");
-	next();
-	switch (select("You endangered the whole city.", "Publish the proof. Stand down.", "Teach us what Cassell taught you.")) {
+	switch (select("You'll drown the world to win an argument.", "Publish your proof. We'll make them listen — without the demon.", "Teach us what you found.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_fought", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 0);
 		mes("[Archmagus Doran]");
-		mes("Then learn from danger. Geffen certainly did.");
+		mes("I'll wake it.");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 1);
@@ -270,9 +339,8 @@ gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_taught", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_unmasked", 1);
 		mes("[Archmagus Doran]");
-		mes("Cassell calls it a catechism. Not worship. Engineering for abandoned locks.");
+		mes("The gray man explains it better than I ever could. Ask him, if you survive him.");
 		break;
 	}
 	callfunc("DM_InstanceSetFlag", "dm_arc04_doran_confronted", 1);
