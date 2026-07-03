@@ -122,39 +122,19 @@ S_SwearIn:
 	}
 	next();
 	mes("[Wynne]");
-	mes("First, prove you can follow a simple posting. Southern fields: Fabres, Porings, Lunatics. Bring me their common drops so I know you learned to loot before the sewer rats bite back.");
-	next();
-	mes("[Wynne]");
-	mes("Be smart. It pays. It also keeps you alive long enough to take real contracts. Sign here.");
+	mes("Take this contract. The Culvert. The city guard says it's just Plankton and Tarou, but the refugees from the south say the ground down there is... humming. Be smart. It pays. It's also a bad idea. Both things are true. Sign here.");
 	callfunc("DM_InstanceSetFlag", "dm_arc01_started", 1);
 	callfunc("DM_InstanceQuestStart", 20001);
-	callfunc("DM_InstanceQuestStart", 20006);
+	callfunc("DM_InstanceQuestStart", 20002);
+	callfunc("DM_InstanceQuestStart", 20003);
 	next();
 	mes("^3355FF[Quest started: Omens at the Fountain]^000000");
-	mes("^3355FFFirst Field Test - collect 10 Fluff, 10 Jellopy, and 10 Clover in the southern Prontera fields.^000000");
-	mes("^3355FFReturn to Wynne when the posting is complete.^000000");
+	mes("^3355FFQuests added: Contract: Cellar Vermin & Field Contract: Rockers and Rumors.^000000");
 	close();
 
 S_Contracts:
 	// Settle any completed hunting contracts.
 	.@paid = 0;
-	if (questprogress(20006) == 1 && countitem(Fluff) >= 10 && countitem(Jellopy) >= 10 && countitem(Clover) >= 10) {
-		delitem Fluff, 10;
-		delitem Jellopy, 10;
-		delitem Clover, 10;
-		callfunc("DM_InstanceQuestComplete", 20006);
-		callfunc("DM_PartyExp", 1500, 750);
-		callfunc("DM_GivePartyZeny", 500);
-		callfunc("DM_InstanceQuestStart", 20002);
-		callfunc("DM_InstanceQuestStart", 20003);
-		.@paid = 1;
-		mes("[Wynne]");
-		mes("Good. You can swing, cast, and come back in one piece. Here's 500 zeny.");
-		next();
-		mes("[Wynne]");
-		mes("Now the real postings: Tarou in the Culvert, Rockers in the fields. Close both, then we'll talk about why the ground is humming.");
-		next();
-	}
 	if (questprogress(20002) == 1 && questprogress(20002, HUNTING) == 2) {
 		callfunc("DM_InstanceQuestComplete", 20002);
 		callfunc("DM_PartyExp", 4000, 1500);
@@ -175,7 +155,7 @@ S_Contracts:
 	}
 
 	// Main quest gate: both contracts done -> hand the unofficial job.
-	if (questprogress(20006) == 2 && questprogress(20002) == 2 && questprogress(20003) == 2 && questprogress(20005) == 0) {
+	if (questprogress(20002) == 2 && questprogress(20003) == 2 && questprogress(20005) == 0) {
 		mes("[Wynne]");
 		mes("You've earned a contract I didn't post. Unofficial. The cathedral won't act, the palace won't look - but adventurers can go where deacons won't. Down.");
 		next();
@@ -203,13 +183,6 @@ S_Contracts:
 	mes("[Wynne]");
 	if (questprogress(20005) == 1) {
 		mes("The paint leads down, not up. Tibbets knows the way. Whatever's making those sigils is in the lowest chamber.");
-	} else if (questprogress(20006) == 1) {
-		mes("First Field Test is still open. Bring 10 Fluff, 10 Jellopy, and 10 Clover from the southern fields.");
-		mes("Current: Fluff " + countitem(Fluff) + "/10, Jellopy " + countitem(Jellopy) + "/10, Clover " + countitem(Clover) + "/10.");
-	} else if (questprogress(20006) == 2 && (questprogress(20002) == 0 || questprogress(20003) == 0)) {
-		callfunc("DM_InstanceQuestStart", 20002);
-		callfunc("DM_InstanceQuestStart", 20003);
-		mes("You passed the field test. I posted the Culvert and Rocker contracts to your ledger.");
 	} else {
 		mes("Cellar Vermin and the field contract are still open. Close them both, then we'll talk about the part the cathedral pretends isn't happening.");
 	}
