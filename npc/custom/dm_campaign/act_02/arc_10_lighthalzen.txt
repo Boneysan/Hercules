@@ -17,6 +17,7 @@
 //= Story flags (persistent character vars, see dm_flags.txt):
 //=   dm_arc10_started, dm_arc10_reise_confronted,
 //=   dm_arc10_echo_freed, dm_arc10_kiel_killed,
+//=   dm_wynne_captured, dm_wynne_rescued, dm_wynne_lost,
 //=   dm_act02_complete
 //===========================================================
 
@@ -79,6 +80,15 @@ S_StartArc:
 	mes("[Reuter]");
 	mes("The Bio Lab produces enhanced soldiers from cloned base stock. The enhancement process uses a stabilized Ash Vacuum extract. The subjects gain exceptional combat capability. They also lose most of what made them individual.");
 	next();
+	if (dm_act01_complete && !dm_wynne_rescued && !dm_wynne_lost) {
+		callfunc("DM_InstanceSetFlag", "dm_wynne_captured", 1);
+		mes("[Reuter]");
+		mes("One more thing. Rekenber intercepted a Guild quartermaster on the north road. Wynne. The name appears in the facility intake system as leverage, not as a patient.");
+		next();
+		mes("[Reuter]");
+		mes("I found a field kit near the security offices. If you want Wynne out, you will have to decide before Reise realizes I warned you.");
+		next();
+	}
 	switch (select("Who authorized this?", "Tell us about Echo.", "What is Kiel D-01?")) {
 	case 1:
 		mes("[Reuter]");
@@ -262,7 +272,7 @@ lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
 	next();
 	switch (select("The RSX authorization, the data suppression, the lab. You are the common thread. This ends now.", "Free Echo and stand down. That is the deal.", "What happens if Kiel D-01 runs without oversight?")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc10_reise_confronted", 1);
+		callfunc("DM_Decide", "arc10.echo", "confronted");
 		mes("[Reise]");
 		mes("You are not wrong that I am the common thread. I am also the only person in this building who understands what Kiel manages. Shutting me down does not shut Kiel down.");
 		next();
@@ -272,7 +282,7 @@ lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
 		mes("^3355FF*Reise steps back. It is not quite cooperation, but it is not obstruction either.*^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc10_echo_freed", 1);
+		callfunc("DM_Decide", "arc10.echo", "freed");
 		mes("[Reise]");
 		mes("Echo. 001-A. The protocol's first successful integrated outcome. The fact that it escaped and is now working against the facility is, professionally speaking, infuriating.");
 		next();
@@ -283,7 +293,7 @@ lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
 		mes("^3355FF*He does not look happy. But he does it.*^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc10_reise_confronted", 1);
+		callfunc("DM_Decide", "arc10.echo", "confronted");
 		mes("[Reise]");
 		mes("Kiel optimizes. Without a production directive it will expand the optimization parameters. Without a population ceiling it will begin identifying enhancement candidates from the general population. Automatically.");
 		next();
@@ -293,8 +303,6 @@ lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
 		mes("^3355FF*Reise's logic is impeccable and horrifying in equal measure.*^000000");
 		break;
 	}
-	callfunc("DM_InstanceQuestComplete", 20144);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1005);
 	next();
 	mes("^3355FF[Echo's Protocol resolved. Descend to lhz_dun04 and destroy Kiel D-01.]^000000");
 	close();
@@ -305,6 +313,131 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// ── Wynne's Field Kit — Optional handler loss branch ──────────────────────
+lighthalzen,122,118,3	script	Wynne's Field Kit#dm10	2_BULLETIN_BOARD,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc10_started) {
+		mes("^3355FF*A battered Adventurers' Guild field kit has been shoved beneath a bench. The seal is intact, but the clasp is bent.*^000000");
+		close();
+	}
+	if (dm_wynne_rescued) {
+		mes("^3355FF*The kit is empty now except for a note in Wynne's square hand: 'I am not dead. Stop looking sentimental.'*^000000");
+		close();
+	}
+	if (dm_wynne_lost) {
+		mes("^3355FF*The kit is tagged as evidence. Rekenber's custody number is stamped over the Adventurers' Guild seal.*^000000");
+		close();
+	}
+	if (dm_act01_complete && !dm_wynne_captured)
+		callfunc("DM_InstanceSetFlag", "dm_wynne_captured", 1);
+	if (!dm_wynne_captured) {
+		mes("^3355FF*The field kit belongs to Quartermaster Wynne. Its contents are packed with the old discipline of someone who expected trouble before breakfast.*^000000");
+		close();
+	}
+
+	mes("^3355FF*The kit contains a bent ledger clasp, a Guild route cipher, and a blood-stiff note written on Rekenber intake paper.*^000000");
+	next();
+	mes("^0000AA[Wynne's Note]^000000");
+	mes("If you are reading this, Rekenber has me. They want your route, your party list, and your conscience in that order.");
+	next();
+	mes("^0000AA[Wynne's Note]^000000");
+	mes("Do not trade the lab evidence for me. Do not let them convince you one quartermaster is worth another batch of heroes in jars.");
+	next();
+	switch (select("Extract Wynne before moving on Reise.", "Keep the pressure on the lab. Wynne told us the cost.")) {
+	case 1:
+		callfunc("DM_Decide", "arc10.wynne", "rescued");
+		mes("^3355FF*You use the route cipher to send Echo and Reuter's contacts through a service lift before the lockdown seals it.*^000000");
+		next();
+		mes("[Wynne]");
+		mes("You disobeyed a direct note from your quartermaster. Good. Means you can still read the room instead of the paperwork.");
+		close();
+	case 2:
+		callfunc("DM_Decide", "arc10.wynne", "lost");
+		mes("^3355FF*You leave the cipher in place and push toward the director's suite. The lab's evidence remains moving. Wynne does not answer again.*^000000");
+		close();
+	}
+}
+
+// ── Echo — The One Who Said No ─────────────────────────────────────────────
+lighthalzen,126,118,4	script	Echo#dm10	4_F_01,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc10_started) {
+		mes("^3355FF*A pale figure watches the executive wing from an alley shadow, then vanishes before you can speak.*^000000");
+		close();
+	}
+	if (questprogress(20144) == 0) {
+		mes("[Echo]");
+		mes("Reuter says you are different from the people who come here with purchase orders. I am waiting to see if that is true.");
+		close();
+	}
+	if (dm_arc10_echo_freed) {
+		mes("[Echo]");
+		mes("They told me I was proof the process worked. Then they told me to kill people who could not fight back. I am choosing to be proof of something else.");
+		next();
+		mes("[Echo]");
+		mes("Kiel is still below. It will keep making obedient heroes until someone teaches it that refusal exists.");
+		close();
+	}
+	if (dm_arc10_reise_confronted) {
+		mes("[Echo]");
+		mes("Reise stepped aside because you made the cost visible. That is not freedom, but it is a door.");
+		close();
+	}
+
+	mes("^3355FF*The figure standing over two disabled Rekenber guards lowers a glowing weapon. A barcode is stamped into the skin at their neck.*^000000");
+	next();
+	mes("[Echo]");
+	mes("They told me to kill you.");
+	next();
+	mes("^3355FF*The weapon hits the pavement with a hard metallic clang.*^000000");
+	next();
+	mes("[Echo]");
+	mes("I am choosing not to.");
+	next();
+	switch (select("Then stand with us as a person, not a protocol.", "Stay hidden until Reise is handled.")) {
+	case 1:
+		callfunc("DM_Decide", "arc10.echo", "freed");
+		mes("[Echo]");
+		mes("A person. I do not know how to be that yet. But I know how to refuse an order.");
+		next();
+		mes("^3355FF*Echo turns toward the executive suite. The facility alarms do not recognize the choice they just made.*^000000");
+		close();
+	case 2:
+		mes("[Echo]");
+		mes("Hidden is familiar. I would like familiar to stop being the safest thing I know.");
+		close();
+	}
+}
+
+// Rekenber Internal Memo - readable handout from the Bio Lab
+lighthalzen,128,116,3	script	Bloody Terminal#dm	2_VENDING_MACHINE1,{
+	if (!callfunc("DM_PartyActive")) { close; }
+	if (!dm_arc10_started) {
+		mes("^3355FF*The executive terminal is dark. It wants a clearance level you do not have.*^000000");
+		close();
+	}
+
+	mes("^3355FF*The terminal screen is cracked and smeared with dried blood. One memo remains open behind a failed security prompt.*^000000");
+	next();
+	mes("^0000AA[REKENBER CORPORATION - EYES ONLY]^000000");
+	mes("Sender: Director Klaus, Special Projects Division");
+	mes("Subject: Project Valhalla - Anomaly in Subject 74");
+	next();
+	mes("^0000AA[Internal Memo]^000000");
+	mes("The Whisperer Cult's resonance magic destabilizes bedrock effectively, but biological hosts fail at a 94 percent mortality rate.");
+	mes("The surviving clone batches are performing above expectations.");
+	next();
+	mes("^0000AA[Internal Memo]^000000");
+	mes("However, Subject 74 - 'Echo' - is presenting a severe anomaly.");
+	mes("The subject has begun exhibiting empathy and hesitation. During a live-fire exercise, Subject 74 refused to execute civilians.");
+	next();
+	mes("^0000AA[Internal Memo]^000000");
+	mes("If a clone can remember its humanity, the entire product line is compromised.");
+	mes("Dispatch the Seyren and Eremes units to the lower levels. Terminate Subject 74 immediately.");
+	mes("Clean up your mess, Doctor. Or you will be next in the vats.");
+	close();
 }
 
 // ── Kiel Core Set-piece ────────────────────────────────────────────────────

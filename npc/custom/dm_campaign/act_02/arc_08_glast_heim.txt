@@ -213,9 +213,7 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 	next();
 	switch (select("The kingdom is gone, Manfred. The faith killed it.", "What would the Twelve actually want here?", "Stand with us. Help us put this to rest.")) {
 	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_spared");
-		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20124);
+		callfunc("DM_Decide", "arc08.manfred", "killed");
 		mes("[Manfred]");
 		mes("Then I am already dead. Take your heresy into the cathedral. The Twelve will judge you there.");
 		next();
@@ -223,9 +221,7 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 		mes("^3355FF[Encounter: the Dark Lord will summon a larger undead court.]^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_killed");
-		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
-		callfunc("DM_InstanceQuestComplete", 20124);
+		callfunc("DM_Decide", "arc08.manfred", "spared");
 		mes("[Manfred]");
 		mes("...");
 		next();
@@ -236,9 +232,7 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 		mes("^3355FF[Encounter: Manfred's faith will suppress part of the Dark Lord's court.]^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_killed");
-		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
-		callfunc("DM_InstanceQuestComplete", 20124);
+		callfunc("DM_Decide", "arc08.manfred", "spared");
 		mes("[Manfred]");
 		mes("No outsider has ever asked me that. Help you. The cathedral was mine. The kingdom was mine. The dead are mine.");
 		next();
@@ -259,6 +253,27 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Manfred's Vigil Book - cathedral-side thematic readable
+gl_in01,116,118,3	script	Vigil Book#dm08	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc08_started) {
+		mes("^3355FF*The lectern is empty. Dust marks show where a book used to rest.*^000000");
+		close();
+	}
+
+	mes("^3355FF*A water-warped prayer ledger lies open on the lectern. The last entries are in a steady hand that grows harsher line by line.*^000000");
+	next();
+	mes("^0000AA[Brother Manfred's Vigil Book]^000000");
+	mes("The Kingdom says faith is obedience, but obedience did not hold the walls. Every man who prayed with perfect posture still bled the same.");
+	next();
+	mes("^0000AA[Brother Manfred's Vigil Book]^000000");
+	mes("If the Twelve are silent, either we are abandoned or we have mistaken silence for approval our entire lives.");
+	next();
+	mes("^0000AA[Brother Manfred's Vigil Book]^000000");
+	mes("Something in the cathedral now answers where heaven does not. I fear the answer is made from us.");
+	close();
 }
 
 // ── Glast Heim Abbey Set-piece ─────────────────────────────────────────────

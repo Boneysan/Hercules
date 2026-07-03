@@ -30,7 +30,7 @@
 //===========================================================
 
 // Elder Gyeong - Intro
-payon,158,131,4	script	Elder Gyeong#dm	1_M_OLDMAN,{
+payon,158,131,4	script	Elder Gyeong#dm	4_M_TWOLDMAN,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (dm_arc02_started) {
 		mes("[Elder Gyeong]");
@@ -302,6 +302,26 @@ S_TurnIns:
 		mes("The cave points down. If you can, sever the conduits before you strike the Flower.");
 	else
 		mes("Clear the rings, gather the bone tags, and come back before the incense burns blue again.");
+	close();
+}
+
+// ancestor plaque - local framing for the taboo Voss breaks
+payon,184,107,4	script	Ancestor Plaque#dm02	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc02_started) {
+		mes("^3355FF*A weathered shrine plaque warns visitors to leave the graves quiet and the cave offerings small.*^000000");
+		close();
+	}
+
+	mes("^3355FF*Fresh chalk marks have been scrubbed off this old plaque. The remaining text is traditional; the missing parts were recent and clinical.*^000000");
+	next();
+	mes("^0000AA[Grave Road Instruction]^000000");
+	mes("The honored dead are not to be named loudly, counted publicly, or moved from cave to lantern-road without family witness.");
+	mes("Blue flame indicates unrest. Do not feed it with fresh offerings.");
+	next();
+	mes("Scraped note beneath the frame: Family witness requirement is the primary inefficiency. Northern-scale replication would require either famine conditions or a substitute rite.");
+	next();
+	mes("The last line has been struck through so hard the wood split.");
 	close();
 }
 

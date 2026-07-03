@@ -111,23 +111,17 @@ S_StartArc:
 	next();
 	switch (select("Stay safe and give us the ward-key.", "Come with us and explain the vault.", "I do not trust Guild people.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 0);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 1);
+		callfunc("DM_Decide", "arc04.elsbeth", "protect");
 		mes("[Apprentice Elsbeth]");
 		mes("Then take this ward-key. If the lower door asks a question, answer with silence.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 0);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 1);
+		callfunc("DM_Decide", "arc04.elsbeth", "vault");
 		mes("[Apprentice Elsbeth]");
 		mes("I know the prayers they carved into the locks. I will come, and I will regret being useful.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 0);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 0);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 0);
+		callfunc("DM_Decide", "arc04.elsbeth", "distrust");
 		mes("[Apprentice Elsbeth]");
 		mes("Fair. Trust the key, then, if not the hand that offers it. No? Then you will force the old way.");
 		break;
@@ -326,26 +320,21 @@ gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
 	next();
 	switch (select("You'll drown the world to win an argument.", "Publish your proof. We'll make them listen — without the demon.", "Teach us what you found.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_fought", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 0);
+		callfunc("DM_Decide", "arc04.doran", "condemn");
 		mes("[Archmagus Doran]");
 		mes("I'll wake it.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_fought", 0);
+		callfunc("DM_Decide", "arc04.doran", "surrender");
 		mes("[Archmagus Doran]");
 		mes("If the city reads my proof with the lamps dimmed, perhaps truth will finally have a cost.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_taught", 1);
+		callfunc("DM_Decide", "arc04.doran", "teaching");
 		mes("[Archmagus Doran]");
 		mes("The gray man explains it better than I ever could. Ask him, if you survive him.");
 		break;
 	}
-	callfunc("DM_InstanceSetFlag", "dm_arc04_doran_confronted", 1);
-	callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_unmasked", 1);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 430);
 	next();
 	mes("^3355FF*The vault door opens below him. The air smells like old candles and wet fur.*^000000");
 	close();
@@ -483,30 +472,22 @@ gef_dun02,218,210,4	script	Brother Cassell#dm04	4_M_MONK,{
 	next();
 	switch (select("Refuse in faith.", "Refuse, but listen for investigative signs.", "Accept the Pilgrim's Catechism.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_catechism_choice", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_pilgrim_catechism", 0);
+		callfunc("DM_Decide", "arc04.catechism", "refuse");
 		mes("[Brother Cassell]");
 		mes("Clean hands, then. Keep them clean enough to open doors by force.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_catechism_choice", 2);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_pilgrim_catechism", 0);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_tamper_sense", 1);
+		callfunc("DM_Decide", "arc04.catechism", "listen");
 		mes("[Brother Cassell]");
 		mes("A detective's heresy. Sensible. You will know when a seal has been touched.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_catechism_choice", 3);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_pilgrim_catechism", 1);
-		callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
+		callfunc("DM_Decide", "arc04.catechism", "accept");
 		mes("[Brother Cassell]");
 		mes("Then learn the grammar of locks. Later, your friends will ask why you needed the language.");
 		break;
 	}
-	callfunc("DM_InstanceQuestComplete", 20024);
-	callfunc("DM_InstanceQuestComplete", 20019);
 	callfunc("DM_PartyExp", 80000, 35000);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 499);
 	next();
 	mes("^3355FF[Arc 4 complete: The City Above the Beast]^000000");
 	close();
@@ -517,6 +498,35 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Cassell's Letter - readable handout from the Geffen vault
+gef_dun02,207,203,3	script	Silver Dagger Letter#dm	2_BOARD1,{
+	if (!callfunc("DM_PartyActive")) { close; }
+	if (!dm_arc04_cassell_unmasked) {
+		mes("^3355FF*The wall here is scored by fresh silver. Whatever was pinned to it is gone.*^000000");
+		close();
+	}
+
+	mes("^3355FF*A clean sheet of paper is pinned to the stone with a silver dagger. The handwriting is elegant and perfectly steady.*^000000");
+	next();
+	mes("^0000AA[My dear Adventurers,]^000000");
+	mes("If you are reading this, I am already gone, and the wards holding the great beast below you have begun to fray.");
+	mes("Please do not take my departure as an insult. I simply have other appointments to keep.");
+	next();
+	mes("^0000AA[Brother Cassell's Letter]^000000");
+	mes("You fight with passion for a world that is fundamentally broken. You look at the sky and see a roof; I look at it and see a cage.");
+	mes("Every city you love is a padlock on a prison door.");
+	next();
+	mes("^0000AA[Brother Cassell's Letter]^000000");
+	mes("I serve the Voice that promises a clean slate. I do not hate you.");
+	mes("In fact, I hope you survive the coming cascade. The new world will need strong foundations.");
+	next();
+	mes("^0000AA[Brother Cassell's Letter]^000000");
+	mes("Do not try to find me. The path I walk is going to get very, very cold.");
+	mes("With utmost respect,");
+	mes("^0000AA*Brother Cassell*^000000");
+	close();
 }
 
 // ── Vault Seal Pressure Set-piece ─────────────────────────────────────────────

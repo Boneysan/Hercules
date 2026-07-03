@@ -250,10 +250,7 @@ nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
 	next();
 	switch (select("Kill the messenger. This deal does not exist.", "What is the catch?", "If we take the deal, what happens to the cascade?")) {
 	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_bribed");
-		callfunc("DM_InstanceClearFlag", "dm_arc13_coalition_deal_honored");
-		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20175);
+		callfunc("DM_Decide", "arc13.carrion", "killed");
 		mes("[Carrion]");
 		mes("Mm. The direct approach. I respect it.");
 		next();
@@ -261,10 +258,7 @@ nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
 		mes("^3355FF[Encounter: Beelzebub will fight with full coalition support.]^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_bribed");
-		callfunc("DM_InstanceClearFlag", "dm_arc13_coalition_deal_honored");
-		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20175);
+		callfunc("DM_Decide", "arc13.carrion", "killed");
 		mes("[Carrion]");
 		mes("The catch is that Beelzebub remains. The cascade remains. The coalition's containment holds only while it suits us. Which is to say: until Loki makes a better offer.");
 		next();
@@ -278,10 +272,7 @@ nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
 		mes("^3355FF[Encounter: Beelzebub will fight at full strength.]^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_killed");
-		callfunc("DM_InstanceClearFlag", "dm_arc13_beelzebub_killed");
-		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_bribed", 1);
-		callfunc("DM_InstanceQuestComplete", 20175);
+		callfunc("DM_Decide", "arc13.carrion", "bribed");
 		mes("[Carrion]");
 		mes("Nothing. The cascade is not our department. We exist within it the same way you do. The coalition wants the cascade to slow down — a world in the middle of an extinction event generates less productive chaos than a world in ordinary distress.");
 		next();
@@ -306,6 +297,27 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Carrion's Calling Card - an example of the Broker's offer language
+nameless_i,108,96,3	script	Broker's Card#dm13	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc13_started) {
+		mes "^3355FF*A lacquered card sits untouched on the stone. It looks important in the way poisons often do.*^000000";
+		close;
+	}
+
+	mes "^3355FF*A black calling card has been left under a rusted bell weight. The handwriting is graceful enough to make the contents feel ruder.*^000000";
+	next;
+	mes "^0000AA[Carrion's Card]^000000";
+	mes "To the next practical souls through the gate: I am prepared to discuss de-escalation, provided we use a definition of peace that respects everyone's continued relevance.";
+	next;
+	mes "^0000AA[Carrion's Card]^000000";
+	mes "Please arrive with clear priorities. I dislike moral panic because it makes accounting imprecise.";
+	next;
+	mes "^0000AA[Carrion's Card]^000000";
+	mes "If Father Quill called me a demon before he called me useful, he was technically correct and strategically boring.";
+	close;
 }
 
 // ── Beelzebub Sanctum Set-piece ────────────────────────────────────────────

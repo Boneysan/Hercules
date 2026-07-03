@@ -233,7 +233,7 @@ mid_camp,110,100,5	script	Captain Vance#dm	4_M_03,{
 	next();
 	switch (select("The anomaly is consuming this world. It is not a resource.", "We need your survey data. But you need to understand what you are surveying.", "Stand your people down. This is not a military operation.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc12_vance_exposed", 1);
+		callfunc("DM_Decide", "arc12.vance", "exposed");
 		mes("[Vance]");
 		mes("Consuming. You mean the cascade. I have read the Yuno reports. I chose to interpret them optimistically.");
 		next();
@@ -243,7 +243,7 @@ mid_camp,110,100,5	script	Captain Vance#dm	4_M_03,{
 		mes("^3355FF*Vance withdraws. He will file an honest report. His superiors will not like it.*^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc12_vance_helped", 1);
+		callfunc("DM_Decide", "arc12.vance", "helped");
 		mes("[Vance]");
 		mes("What I am surveying. I am surveying a dimensional nexus consuming a world. Yes. I understand that intellectually. Emotionally I was writing a survey about unclaimed territory.");
 		next();
@@ -253,7 +253,7 @@ mid_camp,110,100,5	script	Captain Vance#dm	4_M_03,{
 		mes("^3355FF*Vance redirects his team. The data they collect will be scientifically useful rather than strategically convenient.*^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc12_vance_exposed", 1);
+		callfunc("DM_Decide", "arc12.vance", "exposed");
 		mes("[Vance]");
 		mes("On whose authority?");
 		next();
@@ -267,8 +267,6 @@ mid_camp,110,100,5	script	Captain Vance#dm	4_M_03,{
 		mes("^3355FF*He looks like a man who has been waiting for permission to stop pretending.*^000000");
 		break;
 	}
-	callfunc("DM_InstanceQuestComplete", 20165);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1205);
 	next();
 	mes("^3355FF[The Vance Proposal resolved. Proceed to spl_fild01 and face Naght Sieger.]^000000");
 	close();
@@ -279,6 +277,27 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Survey slate - dimensional field notes from the anchor perimeter
+mid_camp,106,96,3	script	Anchor Survey Slate#dm	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc12_started) {
+		mes "^3355FF*A blank survey slate waits under a weighted cloth. No one has started the measurements yet.*^000000";
+		close;
+	}
+
+	mes "^3355FF*The slate is packed with layered field notes in two hands: one military, one Sapha. The disagreement between them gets more urgent line by line.*^000000";
+	next;
+	mes "^0000AA[Anchor Perimeter Notes]^000000";
+	mes "Midgard survey hand: anomaly perimeter stable enough for claim markers. Sapha margin: not stable, only briefly symmetrical.";
+	next;
+	mes "^0000AA[Anchor Perimeter Notes]^000000";
+	mes "Observed effect: local fauna respond to pressure differential before visible rupture. Border aggression may be anticipatory rather than territorial.";
+	next;
+	mes "^0000AA[Anchor Perimeter Notes]^000000";
+	mes "Revised conclusion: if this place is treated as a frontier instead of a wound, every later reading will be wrong on purpose.";
+	close;
 }
 
 // ── Rift Anchor Set-piece ──────────────────────────────────────────────────

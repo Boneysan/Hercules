@@ -186,12 +186,13 @@ villain confrontation, then an MVP boss spawned via DM console.
   150,150. Himmelmez_bargained lowers pulse damage from 8% to 5% and removes
   the curse rider.
 - Final NPC: The Central Choice (`moc_fild22,155,150`) — gated on `dm_arc19_surt_defeated`
-- Five endings (each sets a `dm_finale_*` flag):
+- Six endings (each sets a `dm_finale_*` flag):
   1. `dm_finale_shared_seal` — distributed resonance network
   2. `dm_finale_reforged_seal` — Varmundt's inverse-frequency machine
   3. `dm_finale_queens_bargain` — Himmelmez holds from Niflheim's side
   4. `dm_finale_thanatos_road` — one person chooses the seal knowingly
-  5. `dm_finale_ragnarok_unbound` — seal not rebuilt; what's beneath rises
+  5. `dm_finale_refusal` — no new martyr; the seal's demand is denied outright
+  6. `dm_finale_ragnarok_unbound` — seal not rebuilt; what's beneath rises
 - Beat 1999 + `dm_campaign_complete` + global announce on completion
 
 ---

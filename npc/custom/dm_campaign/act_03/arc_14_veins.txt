@@ -239,7 +239,7 @@ veins,110,100,5	script	Prelate Hesma#dm	4_M_06,{
 	next();
 	switch (select("Sign the evacuation authorization and file an honest report.", "Give us the deep approach seal and step back.", "What will you do about what you know?")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc14_hesma_exposed", 1);
+		callfunc("DM_Decide", "arc14.hesma", "exposed");
 		mes("[Hesma]");
 		mes("Yes. The authorization and the report. Both. I should have done this three months ago. I have a very clear sense of what I should have done three months ago.");
 		next();
@@ -247,14 +247,14 @@ veins,110,100,5	script	Prelate Hesma#dm	4_M_06,{
 		mes("^3355FF*The evacuation order is posted. The deep approach is open.*^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc14_hesma_bribed", 1);
+		callfunc("DM_Decide", "arc14.hesma", "bribed");
 		mes("[Hesma]");
 		mes("The seal. And I will... manage the city response. Quietly. The evacuation will happen. The public account will be a geological emergency, not a divine manifestation. The pilgrimage revenue may recover.");
 		next();
 		mes("^3355FF*The seal is transferred. Hesma's silence is purchased with the same currency he used to buy his own.*^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc14_hesma_exposed", 1);
+		callfunc("DM_Decide", "arc14.hesma", "exposed");
 		mes("[Hesma]");
 		mes("What I will do. I will authorize the evacuation. I will file the report. I will testify at whatever inquiry follows. I am sixty-three years old. I have been a prelate for thirty-one of those years.");
 		next();
@@ -264,8 +264,6 @@ veins,110,100,5	script	Prelate Hesma#dm	4_M_06,{
 		mes("^3355FF*Hesma signs both documents without being asked for a second time.*^000000");
 		break;
 	}
-	callfunc("DM_InstanceQuestComplete", 20185);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1405);
 	next();
 	mes("^3355FF[The Prelate's Silence resolved. Descend to thor_v03 and face Ifrit.]^000000");
 	close();
@@ -276,6 +274,27 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Hesma's withheld notice - records the cover-up in his own words
+veins,112,96,3	script	Withheld Notice#dm14	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc14_started) {
+		mes "^3355FF*A sealed civic notice hangs here, unsigned and undelivered.*^000000";
+		close;
+	}
+
+	mes "^3355FF*A notice meant for the city council has been folded and refolded until the edges are white. It was never posted.*^000000";
+	next;
+	mes("^0000AA[Draft Emergency Notice]^000000");
+	mes("Pilgrimage activity is to be suspended pending review of thermal instability below the Cathedral routes. Civil evacuation planning should begin immediately and without public framing related to divine displeasure.");
+	next;
+	mes("^0000AA[Draft Emergency Notice]^000000");
+	mes("Projected consequence of immediate disclosure: loss of revenue, panic flight, institutional embarrassment, survivable political damage.");
+	next;
+	mes("^0000AA[Draft Emergency Notice]^000000");
+	mes("Projected consequence of continued delay: miner fatalities, route collapse, eventual manifestation event no rhetoric will survive.");
+	close;
 }
 
 // ── Magma Cathedral Set-piece ──────────────────────────────────────────────

@@ -175,7 +175,42 @@ S_TurnIns:
 	else if (questprogress(20223) == 1)
 		mes("Banquet Hall Procession is still open. Gibbet in the Banquet Hall.");
 	else
-		mes("Both done. Himmelmez is in the inner hall. nif_in.");
+	mes("Both done. Himmelmez is in the inner hall. nif_in.");
+	close();
+}
+
+// Echo - living contradiction at Niflheim's edge
+niflheim,104,96,4	script	Echo#dm18	4_F_01,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc10_echo_freed) {
+		mes("^3355FF*Someone was here recently. The frost is broken in a pattern like bootsteps, then lost among the dead.*^000000");
+		close();
+	}
+	if (!dm_arc18_started) {
+		mes("[Echo]");
+		mes("I came to see if the dead sounded different from the living. They do. Less confused. More patient.");
+		close();
+	}
+
+	mes("[Echo]");
+	mes("Himmelmez's dead keep looking at me like I should not exist. They are not wrong. I was made in a place that mistook manufacture for permission.");
+	next();
+	if (questprogress(20221) == 2) {
+		if (dm_arc18_himmelmez_bargained) {
+			mes("[Echo]");
+			mes("You found someone on the far side willing to hold the line. That matters. It means the living are not the only ones refusing what Loki called inevitable.");
+		} else {
+			mes("[Echo]");
+			mes("Then the throne is empty. I understand empty systems. They keep running long after the person inside them is gone.");
+		}
+		close();
+	}
+
+	mes("[Echo]");
+	mes("If you speak to her, do not talk to her like a throne. Talk to her like someone who has been carrying a function alone for too long.");
+	next();
+	mes("[Echo]");
+	mes("That is how they talked to me in the lab. It is how they stopped hearing me. Do not make the same mistake with the queen of the dead.");
 	close();
 }
 
@@ -214,19 +249,13 @@ nif_in,150,150,5	script	Himmelmez#dm	4_F_02,{
 	next();
 	switch (select("You are part of what has gone wrong. This ends here.", "We need your hand to seal the cascade from the inside.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20221);
-		callfunc("DM_PartyExp", 2500000, 1500000);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1899);
+		callfunc("DM_Decide", "arc18.himmelmez", "killed");
 		instance_announce(instance_id(), "^3355FF[DM] Himmelmez falls. Niflheim has no queen. The dead pour north without her hand — and into a world that will have to decide what to do with them as part of the seal.^000000", bc_all);
 		sleep(2000);
 		instance_announce(instance_id(), "^FF6600[DM] One more piece removed. One less hand available for the finale. The seal's shape will have to account for an empty throne.^000000", bc_all);
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_bargained", 1);
-		callfunc("DM_InstanceQuestComplete", 20221);
-		callfunc("DM_PartyExp", 2000000, 1200000);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1899);
+		callfunc("DM_Decide", "arc18.himmelmez", "bargained");
 		instance_announce(instance_id(), "^3355FF[DM] A dark pact is sealed. Himmelmez will hold the dead while the living face Loki. She says: 'I have been holding them already. I am glad to have a reason now.'^000000", bc_all);
 		sleep(2000);
 		instance_announce(instance_id(), "^FF6600[DM] You leave Niflheim with a queen at your back and a debt that has no price yet. The ruins of Morroc are the last thread before the choice.^000000", bc_all);

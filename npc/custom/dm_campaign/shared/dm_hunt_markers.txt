@@ -9,7 +9,7 @@
 // ── Arc 1 ─────────────────────────────────────────────────────────────────
 
 // Quest 20006: First Field Test (Fluff/Jellopy/Clover) → prt_fild08
-prt_fild08,200,200,0	script	Hunt Marker#dm_h_a01i	-1,{
+prt_fild08,200,200,0	script	Hunt Marker#dm_h_a01i	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -18,7 +18,7 @@ OnInit:
 }
 
 // Quest 20002: Contract: Cellar Vermin (Tarou x10) → prt_sewb2 (60 Tarou)
-prt_sewb2,100,100,0	script	Hunt Marker#dm_h_arc01a	-1,{
+prt_sewb2,100,100,0	script	Hunt Marker#dm_h_arc01a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -27,7 +27,7 @@ OnInit:
 }
 
 // Quest 20003: Field Contract: Rockers (Rocker x15) → prt_fild07 (150 Rocker)
-prt_fild07,200,200,0	script	Hunt Marker#dm_h_arc01b	-1,{
+prt_fild07,200,200,0	script	Hunt Marker#dm_h_arc01b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -37,7 +37,7 @@ OnInit:
 
 // Quest 20005: The Goat-Headed Sign (Deviruchi MVP) → prt_sewb4 (story map)
 // Deviruchi also spawns in gef_dun02 but prt_sewb4 is the campaign set-piece
-prt_sewb4,100,100,0	script	Hunt Marker#dm_h_arc01c	-1,{
+prt_sewb4,100,100,0	script	Hunt Marker#dm_h_arc01c	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -48,7 +48,7 @@ OnInit:
 // ── Arc 2 ─────────────────────────────────────────────────────────────────
 
 // Quest 20008: Mushroom Ring Patrol (Spore x? → MobId 1014) → pay_fild08 (140 Spore)
-pay_fild08,200,200,0	script	Hunt Marker#dm_h_arc02a	-1,{
+pay_fild08,200,200,0	script	Hunt Marker#dm_h_arc02a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -57,7 +57,7 @@ OnInit:
 }
 
 // Quest 20009: Bone Tag Turn-In (Skeleton x? → MobId 1076) → pay_dun00 (35 Skeleton)
-pay_dun00,100,100,0	script	Hunt Marker#dm_h_arc02b	-1,{
+pay_dun00,100,100,0	script	Hunt Marker#dm_h_arc02b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -66,7 +66,7 @@ OnInit:
 }
 
 // Quest 20012: What the Ancestors Won't Say (Moonlight Flower MVP) → pay_dun04
-pay_dun04,120,115,0	script	Hunt Marker#dm_h_arc02c	-1,{
+pay_dun04,120,115,0	script	Hunt Marker#dm_h_arc02c	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -77,7 +77,7 @@ OnInit:
 // ── Arc 3 ─────────────────────────────────────────────────────────────────
 
 // Quest 20014: Caravan Water Debt (Muka x? → MobId 1055) → moc_fild02 (130 Muka)
-moc_fild02,200,200,0	script	Hunt Marker#dm_h_arc03a	-1,{
+moc_fild02,200,200,0	script	Hunt Marker#dm_h_arc03a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -89,7 +89,7 @@ OnInit:
 // Quest 20016: Sphinx Night Watch (Zerom x? → MobId 1178) → in_sphinx2 (50 Zerom)
 // Both mobs accessible from Morroc area; separate markers for clarity
 
-anthell01,100,200,0	script	Hunt Marker#dm_h_arc03b	-1,{
+anthell01,100,200,0	script	Hunt Marker#dm_h_arc03b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -97,7 +97,7 @@ OnInit:
 	end;
 }
 
-in_sphinx2,100,100,0	script	Hunt Marker#dm_h_arc03c	-1,{
+in_sphinx2,100,100,0	script	Hunt Marker#dm_h_arc03c	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -106,7 +106,7 @@ OnInit:
 }
 
 // Quest 20017: What the Desert Spat Up (Osiris → MobId 1038) → moc_pryd04
-moc_pryd04,100,100,0	script	Hunt Marker#dm_h_arc03d	-1,{
+moc_pryd04,100,100,0	script	Hunt Marker#dm_h_arc03d	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -115,7 +115,7 @@ OnInit:
 }
 
 // Quest 20018: The King Beneath (Amon Ra MVP → MobId 1511) → moc_pryd06
-moc_pryd06,102,85,0	script	Hunt Marker#dm_h_arc03e	-1,{
+moc_pryd06,102,85,0	script	Hunt Marker#dm_h_arc03e	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -126,7 +126,7 @@ OnInit:
 // ── Arc 4 ─────────────────────────────────────────────────────────────────
 
 // Quest 20020: Tower Apprentice Drills (Poison Spore x? → MobId 1077) → gef_dun00 (25)
-gef_dun00,100,100,0	script	Hunt Marker#dm_h_arc04a	-1,{
+gef_dun00,100,100,0	script	Hunt Marker#dm_h_arc04a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -135,7 +135,7 @@ OnInit:
 }
 
 // Quest 20021: Orc Village Bounty (Orc Warrior x? → MobId 1023) → gef_fild10 (130)
-gef_fild10,200,200,0	script	Hunt Marker#dm_h_arc04b	-1,{
+gef_fild10,200,200,0	script	Hunt Marker#dm_h_arc04b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -144,7 +144,7 @@ OnInit:
 }
 
 // Quest 20022: Argiope Silk Run (Argiope x? → MobId 1099) → mjolnir_05 (130)
-mjolnir_05,200,200,0	script	Hunt Marker#dm_h_arc04c	-1,{
+mjolnir_05,200,200,0	script	Hunt Marker#dm_h_arc04c	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -153,7 +153,7 @@ OnInit:
 }
 
 // Quest 20023: The Vault That Prays (Baphomet MVP → MobId 1039) → gef_dun02
-gef_dun02,100,100,0	script	Hunt Marker#dm_h_arc04d	-1,{
+gef_dun02,100,100,0	script	Hunt Marker#dm_h_arc04d	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -164,7 +164,7 @@ OnInit:
 // ── Arc 5 ─────────────────────────────────────────────────────────────────
 
 // Quest 20027: Byalan Tide Contract (Marc x? → MobId 1045) → iz_dun03 (40 Marc)
-iz_dun03,100,100,0	script	Hunt Marker#dm_h_arc05a	-1,{
+iz_dun03,100,100,0	script	Hunt Marker#dm_h_arc05a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -173,7 +173,7 @@ OnInit:
 }
 
 // Quest 20028: Sunken Ship Manifest (Pirate Skeleton x? → MobId 1071) → treasure01 (43)
-treasure01,100,100,0	script	Hunt Marker#dm_h_arc05b	-1,{
+treasure01,100,100,0	script	Hunt Marker#dm_h_arc05b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -183,7 +183,7 @@ OnInit:
 
 // Quest 20030: What Turned Over in the Deep (Tao Gunka MVP → MobId 1583) → beach_dun
 // (tur_dun04 is the campaign context; Tao Gunka actually spawns on beach_dun)
-beach_dun,100,100,0	script	Hunt Marker#dm_h_arc05c	-1,{
+beach_dun,100,100,0	script	Hunt Marker#dm_h_arc05c	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -194,7 +194,7 @@ OnInit:
 // ── Arc 6 ─────────────────────────────────────────────────────────────────
 
 // Quest 20103: Harpy Weather Log (MobId 1377 → Elder/Harpy area) → yuno_fild03 (130 Harpy)
-yuno_fild03,200,200,0	script	Hunt Marker#dm_h_arc06a	-1,{
+yuno_fild03,200,200,0	script	Hunt Marker#dm_h_arc06a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -203,7 +203,7 @@ OnInit:
 }
 
 // Quest 20104: Juperos Parts Requisition (Venatu x? → MobId 1676) → juperos_01 (70)
-juperos_01,100,100,0	script	Hunt Marker#dm_h_arc06b	-1,{
+juperos_01,100,100,0	script	Hunt Marker#dm_h_arc06b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -212,7 +212,7 @@ OnInit:
 }
 
 // Quest 20105: Norgroad Heat Index (Zenorc x? → MobId 1177) → orcsdun02 (50 Zenorc)
-orcsdun02,100,100,0	script	Hunt Marker#dm_h_arc06c	-1,{
+orcsdun02,100,100,0	script	Hunt Marker#dm_h_arc06c	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -223,7 +223,7 @@ OnInit:
 // ── Arc 7 ─────────────────────────────────────────────────────────────────
 
 // Quest 20113: Factory Whistle Shift (Galion x? → MobId 1783) → ve_fild01 (35 Galion)
-ve_fild01,200,200,0	script	Hunt Marker#dm_h_arc07a	-1,{
+ve_fild01,200,200,0	script	Hunt Marker#dm_h_arc07a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -232,7 +232,7 @@ OnInit:
 }
 
 // Quest 20114: Metaling Scrap Drive (Mineral x? → MobId 1614) → ein_dun02 (50 Mineral)
-ein_dun02,100,100,0	script	Hunt Marker#dm_h_arc07b	-1,{
+ein_dun02,100,100,0	script	Hunt Marker#dm_h_arc07b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -241,7 +241,7 @@ OnInit:
 }
 
 // Quest 20115: Mine Dust Medicine (Pitman x15 → MobId 1616) → ein_fild03 (20 Pitman)
-ein_fild03,200,200,0	script	Hunt Marker#dm_h_arc07c	-1,{
+ein_fild03,200,200,0	script	Hunt Marker#dm_h_arc07c	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -252,7 +252,7 @@ OnInit:
 // ── Arc 8 ─────────────────────────────────────────────────────────────────
 
 // Quest 20122: Outer Garrison (Raydric → MobId 1164 / Raydric 1163) → gl_knt01 (90 Raydric)
-gl_knt01,100,100,0	script	Hunt Marker#dm_h_arc08a	-1,{
+gl_knt01,100,100,0	script	Hunt Marker#dm_h_arc08a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -261,7 +261,7 @@ OnInit:
 }
 
 // Quest 20123: Fallen Choir (Wraith → MobId 1193 / Wraith 1192) → gl_chyard (Hunter Fly + Wraith area)
-gl_chyard,100,100,0	script	Hunt Marker#dm_h_arc08b	-1,{
+gl_chyard,100,100,0	script	Hunt Marker#dm_h_arc08b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -273,7 +273,7 @@ OnInit:
 
 // Quest 20132: Ice Core Samples (Gazeti x? → MobId 1778) → ice_dun03 (42 Gazeti)
 // Quest 20133: Hollow Blessings (Siroma x? → MobId 1776) → ice_dun01 (75 Siroma)
-ice_dun03,100,100,0	script	Hunt Marker#dm_h_arc09a	-1,{
+ice_dun03,100,100,0	script	Hunt Marker#dm_h_arc09a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -281,7 +281,7 @@ OnInit:
 	end;
 }
 
-ice_dun01,100,100,0	script	Hunt Marker#dm_h_arc09b	-1,{
+ice_dun01,100,100,0	script	Hunt Marker#dm_h_arc09b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -293,7 +293,7 @@ OnInit:
 
 // Quest 20142: Lab Infiltration (Remover x20 → MobId 1682) → lhz_dun01 (100 Remover)
 // Quest 20143: Lower Level Sweep (Aliza x? → MobId 1737) → kh_dun02 (10 Aliza)
-lhz_dun01,100,100,0	script	Hunt Marker#dm_h_arc10a	-1,{
+lhz_dun01,100,100,0	script	Hunt Marker#dm_h_arc10a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -301,7 +301,7 @@ OnInit:
 	end;
 }
 
-kh_dun02,100,100,0	script	Hunt Marker#dm_h_arc10b	-1,{
+kh_dun02,100,100,0	script	Hunt Marker#dm_h_arc10b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -312,7 +312,7 @@ OnInit:
 // ── Arc 11 ────────────────────────────────────────────────────────────────
 
 // Quest 20153: Gryphon Vigil (Gryphon → MobId 1260) → hu_fild02 (Gryphon 1259 sparse)
-hu_fild02,200,200,0	script	Hunt Marker#dm_h_arc11a	-1,{
+hu_fild02,200,200,0	script	Hunt Marker#dm_h_arc11a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -321,7 +321,7 @@ OnInit:
 }
 
 // Quest 20154: Dragon Pack Dispersal (Novus/Ferus → MobId 1715) → abyss_01 (9 Novus + Ferus)
-abyss_01,100,100,0	script	Hunt Marker#dm_h_arc11b	-1,{
+abyss_01,100,100,0	script	Hunt Marker#dm_h_arc11b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -333,7 +333,7 @@ OnInit:
 
 // Quest 20163: New World Cornus Survey (Cornus x20 → MobId 1992) → spl_fild01 (25 Cornus)
 // Quest 20164: Naga Border Patrol (Naga x20 → MobId 1993) → spl_fild01 (35 Naga)
-spl_fild01,200,200,0	script	Hunt Marker#dm_h_arc12a	-1,{
+spl_fild01,200,200,0	script	Hunt Marker#dm_h_arc12a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -347,7 +347,7 @@ OnInit:
 
 // Quest 20173: Abbey Bell Silencing (Banshee x20 → MobId 1868 / Banshee 1867) → abbey01 (93)
 // Quest 20174: Sanctum Sweep (Zombie Slaughter x20 → MobId 1865 / Ragged Zombie 1865) → abbey02 (70 + 210)
-abbey01,100,100,0	script	Hunt Marker#dm_h_arc13a	-1,{
+abbey01,100,100,0	script	Hunt Marker#dm_h_arc13a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -355,7 +355,7 @@ OnInit:
 	end;
 }
 
-abbey02,100,100,0	script	Hunt Marker#dm_h_arc13b	-1,{
+abbey02,100,100,0	script	Hunt Marker#dm_h_arc13b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -367,7 +367,7 @@ OnInit:
 
 // Quest 20183: Volcanic Salamander Hunt (Salamander → MobId 1832/Ifrit area) → thor_v03 (60 Salamander)
 // Quest 20184: Lava Golem Firebreak (Blazer → MobId 1367 / Lava Golem 1366) → mag_dun01
-thor_v03,100,100,0	script	Hunt Marker#dm_h_arc14a	-1,{
+thor_v03,100,100,0	script	Hunt Marker#dm_h_arc14a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -375,7 +375,7 @@ OnInit:
 	end;
 }
 
-mag_dun01,100,100,0	script	Hunt Marker#dm_h_arc14b	-1,{
+mag_dun01,100,100,0	script	Hunt Marker#dm_h_arc14b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -387,7 +387,7 @@ OnInit:
 
 // Quest 20192: What the Tower Remembers (Heirozoist x15 → MobId 1510) → niflheim (10)
 // Quest 20193: Aldebaran Last Letters (Lude x15 → MobId 1509) → nif_fild01 (20 Disguise + Lude area)
-niflheim,100,100,0	script	Hunt Marker#dm_h_arc15a	-1,{
+niflheim,100,100,0	script	Hunt Marker#dm_h_arc15a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -401,7 +401,7 @@ OnInit:
 
 // Quest 20202: Underground Prison Cleanup (Disguise x20 → MobId 1506) → nif_fild01 (50 Disguise)
 // Quest 20203: Terra Gloria (Bloody Murderer x20 → MobId 1507) → nif_fild02 (11 Bloody Murderer)
-nif_fild01,200,200,0	script	Hunt Marker#dm_h_arc16a	-1,{
+nif_fild01,200,200,0	script	Hunt Marker#dm_h_arc16a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -409,7 +409,7 @@ OnInit:
 	end;
 }
 
-nif_fild02,200,200,0	script	Hunt Marker#dm_h_arc16b	-1,{
+nif_fild02,200,200,0	script	Hunt Marker#dm_h_arc16b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -421,7 +421,7 @@ OnInit:
 
 // Quest 20212: Sages Legacy (Aliza x20 → MobId 1737) → kh_dun01 (45 Aliza)
 // Quest 20213: Tartaros Dive (Celia x15 → MobId 2223) → lhz_dun04 (81 Celia)
-kh_dun01,100,100,0	script	Hunt Marker#dm_h_arc17a	-1,{
+kh_dun01,100,100,0	script	Hunt Marker#dm_h_arc17a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -429,7 +429,7 @@ OnInit:
 	end;
 }
 
-lhz_dun04,100,100,0	script	Hunt Marker#dm_h_arc17b	-1,{
+lhz_dun04,100,100,0	script	Hunt Marker#dm_h_arc17b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -441,7 +441,7 @@ OnInit:
 
 // Quest 20222: The Dead You Failed (Dullahan x15 → MobId 1504) → nif_fild01 (20 Dullahan)
 // Quest 20223: Banquet Hall Procession (Gibbet x15 → MobId 1503) → nif_fild02 (20 Gibbet)
-nif_fild01,150,150,0	script	Hunt Marker#dm_h_arc18a	-1,{
+nif_fild01,150,150,0	script	Hunt Marker#dm_h_arc18a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -449,7 +449,7 @@ OnInit:
 	end;
 }
 
-nif_fild02,150,150,0	script	Hunt Marker#dm_h_arc18b	-1,{
+nif_fild02,150,150,0	script	Hunt Marker#dm_h_arc18b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -460,7 +460,7 @@ OnInit:
 // ── Arc 19 ────────────────────────────────────────────────────────────────
 
 // Quest 20232: Beyond the Veil (Khalitzburg x15 → MobId 1132) → gl_knt02 (40 Khalitzburg)
-gl_knt02,100,100,0	script	Hunt Marker#dm_h_arc19a	-1,{
+gl_knt02,100,100,0	script	Hunt Marker#dm_h_arc19a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;

@@ -7,10 +7,38 @@ updates in `npc/custom/dm_campaign/`.
 
 - The campaign scripts load successfully after the recent fixes.
 - `script-checker` passes for all DM campaign scripts.
+- As of 2026-07-03, `bash ./script-checker $(find npc/custom/dm_campaign -name '*.txt' | sort)` exits `0` with no output.
 - `./map-server --run-once` parses the campaign and quest DB without DM-campaign
   syntax or map blockers.
 - The campaign is script-first and runs through `dm_console.txt` plus the
   shared helpers in `npc/custom/dm_campaign/shared/`.
+- The dialogue audit gaps identified from the synced Obsidian subset have been implemented: Mira Arc 1/5, Echo Arc 10, Wynne Arc 10 capture branch, Arc 16 unity tightening, and Arc 19 finale registry routing.
+- Remaining highest-value work is live behavior validation: critical branch QA, full client journal merge verification, server smoke testing, and optional full-vault Obsidian sync for strict line-by-line source comparison.
+
+## Immediate Next Checks
+
+1. Runtime QA in-game: test `arc10.wynne`, `arc10.echo`, `arc16.rina`, and all six `arc19.finale` outcomes. Use `planning/dm-playtest-notes.md#critical-branch-qa` as the checklist.
+2. Full Obsidian source sync: copy the full `H:\Docs\Obsidian Notes\Game Design\Ragnarok_Online\Campaign\` vault subset into `planning/obsidian-campaign/full/` or equivalent if a true line-by-line dialogue audit is required.
+3. Client journal side: apply `planning/campaign_quest_journal_entries.lua` or `planning/SealCascade_QuestList_addon.lua` to the actual client Lua/LUB and verify quests in the client UI.
+4. Server smoke: start the real login/char/map stack and walk a test character through early, mid, and finale arcs.
+5. Handoff polish: after runtime QA, mark pass/fail notes directly in this document and in `planning/dialogue-implementation-audit.md`.
+
+## Runtime QA Setup Status
+
+2026-07-03 workspace smoke:
+
+- `bash ./script-checker $(find npc/custom/dm_campaign -name '*.txt' | sort)` passed with no output.
+- `timeout 35 ./map-server --run-once` completed successfully outside the sandbox and loaded the DM campaign scripts.
+- Live `login-server`, `char-server`, and `map-server` were started successfully; map reached `Map Server is now online`.
+- Local QA accounts were created:
+  - DM: `dmqa` / `dmqa123`, promoted to group 5.
+  - Player: `playerqa` / `playerqa123`, normal group.
+- Backup taken after QA account setup: `backups/ragnarok_20260703_003202_runtime_qa_setup.sql.gz`.
+
+Remaining client-bound test:
+
+- Connect with the RO client as `dmqa`, create/log in a character, party with a `playerqa` character, then run the Critical Branch QA checklist in `planning/dm-playtest-notes.md`.
+- The server console does not expose player `@dm` commands; those must be executed from an authenticated in-game character.
 
 **Client Journal & Tooling Complete (2026-07-02):** Full quest data layer (89 entries), merge tooling, preflight script, playtest notes, client setup guide, and BGM/cutin docs are ready. See "Latest Local Validation" and new files under planning/, tools/, client/. Server DM commands are elegant and complete. Focus now shifts to live client playtesting per the Sprint plans below.
 
@@ -36,8 +64,9 @@ updates in `npc/custom/dm_campaign/`.
   (`DM_Config.gm_level`), downed/cutscene movement-lock ownership, and an
   "Adding A New Arc" checklist in `CAMPAIGN.md`.
 - Validation: `./tools/campaign-preflight.sh` OK after each server-side batch
-  (84 dm_campaign include lines, 0 errors). Remaining warnings are the known
-  numeric `-1` invisible marker view warnings in `dm_hunt_markers.txt`.
+  (84 dm_campaign include lines, 0 errors). Hunt markers now use `HIDDEN_NPC`
+  constants instead of numeric `-1` view IDs, so the marker deprecation warnings
+  are resolved.
 - Live smoke tests still pending: `@dm decide`, `@dm flag arc03`,
   `@dm flag cleararc03`, `@dm flag sync <player>`, `@dm status` mid-fight,
   and the two downed/cutscene lock-order cases.
@@ -53,7 +82,7 @@ updates in `npc/custom/dm_campaign/`.
 - DB comments: 19 arcs with design source + synopsis (branches, flags, cast, Rewards on all 47+ hunts); samples enriched in prior passes.
 - Hunt markers: 48 coverage (all real hunts; trackers intentionally omitted; late arcs 15-19 maps verified correct: aldebaran/prt_q/moc_ruins etc.).
 - All 89 wired to scripts + @dmbeat.
-- Validation: script-checker clean (minor -1 deprecation on invisible markers expected, non-fatal); ./tools/check-campaign.sh and ./tools/campaign-preflight.sh OK. Journal health: 89 entries, 0 "see vault", ~55 solid structured, colored summaries present.
+- Validation: script-checker clean; ./tools/check-campaign.sh and ./tools/campaign-preflight.sh OK. Journal health: 89 entries, 0 "see vault", ~55 solid structured, colored summaries present.
 - Quest/Data Layer complete and elegant. Ready to merge lua source into OngoingQuestInfoList_True_EN.lub.
 - DM Tooling (console, beats, helpers, flags, instances, rewards, symptoms, combat, scene, voice/secret, checks/roll extraction, traps stub): feature-complete per vault + @dm secret quick win + DM_RollCheck extraction for traps/initiative. @dm trap surface present (core impl pending per guide). Server side elegant and ready. Small polish: @dm status now reminds players about merged client journal for full experience.
 - Next focus: live client validation + full playtest checklist execution (see "Live Client Validation", "Encounter And Branch Validation", "Hazard..." sections below); client asset distribution (BGM/cutins per campaign_client_assets.md); prep for game night.
@@ -175,7 +204,8 @@ See planning/campaign_quest_journal_entries.lua (source) and campaign_client_ass
 - Added `Rewards: { Exp: X  Jexp: Y }` blocks to all 47 hunt and boss quests
   in `db/quest_db.conf`, scaled by arc target level (Arc 1 ~8k base EXP,
   scaling up to Arc 19 ~800k). Quest journal reward tab now shows EXP/JExp.
-- Added `shared/dm_hunt_markers.txt` — 45 invisible marker NPCs using
+- Added `shared/dm_hunt_markers.txt` — invisible marker NPCs using
+  `HIDDEN_NPC` plus
   `questinfo` + `setquestinfo` to display yellow minimap arrows at monster
   spawn zones while the player has the matching hunt quest active on the same
   map. Registered in `npc/scripts_custom.conf`.

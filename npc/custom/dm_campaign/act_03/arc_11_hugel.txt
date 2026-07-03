@@ -234,9 +234,7 @@ hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
 	next();
 	switch (select("The Valkyries are not judging us. They are malfunctioning.", "You may be right about Midgard's failures. That is not what this is.", "Then stand with us and do something about those failures.")) {
 	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_joined");
-		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_subdued", 1);
-		callfunc("DM_InstanceQuestComplete", 20155);
+		callfunc("DM_Decide", "arc11.bjorn", "subdued");
 		mes("[Bjorn]");
 		mes("Malfunctioning. A divine instrument of judgment, and you call it broken.");
 		next();
@@ -250,9 +248,7 @@ hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
 		mes("^3355FF[Encounter: Randgris will fight with her full court.]^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_joined");
-		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_subdued", 1);
-		callfunc("DM_InstanceQuestComplete", 20155);
+		callfunc("DM_Decide", "arc11.bjorn", "subdued");
 		mes("[Bjorn]");
 		mes("You acknowledge that Midgard is faithless.");
 		next();
@@ -263,9 +259,7 @@ hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
 		mes("^3355FF[Encounter: Randgris will fight with her full court.]^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_subdued");
-		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_joined", 1);
-		callfunc("DM_InstanceQuestComplete", 20155);
+		callfunc("DM_Decide", "arc11.bjorn", "joined");
 		mes("[Bjorn]");
 		mes("Do something about it.");
 		next();
@@ -289,6 +283,27 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Temple signal log - records the Valkyrie connection failure
+hugel,104,96,3	script	Temple Signal Log#dm	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc11_started) {
+		mes("^3355FF*A sealed temple logbook hangs here, waiting for a crisis worthy of ink.*^000000");
+		close();
+	}
+
+	mes("^3355FF*A clerk's signal log sits open under a prayer weight. The entries begin as routine temple notes and end as field diagnostics written by frightened priests.*^000000");
+	next();
+	mes("^0000AA[Temple Signal Log]^000000");
+	mes("Day 1: Valkyrie requests unanswered. Day 3: temple blessing returns static. Day 5: Randgris formation rejects liturgical command priority.");
+	next();
+	mes("^0000AA[Temple Signal Log]^000000");
+	mes("Day 7: sacred beasts fleeing the upper approach before any visible threat. Day 9: judgment phrases repeat without context or recipient distinction.");
+	next();
+	mes("^0000AA[Temple Signal Log]^000000");
+	mes("Conclusion: the line to Odin remains present but unusable. Something louder is speaking across the same road.");
+	close();
 }
 
 // ── Valkyrie Hall Set-piece ─────────────────────────────────────────────────

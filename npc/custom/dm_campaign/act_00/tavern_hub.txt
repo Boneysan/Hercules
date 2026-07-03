@@ -1,7 +1,7 @@
 // Seal Cascade - Tavern Hub (act_00)
 // Safe hub for downtime and rumors.
 
-prt_in,163,22,5	script	Tavern Keeper	428,{
+prt_in,163,22,5	script	Tavern Keeper	4_M_01,{
 	mes "[Tavern Keeper]";
 	mes "Welcome to the Seal Cascade inn. Rest up, adventurers.";
 	next;
@@ -13,20 +13,84 @@ prt_in,163,22,5	script	Tavern Keeper	428,{
 		close;
 	}
 	
-	mes "We have rooms available if you need them.";
+	if (dm_campaign_complete) {
+		mes "The rooms are quiet again. Funny how a city sounds after people stop waiting for the world to end.";
+		close;
+	}
+	if (dm_wynne_lost) {
+		mes "Nobody sits in Wynne's old corner anymore. The ledger is still there. Nobody likes touching it.";
+		close;
+	}
+	if (dm_wynne_rescued && dm_arc10_kiel_killed) {
+		mes "Wynne came through after Lighthalzen, limping and swearing. Best sound this room heard all week.";
+		close;
+	}
+	if (dm_wynne_captured) {
+		mes "A Guild courier came in asking after Wynne, then left when nobody answered. That is never a small problem.";
+		close;
+	}
+	if (dm_arc19_started) {
+		mes "Everyone in the common room is pretending Morroc is far away. Nobody believes it.";
+		close;
+	}
+	if (dm_arc16_started) {
+		mes "Half the guests are officials who suddenly discovered they had relatives elsewhere. The other half are refugees who already knew how packing works.";
+		close;
+	}
+	if (dm_arc12_started) {
+		mes "The foreign traders stopped arguing about prices and started arguing about which sky is the real one. That's usually a bad sign.";
+		close;
+	}
+	mes "We have rooms available if you need them. Pay up front. Apocalypses are bad for bookkeeping.";
 	close;
 }
 
-prt_in,160,25,3	script	Shady Informant	125,{
+prt_in,160,25,3	script	Shady Informant	4_M_03,{
 	mes "[Shady Informant]";
 	
 	// Rumors driven by campaign flags
 	.@arc = callfunc("DM_CurrentArc");
 	
-	if (.@arc == 1) {
+	if (dm_campaign_complete) {
+		mes "You changed the shape of the next century and somehow the tavern still waters down the ale. That's how you know the world survived.";
+	} else if (.@arc == 1) {
 		mes "I heard the Tibbets family is looking for help in Prontera... something about a lost heirloom.";
 	} else if (.@arc == 2) {
 		mes "The Payon forest has been restless lately. The Elders are worried.";
+	} else if (.@arc == 3) {
+		mes "Morroc caravans are coming in half-empty. People say the sand is breathing again.";
+	} else if (.@arc == 4) {
+		mes "Geffen's mages are pretending nothing is wrong, which usually means something under the city is very wrong.";
+	} else if (.@arc == 5) {
+		mes "Alberta's docks are full of refugees and sailors telling sea-cult stories they swear they don't believe.";
+	} else if (.@arc == 6) {
+		mes "Yuno started measuring the sky. When scholars start measuring the sky, regular people should start worrying.";
+	} else if (.@arc == 7) {
+		mes "Einbroch workers say the machines are waking up mean. Rekenber says that means productivity.";
+	} else if (.@arc == 8) {
+		mes "Glast Heim's bells have been ringing with no hands on the ropes. Nobody around Geffen likes to mention it after dark.";
+	} else if (.@arc == 9) {
+		mes "Rachel's pilgrims are praying louder than usual. That's not the same thing as safer.";
+	} else if (.@arc == 10) {
+		mes "Lighthalzen is paying extra for discretion. That's always the cheapest way to advertise a catastrophe.";
+	} else if (.@arc == 11) {
+		mes "Hugel says the Valkyries stopped listening. Hard to know whether that's blasphemy or field reporting.";
+	} else if (.@arc == 12) {
+		mes "The New World envoys are using words like membrane and pressure. Every soldier hearing that is pretending they understood.";
+	} else if (.@arc == 13) {
+		mes "Nameless Island has deals on offer now, and none of them sound like the kind a person walks away from unchanged.";
+	} else if (.@arc == 14) {
+		mes "Veins is hotter than usual, and not in the poetic pilgrimage sense.";
+	} else if (.@arc == 15) {
+		mes "Aldebaran scholars are suddenly interested in what a hero costs after the statue is already built.";
+	} else if (.@arc == 16) {
+		mes "Prontera's court found religion in evacuation ledgers the second the prison started whispering back.";
+	} else if (.@arc == 17) {
+		mes "Varmundt's old machines are still thinking. Some people hear that and imagine progress. I hear unpaid consequences.";
+	} else if (.@arc == 18) {
+		mes "Niflheim's dead are moving like they got directions. I don't care who gave them.";
+	} else if (.@arc == 19) {
+		mes "Morroc's ruins are pulling every loose story-thread in Midgard tight. If you're heading there, finish your drink.";
 	} else if (dm_arc04_cassell_unmasked) {
 		mes "Cassell was unmasked, you say? I always knew that guy was bad news.";
 	} else if (dm_arc11_bjorn_joined) {
@@ -49,6 +113,32 @@ function	script	DM_Rest	{
 	.@done = callfunc("DM_PartyForEach", "DM_RestItem", $dm_active_party);
 	dispbottom("[DM] Party rested (" + .@done + " members). HP/SP restored, savepoint updated, buffs applied.");
 	return 1;
+}
+
+prt_in,158,23,3	script	Wynne's Ledger Copy#dm	2_BOARD1,{
+	mes "^3355FF*A copy page from Quartermaster Wynne's contract ledger has been pinned beside the bar for traveling parties who want work without the speech.*^000000";
+	if (dm_wynne_lost) {
+		next;
+		mes "^0000AA[Guild Routing Notes]^000000";
+		mes "The last line is in a different hand: Quartermaster Wynne failed to report after Lighthalzen. Rekenber denies custody. The Guild does not believe them.";
+		close;
+	}
+	if (dm_wynne_rescued) {
+		next;
+		mes "^0000AA[Guild Routing Notes]^000000";
+		mes "A new line has been added under Wynne's original notes: if the corporation starts taking quartermasters, it is afraid of the people they route.";
+		close;
+	}
+	next;
+	mes "^0000AA[Guild Routing Notes]^000000";
+	mes "If a town starts describing its problem as unusual weather, strange prayers, or normal mining trouble, pack extra supplies and assume the truth is worse.";
+	next;
+	mes "^0000AA[Guild Routing Notes]^000000";
+	mes "Listen to refugees before officials. Refugees are rarely paid to misunderstand what happened to them.";
+	next;
+	mes "^0000AA[Guild Routing Notes]^000000";
+	mes "If a gray pilgrim offers comfort before anyone asks for it, write his name down and keep one hand on your purse.";
+	close;
 }
 
 -	script	DM_TavernConsole	FAKE_NPC,{

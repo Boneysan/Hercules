@@ -72,18 +72,17 @@ S_StartArc:
 	}
 	switch (select("We're looking for the Whisperer cult. We know they're moving through Alberta.", "We'll pay for passage and information.", "Talk, or we'll take a ship and find out ourselves.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_trust", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_network", 1);
+		callfunc("DM_Decide", "arc05.mara", "trust");
 		mes("[Captain Mara]");
 		mes("Then you're looking for Brode's manifests. Robed weirdos paid him double to be dropped off near the Sunken Ship. Said they were looking for an 'ancient current'.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_pragmatic", 1);
+		callfunc("DM_Decide", "arc05.mara", "pragmatic");
 		mes("[Captain Mara]");
 		mes("Keep your zeny. My price is proof — crack Brode's 'ballast' hold and show me what he's really shipping. Do that, and the Saltmother and her crew are yours for the dive.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_insulted", 1);
+		callfunc("DM_Decide", "arc05.mara", "insult");
 		mes("[Captain Mara]");
 		mes("Threaten me on my own dock and you'll swim to Byalan. Save the knives for Brode — his crew dumped 'heavy crates' in the trench right before the sea turned wrong. The nets have come up screaming ever since.");
 		break;
@@ -243,6 +242,40 @@ S_TurnIns:
 	close();
 }
 
+// Mira Ashkey - refugee ship callback
+alberta,176,147,4	script	Mira Ashkey#dm05	4_F_02,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_mira_lives) {
+		mes("^3355FF*A ferry roster is pinned here. Several Morroc names are crossed out, rewritten, and crossed out again.*^000000");
+		close();
+	}
+	if (!dm_arc05_started) {
+		mes("[Mira]");
+		mes("They say the harbor can move people faster than roads can lose them. I am trying to believe that.");
+		close();
+	}
+
+	mes("^3355FF*Mira stands near the Saltmother's gangplank, one hand wrapped around the brass house-key at her wrist.*^000000");
+	next();
+	if (questprogress(20026) == 2) {
+		mes("[Mira]");
+		if (dm_arc05_refugees_moved)
+			mes("Mara put families aboard first. You can hear the difference on the dock when children stop asking whether they are being left behind.");
+		else if (dm_arc05_supplies_moved)
+			mes("Food and medicine went first. I wanted people, but hungry people still need tomorrow to exist.");
+		else
+			mes("Spies went aboard under watch. I hope the information saves more people than the deck space would have.");
+		close();
+	}
+
+	mes("[Mira]");
+	mes("Every refugee here carries a house they cannot return to. Mine fits in my palm. That makes it easier to lose and harder to put down.");
+	next();
+	mes("[Mira]");
+	mes("If Captain Mara asks who boards first, remember the people who do not have the strength left to argue for themselves.");
+	close();
+}
+
 // Smuggler-Baron Brode - logistics villain
 alberta,101,65,4	script	Smuggler-Baron Brode#dm	4_M_03,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
@@ -270,30 +303,21 @@ alberta,101,65,4	script	Smuggler-Baron Brode#dm	4_M_03,{
 	next();
 	switch (select("You're trafficking people for a death-cult.", "We'll outbid the cult for the ledger.", "Talk, or we sink everything you own.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_ruined", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_enemy", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_taken", 1);
+		callfunc("DM_Decide", "arc05.brode", "expose");
 		mes("[Brode]");
 		mes("Then come take your righteous inventory. The cargo's conscience was never on my manifest.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_sold_manifest", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_taken", 1);
+		callfunc("DM_Decide", "arc05.brode", "buy");
 		mes("[Brode]");
 		mes("Gold for paper. Finally, someone speaks an honest language.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_threatened", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_enemy", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_taken", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc05_northern_account", 1);
+		callfunc("DM_Decide", "arc05.brode", "threaten");
 		mes("[Brode]");
 		mes("Fine. Gray courier. Northern account. Yuno money. Now stop looking at my ships like kindling.");
 		break;
 	}
-	callfunc("DM_InstanceSetFlag", "dm_arc05_cassell_courier_drop", 1);
-	callfunc("DM_InstanceQuestStart", 20029);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 525);
 	next();
 	mes("^3355FF*Brode's Manifest lists ports and dates forward into places you have not yet visited.*^000000");
 	close();
@@ -304,6 +328,27 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Wynne's routing slip - guild guidance carried into the port arc
+alberta,180,149,3	script	Guild Routing Slip#dm05	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc05_started) {
+		mes("^3355FF*A sealed guild routing slip flaps under a dock nail, not yet claimed by the captain it was meant for.*^000000");
+		close();
+	}
+
+	mes("^3355FF*A grease-marked copy of Quartermaster Wynne's routing slip has been pinned beside the ferry roster so nobody can pretend they missed it.*^000000");
+	next();
+	mes("^0000AA[Guild Routing Slip: Alberta]^000000");
+	mes("Priority one: civilian transfer under Captain Mara. Priority two: document exempt cargo routes belonging to Brode. Priority three: try not to start a harbor war until we know who owns the knives.");
+	next();
+	mes("^0000AA[Guild Routing Slip: Alberta]^000000");
+	mes("If the refugees say a hold smells wrong, believe the refugees before you believe the invoices.");
+	next();
+	mes("^0000AA[Guild Routing Slip: Alberta]^000000");
+	mes("Wynne's note in the margin: every cult eventually hires a shipping company because evil gets tired of walking.");
+	close();
 }
 
 // Cargo of Souls - locked hold reveal on the Sunken Ship route

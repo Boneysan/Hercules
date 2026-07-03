@@ -393,6 +393,9 @@ OnInit:
 
 	setarray .arc10$[0],
 		"dm_arc10_started",
+		"dm_wynne_captured",
+		"dm_wynne_rescued",
+		"dm_wynne_lost",
 		"dm_arc10_reise_confronted",
 		"dm_arc10_echo_freed",
 		"dm_echo_trusts_party",

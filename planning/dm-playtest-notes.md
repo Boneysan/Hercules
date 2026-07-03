@@ -13,6 +13,33 @@ DM account: use `./tools/create-account.sh` + `./tools/promote-dm.sh`.
 
 Client: merge journal with `python3 tools/campaign_quest_merge.py --patch <your decompiled .lua>`, recompile .lub, copy BGM/cutins, update clientinfo.xml.
 
+## Client Runtime QA Run Order
+
+Use this order when validating the latest dialogue and branch implementation in
+the live client.
+
+1. Run `./tools/campaign-preflight.sh` on the server machine.
+2. Start the server stack in separate terminals:
+   - `./login-server`
+   - `./char-server`
+   - `./map-server`
+3. Log into the RO client as `dmqa` / `dmqa123`, then create or select a GM
+   character.
+4. Log in a second client as `playerqa` / `playerqa123` when party sync needs to
+   be tested.
+5. Party the GM and player test characters, then run:
+   ```
+   @dmmode on
+   @dm status
+   ```
+6. Run `Critical Branch QA` first, especially all six Arc 19 endings.
+7. Record pass/fail notes under the relevant checklist item and mirror any
+   blockers into `planning/dm-handoff.md`.
+
+Server console note: `@dm` commands are player commands and must be run from an
+authenticated in-game character. The `login-server`, `char-server`, and
+`map-server` consoles only expose server maintenance commands.
+
 ## Sprint 1: Live Mode & Marker Validation (start here)
 1. Log DM + 1-2 test chars in a party.
 2. `@dmmode on`
@@ -80,6 +107,153 @@ After setting:
 ```
 
 Verify narration, adds, flags (`@dm status`), non-combat paths complete cleanly.
+
+## Critical Branch QA
+
+These are the highest-risk branches after the dialogue implementation pass. Run
+each branch on a live test character because `script-checker` only proves parse
+validity.
+
+Before each family:
+```
+@dmmode on
+@dm status
+```
+
+### Arc 10: Wynne Rescued / Lost
+
+Fast path:
+```
+@dm decide arc10.wynne rescued
+@dm decide status 10
+@dm flag get dm_wynne_captured
+@dm flag get dm_wynne_rescued
+@dm flag get dm_wynne_lost
+```
+
+Repeat after undo/reset with:
+```
+@dm decide arc10.wynne lost
+@dm decide status 10
+@dm flag get dm_wynne_captured
+@dm flag get dm_wynne_rescued
+@dm flag get dm_wynne_lost
+```
+
+NPC path:
+- Start Arc 10 through `Doctor Sabine Reuter#dm`.
+- Open `Wynne's Field Kit#dm10` in Lighthalzen.
+- Choose both outcomes on separate test runs.
+- Visit the tavern and `Wynne's Ledger Copy#dm`.
+
+Pass:
+- `rescued` sets `dm_wynne_rescued=1` and clears captured/lost.
+- `lost` sets `dm_wynne_lost=1` and clears captured/rescued.
+- Tavern and ledger text match the chosen outcome.
+- Arc 10 can still continue to Reise and Kiel.
+
+### Arc 10: Echo Freed / Confronted
+
+Fast path:
+```
+@dm decide arc10.echo freed
+@dm decide status 10
+@dm flag get dm_arc10_echo_freed
+@dm flag get dm_echo_trusts_party
+@dm flag get dm_arc10_reise_confronted
+```
+
+Repeat with:
+```
+@dm decide arc10.echo confronted
+@dm decide status 10
+@dm flag get dm_arc10_echo_freed
+@dm flag get dm_echo_trusts_party
+@dm flag get dm_arc10_reise_confronted
+```
+
+NPC path:
+- Resolve `Echo#dm10` and `Director Hallan Reise#dm` on separate runs.
+- Later inspect `Echo#dm18` and `Echo#dm19`.
+
+Pass:
+- `freed` sets `dm_arc10_echo_freed=1` and `dm_echo_trusts_party=1`.
+- `confronted` sets `dm_arc10_reise_confronted=1` and clears Echo trust.
+- Quest `20144` completes.
+- Arc 18/19 Echo callbacks reflect the branch.
+
+### Arc 16: Rina and Prontera United
+
+Fast path:
+```
+@dm decide arc16.rina exposed
+@dm decide status 16
+@dm flag get dm_prontera_united
+```
+
+Repeat with:
+```
+@dm decide arc16.rina rolled
+@dm decide status 16
+@dm flag get dm_prontera_united
+```
+
+Repeat with:
+```
+@dm decide arc16.rina defected
+@dm decide status 16
+@dm flag get dm_prontera_united
+```
+
+NPC path:
+- Resolve `Matron Rina#dm` all three ways on separate runs.
+- Check Arc 18/19 callbacks that mention Prontera's condition.
+
+Pass:
+- `exposed` and `rolled` set `dm_prontera_united=1`.
+- `defected` clears or leaves `dm_prontera_united=0`.
+- Only one Rina branch flag remains set after each choice.
+- Quest `20204` completes.
+
+### Arc 19: All Six Endings
+
+Unlock Refusal first when testing that path:
+```
+@dm decide arc10.echo freed
+# or:
+@dm decide arc15.pratt challenged
+```
+
+Test all outcomes:
+```
+@dm decide arc19.finale shared
+@dm decide status 19
+@dm decide arc19.finale reforged
+@dm decide status 19
+@dm decide arc19.finale queen
+@dm decide status 19
+@dm decide arc19.finale thanatos
+@dm decide status 19
+@dm decide arc19.finale refusal
+@dm decide status 19
+@dm decide arc19.finale unbound
+@dm decide status 19
+```
+
+NPC path:
+- Use `The Central Choice#dm` in Arc 19.
+- Confirm Refusal appears only when `dm_echo_trusts_party` or
+  `dm_arc15_pratt_challenged` is set.
+- After each ending, inspect `Loki The Voice#dm`, `Mira Ashkey#dm19`, and
+  `Echo#dm19` where applicable.
+
+Pass:
+- Exactly one finale flag is set after each choice.
+- `dm_campaign_complete=1`.
+- Quest `20233` completes.
+- EXP reward fires once per test run.
+- Refusal gating is correct.
+- Post-finale witness dialogue matches the selected ending.
 
 ## Sprint 3: Hazards
 Test manual + scripted.

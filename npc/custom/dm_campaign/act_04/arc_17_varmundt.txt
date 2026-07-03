@@ -232,10 +232,7 @@ ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
 	next();
 	switch (select("Authorization override: research transfer complete. Shut down.", "Your mission is to preserve the data. Help us receive it properly.", "Leave the core running. We will work with you remotely after.")) {
 	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
-		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_purged", 1);
-		callfunc("DM_InstanceQuestComplete", 20214);
+		callfunc("DM_Decide", "arc17.admin", "purged");
 		mes("[The Administrator]");
 		mes("Acknowledged. Initiating data transfer to external storage. Transfer complete. Beginning shutdown sequence.");
 		next();
@@ -246,10 +243,7 @@ ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
 		mes("^3355FF[Outcome: clean data transfer. The Biosphere Core remains active.]^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
-		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_negotiated", 1);
-		callfunc("DM_InstanceQuestComplete", 20214);
+		callfunc("DM_Decide", "arc17.admin", "negotiated");
 		mes("[The Administrator]");
 		mes("Mission: data preservation. Subroutine: optimize data reception by recipient. I will organize the archive by priority tier for your use case. This will take fourteen minutes.");
 		next();
@@ -260,10 +254,7 @@ ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
 		mes("^3355FF[Outcome: richer data yield. The Administrator remains active to answer queries.]^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
-		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_running", 1);
-		callfunc("DM_InstanceQuestComplete", 20214);
+		callfunc("DM_Decide", "arc17.admin", "running");
 		mes("[The Administrator]");
 		mes("Remote access protocol: accepted. I will transmit cascade analysis updates to your designated receiver. Real-time cascade frequency data. I have three centuries of baseline readings. Current deviation from baseline: 847 percent.");
 		next();
@@ -284,6 +275,27 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Pattern Seven Note - Varmundt's ethical anomaly record
+ba_in01,104,96,3	script	Pattern Seven Console#dm	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc17_started) {
+		mes("^3355FF*The console is sealed behind a glass cover. It is waiting for a research session that never resumed.*^000000");
+		close();
+	}
+
+	mes("^3355FF*One terminal drawer is still open. Inside, a tagged note is filed under PATTERN SEVEN: ETHICAL ANOMALY.*^000000");
+	next();
+	mes("^0000AA[Varmundt Note: Pattern Seven]^000000");
+	mes("Working assumption overturned: a created intelligence may reject its assigned directive on moral grounds without degrading cognitive integrity.");
+	next();
+	mes("^0000AA[Varmundt Note: Pattern Seven]^000000");
+	mes("This is not a defect. It is evidence of personhood persisting under imposed design. Preservation of refusal may be the only meaningful proof that a tool has become a self.");
+	next();
+	mes("^0000AA[Varmundt Note: Pattern Seven]^000000");
+	mes("If the future suppression lattice requires living operators, select for conscience, not obedience. Obedience scales. Conscience decides.");
+	close();
 }
 
 // ── Biosphere Core Set-piece ───────────────────────────────────────────────

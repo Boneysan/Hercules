@@ -139,8 +139,112 @@ S_TurnIns:
 	close();
 }
 
+// Rashid - caravan guide and refugee route witness
+morocc,153,101,4	script	Water Seller Rashid#dm03	4_M_03,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc03_started) {
+		mes("[Rashid]");
+		mes("Water is double today, apology included. If you are Guild, the girl with the brass key needs you more than my stall does.");
+		close();
+	}
+	if (dm_arc03_rashid_trust) {
+		mes("[Rashid]");
+		if (dm_arc03_sabra_deal)
+			mes("Sabra's people are moving refugees through the old channel. It is mercy, yes, but mercy with a receipt.");
+		else if (dm_arc03_sabra_exposed)
+			mes("The relief mission is angry you looked under their blankets. Angry people hide less carefully.");
+		else if (dm_arc03_sabra_revealed_cascade)
+			mes("You heard the word she keeps behind her teeth. Cascade. Now watch who stops breathing when you say it.");
+		else if (dm_arc03_rashid_route == 2)
+			mes("The west wash is faster and cursed by every merchant with sense. Since we lack sense, it remains useful.");
+		else
+			mes("Use the old caravan wells. The cultists mark roads; they do not bother marking thirst.");
+		close();
+	}
+
+	mes("^3355FF*A thin water seller studies the tremors by watching ripples in a brass cup.*^000000");
+	next();
+	mes("[Rashid]");
+	mes("Mira asks for her brother. The city asks for calm. The desert asks for payment. You should decide which voice you are answering before you go below.");
+	next();
+	switch (select("Help us move safely through the refugee routes.", "We need the fastest path to the Pyramid.", "Sell us water and keep your warnings.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_trust", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_route", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc03_ward_charm", 1);
+		mes("[Rashid]");
+		mes("Then take this ward charm. Not holy, not clever, but it tells the scared families you did not come to rob them.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_trust", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_route", 2);
+		mes("[Rashid]");
+		mes("West wash, then the broken stairs. Fast path. Bad path. If the sand starts singing, do not answer.");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_mocked", 1);
+		mes("[Rashid]");
+		mes("Water is water. Warnings are free because nobody values them until the bill arrives.");
+		break;
+	}
+	next();
+	mes("[Rashid]");
+	mes("Mother Sabra's relief mission camps south of the road. She feeds people the guards do not count. That makes her useful. It also makes her dangerous.");
+	close();
+}
+
+// Mother Sabra - relief mission choice that drives later Arc 4/5 callbacks
+moc_fild01,84,45,4	script	Mother Sabra#dm03	4_F_01,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc03_started) {
+		mes("[Mother Sabra]");
+		mes("If Morroc sent you, tell them the mission is over capacity and under guard. If grief sent you, speak plainly.");
+		close();
+	}
+	if (dm_arc03_sabra_exposed || dm_arc03_sabra_deal || dm_arc03_sabra_revealed_cascade) {
+		mes("[Mother Sabra]");
+		if (dm_arc03_sabra_exposed)
+			mes("You exposed the dig. Good. Now every frightened family here must decide whether your truth feeds them tonight.");
+		else if (dm_arc03_sabra_deal)
+			mes("You chose the living first. That choice is not clean, but clean hands do not carry water far.");
+		else
+			mes("You heard the cascade named and lived. Remember that knowledge is also a wound.");
+		close();
+	}
+
+	mes("^3355FF*Mother Sabra's relief tent is too orderly for a refugee camp. Water jars, prayer cloths, and survey maps share the same table.*^000000");
+	next();
+	mes("[Mother Sabra]");
+	mes("The cult calls this a test. The palace calls it bandit panic. I call it a city deciding which poor people may be counted.");
+	next();
+	mes("[Mother Sabra]");
+	mes("There is a dig under the mission. Yes, I know. Yes, I have used it. The tunnel moves families away from the shaking faster than any official gate.");
+	next();
+	switch (select("Expose the dig and end the operation.", "Keep the tunnel open for refugees.", "Tell us what the cult is really testing.")) {
+	case 1:
+		callfunc("DM_Decide", "arc03.sabra", "exposed");
+		mes("[Mother Sabra]");
+		mes("Then take your truth to Morroc and hope it learns to carry water.");
+		break;
+	case 2:
+		callfunc("DM_Decide", "arc03.sabra", "deal");
+		mes("[Mother Sabra]");
+		mes("I will move families until the last jar is empty. You will not ask who else used the tunnel before them.");
+		break;
+	case 3:
+		callfunc("DM_Decide", "arc03.sabra", "truth");
+		mes("[Mother Sabra]");
+		mes("Cascade. That is the word they whisper when they think mercy is asleep. One seal weakens, then the next begins to answer.");
+		break;
+	}
+	next();
+	mes("[Mother Sabra]");
+	mes("If you go below the Pyramid, remember this: the sand is not swallowing people. Something beneath it is learning their weight.");
+	close();
+}
+
 // Guild Assassin - Pyramids Entrance
-moc_ruins,75,165,4	script	Guild Assassin#dm	1_M_ASSASSIN,{
+moc_ruins,75,165,4	script	Guild Assassin#dm	4_M_JOB_ASSASSIN,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc03_started) {
 		mes("[Guild Assassin]");
@@ -188,7 +292,7 @@ moc_ruins,75,165,4	script	Guild Assassin#dm	1_M_ASSASSIN,{
 }
 
 // High Priest - Pyramids Lowest Level (moc_pryd06)
-moc_pryd06,102,85,4	script	High Priest#dm	4_M_BISHOP,{
+moc_pryd06,102,85,4	script	High Priest#dm	1_M_PASTOR,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20018) == 2) {
 		mes("^3355FF*The cultists are gone. The shaft behind the throne breathes cold air from far below.*^000000");
@@ -266,6 +370,7 @@ OnAmonDead:
 	killmonster .@map$, "High Priest#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20018);
 	callfunc("DM_InstanceSetFlag", "dm_arc03_mira_scarf_returned", 1);
+	callfunc("DM_InstanceSetFlag", "dm_mira_lives", 1);
 	callfunc("DM_PartyExp", 150000, 65000);
 	callfunc("DM_GivePartyZeny", 14000);
 	

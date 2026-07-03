@@ -189,7 +189,7 @@ only the GM character is reset.
 
 ## Hunt Zone Markers
 
-`dm_hunt_markers.txt` places 45 invisible (sprite -1) NPC markers on the maps
+`dm_hunt_markers.txt` places invisible `HIDDEN_NPC` markers on the maps
 where hunt quest targets spawn. Each marker uses `questinfo QTYPE_QUEST2` +
 `setquestinfo QINFO_QUEST` to show a yellow arrow on the minimap **only while
 the player has the matching quest active and is standing on the same map as the

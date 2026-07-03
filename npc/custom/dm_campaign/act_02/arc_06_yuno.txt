@@ -256,7 +256,7 @@ S_TurnIns:
 }
 
 // ── "Gramps" — Eden Group Liaison, Juperos forward camp ────────────────────
-juperos_01,30,30,4	script	Gramps#dm06	1_M_OLDMAN,{
+juperos_01,30,30,4	script	Gramps#dm06	4_M_TWOLDMAN,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (dm_arc06_gramps_met) {
 		mes("[Gramps]");
@@ -321,21 +321,21 @@ yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
 	next();
 	switch (select("Sign the document. This city deserves the truth.", "We will take the data to a buyer who is not Rekenber.", "What does staying quiet pay?")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
+		callfunc("DM_Decide", "arc06.krenn", "exposed");
 		mes("[Krenn]");
 		mes("You want me to sign my own career's end so Yuno can panic in an orderly fashion. No. But you do not need my signature.");
 		next();
 		mes("^3355FF*Krenn's refusal goes on record. The document moves to the Council over his objection.*^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
+		callfunc("DM_Decide", "arc06.krenn", "exposed");
 		mes("[Krenn]");
 		mes("The Schwarzwald naturalist journals will print anything. And I will find a reason to have you removed from the city before morning.");
 		next();
 		mes("^3355FF*The threat is hollow. Vahl's data leaves through the naturalist circuit.*^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_bribed", 1);
+		callfunc("DM_Decide", "arc06.krenn", "bribed");
 		callfunc("DM_GivePartyZeny", 25000);
 		mes("[Krenn]");
 		mes("Now you are speaking the Republic's language. Twenty-five thousand zeny. Consider it a retainer for services rendered in the public interest.");
@@ -343,8 +343,6 @@ yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
 		mes("^3355FF*25,000 zeny changes hands. Krenn files the report under 'acceptable variance.'*^000000");
 		break;
 	}
-	callfunc("DM_InstanceQuestComplete", 20102);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 605);
 	next();
 	mes("^3355FF[The Number Nobody Wants resolved. The Juperos set-piece is now accessible.]^000000");
 	close();
@@ -355,6 +353,27 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// variance memo - Yuno's bureaucratic euphemism for the cascade
+yuno,158,183,3	script	Variance Memo#dm06	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc06_started) {
+		mes("^3355FF*A clipped bureau memo is posted here, but the useful page has already been removed.*^000000");
+		close();
+	}
+
+	mes("^3355FF*A Council memorandum is pinned to the post with two different seals on it: Research Bureau and Finance Oversight. The tone is careful in the way panic usually is when dressed for office.*^000000");
+	next();
+	mes("^0000AA[Managed Variance Memorandum]^000000");
+	mes("Subject: floating-anchor oscillation remains within acceptable variance provided public distribution of numerical findings is delayed pending investor review.");
+	next();
+	mes("^0000AA[Managed Variance Memorandum]^000000");
+	mes("Recommendation: refer to all dimensional instability as infrastructural drift until a more favorable term is approved.");
+	next();
+	mes("^0000AA[Managed Variance Memorandum]^000000");
+	mes("Handwritten note at the bottom: if the city is still in the air, no one will thank us for honesty. They will only notice if we choose it too early.");
+	close();
 }
 
 // ── Cultist Engineer — Juperos Core siphon, pre-Mistress set-piece ─────────

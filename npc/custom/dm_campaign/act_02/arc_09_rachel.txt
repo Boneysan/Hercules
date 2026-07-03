@@ -264,7 +264,7 @@ rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
 	next();
 	switch (select("Sign a public confession. The people of Arunafeltz deserve the truth.", "What would it take for you to manage this transition yourself?", "We are not interested in the church. We need Gloom Under Night stopped.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_exposed", 1);
+		callfunc("DM_Decide", "arc09.karsh", "exposed");
 		mes("[Karsh]");
 		mes("A public confession. Signed, dated, distributed. The Council will remove me. The church will enter a crisis it may not survive.");
 		next();
@@ -277,7 +277,7 @@ rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
 		mes("^3355FF*Karsh signs. His hand does not tremble.*^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_deal", 1);
+		callfunc("DM_Decide", "arc09.karsh", "deal");
 		mes("[Karsh]");
 		mes("A managed transition. I formally reclassify the Blessing as a dimensional anomaly under theological study. The Council is briefed privately. No public confession. The institution survives.");
 		next();
@@ -287,7 +287,7 @@ rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
 		mes("^3355FF*The deal is struck. The truth moves at the church's pace. That may be the best available outcome.*^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_deal", 1);
+		callfunc("DM_Decide", "arc09.karsh", "deal");
 		mes("[Karsh]");
 		mes("Then we have more in common than I expected. Gloom Under Night is what happens when four hundred years of prayer hits a dimensional aperture with nothing on the other side to receive it. I need it gone as much as you do.");
 		next();
@@ -297,8 +297,6 @@ rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
 		mes("^3355FF*Karsh's cooperation is practical rather than principled. But it opens the ice dungeon approach.*^000000");
 		break;
 	}
-	callfunc("DM_InstanceQuestComplete", 20134);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 905);
 	next();
 	mes("^3355FF[The Prelate's Record resolved. Descend to ice_dun03 and face Gloom Under Night.]^000000");
 	close();
@@ -309,6 +307,27 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// archived doctrine note - church language for an older scientific finding
+rachel,126,118,3	script	Archived Doctrine#dm09	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc09_started) {
+		mes("^3355FF*A locked doctrinal notice case hangs here. The current page is ceremonial and blankly reassuring.*^000000");
+		close();
+	}
+
+	mes("^3355FF*Behind the current notice, an older page was never fully removed. The official language has been corrected so many times the corrections now read like a confession.*^000000");
+	next();
+	mes("^0000AA[Doctrinal Clarification Draft]^000000");
+	mes("The Blessing shall continue to be described as divine aperture pending further study, despite inconsistencies between inherited theology and current geological samples.");
+	next();
+	mes("^0000AA[Doctrinal Clarification Draft]^000000");
+	mes("Terminology such as rift, tear, or dimensional bleed is to remain restricted to sealed review circles until devotional continuity can be preserved.");
+	next();
+	mes("^0000AA[Doctrinal Clarification Draft]^000000");
+	mes("A final line has been crossed out three times: if the truth is timed correctly, perhaps it will still be called doctrine when it arrives.");
+	close();
 }
 
 // ── Ice Bleed Site Set-piece ───────────────────────────────────────────────

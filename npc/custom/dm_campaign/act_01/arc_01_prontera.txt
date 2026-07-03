@@ -256,6 +256,58 @@ OnInit:
 	end;
 }
 
+// Mira Ashkey - early refugee witness
+prontera,153,42,3	script	Mira Ashkey#dm01	4_F_02,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc01_started) {
+		mes("[Mira]");
+		mes("The guard keeps asking which street in Morroc I came from. I keep telling him the street is gone.");
+		close();
+	}
+	if (questprogress(20004) == 2) {
+		mes("[Mira]");
+		if (dm_arc01_refugees_helped)
+			mes("You brought that child back quietly. People noticed. The soup line is still frightening, but at least someone here knows we are people before we are paperwork.");
+		else
+			mes("The guard came through after you reported the soup line. I know why. I do. But frightened people run toward anyone who promises not to count them.");
+		next();
+		mes("[Mira]");
+		mes("My brother went south to look for water. When the roads open again, I am going after him.");
+		close();
+	}
+
+	mes("^3355FF*A young Morroc refugee sits near the south gate, clutching a brass house-key wrapped in red thread.*^000000");
+	next();
+	mes("[Mira]");
+	mes("The buildings in Morroc shook before they fell. Now Prontera shakes too, and everyone tells me that is normal because normal is easier than scared.");
+	next();
+	mes("[Mira]");
+	mes("If you go near the soup line, watch the gray-robed man. He speaks kindly, but the ground gets colder after he leaves.");
+	close();
+}
+
+// charity ledger - early paper trail for Holt's refugee outreach
+prontera,160,43,3	script	Charity Ledger#dm01	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc01_started) {
+		mes("^3355FF*A municipal relief ledger is posted here for public reassurance. The neat totals feel more optimistic than the camp beyond the wall.*^000000");
+		close();
+	}
+
+	mes("^3355FF*Several pages have been pinned under the city seal. Most are grain tallies. One page tracks private soup deliveries to the south gate camp.*^000000");
+	next();
+	mes("^0000AA[Emergency Charity Ledger]^000000");
+	mes("Authorized supplemental kitchens:");
+	mes("- Adventurers' Guild fountain ward");
+	mes("- Cathedral alms route, Deacon Holt supervising");
+	mes("- South culvert overflow, after curfew");
+	next();
+	mes("Margin note: Refugees respond more calmly when fed below the grate rather than at the wall. Continue gray-robed volunteer rotation. Keep guard presence light to avoid panic.");
+	next();
+	mes("Unsigned addendum: The trembling is strongest during distribution. Record names separately.");
+	close();
+}
+
 // ── Tibbets the Sluice-Keeper — Culvert guide ──────────────────────────────
 prontera,146,193,5	script	Tibbets the Keeper#dm	1_M_SIZ,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }

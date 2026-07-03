@@ -46,14 +46,22 @@ fi
 
 while [ -n "$1" ]; do
 	[ -n "$FILES" ] && FILES="${FILES}!"
-	if [[ "$1" =~ ^\/ ]]; then
+	case "$1" in
+	/*)
 		FILES="${FILES}--load-script!$1"
-	else
+		;;
+	*)
 		FILES="${FILES}--load-script!${ORIG_CWD}/$1"
-	fi
+		;;
+	esac
 	shift
 done
 
 # We assume that filenames don't contain exclamation marks.
 IFS=!
-"$EXECUTABLE" --script-check $FILES 2>&1
+OUTFILE="$(mktemp "${TMPDIR:-/tmp}/script-checker.XXXXXX")" || exit 1
+trap 'rm -f "$OUTFILE"' EXIT HUP INT TERM
+"$EXECUTABLE" --script-check $FILES > "$OUTFILE" 2>&1
+STATUS=$?
+grep -v -F "[Error]: socket_getips: Unable to create a socket!" "$OUTFILE"
+exit "$STATUS"
