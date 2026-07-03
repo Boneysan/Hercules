@@ -10,9 +10,9 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 | Arc | Title (vault) | Hub / Map | Boss | Quest IDs |
 |-----|---------------|-----------|------|-----------|
 | 00 | Tavern Downtime | Prontera Tavern (`prt_in 163 22`) | — | — |
-| 01 | Omens at the Fountain | Prontera (Wynne / Frightened Mother / Tibbets / Culvert) | Deviruchi (1109) | 20001–20006 (+ session 20000) |
-| 02 | The Sleeping Forest | Payon (Sun-Hwa / Voss) | Moonlight Flower (1150) | 20007–20012 |
-| 03 | Sand and Whispers | Morroc (Rashid / Mother Sabra) | Amon Ra / Osiris | 20013–20018 |
+| 01 | Omens at the Fountain | Prontera (Wynne / Frightened Mother / Tibbets) | Deviruchi (1109) | 20001–20006 (+ session 20000) |
+| 02 | The Sleeping Forest | Payon (Elder Gyeong / Sun-Hwa / Voss) | Moonlight Flower (1150) | 20007–20012 |
+| 03 | Sand and Whispers | Morroc (Mira / Assassin / High Priest) | Amon Ra / Osiris | 20013–20018 |
 | 04 | City Above the Beast | Geffen (Elsbeth / Doran) | Baphomet | 20019–20024 |
 | 05 | Tides and Trade | Alberta / Izlude (Mara / Brode) | Tao Gunka | 20025–20030 |
 | 06 | The Floating Republic | Yuno | Mistress (1059) | 20101–20105 |
