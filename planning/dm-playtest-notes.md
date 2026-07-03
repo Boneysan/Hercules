@@ -33,6 +33,7 @@ Sample commands:
 @dm scene dread
 @dm hazard 5 4 3 2500 poison 4000
 @dm cutscene 20
+@dm secret <testchar> You notice the statue's eyes follow you.
 ```
 
 Confirm:

@@ -24,6 +24,55 @@ function	script	DM_StatConst	{
 	return -1;
 }
 
+// DM_RollCheck(<stat_id>, <dc>, <mode$>)
+// Pure roll: d20 (+adv/dis) + (readparam(stat)/10) vs dc.
+// Respects/ consumes inspiration on adv. Forces nat20=pass, nat1=fail.
+// Returns 1=pass, 0=fail.
+// Also sets @dm_check_* temps on the attached RID for callers that need
+// the exact numbers (e.g. traps, initiative) to build custom announces.
+// Caller must be attached to the character whose stats are read.
+function	script	DM_RollCheck	{
+	.@stat  = getarg(0);
+	.@dc    = getarg(1, 10);
+	.@mode$ = strtolower(getarg(2, ""));
+
+	.@d1 = rand(1, 20);
+	.@note$ = "";
+	if (.@mode$ == "adv") {
+		if (dm_inspiration > 0) {
+			--dm_inspiration;
+			.@note$ = " Inspiration";
+		}
+		.@d2 = rand(1, 20);
+		.@roll = (.@d1 > .@d2 ? .@d1 : .@d2);
+		.@note$ += " adv[" + .@d1 + "/" + .@d2 + "]";
+	} else if (.@mode$ == "dis") {
+		.@d2 = rand(1, 20);
+		.@roll = (.@d1 < .@d2 ? .@d1 : .@d2);
+		.@note$ = " dis[" + .@d1 + "/" + .@d2 + "]";
+	} else {
+		.@roll = .@d1;
+	}
+
+	.@mod = readparam(.@stat) / 10;
+	.@total = .@roll + .@mod;
+	.@pass = (.@total >= .@dc);
+
+	if (.@roll == 20) {
+		.@pass = 1;
+	} else if (.@roll == 1) {
+		.@pass = 0;
+	}
+
+	@dm_check_roll  = .@roll;
+	@dm_check_mod   = .@mod;
+	@dm_check_total = .@total;
+	@dm_check_dc    = .@dc;
+	@dm_check_note$ = .@note$;
+	@dm_check_pass  = .@pass;  // redundant with return but handy
+	return .@pass;
+}
+
 function	script	DM_Check	{
 	.@target$ = getarg(0, "");
 	.@stat$   = getarg(1, "");
@@ -93,34 +142,16 @@ S_Roll:
 	.@md$    = getarg(4);
 	.@map$   = getarg(5);
 
-	.@d1 = rand(1, 20);
-	.@note$ = "";
-	if (.@md$ == "adv") {
-		if (dm_inspiration > 0) {
-			--dm_inspiration;
-			.@note$ = " Inspiration";
-		}
-		.@d2 = rand(1, 20);
-		.@roll = (.@d1 > .@d2 ? .@d1 : .@d2);
-		.@note$ += " adv[" + .@d1 + "/" + .@d2 + "]";
-	} else if (.@md$ == "dis") {
-		.@d2 = rand(1, 20);
-		.@roll = (.@d1 < .@d2 ? .@d1 : .@d2);
-		.@note$ = " dis[" + .@d1 + "/" + .@d2 + "]";
-	} else {
-		.@roll = .@d1;
-	}
-
-	.@mod = readparam(.@st) / 10;
-	.@total = .@roll + .@mod;
-	.@pass = (.@total >= .@dc2);
+	.@pass = callfunc("DM_RollCheck", .@st, .@dc2, .@md$);
+	.@roll  = @dm_check_roll;
+	.@mod   = @dm_check_mod;
+	.@total = @dm_check_total;
+	.@note$ = @dm_check_note$;
 
 	.@res$ = (.@pass ? "SUCCESS" : "FAILURE");
 	if (.@roll == 20) {
-		.@pass = 1;
 		.@res$ = "CRIT SUCCESS";
 	} else if (.@roll == 1) {
-		.@pass = 0;
 		.@res$ = "CRIT FAIL";
 	}
 

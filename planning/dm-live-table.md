@@ -29,8 +29,7 @@ namespaced `$dm_*` (global) or `dm_*` (per-character).
 
 **Starter live-table pack shipped** (registered in `npc/scripts_custom.conf`):
 
-- `shared/dm_voice.txt` — `@dm say` / `@dmsay` (improv NPC voice via `unittalk`;
-  `@<npc>` puppet form via `npctalk`). ✅
+- `shared/dm_voice.txt` — `@dm say` / `@dmsay`, `@dm secret` / `@dmsecret` (improv NPC voice + private asides). ✅
 - `shared/dm_checks.txt` — `@dm check` / `@dmcheck` (RO-native d20 + stat/10 vs
   DC, party/single, adv/dis, party-facing `mapannounce`). ✅
 - `shared/dm_checks.txt` — `@dm inspire` / `@dminspire` (per-character
@@ -47,16 +46,17 @@ namespaced `$dm_*` (global) or `dm_*` (per-character).
   `@dmdownrule` / `@dmdown` / `@dmrevive` (Death's Door death saves via
   `OnPCDieEvent`; ally-proximity/heal rescue; released by cleanup/mode off). ✅
 
-Remaining (not yet built): `@dm secret`, initiative/spotlight, tavern hub,
-recap log. **Prioritized against the infrastructure work in
+Remaining (not yet built): initiative/spotlight, tavern hub, recap log.
+**Prioritized against the infrastructure work in
 `planning/dm-architecture-review.md` §9 (consolidated roadmap) — pick up
 work from that list, not this one; the feature specs stay in this file.**
+(@dm secret shipped.)
 
 ## New files
 
 | File | Purpose |
 |------|---------|
-| `shared/dm_voice.txt` ✅   | `@dm say` (+ future `@dm emote`, `@dm secret`) — improv presentation |
+| `shared/dm_voice.txt` ✅   | `@dm say` / `@dm secret` — improv presentation + private asides |
 | `shared/dm_scene.txt` ✅   | `@dm scene`, `@dm cutscene` — ambience + cutscene director |
 | `shared/dm_checks.txt` ✅  | `@dm check`, `@dm inspire` (+ future `@dm initiative`) — tabletop mechanics |
 | `shared/dm_combat.txt` ✅ | spawn-GID registry, `@dm encounter`, `@dm scale`, bloodied watcher — live difficulty dial |

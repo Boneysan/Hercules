@@ -1,7 +1,12 @@
 // Seal Cascade Trap and Hazard Helpers
 //
 // These functions provide standard puzzle resets, area hazards,
-// and trigger tile abstractions for the DM campaign.
+// trigger tile abstractions, and the @dm trap live-table surface
+// for the DM campaign.
+//
+// See planning/dm-traps-puzzles-guide.md (archetypes, rules, primitives)
+// and planning/dm-architecture-review.md (WP-11) for design.
+// @dm trap command surface wired; full registry + watcher + spring pending.
 
 // DM_HazardArea("<map>", x, y, range, hp_percent_loss, status_type, status_duration{, party_id})
 // Inflicts damage and/or status effects to the caller's party in the area.
@@ -92,4 +97,28 @@ function	script	DM_CleanupEncounter	{
 		.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, .@label$;
 	return 1;
+}
+
+// DM_TrapCommand(...) stub (WP-11 in progress).
+// Full: registry + watcher + spring with DM_RollCheck saves.
+// Current: documents usage and does no-op or basic status.
+function	script	DM_TrapCommand	{
+	.@argc = getarg(0, 0);
+	.@cmd$ = strtolower(getarg(1, "help"));
+
+	if (.@cmd$ == "" || .@cmd$ == "help") {
+		dispbottom("[DM] @dm trap set <r> <dc> <dmg%> [status] [ms]  -- place at current pos (WIP)");
+		dispbottom("[DM] @dm trap list|clear [n|all]|reveal [n]|disarm <player> [n]");
+		dispbottom("[DM] Traps are DM-char temp; cleared on cleanup/mode off/rel og.");
+		return 0;
+	}
+
+	if (.@cmd$ == "set") {
+		dispbottom("[DM] trap set: full latent registry+watcher not yet wired (use @dm hazard for now, or bespoke OnTouch in arc). Registry prep done via DM_RollCheck.");
+		// TODO: implement arrays + addtimer watcher + spring using DM_RollCheck(bAgi, dc, "")
+		return 0;
+	}
+
+	dispbottom("[DM] trap: subcommand not fully implemented yet. See planning/dm-traps-puzzles-guide.md");
+	return 0;
 }

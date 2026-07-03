@@ -23,6 +23,7 @@ OnInit:
 	bindatcmd("dmreset", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReset", 1, 99, 1);
 	bindatcmd("dmstatus", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStatus", 1, 99, 1);
 	bindatcmd("roll", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRoll", 0, 99, 1);
+	bindatcmd("dmtrap", strnpcinfo(NPC_NAME_UNIQUE)+"::OnTrap", 1, 99, 1);
 	end;
 
 OnDM:
@@ -208,6 +209,15 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "secret") {
+		.@player$ = .@atcmd_parameters$[1];
+		.@text$ = "";
+		for (.@i = 2; .@i < .@atcmd_numparameters; ++.@i)
+			.@text$ += (.@i > 2 ? " " : "") + .@atcmd_parameters$[.@i];
+		callfunc("DM_Secret", .@player$, .@text$);
+		end;
+	}
+
 	if (.@sub$ == "check") {
 		callfunc("DM_Check", .@atcmd_parameters$[1], .@atcmd_parameters$[2], atoi(.@atcmd_parameters$[3]), .@atcmd_parameters$[4]);
 		end;
@@ -240,6 +250,11 @@ OnDM:
 
 	if (.@sub$ == "revive") {
 		callfunc("DM_Revive", .@atcmd_parameters$[1]);
+		end;
+	}
+
+	if (.@sub$ == "trap") {
+		callfunc("DM_TrapCommand", .@atcmd_numparameters - 1, .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3], .@atcmd_parameters$[4], .@atcmd_parameters$[5]);
 		end;
 	}
 
@@ -452,6 +467,12 @@ OnRoll:
 		mapannounce strcharinfo(PC_MAP), .@msg$, bc_map, 0xFFAA33;
 	end;
 
+OnTrap:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callfunc("DM_TrapCommand", .@atcmd_numparameters, .@atcmd_parameters$[0], .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3], .@atcmd_parameters$[4]);
+	end;
+
 OnDMKilled:
 	end;
 
@@ -509,13 +530,16 @@ S_Help:
 	dispbottom("[DM] @dm savepoint           (set party save/home point to your current location)");
 	dispbottom("[DM] @dm reset confirm       (wipe all campaign flags for a fresh run)");
 	dispbottom("[DM] @dm say <speaker> | <text>   (voice a line; @<npc> <text> puppets an NPC)");
+	dispbottom("[DM] @dm secret <player> <text>   (private aside to one player only)");
 	dispbottom("[DM] @dm check <player|party> <str|agi|vit|int|dex|luk> <DC> [adv|dis]");
 	dispbottom("[DM] @dm inspire <player> [+n|spend|clear|set n] | party");
 	dispbottom("[DM] @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]  (mood: weather+BGM+cutin)");
 	dispbottom("[DM] @dm cutscene <on|off> [portrait] [seconds]  (freeze/release party movement)");
 	dispbottom("[DM] @dm downrule <on|off|status>  (death saves instead of dying; arm per fight)");
 	dispbottom("[DM] @dm down <player> | @dm revive <player|party>");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmdecide, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dminspire, @dmscene, @dmcutscene, @dmencounter, @dmscale, @dmbloodied, @dmdownrule, @dmdown, @dmrevive");
+	dispbottom("[DM] @dm trap set <radius> <dc> <dmg%> [status] [status_ms]");
+	dispbottom("[DM] @dm trap list | clear [i|all] | reveal [i] | disarm <player> [i]   (latent trap MVP; full impl in progress)");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmdecide, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmsecret, @dmcheck, @dminspire, @dmscene, @dmcutscene, @dmencounter, @dmscale, @dmbloodied, @dmdownrule, @dmdown, @dmrevive, @dmtrap");
 	return;
 
 S_Reset:

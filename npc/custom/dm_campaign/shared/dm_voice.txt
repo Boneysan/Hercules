@@ -79,11 +79,38 @@ function	script	DM_Say	{
 	return 1;
 }
 
+// DM_Secret("<playername>", "<text>")
+// Sends a private styled message only to the named online player.
+// The DM receives a confirmation dispbottom. Private asides for table secrets.
+function	script	DM_Secret	{
+	.@player$ = callfunc("DM_Trim", getarg(0, ""));
+	.@text$   = callfunc("DM_Trim", getarg(1, ""));
+
+	if (.@player$ == "" || .@text$ == "") {
+		dispbottom("[DM] Usage: @dm secret <player> <text>");
+		return 0;
+	}
+
+	.@acc = getcharid(CHAR_ID_ACCOUNT, .@player$);
+	if (.@acc <= 0) {
+		dispbottom("[DM] Player '" + .@player$ + "' is not online.");
+		return 0;
+	}
+
+	// Private delivery to target only. "message" works by name without attach.
+	message(.@player$, "^3355FF[The DM leans in to you...] " + .@text$ + "^000000");
+
+	// DM confirmation (visible only to issuer).
+	dispbottom("[DM] secret to " + .@player$ + ": " + .@text$);
+	return 1;
+}
+
 -	script	DM_VoiceConsole	FAKE_NPC,{
 	end;
 
 OnInit:
 	bindatcmd("dmsay", strnpcinfo(NPC_NAME_UNIQUE)+"::OnSay", 1, 99, 1);
+	bindatcmd("dmsecret", strnpcinfo(NPC_NAME_UNIQUE)+"::OnSecret", 1, 99, 1);
 	end;
 
 OnSay:
@@ -95,5 +122,17 @@ OnSay:
 		.@text$ += (.@i > 0 ? " " : "") + .@atcmd_parameters$[.@i];
 
 	callfunc("DM_Say", .@text$);
+	end;
+
+OnSecret:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	.@player$ = .@atcmd_parameters$[0];
+	.@text$ = "";
+	for (.@i = 1; .@i < .@atcmd_numparameters; ++.@i)
+		.@text$ += (.@i > 1 ? " " : "") + .@atcmd_parameters$[.@i];
+
+	callfunc("DM_Secret", .@player$, .@text$);
 	end;
 }

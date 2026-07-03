@@ -646,7 +646,7 @@ Pick from the top unless a dependency says otherwise.
 | 3 | WP-2 flag registry as data — **shipped server-side; live smoke test pending** | M | — | Unblocks WP-3; removes flag-list duplication |
 | 4 | WP-3 `@dm flag sync` — **shipped server-side; live smoke test pending** | M | WP-2 | Fixes absent-player branch drift |
 | 5 | WP-5 session health in `@dm status` — **shipped server-side; live smoke test pending** | S | — | Restart/relog visibility at the table |
-| 6 | LT: `@dm secret <player> <text>` | S | — | Quick win; spec in dm-live-table.md §8 |
+| 6 | LT: `@dm secret <player> <text>` | S | — | Quick win; **shipped** (dm_voice + console) |
 | 7 | WP-1 permission-gate constant — **shipped server-side** | S | — | Trivial; do alongside anything |
 | 8 | WP-6 downed/cutscene PCBLOCK interplay — **shipped server-side; live movement test pending** | S | — | Known interaction bug |
 | 9 | WP-11 `@dm trap` | M | read the traps/puzzles guide | First big feel upgrade for dungeons |

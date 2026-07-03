@@ -19,7 +19,7 @@ without recompiling the server.
 - `dm_checks.txt` - d20 stat checks and saving throws for live table play.
 - `dm_scene.txt` - weather/BGM/portrait scenes and cutscene movement locks.
 - `dm_combat.txt` - spawn-GID registry, live HP/damage scaling, and bloodied callouts.
-- `dm_traps.txt` - reusable hazard, puzzle reset, and encounter cleanup helpers.
+- `dm_traps.txt` - reusable hazard, puzzle reset, encounter cleanup, and @dm trap (latent save traps; MVP surface + stub wired, core watcher in progress per guide).
 - `dm_symptoms.txt` - Obsidian-sourced per-arc symptom pulses and boss
   read-aloud helpers.
 - `dm_onboarding.txt` - novice-start campaign guide NPCs that can warp new players
@@ -92,6 +92,8 @@ by `tools/promote-dm.sh`). The gate is `DM_RequireDM` in `dm_common.txt`.
 @dm say <speaker> | <text>
 @dm say @<npcname> <text>
 @dmsay <speaker> | <text>
+@dm secret <player> <text>
+@dmsecret <player> <text>
 @dm check <player|party> <str|agi|vit|int|dex|luk> <DC> [adv|dis]
 @dmcheck <player|party> <stat> <DC> [adv|dis]
 @dm inspire <player> [+n|spend|clear|set n]
@@ -111,6 +113,8 @@ campaign. See `planning/dm-live-table.md` for the full roadmap.
 
 - `@dm say` voices attributed dialogue over the DM (`unittalk`) or puppets a named
   on-map NPC (`npctalk`), so lines can be improvised instead of pre-scripted.
+- `@dm secret <player> <text>` sends a styled private message only to one player
+  (e.g. "_The DM leans in to you..._") for table secrets the rest should not hear.
 - `@dm check` rolls a d20 plus an RO-native `stat/10` modifier against a DC for one
   player or the whole party, announcing pass/fail to the map. Nat-20 always
   succeeds, nat-1 always fails; `adv`/`dis` roll twice. If the target has
@@ -139,6 +143,8 @@ campaign. See `planning/dm-live-table.md` for the full roadmap.
   hazard/status pulses, fog/ash weather, or patrol/spirit spawns depending on
   the arc. `setup` announces the tabletop rule without applying effects, `read`
   prints concise boss read-aloud lines, and `clear` removes symptom weather.
+- `@dm trap` (surface + stub) places latent position-watched traps using AGI
+  saves via DM_RollCheck; full spring/disarm in progress.
 
 `@dm mode on` does two things: suppresses normal BOSS/MVP spawns server-wide, and
 stores the DM's current party ID in `$dm_active_party`. All 50 visible campaign
