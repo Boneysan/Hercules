@@ -46,11 +46,10 @@ namespaced `$dm_*` (global) or `dm_*` (per-character).
   `@dmdownrule` / `@dmdown` / `@dmrevive` (Death's Door death saves via
   `OnPCDieEvent`; ally-proximity/heal rescue; released by cleanup/mode off). ✅
 
-Remaining (not yet built): initiative/spotlight, tavern hub, recap log.
-**Prioritized against the infrastructure work in
-`planning/dm-architecture-review.md` §9 (consolidated roadmap) — pick up
-work from that list, not this one; the feature specs stay in this file.**
-(@dm secret shipped.)
+- `shared/dm_session_log.txt` — `@dm log` / `@dm recap` (session recap log). ✅
+- `act_00/tavern_hub.txt` — `@dm rest` and tavern rumors (downtime hub). ✅
+
+**Starter live-table pack shipped!** All planned live-table functionality has been implemented.
 
 ## New files
 

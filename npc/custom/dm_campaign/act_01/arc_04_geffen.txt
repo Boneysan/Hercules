@@ -500,12 +500,10 @@ gef_dun02,219,212,4	script	East Seal Glyph#dm	4_ENERGY_WHITE,{
 	next();
 	if (select("Channel magic", "Leave it") == 2) close();
 	
-	if (dm_arc04_puzzle_1 == 0 && dm_arc04_puzzle_2 == 0 && dm_arc04_puzzle_3 == 0) {
-		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_1", 1);
+	if (callfunc("DM_PuzzleStep", "dm_arc04_puzzle_", 1, 3, "Vault Seal Pressure#dm::OnPressureStart")) {
 		mes("The glyph lights up with a steady hum.");
 	} else {
 		mes("The glyph flares red and sparks. The sequence is broken.");
-		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();
 
@@ -527,12 +525,10 @@ gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
 	next();
 	if (select("Channel magic", "Leave it") == 2) close();
 	
-	if (dm_arc04_puzzle_1 == 1 && dm_arc04_puzzle_2 == 0 && dm_arc04_puzzle_3 == 0) {
-		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_2", 1);
+	if (callfunc("DM_PuzzleStep", "dm_arc04_puzzle_", 2, 3, "Vault Seal Pressure#dm::OnPressureStart")) {
 		mes("The glyph lights up with a steady hum.");
 	} else {
 		mes("The glyph flares red and sparks. The sequence is broken.");
-		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();
 
@@ -554,13 +550,11 @@ gef_dun02,209,212,4	script	West Seal Glyph#dm	4_ENERGY_WHITE,{
 	next();
 	if (select("Channel magic", "Leave it") == 2) close();
 	
-	if (dm_arc04_puzzle_1 == 1 && dm_arc04_puzzle_2 == 1 && dm_arc04_puzzle_3 == 0) {
-		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_3", 1);
+	if (callfunc("DM_PuzzleStep", "dm_arc04_puzzle_", 3, 3, "Vault Seal Pressure#dm::OnPressureStart")) {
 		mes("The final glyph lights up. A heavy stone grinding noise comes from the center of the vault.");
 		mapannounce strnpcinfo(NPC_MAP), "The outer seal sequence is complete. The vault center is accessible.", bc_map, 0x3355FF;
 	} else {
 		mes("The glyph flares red and sparks. The sequence is broken.");
-		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();
 

@@ -48,33 +48,13 @@ function	script	DM_SceneWeather	{
 
 // Show (or clear, with empty filename) a cutin portrait for every online party
 // member -- cutin is per-client, so it must be looped over the party.
-function	script	DM_ScenePortrait	{
-	.@img$ = getarg(0, "");
-	.@pos = (.@img$ == "" ? 255 : 2);
-
-	.@party_id = getcharid(CHAR_ID_PARTY);
-	.@origin = getcharid(CHAR_ID_ACCOUNT);
-
-	if (.@party_id <= 0) {
-		cutin(.@img$, .@pos);
-		return;
-	}
-
-	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
-	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
-
-	for (.@i = 0; .@i < .@count; ++.@i) {
-		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
-			continue;
-		if (!attachrid(.@accid[.@i]))
-			continue;
-		cutin(.@img$, .@pos);
-		detachrid();
-	}
-
-	if (.@origin)
-		attachrid(.@origin);
+function	script	DM_ScenePortraitItem	{
+	cutin(getarg(0), (getarg(0) == "" ? 255 : 2));
 	return;
+}
+
+function	script	DM_ScenePortrait	{
+	return callfunc("DM_PartyForEach", "DM_ScenePortraitItem", getcharid(CHAR_ID_PARTY), getarg(0, ""));
 }
 
 function	script	DM_Scene	{
@@ -228,6 +208,47 @@ function	script	DM_Cutscene	{
 	dispbottom("[DM] Cutscene lock enabled for " + .@done + " member(s), auto-release in " + .@seconds + "s" + (.@portrait$ != "" ? ", portrait=" + .@portrait$ : "") + ".");
 	return 1;
 }
+function	script	DM_SpotlightItem	{
+	.@on = getarg(0);
+	.@target$ = getarg(1);
+	
+	if (.@on) {
+		if (strcharinfo(PC_NAME) == .@target$)
+			return; // exclude target
+		
+		@dm_spotlight_blocked = 1;
+		setpcblock(PCBLOCK_MOVE|PCBLOCK_ATTACK|PCBLOCK_SKILL|PCBLOCK_USEITEM|PCBLOCK_SITSTAND|PCBLOCK_IMMUNE, 1);
+		deltimer "DM_SceneConsole::OnSpotlightTimeout";
+		addtimer 60000, "DM_SceneConsole::OnSpotlightTimeout";
+	} else {
+		if (@dm_spotlight_blocked) {
+			@dm_spotlight_blocked = 0;
+			if (!@dm_downed && !dm_cutscene_blocked)
+				setpcblock(PCBLOCK_MOVE|PCBLOCK_ATTACK|PCBLOCK_SKILL|PCBLOCK_USEITEM|PCBLOCK_SITSTAND|PCBLOCK_IMMUNE, 0);
+			deltimer "DM_SceneConsole::OnSpotlightTimeout";
+		}
+	}
+	return;
+}
+
+function	script	DM_Spotlight	{
+	.@target$ = getarg(0, "");
+
+	if (.@target$ == "off" || .@target$ == "clear") {
+		.@done = callfunc("DM_PartyForEach", "DM_SpotlightItem", $dm_active_party, 0, "");
+		dispbottom("[DM] Spotlight released for " + .@done + " member(s).");
+		return 1;
+	}
+
+	if (.@target$ == "") {
+		dispbottom("[DM] Usage: @dm spotlight <player|off>");
+		return 0;
+	}
+
+	.@done = callfunc("DM_PartyForEach", "DM_SpotlightItem", $dm_active_party, 1, .@target$);
+	dispbottom("[DM] Spotlight on " + .@target$ + ". " + .@done + " other member(s) frozen for 60s.");
+	return 1;
+}
 
 -	script	DM_SceneConsole	FAKE_NPC,{
 	end;
@@ -235,6 +256,7 @@ function	script	DM_Cutscene	{
 OnInit:
 	bindatcmd("dmscene", strnpcinfo(NPC_NAME_UNIQUE)+"::OnScene", 1, 99, 1);
 	bindatcmd("dmcutscene", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCutscene", 1, 99, 1);
+	bindatcmd("dmspotlight", strnpcinfo(NPC_NAME_UNIQUE)+"::OnSpotlight", 1, 99, 1);
 	end;
 
 OnScene:
@@ -251,6 +273,13 @@ OnCutscene:
 	callfunc("DM_Cutscene", .@atcmd_parameters$[0], .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
 	end;
 
+OnSpotlight:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	callfunc("DM_Spotlight", .@atcmd_parameters$[0]);
+	end;
+
 OnCutsceneTimeout:
 	if (dm_cutscene_blocked) {
 		callfunc("DM_CutsceneSelf", 0, "", 0);
@@ -258,10 +287,20 @@ OnCutsceneTimeout:
 	}
 	end;
 
+OnSpotlightTimeout:
+	if (@dm_spotlight_blocked) {
+		callfunc("DM_SpotlightItem", 0, "");
+		dispbottom("[DM] Spotlight auto-released.");
+	}
+	end;
+
 OnPCLoginEvent:
 	if (dm_cutscene_blocked) {
 		callfunc("DM_CutsceneSelf", 0, "", 0);
 		dispbottom("[DM] Previous cutscene lock cleared on login.");
+	}
+	if (@dm_spotlight_blocked) {
+		callfunc("DM_SpotlightItem", 0, "");
 	}
 	end;
 }

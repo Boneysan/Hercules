@@ -233,6 +233,34 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "initiative") {
+		callfunc("DM_Initiative");
+		end;
+	}
+
+	if (.@sub$ == "log") {
+		.@text$ = "";
+		for (.@i = 1; .@i < .@atcmd_numparameters; ++.@i)
+			.@text$ += (.@i > 1 ? " " : "") + .@atcmd_parameters$[.@i];
+		callfunc("DM_Log", .@text$);
+		end;
+	}
+
+	if (.@sub$ == "recap") {
+		callfunc("DM_Recap");
+		end;
+	}
+
+	if (.@sub$ == "rest") {
+		callfunc("DM_Rest");
+		end;
+	}
+
+	if (.@sub$ == "spotlight") {
+		callfunc("DM_Spotlight", .@atcmd_parameters$[1]);
+		end;
+	}
+
 	if (.@sub$ == "cutscene") {
 		callfunc("DM_Cutscene", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
 		end;
@@ -535,11 +563,16 @@ S_Help:
 	dispbottom("[DM] @dm inspire <player> [+n|spend|clear|set n] | party");
 	dispbottom("[DM] @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]  (mood: weather+BGM+cutin)");
 	dispbottom("[DM] @dm cutscene <on|off> [portrait] [seconds]  (freeze/release party movement)");
+	dispbottom("[DM] @dm initiative   (roll d20+AGI for party, print order)");
+	dispbottom("[DM] @dm spotlight <player|off>   (freeze everyone else briefly)");
+	dispbottom("[DM] @dm log <text>   (append timestamped note to session log)");
+	dispbottom("[DM] @dm recap        (print recent session log notes)");
+	dispbottom("[DM] @dm rest         (full HP/SP heal, buffs, and savepoint update)");
 	dispbottom("[DM] @dm downrule <on|off|status>  (death saves instead of dying; arm per fight)");
 	dispbottom("[DM] @dm down <player> | @dm revive <player|party>");
 	dispbottom("[DM] @dm trap set <radius> <dc> <dmg%> [status] [status_ms]");
 	dispbottom("[DM] @dm trap list | clear [i|all] | reveal [i] | disarm <player> [i]   (latent trap MVP; full impl in progress)");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmdecide, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmsecret, @dmcheck, @dminspire, @dmscene, @dmcutscene, @dmencounter, @dmscale, @dmbloodied, @dmdownrule, @dmdown, @dmrevive, @dmtrap");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmdecide, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmsecret, @dmcheck, @dminspire, @dminitiative, @dmscene, @dmcutscene, @dmspotlight, @dmencounter, @dmscale, @dmbloodied, @dmdownrule, @dmdown, @dmrevive, @dmtrap, @dmlog, @dmrecap, @dmrest");
 	return;
 
 S_Reset:
@@ -649,29 +682,24 @@ S_Status:
 	if ($dm_mode && .@exp_rate == 100 && .@enc_count <= 0)
 		dispbottom("[Session] Hint: restart or DM relog? Temp EXP and registries reset; see CAMPAIGN.md lifetimes.");
 
-	setarray .@q[0], 20001, 20007, 20013, 20019, 20025, 20101, 20111, 20121, 20131, 20141, 20151, 20161, 20171, 20181, 20191, 20201, 20211, 20221, 20231;
 	.@line$ = "[Arcs 01-05] ";
-	for (.@i = 0; .@i < 5; ++.@i) {
-		.@n = .@i + 1;
-		.@line$ += (.@n < 10 ? "A0" : "A") + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	for (.@i = 1; .@i <= 5; ++.@i) {
+		.@line$ += (.@i < 10 ? "A0" : "A") + .@i + ":" + questprogress(callfunc("DM_ArcTrackerId", .@i)) + " ";
 	}
 	dispbottom(.@line$);
 	.@line$ = "[Arcs 06-10] ";
-	for (.@i = 5; .@i < 10; ++.@i) {
-		.@n = .@i + 1;
-		.@line$ += (.@n < 10 ? "A0" : "A") + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	for (.@i = 6; .@i <= 10; ++.@i) {
+		.@line$ += (.@i < 10 ? "A0" : "A") + .@i + ":" + questprogress(callfunc("DM_ArcTrackerId", .@i)) + " ";
 	}
 	dispbottom(.@line$);
 	.@line$ = "[Arcs 11-15] ";
-	for (.@i = 10; .@i < 15; ++.@i) {
-		.@n = .@i + 1;
-		.@line$ += "A" + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	for (.@i = 11; .@i <= 15; ++.@i) {
+		.@line$ += "A" + .@i + ":" + questprogress(callfunc("DM_ArcTrackerId", .@i)) + " ";
 	}
 	dispbottom(.@line$);
 	.@line$ = "[Arcs 16-19] ";
-	for (.@i = 15; .@i < 19; ++.@i) {
-		.@n = .@i + 1;
-		.@line$ += "A" + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	for (.@i = 16; .@i <= 19; ++.@i) {
+		.@line$ += "A" + .@i + ":" + questprogress(callfunc("DM_ArcTrackerId", .@i)) + " ";
 	}
 	dispbottom(.@line$);
 	dispbottom("[DM] (quest: 0=not started  1=in progress  2=complete)");
@@ -684,11 +712,38 @@ S_Status:
 
 S_Exp:
 	.@offset = getarg(0, 0);
-	.@base = atoi(.dm_params$[.@offset]);
+	.@arg1$ = .dm_params$[.@offset];
+	
+	if (.@arg1$ == "challenge") {
+		.@scale$ = strtolower(.dm_params$[.@offset + 1]);
+		.@arc = callfunc("DM_CurrentArc");
+		if (atoi(.dm_params$[.@offset + 2]) > 0)
+			.@arc = atoi(.dm_params$[.@offset + 2]); // fallback arc
+
+		.@level = callfunc("DM_RewardArcLevel", .@arc);
+		.@bar = .@level * .@level * 25; // approximated "bar"
+		
+		if (.@scale$ == "minor") {
+			.@base = .@bar / 4;
+		} else if (.@scale$ == "major") {
+			.@base = .@bar;
+		} else { // standard
+			.@base = .@bar / 2;
+		}
+		.@job = .@base / 2;
+
+		.@given = callfunc("DM_PartyExp", .@base, .@job);
+		mapannounce strcharinfo(PC_MAP), "[DM] The party overcomes the challenge.", bc_map, 0xFFAA33;
+		dispbottom("[DM] Granted " + .@base + " base / " + .@job + " job EXP (Challenge: " + (.@scale$ == "" ? "standard" : .@scale$) + ", Arc " + .@arc + ") to " + .@given + " party member(s).");
+		return;
+	}
+
+	.@base = atoi(.@arg1$);
 	.@job  = atoi(.dm_params$[.@offset + 1]);
 
 	if (.@base <= 0 && .@job <= 0) {
 		dispbottom("[DM] Usage: @dm exp <base> [job]");
+		dispbottom("[DM]        @dm exp challenge <minor|standard|major> [arc]");
 		dispbottom("[DM] Example: @dm exp 50000 20000");
 		return;
 	}
@@ -771,6 +826,7 @@ S_Mode:
 		$@dm_exp_char = 0;
 		$@dm_exp_rate = 100;
 		callfunc("DM_EncounterReset");
+		callfunc("DM_TrapCommand", 2, "clear", "all");
 		dispbottom("[DM] DnD mode disabled. MVP spawns will resume naturally.");
 		if (.@released > 0)
 			dispbottom("[DM] Released cutscene lock for " + .@released + " member(s).");
@@ -782,28 +838,7 @@ S_Mode:
 	dispbottom("[DM] Usage: @dm mode <on|off>");
 	return;
 
-S_HazardStatus:
-	.@status$ = strtolower(getarg(0, ""));
-	if (.@status$ == "" || .@status$ == "0" || .@status$ == "none")
-		return 0;
-	if (.@status$ == "poison" || .@status$ == "sc_poison")
-		return SC_POISON;
-	if (.@status$ == "freeze" || .@status$ == "frozen" || .@status$ == "sc_freeze")
-		return SC_FREEZE;
-	if (.@status$ == "stun" || .@status$ == "stunned" || .@status$ == "sc_stun")
-		return SC_STUN;
-	if (.@status$ == "sleep" || .@status$ == "sc_sleep")
-		return SC_SLEEP;
-	if (.@status$ == "curse" || .@status$ == "cursed" || .@status$ == "sc_curse")
-		return SC_CURSE;
-	if (.@status$ == "confusion" || .@status$ == "confused" || .@status$ == "sc_confusion")
-		return SC_CONFUSION;
-	if (.@status$ == "blind" || .@status$ == "sc_blind")
-		return SC_BLIND;
-	.@status = atoi(.@status$);
-	if (.@status > 0)
-		return .@status;
-	return -1;
+
 
 S_Hazard:
 	.@offset = getarg(0, 0);
@@ -820,7 +855,7 @@ S_Hazard:
 	.@damage = atoi(.dm_params$[.@offset + 1]);
 	.@ticks = atoi(.dm_params$[.@offset + 2]);
 	.@interval = atoi(.dm_params$[.@offset + 3]);
-	.@status = callsub(S_HazardStatus, .dm_params$[.@offset + 4]);
+	.@status = callfunc("DM_HazardStatus", .dm_params$[.@offset + 4]);
 	.@status_ms = atoi(.dm_params$[.@offset + 5]);
 
 	if (.@status < 0) {
@@ -1091,9 +1126,49 @@ S_Quest:
 		return;
 	}
 
+	if (.@action$ == "list") {
+		.@arc = atoi(.dm_params$[.@offset + 1]);
+		if (.@arc <= 0) .@arc = callfunc("DM_CurrentArc");
+		if (.@arc < 1) .@arc = 1;
+		if (.@arc > 19) .@arc = 19;
+
+		dispbottom("[DM] Quest progress for Arc " + .@arc + ":");
+		.@count = callfunc("DM_ArcQuestCount", .@arc);
+		
+		.@party_id = $dm_active_party;
+		if (.@party_id == 0) .@party_id = getcharid(CHAR_ID_PARTY);
+		if (.@party_id > 0) {
+			getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+			.@pc_count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		} else {
+			.@pc_count = 0;
+		}
+
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			.@qid = callfunc("DM_ArcQuestId", .@arc, .@i);
+			.@qname$ = callfunc("DM_ArcQuestName", .@arc, .@i);
+			.@done = 0; .@inprog = 0; .@missing = 0;
+			
+			for (.@j = 0; .@j < .@pc_count; ++.@j) {
+				if (!isloggedin(.@accid[.@j], .@charid[.@j])) continue;
+				if (!attachrid(.@accid[.@j])) continue;
+				
+				.@p = questprogress(.@qid);
+				if (.@p == 1) ++.@inprog;
+				else if (.@p == 2) ++.@done;
+				else ++.@missing;
+				
+				detachrid();
+			}
+			dispbottom("[DM] " + .@qid + " (" + .@qname$ + "): " + .@done + " done, " + .@inprog + " in prog, " + .@missing + " missing.");
+		}
+		return;
+	}
+
 	.@quest_id = atoi(.dm_params$[.@offset + 1]);
 	if (.@quest_id <= 0) {
-		dispbottom("[DM] Usage: @dmquest <start|complete|erase> <quest_id>");
+		dispbottom("[DM] Usage: @dmquest <list> [arc]");
+		dispbottom("[DM]        @dmquest <start|complete|erase> <quest_id>");
 		dispbottom("[DM]        @dmquest sync <forward|back>");
 		dispbottom("[DM]        @dmquest refresh");
 		return;
@@ -1101,13 +1176,15 @@ S_Quest:
 
 	if (.@action$ == "start" || .@action$ == "set") {
 		.@done = callfunc("DM_InstanceQuestStart", .@quest_id);
-		dispbottom("[DM] Quest " + .@quest_id + " started for " + .@done + " party member(s).");
+		.@qname$ = callfunc("DM_QuestNameById", .@quest_id);
+		dispbottom("[DM] Quest " + .@quest_id + " (" + .@qname$ + ") started for " + .@done + " party member(s).");
 		return;
 	}
 
 	if (.@action$ == "complete") {
 		.@done = callfunc("DM_InstanceQuestComplete", .@quest_id);
-		dispbottom("[DM] Quest " + .@quest_id + " completed for " + .@done + " party member(s).");
+		.@qname$ = callfunc("DM_QuestNameById", .@quest_id);
+		dispbottom("[DM] Quest " + .@quest_id + " (" + .@qname$ + ") completed for " + .@done + " party member(s).");
 		return;
 	}
 

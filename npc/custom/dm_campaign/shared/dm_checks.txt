@@ -73,6 +73,60 @@ function	script	DM_RollCheck	{
 	return .@pass;
 }
 
+function	script	DM_CheckList	{
+	dispbottom("Str = bStr, Agi = bAgi, Vit = bVit, Int = bInt, Dex = bDex, Luk = bLuk");
+	return;
+}
+
+function	script	DM_Initiative	{
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	if (.@party_id <= 0) {
+		dispbottom("[DM] You must be in a party for initiative.");
+		return;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	.@n = 0;
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+
+		callfunc("DM_RollCheck", bAgi, 0, "");
+		.@rolls[.@n] = @dm_check_total;
+		.@names$[.@n] = strcharinfo(PC_NAME);
+		++.@n;
+		detachrid();
+	}
+
+	// Sort by roll descending. Bubble sort.
+	for (.@i = 0; .@i < .@n - 1; ++.@i) {
+		for (.@j = 0; .@j < .@n - .@i - 1; ++.@j) {
+			if (.@rolls[.@j] < .@rolls[.@j + 1]) {
+				// Swap
+				.@t = .@rolls[.@j];
+				.@rolls[.@j] = .@rolls[.@j + 1];
+				.@rolls[.@j + 1] = .@t;
+
+				.@t$ = .@names$[.@j];
+				.@names$[.@j] = .@names$[.@j + 1];
+				.@names$[.@j + 1] = .@t$;
+			}
+		}
+	}
+
+	.@map$ = callfunc("DM_CurrentMap");
+	mapannounce .@map$, "[Initiative Order]", bc_map, 0x00FFFF;
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		mapannounce .@map$, " " + (.@i + 1) + ". " + .@names$[.@i] + " (" + .@rolls[.@i] + ")", bc_map, 0xFFFFFF;
+	}
+	
+	return;
+}
+
 function	script	DM_Check	{
 	.@target$ = getarg(0, "");
 	.@stat$   = getarg(1, "");
@@ -279,6 +333,7 @@ function	script	DM_Inspire	{
 OnInit:
 	bindatcmd("dmcheck", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCheck", 1, 99, 1);
 	bindatcmd("dminspire", strnpcinfo(NPC_NAME_UNIQUE)+"::OnInspire", 1, 99, 1);
+	bindatcmd("dminitiative", strnpcinfo(NPC_NAME_UNIQUE)+"::OnInitiative", 1, 99, 1);
 	end;
 
 OnCheck:
@@ -293,5 +348,12 @@ OnInspire:
 		end;
 
 	callfunc("DM_Inspire", .@atcmd_parameters$[0], .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+	end;
+
+OnInitiative:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	callfunc("DM_Initiative");
 	end;
 }

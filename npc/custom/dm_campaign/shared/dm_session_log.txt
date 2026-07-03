@@ -1,0 +1,74 @@
+// Seal Cascade DM Session Log
+
+function	script	DM_Log	{
+	.@text$ = getarg(0, "");
+	if (.@text$ == "") {
+		dispbottom("[DM] Usage: @dm log <text> | clear");
+		return;
+	}
+
+	if (.@text$ == "clear") {
+		deletearray $dm_log$[0], getarraysize($dm_log$);
+		dispbottom("[DM] Session log cleared.");
+		return;
+	}
+
+	// Add to end of array. If >= 20, shift.
+	.@size = getarraysize($dm_log$);
+	if (.@size >= 20) {
+		for (.@i = 0; .@i < 19; ++.@i)
+			$dm_log$[.@i] = $dm_log$[.@i + 1];
+		.@size = 19;
+	}
+	
+	.@time$ = "[" + gettimestr("%Y-%m-%d %H:%M", 20) + "]";
+	$dm_log$[.@size] = .@time$ + " " + .@text$;
+	dispbottom("[DM] Logged: " + $dm_log$[.@size]);
+	return;
+}
+
+function	script	DM_Recap	{
+	dispbottom("=== Previously on Seal Cascade ===");
+	
+	.@arc = callfunc("DM_CurrentArc");
+	if (.@arc > 0)
+		dispbottom("Current Arc: Arc " + .@arc);
+	
+	.@size = getarraysize($dm_log$);
+	.@start = (.@size > 5) ? .@size - 5 : 0;
+	if (.@size > 0) {
+		for (.@i = .@start; .@i < .@size; ++.@i)
+			dispbottom($dm_log$[.@i]);
+	} else {
+		dispbottom("(No recent session notes)");
+	}
+	dispbottom("==================================");
+	return;
+}
+
+-	script	DM_SessionLogConsole	FAKE_NPC,{
+	end;
+
+OnInit:
+	bindatcmd("dmlog", strnpcinfo(NPC_NAME_UNIQUE)+"::OnLog", 1, 99, 1);
+	bindatcmd("dmrecap", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRecap", 1, 99, 1);
+	end;
+
+OnLog:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	.@text$ = "";
+	for (.@i = 0; .@i < .@atcmd_numparameters; ++.@i)
+		.@text$ += (.@i > 0 ? " " : "") + .@atcmd_parameters$[.@i];
+	
+	callfunc("DM_Log", .@text$);
+	end;
+
+OnRecap:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	callfunc("DM_Recap");
+	end;
+}

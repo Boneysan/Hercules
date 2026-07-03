@@ -143,50 +143,96 @@ function	script	DM_InstanceClearFlag	{
 // Erases every campaign quest (20000-20233 range blocks) for the caller's party.
 // Used by @dm reset so the list of IDs lives in one place.
 function	script	DM_EraseAllCampaignQuests	{
-	// Session marker + Arc 1
-	for (.@q = 20000; .@q <= 20030; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 6
-	for (.@q = 20101; .@q <= 20105; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 7
-	for (.@q = 20111; .@q <= 20115; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 8
-	for (.@q = 20121; .@q <= 20124; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 9
-	for (.@q = 20131; .@q <= 20134; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 10
-	for (.@q = 20141; .@q <= 20144; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 11
-	for (.@q = 20151; .@q <= 20155; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 12
-	for (.@q = 20161; .@q <= 20165; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 13
-	for (.@q = 20171; .@q <= 20175; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 14
-	for (.@q = 20181; .@q <= 20185; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 15
-	for (.@q = 20191; .@q <= 20194; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 16
-	for (.@q = 20201; .@q <= 20204; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 17
-	for (.@q = 20211; .@q <= 20214; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 18
-	for (.@q = 20221; .@q <= 20223; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	// Arc 19
-	for (.@q = 20231; .@q <= 20233; ++.@q)
-		callfunc("DM_InstanceQuestErase", .@q);
-	return 1;
+	for (.@arc = 1; .@arc <= 19; ++.@arc) {
+		.@count = callfunc("DM_ArcQuestCount", .@arc);
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			callfunc("DM_InstanceQuestErase", callfunc("DM_ArcQuestId", .@arc, .@i));
+		}
+	}
+	return;
+}
+
+// Seal Cascade Quest Registry
+function	script	DM_QuestRegistry	{
+	// Dummy function body, data lives in OnInit
+	return;
+
+OnInit:
+	setarray .arc01_id[0], 20001, 20002, 20003, 20004, 20005, 20006;
+	setarray .arc01_nm$[0], "Omens at the Fountain", "Contract: Cellar Vermin", "Field Contract: Rockers and Rumors", "The Trembling Ground", "The Goat-Headed Sign", "First Field Test";
+	setarray .arc02_id[0], 20007, 20008, 20009, 20010, 20011, 20012;
+	setarray .arc02_nm$[0], "The Sleeping Forest", "Mushroom Ring Patrol", "Bone Tag Turn-In", "Lanterns for the Lost", "The Emptied Graves", "What the Ancestors Won't Say";
+	setarray .arc03_id[0], 20013, 20014, 20015, 20016, 20017, 20018;
+	setarray .arc03_nm$[0], "Sand and Whispers", "Caravan Water Debt", "Ant Hell Survey", "Sphinx Night Watch", "What the Desert Spat Up", "The King Beneath";
+	setarray .arc04_id[0], 20019, 20020, 20021, 20022, 20023, 20024;
+	setarray .arc04_nm$[0], "The City Above the Beast", "Tower Apprentice Drills", "Orc Village Bounty", "Argiope Silk Run", "The Vault That Prays", "The Pilgrim's Offer";
+	setarray .arc05_id[0], 20025, 20026, 20027, 20028, 20029, 20030;
+	setarray .arc05_nm$[0], "Tides and Trade", "Refugee Ferry Rotation", "Byalan Tide Contract", "Sunken Ship Manifest", "Cargo of Souls", "What Turned Over in the Deep";
+	setarray .arc06_id[0], 20101, 20102, 20103, 20104, 20105;
+	setarray .arc06_nm$[0], "The Heart That Holds the City", "The Number Nobody Wants", "Harpy Weather Log", "Juperos Parts Requisition", "Norgroad Heat Index";
+	setarray .arc07_id[0], 20111, 20112, 20113, 20114, 20115;
+	setarray .arc07_nm$[0], "The Unit That Wouldn't Stay Dead", "Whose Side the Smoke Is On", "Factory Whistle Shift", "Metaling Scrap Drive", "Mine Dust Medicine";
+	setarray .arc08_id[0], 20121, 20122, 20123, 20124;
+	setarray .arc08_nm$[0], "A Kingdom Unmade", "Outer Garrison", "Fallen Choir", "The Weight of Faith";
+	setarray .arc09_id[0], 20131, 20132, 20133, 20134;
+	setarray .arc09_nm$[0], "The Bleeding Blessing", "Ice Core Samples", "Hollow Blessings", "The Prelate's Record";
+	setarray .arc10_id[0], 20141, 20142, 20143, 20144;
+	setarray .arc10_nm$[0], "The Heroes They Made", "Lab Infiltration", "Lower Level Sweep", "Echo's Protocol";
+	setarray .arc11_id[0], 20151, 20153, 20154, 20155;
+	setarray .arc11_nm$[0], "When Heaven Turns", "Gryphon Vigil", "Dragon Pack Dispersal", "The Zealot's Testimony";
+	setarray .arc12_id[0], 20161, 20163, 20164, 20165;
+	setarray .arc12_nm$[0], "The Wound With a Keeper", "New World Cornus Survey", "Naga Border Patrol", "The Vance Proposal";
+	setarray .arc13_id[0], 20171, 20173, 20174, 20175;
+	setarray .arc13_nm$[0], "The Council of the Drowned", "Abbey Bell Silencing", "Sanctum Sweep", "The Broker's Terms";
+	setarray .arc14_id[0], 20181, 20183, 20184, 20185;
+	setarray .arc14_nm$[0], "The Herald in the Magma", "Volcanic Salamander Hunt", "Lava Golem Firebreak", "The Prelate's Silence";
+	setarray .arc15_id[0], 20191, 20192, 20193, 20194;
+	setarray .arc15_nm$[0], "The Five Doors of a Dead Hero", "What the Tower Remembers", "Aldebaran Last Letters", "The Method's Price";
+	setarray .arc16_id[0], 20201, 20202, 20203, 20204;
+	setarray .arc16_nm$[0], "The Royal Banquet", "Underground Prison Cleanup", "Terra Gloria", "Royal House Audience Rounds";
+	setarray .arc17_id[0], 20211, 20212, 20213, 20214;
+	setarray .arc17_nm$[0], "Illusion Investigation", "Sages Legacy", "Tartaros Dive", "Biosphere Sample Rotation";
+	setarray .arc18_id[0], 20221, 20222, 20223, 20230;
+	setarray .arc18_nm$[0], "The Queen the Drowned Chose", "The Dead You Failed", "Banquet Hall Procession", "Allied Front Muster";
+	setarray .arc19_id[0], 20231, 20232, 20233, 20234;
+	setarray .arc19_nm$[0], "Where Thanatos Stood", "Beyond the Veil", "The Choice He Never Had", "Ragnarok Aftermath Seeds";
+	end;
+}
+
+
+function	script	DM_ArcQuestCount	{
+	.@arc = getarg(0);
+	.@var$ = sprintf(".arc%02d_id", .@arc);
+	return getarraysize(getvariableofnpc(getd(.@var$), "DM_QuestRegistry"));
+}
+
+function	script	DM_ArcQuestId	{
+	.@arc = getarg(0);
+	.@i = getarg(1);
+	.@var$ = sprintf(".arc%02d_id", .@arc);
+	return getelementofarray(getvariableofnpc(getd(.@var$), "DM_QuestRegistry"), .@i);
+}
+
+function	script	DM_ArcQuestName	{
+	.@arc = getarg(0);
+	.@i = getarg(1);
+	.@var$ = sprintf(".arc%02d_nm$", .@arc);
+	return getelementofarray(getvariableofnpc(getd(.@var$), "DM_QuestRegistry"), .@i);
+}
+
+function	script	DM_QuestNameById	{
+	.@id = getarg(0);
+	for (.@arc = 1; .@arc <= 19; ++.@arc) {
+		.@count = callfunc("DM_ArcQuestCount", .@arc);
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (callfunc("DM_ArcQuestId", .@arc, .@i) == .@id) {
+				return callfunc("DM_ArcQuestName", .@arc, .@i);
+			}
+		}
+	}
+	return "Unknown Quest";
+}
+
+function	script	DM_ArcTrackerId	{
+	return callfunc("DM_ArcQuestId", getarg(0), 0);
 }

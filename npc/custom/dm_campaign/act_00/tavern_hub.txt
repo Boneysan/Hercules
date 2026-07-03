@@ -1,0 +1,67 @@
+// Seal Cascade - Tavern Hub (act_00)
+// Safe hub for downtime and rumors.
+
+prt_in,163,22,5	script	Tavern Keeper	428,{
+	mes "[Tavern Keeper]";
+	mes "Welcome to the Seal Cascade inn. Rest up, adventurers.";
+	next;
+	if (callfunc("DM_IsDM")) {
+		mes "DM options:";
+		if (select("Rest Party", "Nothing") == 1) {
+			callfunc("DM_Rest");
+		}
+		close;
+	}
+	
+	mes "We have rooms available if you need them.";
+	close;
+}
+
+prt_in,160,25,3	script	Shady Informant	125,{
+	mes "[Shady Informant]";
+	
+	// Rumors driven by campaign flags
+	.@arc = callfunc("DM_CurrentArc");
+	
+	if (.@arc == 1) {
+		mes "I heard the Tibbets family is looking for help in Prontera... something about a lost heirloom.";
+	} else if (.@arc == 2) {
+		mes "The Payon forest has been restless lately. The Elders are worried.";
+	} else if (dm_arc04_cassell_unmasked) {
+		mes "Cassell was unmasked, you say? I always knew that guy was bad news.";
+	} else if (dm_arc11_bjorn_joined) {
+		mes "Bjorn joined some adventurers? Ha! That old bear must be desperate.";
+	} else {
+		mes "Keep your ear to the ground. Change is coming.";
+	}
+	close;
+}
+
+function	script	DM_RestItem	{
+	percentheal 100, 100;
+	savepoint "prt_in", 163, 22;
+	sc_start SC_INC_AGI, 600000, 10;
+	sc_start SC_BLESSING, 600000, 10;
+	return;
+}
+
+function	script	DM_Rest	{
+	.@done = callfunc("DM_PartyForEach", "DM_RestItem", $dm_active_party);
+	dispbottom("[DM] Party rested (" + .@done + " members). HP/SP restored, savepoint updated, buffs applied.");
+	return 1;
+}
+
+-	script	DM_TavernConsole	FAKE_NPC,{
+	end;
+
+OnInit:
+	bindatcmd("dmrest", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRest", 1, 99, 1);
+	end;
+
+OnRest:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	callfunc("DM_Rest");
+	end;
+}

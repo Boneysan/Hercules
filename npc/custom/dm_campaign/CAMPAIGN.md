@@ -195,6 +195,19 @@ villain confrontation, then an MVP boss spawned via DM console.
 
 ---
 
+## Puzzles and Challenges
+
+Puzzles and riddles are supported via `DM_PuzzleStep` and `DM_PuzzleRiddle` (see `dm_puzzles.txt` for full API and NPC templates).
+- **Sequential Puzzles**: Use `DM_PuzzleStep` for levers or glyphs that must be clicked in order. A wrong step automatically resets the sequence and fires an optional failure event.
+- **Riddles & Passwords**: Use `DM_PuzzleRiddle` to track attempts at a password or `select()` menu. It handles locking the puzzle after max attempts and triggering a consequence (e.g. a hazard or add spawn).
+
+To reward non-combat solutions, use the **challenge EXP preset**:
+- `@dm exp challenge <minor|standard|major> [arc]`
+- It scales the reward to the target level of the current arc.
+- `minor` grants ~25% of a mob-grind bar, `standard` ~50%, and `major` ~100%.
+
+---
+
 ## Session Start Checklist
 
 1. Form a party with all players.
@@ -215,7 +228,7 @@ DM relog, check it before resuming play.
 |---|---|---|---|---|
 | Session on/off, active party | `$dm_mode`, `$dm_active_party`, `$dm_inst_<pid>` | permanent global | survives | survives |
 | EXP scaling, downed rule | `$@dm_exp_*`, `$@dm_downed_rule` | server-temp global | reset | survives |
-| Encounter registry, hazard, bloodied watcher | `@dm_enc_*`, `@dm_hazard_*`, `@dm_bloodied_*` | DM char-temp | lost | lost |
+| Encounter registry, hazard, bloodied watcher, traps | `@dm_enc_*`, `@dm_hazard_*`, `@dm_bloodied_*`, `@dm_trap_*` | DM char-temp | lost | lost |
 | Player campaign state | `dm_arc*` flags, `dm_inspiration` | permanent char | survives | survives |
 | Player live state | `@dm_downed`, `@dm_down_*`, `dm_cutscene_blocked` | char-temp | lost | lost |
 

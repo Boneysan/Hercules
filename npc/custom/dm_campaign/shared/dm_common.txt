@@ -41,6 +41,54 @@ function	script	DM_PartyOnlineCount	{
 	return .@online;
 }
 
+// DM_PartyForEach("<FuncName>", party_id, arg2, arg3, ...)
+// Calls callfunc("<FuncName>", arg2, arg3, ...) attached to each online
+// member; restores the caller's attachment; returns members reached.
+// Convention: new party-wide features must use this; new @dm subcommands must be 
+// callfunc-style domain functions taking explicit args.
+function	script	DM_PartyForEach	{
+	.@func$ = getarg(0);
+	.@party_id = getarg(1);
+	.@caller_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@reached = 0;
+
+	// Solo / no party fallback
+	if (.@party_id <= 0) {
+		if (getargcount() == 2) callfunc(.@func$);
+		else if (getargcount() == 3) callfunc(.@func$, getarg(2));
+		else if (getargcount() == 4) callfunc(.@func$, getarg(2), getarg(3));
+		else if (getargcount() == 5) callfunc(.@func$, getarg(2), getarg(3), getarg(4));
+		else if (getargcount() == 6) callfunc(.@func$, getarg(2), getarg(3), getarg(4), getarg(5));
+		else if (getargcount() == 7) callfunc(.@func$, getarg(2), getarg(3), getarg(4), getarg(5), getarg(6));
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+
+		if (getargcount() == 2) callfunc(.@func$);
+		else if (getargcount() == 3) callfunc(.@func$, getarg(2));
+		else if (getargcount() == 4) callfunc(.@func$, getarg(2), getarg(3));
+		else if (getargcount() == 5) callfunc(.@func$, getarg(2), getarg(3), getarg(4));
+		else if (getargcount() == 6) callfunc(.@func$, getarg(2), getarg(3), getarg(4), getarg(5));
+		else if (getargcount() == 7) callfunc(.@func$, getarg(2), getarg(3), getarg(4), getarg(5), getarg(6));
+		
+		++.@reached;
+		detachrid();
+	}
+
+	if (.@caller_aid)
+		attachrid(.@caller_aid);
+	
+	return .@reached;
+}
+
 function	script	DM_CurrentMap	{
 	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
 	return .@map$;

@@ -649,13 +649,13 @@ Pick from the top unless a dependency says otherwise.
 | 6 | LT: `@dm secret <player> <text>` | S | — | Quick win; **shipped** (dm_voice + console) |
 | 7 | WP-1 permission-gate constant — **shipped server-side** | S | — | Trivial; do alongside anything |
 | 8 | WP-6 downed/cutscene PCBLOCK interplay — **shipped server-side; live movement test pending** | S | — | Known interaction bug |
-| 9 | WP-11 `@dm trap` | M | read the traps/puzzles guide | First big feel upgrade for dungeons |
-| 10 | WP-12 puzzle templates + `@dm exp challenge` | S–M | guide §4; `DM_CurrentArc()` from WP-9 (or inline it) | Pays out non-combat play |
-| 11 | WP-9 quest registry + `@dm quest list` | M | — | DM quality-of-life; kills ID memorization |
-| 12 | WP-4 `DM_PartyForEach` | M | — | Incremental; fold into other packages' files |
-| 13 | LT: initiative/spotlight | M | WP-11's `DM_RollCheck` extraction | Spec in dm-live-table.md §10 |
-| 14 | LT: recap log (`@dm log` / `@dm recap`) | S–M | — | Spec in dm-live-table.md §12 |
-| 15 | LT: tavern downtime hub | M | — | Spec in dm-live-table.md §11; session-flow polish |
+| 9 | WP-11 `@dm trap` | M | read the traps/puzzles guide | **shipped** |
+| 10 | WP-12 puzzle templates + `@dm exp challenge` | S–M | guide §4; `DM_CurrentArc()` from WP-9 (or inline it) | **shipped** |
+| 11 | WP-9 quest registry + `@dm quest list` | M | — | **shipped** |
+| 12 | WP-4 `DM_PartyForEach` | M | — | **shipped** |
+| 13 | LT: initiative/spotlight | M | WP-11's `DM_RollCheck` extraction | **shipped** |
+| 14 | LT: recap log (`@dm log` / `@dm recap`) | S–M | — | **shipped** |
+| 15 | LT: tavern downtime hub | M | — | **shipped** |
 | 16 | WP-7 new-arc checklist — **complete** | S | after WP-9/10 land (they change the list) | Docs |
 | 17 | WP-8 HPM plugin migration | M–L | first upstream merge conflict | Deferred by design |
 

@@ -152,14 +152,13 @@ function	script	DM_CurrentArc	{
 		return .@arc;
 	}
 
-	setarray .@q[0], 20001, 20007, 20013, 20019, 20025, 20101, 20111, 20121, 20131, 20141, 20151, 20161, 20171, 20181, 20191, 20201, 20211, 20221, 20231;
 	.@last = 1;
-	for (.@i = 0; .@i < getarraysize(.@q); ++.@i) {
-		.@p = questprogress(.@q[.@i]);
+	for (.@i = 1; .@i <= 19; ++.@i) {
+		.@p = questprogress(callfunc("DM_ArcTrackerId", .@i));
 		if (.@p == 1)
-			return .@i + 1;
+			return .@i;
 		if (.@p == 2)
-			.@last = .@i + 1;
+			.@last = .@i;
 	}
 	return .@last;
 }
