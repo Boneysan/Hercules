@@ -907,6 +907,12 @@ S_Warp:
 	.@x = atoi(.dm_params$[.@offset + 1]);
 	.@y = atoi(.dm_params$[.@offset + 2]);
 
+	if (.@map$ == "tavern" || .@map$ == "hub") {
+		.@map$ = "prt_in";
+		.@x = 163;
+		.@y = 22;
+	}
+
 	if (.@map$ == "") {
 		dispbottom("[DM] Usage: @dm warp <map> [x] [y]");
 		return;
