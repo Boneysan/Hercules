@@ -29,6 +29,37 @@
 //=   dm_arc02_grove_burned, dm_arc02_notebook_obtained
 //===========================================================
 
+// Elder Gyeong - Intro
+payon,158,131,4	script	Elder Gyeong#dm	1_M_OLDMAN,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (dm_arc02_started) {
+		mes("[Elder Gyeong]");
+		mes("Sun-Hwa will guide you. Bring peace to the shrines.");
+		close();
+	}
+	mes("[Elder Gyeong]");
+	mes("The Ancestors are restless. It has been a hundred years since the dead walked the forest, but now... the shrines are cold. Our hunters find tracks in the mud that shouldn't be there.");
+	next();
+	switch (select("We will bring peace to your ancestors, Elder.", "Are they dropping anything valuable? What's the bounty?", "Why are they waking up now?")) {
+	case 1:
+		mes("[Elder Gyeong]");
+		mes("Your respect is appreciated, outsiders. But swords do not bring peace to the dead. They only bring silence. Still... it is better than this desecration.");
+		break;
+	case 2:
+		mes("[Elder Gyeong]");
+		mes("(Frowning) You speak of our ancestors as mere prey. The Guild pays you, I assume. But if you find the source of this rot, the village will reward you from our own coffers.");
+		break;
+	case 3:
+		mes("[Elder Gyeong]");
+		mes("Someone went deep into the fourth level of the caves. They brought flowers. Pale, glowing things. The dead followed the light. Find the one who planted the garden.");
+		break;
+	}
+	next();
+	mes("[Elder Gyeong]");
+	mes("Go to Sun-Hwa the Shrine-Medium. She can perform the rite that lets you question the dead. She will guide your hunt.");
+	close();
+}
+
 // Sun-Hwa - shrine-medium and Arc 2 quest-giver
 payon,181,104,4	script	Sun-Hwa#dm	4_F_SHAMAN,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
@@ -292,30 +323,30 @@ pay_dun04,120,115,4	script	Scholar Voss#dm	4_M_SCIENCE,{
 		close();
 	}
 
-	mes("^3355FF*Roots pulse under the cave floor. Moonlight gathers in the grove like a wound pretending to be beautiful.*^000000");
+	mes("^3355FF*You find a tidy, academic man in travel-worn robes performing a ritual over a catalogued pile of bones. He wears the same goat-headed sigil seen in Prontera, and takes notes between incantations.*^000000");
 	next();
 	mes("[Scholar Voss]");
-	mes("Ah. Prontera's sewer party. Cassell said the Guild might send dogs after the second trial.");
+	mes("More material for the survey. The Gray Pilgrim said the Guild might send dogs to sniff around. You're far from your sewer, rats.");
 	next();
-	switch (select("These were people, Voss.", "Walk away and leave the notes.", "Show us how the harvest works.")) {
+	switch (select("Your cult is defiling the dead. It stops here.", "Cassell sent you? What is he looking for in these caves?", "Tell me how the magic works, and I might let you live.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_killed", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_spared", 0);
 		mes("[Voss]");
-		mes("These were data. People are the storage medium.");
+		mes("Defiling? I am *cataloguing* them! Death is a seal of its own, and we are learning to loosen it!");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_spared", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_killed", 0);
 		mes("[Voss]");
-		mes("A practical offer. I keep my life, you keep the notebook, and Payon keeps pretending this was an aberration.");
+		mes("He looks for the seams of the world! He tests the boundaries! If a forest spirit can be fed enough souls to thin the veil, what else can be thinned?");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_spared", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_killed", 0);
 		callfunc("DM_InstanceSetFlag", "dm_arc02_rite_path", 3);
 		mes("[Voss]");
-		mes("Delightful. A bound spirit resonates with the seal when fed memory-rich souls. It is less theology than acoustics.");
+		mes("You want the power of the grave? It takes sacrifice! The spirit below demands it! The Moonlight Flower blooms in blood!");
 		break;
 	}
 	next();
@@ -388,6 +419,14 @@ OnMoonlightDead:
 	killmonster .@map$, "Scholar Voss#dm::OnAddKilled";
 	callfunc("DM_PartyQuestComplete", 20012, getcharid(CHAR_ID_PARTY));
 	callfunc("DM_PartyExp", 110000, 45000, getcharid(CHAR_ID_PARTY));
+	
+	mapannounce .@map$, "[Moonlit Grove] The dark roots wither and turn to ash.", bc_map, 0x88CCFF;
+	sleep2 3000;
+	mapannounce .@map$, "[Brother Cassell] (Illusion) Fascinating. The boundary between life and death is much thinner here than in Prontera.", bc_map, 0xAAAAAA;
+	sleep2 3000;
+	mapannounce .@map$, "[Brother Cassell] (Illusion) You have my thanks, adventurers. You are excellent test subjects.", bc_map, 0xAAAAAA;
+	sleep2 3000;
+	
 	if (dm_arc02_grove_restored)
 		mapannounce .@map$, "[Moonlit Grove] Silver bells fade. The stolen souls find the shrine road home.", bc_map, 0x88CCFF;
 	else
