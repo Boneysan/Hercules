@@ -1,11 +1,10 @@
-# MariaDB Campaign Backup — Verification Handoff
+# MariaDB Campaign Backup — Verification Record
 
-Written 2026-07-02. Hand this to whoever (human or agent) is at the keyboard
-the next time MariaDB is running. It finishes WP-13 from
+Written 2026-07-02 to finish WP-13 from
 `planning/dm-architecture-review.md` (finding F16: campaign state previously
 had no backups at all).
 
-## Status at handoff
+## Status
 
 **Built and committed** (commit `5ef4ecda9`):
 
@@ -19,12 +18,14 @@ had no backups at all).
   failure so the rest of preflight still reports), meaning every game night
   gets an automatic snapshot.
 
-**Verified:** the failure path only. MariaDB was down during the build
-session; a failed dump correctly exits 1, prints
-`BACKUP FAILED - is MariaDB running? Nothing was written.`, and leaves no
-file behind.
-
-**NOT yet verified:** the success path and a restore. That is this handoff.
+**Verified 2026-07-02:** failure path, success path, preflight integration,
+and restore drill. `./tools/backup-campaign.sh verify` wrote
+`backups/ragnarok_20260702_180239_verify.sql.gz` (13K on disk; 16K via
+`du -h`). Restoring that dump into `ragnarok_restore_test` matched live row
+counts exactly: `char_reg_num_db` 8/8, `quest` 14/14, `map_reg_num_db` 14/14,
+and `map_reg_str_db` 26/26. `campaign-preflight.sh` also wrote
+`backups/ragnarok_20260702_180346_pre_session.sql.gz` and passed script/load
+validation.
 
 ## Environment facts (checked, not assumed)
 
@@ -39,6 +40,9 @@ file behind.
   database `ragnarok`.
 - Liveness probe: `mysqladmin -h 127.0.0.1 -u ragnarok -pragnarok ping`
   → `mysqld is alive` when up.
+- The restore drill needs one-time scratch DB privileges. This was granted
+  with:
+  `sudo mysql -e "DROP DATABASE IF EXISTS ragnarok_restore_test; CREATE DATABASE ragnarok_restore_test; GRANT ALL PRIVILEGES ON ragnarok_restore_test.* TO 'ragnarok'@'localhost'; FLUSH PRIVILEGES;"`
 
 ## Verification procedure (run top to bottom)
 
@@ -51,13 +55,14 @@ mysqladmin -h 127.0.0.1 -u ragnarok -pragnarok ping   # expect: mysqld is alive
 # 1. Success path
 ./tools/backup-campaign.sh verify
 # Expect: "Backup written: backups/ragnarok_<stamp>_verify.sql.gz (<size>)"
-# Size sanity: a real campaign DB dump should be at least a few hundred KB.
+# Size sanity: the script rejects dumps under 10 KB; this verified DB was 13K.
 ls -lh backups/
 
 # 2. Dump content spot-check (story flags + quests + globals must be present)
 gunzip -c backups/ragnarok_*_verify.sql.gz | grep -c "INSERT INTO \`char_reg_num_db\`"   # >= 1 once anyone has campaign flags
 gunzip -c backups/ragnarok_*_verify.sql.gz | grep -m1 "CREATE TABLE \`quest\`"
-gunzip -c backups/ragnarok_*_verify.sql.gz | grep -m1 "CREATE TABLE \`mapreg\`"
+gunzip -c backups/ragnarok_*_verify.sql.gz | grep -m1 "CREATE TABLE \`map_reg_num_db\`"
+gunzip -c backups/ragnarok_*_verify.sql.gz | grep -m1 "CREATE TABLE \`map_reg_str_db\`"
 
 # 3. Restore drill into a scratch DB (never touch `ragnarok` for this)
 mysql -h 127.0.0.1 -u ragnarok -pragnarok -e "CREATE DATABASE IF NOT EXISTS ragnarok_restore_test"
@@ -83,8 +88,8 @@ If restoring for real one day: **stop login/char/map servers first**, then
 
 ## After verification
 
-1. Tick WP-13's remaining steps in `planning/dm-architecture-review.md`
-   (mark the package fully done, note the verified dump size).
+1. WP-13's remaining steps have been ticked in
+   `planning/dm-architecture-review.md`.
 2. Delete stray `*_verify` / `*_fail_test` dumps if you want a clean
    `backups/` (or leave them; retention will age them out).
 3. Remind the DM of the two habit rules (also in the crash runbook in

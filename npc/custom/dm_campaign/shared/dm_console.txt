@@ -4,6 +4,7 @@
 	end;
 
 OnInit:
+	// The bindatcmd level 1 is an engine floor; DM_RequireDM reads DM_Config.gm_level.
 	bindatcmd("dm", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDM", 1, 99, 1);
 	bindatcmd("dmreward", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReward", 1, 99, 1);
 	bindatcmd("dmflag", strnpcinfo(NPC_NAME_UNIQUE)+"::OnFlag", 1, 99, 1);
@@ -54,6 +55,11 @@ OnDM:
 
 	if (.@sub$ == "quest") {
 		callsub(S_Quest, 1);
+		end;
+	}
+
+	if (.@sub$ == "decide") {
+		callfunc("DM_DecideCommand", .@atcmd_numparameters - 1, .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
 		end;
 	}
 
@@ -473,10 +479,12 @@ S_Help:
 	dispbottom("[DM] @dm mode <on|off>");
 	dispbottom("[DM] @dm reward [arc] [tier] [preview|dryrun|1]");
 	dispbottom("[DM] @roll [hidden] <NdX[+/-mod]> | @roll fudge <total> [note]");
-	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
+	dispbottom("[DM] @dm flag <get|set|clear|sync> [name] [value]");
+	dispbottom("[DM] @dm flag <arc01..arc19|cleararc01..cleararc19>");
 	dispbottom("[DM] @dm quest <start|complete|erase> <quest_id>   (current party)");
 	dispbottom("[DM] @dm quest sync <forward|back>   (forward=catch up to furthest, back=reset to least)");
 	dispbottom("[DM] @dm quest refresh               (re-deliver all in-progress quests, fixes client hidden quests)");
+	dispbottom("[DM] @dm decide [arc] | <key> <outcome> | status [arc] | undo <key>");
 	dispbottom("[DM] @dm beat                 (menu: location/NPC/story tracking)");
 	dispbottom("[DM] @dm story <message> | @dm globalstory <message>");
 	dispbottom("[DM] @dm spawn <mob_id> [count] [name]");
@@ -507,7 +515,7 @@ S_Help:
 	dispbottom("[DM] @dm cutscene <on|off> [portrait] [seconds]  (freeze/release party movement)");
 	dispbottom("[DM] @dm downrule <on|off|status>  (death saves instead of dying; arm per fight)");
 	dispbottom("[DM] @dm down <player> | @dm revive <player|party>");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dminspire, @dmscene, @dmcutscene, @dmencounter, @dmscale, @dmbloodied, @dmdownrule, @dmdown, @dmrevive");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmdecide, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmcheck, @dminspire, @dmscene, @dmcutscene, @dmencounter, @dmscale, @dmbloodied, @dmdownrule, @dmdown, @dmrevive");
 	return;
 
 S_Reset:
@@ -553,7 +561,70 @@ S_Reset:
 
 S_Status:
 	.@party_id = getcharid(CHAR_ID_PARTY);
-	dispbottom("[DM] Mode=" + ($dm_mode ? "ON" : "OFF") + "  Session party=" + $dm_active_party + "  Your party=" + .@party_id);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@pruned = callfunc("DM_EncounterPrune");
+	.@enc_count = @dm_enc_count;
+	.@enc_last_gid = @dm_enc_last_gid;
+	.@enc_boss_gid = @dm_enc_boss_gid;
+	.@hazard_ticks = @dm_hazard_ticks;
+	.@hazard_map$ = @dm_hazard_map$;
+	.@hazard_x = @dm_hazard_x;
+	.@hazard_y = @dm_hazard_y;
+	.@hazard_range = @dm_hazard_range;
+	.@hazard_damage = @dm_hazard_damage;
+	.@hazard_status = @dm_hazard_status;
+	.@hazard_party = @dm_hazard_party_id;
+	.@bloodied_gid = @dm_bloodied_gid;
+	.@bloodied_fired = @dm_bloodied_fired;
+	.@inst_party = (.@party_id > 0 ? .@party_id : $dm_active_party);
+	.@inst_id = (.@inst_party > 0 ? getd("$dm_inst_" + .@inst_party) : 0);
+	.@exp_rate = ($@dm_exp_rate > 0 ? $@dm_exp_rate : 100);
+	.@exp_scope$ = "normal";
+	if ($@dm_exp_party > 0 && $@dm_exp_rate > 0)
+		.@exp_scope$ = "party " + $@dm_exp_party;
+	else if ($@dm_exp_char > 0 && $@dm_exp_rate > 0)
+		.@exp_scope$ = "char " + $@dm_exp_char;
+	else if (.@exp_rate != 100)
+		.@exp_scope$ = "unscoped";
+
+	if (.@party_id > 0) {
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+				continue;
+			if (!attachrid(.@accid[.@i]))
+				continue;
+			if (@dm_downed) {
+				++.@downed;
+				if (@dm_downed == 2)
+					++.@stable;
+				else
+					++.@dying;
+			}
+			detachrid();
+		}
+		if (.@origin_aid)
+			attachrid(.@origin_aid);
+	} else if (@dm_downed) {
+		.@downed = 1;
+		if (@dm_downed == 2)
+			.@stable = 1;
+		else
+			.@dying = 1;
+	}
+
+	dispbottom("[Session] mode=" + ($dm_mode ? "ON" : "OFF") + " active_party=" + $dm_active_party + " your_party=" + .@party_id + " instance=" + .@inst_id);
+	dispbottom("[Session] downrule=" + ($@dm_downed_rule ? "ARMED" : "off") + " downed=" + .@downed + " (dying=" + .@dying + " stable=" + .@stable + ") exp=" + .@exp_rate + "% " + .@exp_scope$);
+	dispbottom("[Session] encounter=" + .@enc_count + " last_gid=" + .@enc_last_gid + " boss_gid=" + .@enc_boss_gid + (.@pruned ? " pruned=" + .@pruned : ""));
+	if (.@hazard_ticks > 0)
+		dispbottom("[Session] hazard=" + .@hazard_ticks + " tick(s) " + .@hazard_map$ + " " + .@hazard_x + "," + .@hazard_y + " r=" + .@hazard_range + " dmg=" + .@hazard_damage + "% status=" + .@hazard_status + " party=" + .@hazard_party);
+	else
+		dispbottom("[Session] hazard=off");
+	dispbottom("[Session] bloodied_gid=" + .@bloodied_gid + " fired=" + .@bloodied_fired);
+	if ($dm_mode && .@exp_rate == 100 && .@enc_count <= 0)
+		dispbottom("[Session] Hint: restart or DM relog? Temp EXP and registries reset; see CAMPAIGN.md lifetimes.");
+
 	setarray .@q[0], 20001, 20007, 20013, 20019, 20025, 20101, 20111, 20121, 20131, 20141, 20151, 20161, 20171, 20181, 20191, 20201, 20211, 20221, 20231;
 	.@line$ = "[Arcs 01-05] ";
 	for (.@i = 0; .@i < 5; ++.@i) {
@@ -842,14 +913,19 @@ S_Flag:
 	.@offset = getarg(0, 0);
 	.@action$ = .dm_params$[.@offset];
 
+	if (.@action$ == "sync") {
+		callfunc("DM_FlagSyncFrom", .dm_params$[.@offset + 1]);
+		return;
+	}
+
 	if (.@action$ == "arc01") {
 		callfunc("DM_PrintArc01Flags");
 		return;
 	}
 
 	if (.@action$ == "cleararc01") {
-		callfunc("DM_ClearArc01Flags");
-		dispbottom("[DM] Arc 01 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 1);
+		dispbottom("[DM] Arc 01 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -859,8 +935,8 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc02") {
-		callfunc("DM_ClearArc02Flags");
-		dispbottom("[DM] Arc 02 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 2);
+		dispbottom("[DM] Arc 02 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -870,8 +946,8 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc03") {
-		callfunc("DM_ClearArc03Flags");
-		dispbottom("[DM] Arc 03 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 3);
+		dispbottom("[DM] Arc 03 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -881,8 +957,8 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc04") {
-		callfunc("DM_ClearArc04Flags");
-		dispbottom("[DM] Arc 04 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 4);
+		dispbottom("[DM] Arc 04 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -892,8 +968,8 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc05") {
-		callfunc("DM_ClearArc05Flags");
-		dispbottom("[DM] Arc 05 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 5);
+		dispbottom("[DM] Arc 05 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -903,8 +979,8 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc06") {
-		callfunc("DM_ClearArc06Flags");
-		dispbottom("[DM] Arc 06 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 6);
+		dispbottom("[DM] Arc 06 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -914,42 +990,43 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc07") {
-		callfunc("DM_ClearArc07Flags");
-		dispbottom("[DM] Arc 07 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 7);
+		dispbottom("[DM] Arc 07 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
 	if (.@action$ == "arc08") { callfunc("DM_PrintArc08Flags"); return; }
-	if (.@action$ == "cleararc08") { callfunc("DM_ClearArc08Flags"); dispbottom("[DM] Arc 08 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc08") { .@done = callfunc("DM_PartyClearArcFlags", 8); dispbottom("[DM] Arc 08 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc09") { callfunc("DM_PrintArc09Flags"); return; }
-	if (.@action$ == "cleararc09") { callfunc("DM_ClearArc09Flags"); dispbottom("[DM] Arc 09 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc09") { .@done = callfunc("DM_PartyClearArcFlags", 9); dispbottom("[DM] Arc 09 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc10") { callfunc("DM_PrintArc10Flags"); return; }
-	if (.@action$ == "cleararc10") { callfunc("DM_ClearArc10Flags"); dispbottom("[DM] Arc 10 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc10") { .@done = callfunc("DM_PartyClearArcFlags", 10); dispbottom("[DM] Arc 10 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc11") { callfunc("DM_PrintArc11Flags"); return; }
-	if (.@action$ == "cleararc11") { callfunc("DM_ClearArc11Flags"); dispbottom("[DM] Arc 11 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc11") { .@done = callfunc("DM_PartyClearArcFlags", 11); dispbottom("[DM] Arc 11 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc12") { callfunc("DM_PrintArc12Flags"); return; }
-	if (.@action$ == "cleararc12") { callfunc("DM_ClearArc12Flags"); dispbottom("[DM] Arc 12 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc12") { .@done = callfunc("DM_PartyClearArcFlags", 12); dispbottom("[DM] Arc 12 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc13") { callfunc("DM_PrintArc13Flags"); return; }
-	if (.@action$ == "cleararc13") { callfunc("DM_ClearArc13Flags"); dispbottom("[DM] Arc 13 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc13") { .@done = callfunc("DM_PartyClearArcFlags", 13); dispbottom("[DM] Arc 13 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc14") { callfunc("DM_PrintArc14Flags"); return; }
-	if (.@action$ == "cleararc14") { callfunc("DM_ClearArc14Flags"); dispbottom("[DM] Arc 14 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc14") { .@done = callfunc("DM_PartyClearArcFlags", 14); dispbottom("[DM] Arc 14 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc15") { callfunc("DM_PrintArc15Flags"); return; }
-	if (.@action$ == "cleararc15") { callfunc("DM_ClearArc15Flags"); dispbottom("[DM] Arc 15 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc15") { .@done = callfunc("DM_PartyClearArcFlags", 15); dispbottom("[DM] Arc 15 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc16") { callfunc("DM_PrintArc16Flags"); return; }
-	if (.@action$ == "cleararc16") { callfunc("DM_ClearArc16Flags"); dispbottom("[DM] Arc 16 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc16") { .@done = callfunc("DM_PartyClearArcFlags", 16); dispbottom("[DM] Arc 16 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc17") { callfunc("DM_PrintArc17Flags"); return; }
-	if (.@action$ == "cleararc17") { callfunc("DM_ClearArc17Flags"); dispbottom("[DM] Arc 17 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc17") { .@done = callfunc("DM_PartyClearArcFlags", 17); dispbottom("[DM] Arc 17 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc18") { callfunc("DM_PrintArc18Flags"); return; }
-	if (.@action$ == "cleararc18") { callfunc("DM_ClearArc18Flags"); dispbottom("[DM] Arc 18 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc18") { .@done = callfunc("DM_PartyClearArcFlags", 18); dispbottom("[DM] Arc 18 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc19") { callfunc("DM_PrintArc19Flags"); return; }
-	if (.@action$ == "cleararc19") { callfunc("DM_ClearArc19Flags"); dispbottom("[DM] Arc 19 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc19") { .@done = callfunc("DM_PartyClearArcFlags", 19); dispbottom("[DM] Arc 19 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 
 
 
 
 	.@flag$ = .dm_params$[.@offset + 1];
 	if (.@flag$ == "") {
-		dispbottom("[DM] Usage: @dmflag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
+		dispbottom("[DM] Usage: @dmflag <get|set|clear|sync> [name] [value]");
+		dispbottom("[DM]        @dmflag <arc01..arc19|cleararc01..cleararc19>");
 		return;
 	}
 

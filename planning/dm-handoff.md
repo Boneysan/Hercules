@@ -16,6 +16,32 @@ updates in `npc/custom/dm_campaign/`.
 
 ## Latest Local Validation
 
+2026-07-02 (DM architecture WP hardening batch):
+
+- Database backup tooling verified end-to-end, including a restore drill into
+  `ragnarok_restore_test`; campaign globals, quests, and map registry rows
+  restored with matching counts.
+- WP-10 decision registry shipped server-side: `@dm decide` / `@dmdecide`,
+  branch exclusivity, undo/status, and `@dmbeat` branch delegation are wired
+  through `shared/dm_decisions.txt`.
+- WP-2 flag registry shipped server-side: `DM_FlagRegistry` owns all story flag
+  names and clear/print/reset/party-clear paths loop the same registry.
+- WP-3 flag sync shipped server-side: `@dm flag sync <player>` copies every
+  registered story flag from a known-good online party member to the other
+  online party members.
+- WP-5 status health shipped server-side: `@dm status` now reports session
+  mode, party, instance, downed rule/counts, EXP scope, encounter registry,
+  hazard ticks, and bloodied watcher state before the story summary.
+- WP-1, WP-6, and WP-7 shipped: one configurable DM gate
+  (`DM_Config.gm_level`), downed/cutscene movement-lock ownership, and an
+  "Adding A New Arc" checklist in `CAMPAIGN.md`.
+- Validation: `./tools/campaign-preflight.sh` OK after each server-side batch
+  (84 dm_campaign include lines, 0 errors). Remaining warnings are the known
+  numeric `-1` invisible marker view warnings in `dm_hunt_markers.txt`.
+- Live smoke tests still pending: `@dm decide`, `@dm flag arc03`,
+  `@dm flag cleararc03`, `@dm flag sync <player>`, `@dm status` mid-fight,
+  and the two downed/cutscene lock-order cases.
+
 2026-07-02 (continued enrichment and tooling polish):
 
 - Client quest journal source: planning/campaign_quest_journal_entries.lua (normalized + enriched 2026-07-02; additional immersive flavor for Arc3/4/5/2 support like Sand and Whispers, Orc Bounty, Argiope Silk, Pilgrim's Offer, Tides and Trade, Byalan Tide, Ancestors Won't Say; 89 entries, ~55+ with solid Hunt/Boss/Return + length) + `planning/SealCascade_QuestList_addon.lua`.
@@ -27,7 +53,7 @@ updates in `npc/custom/dm_campaign/`.
 - DB comments: 19 arcs with design source + synopsis (branches, flags, cast, Rewards on all 47+ hunts); samples enriched in prior passes.
 - Hunt markers: 48 coverage (all real hunts; trackers intentionally omitted; late arcs 15-19 maps verified correct: aldebaran/prt_q/moc_ruins etc.).
 - All 89 wired to scripts + @dmbeat.
-- Validation: script-checker clean (minor -1 deprecation on invisible markers expected, non-fatal); ./tools/check-campaign.sh and ./tools/campaign-preflight.sh OK (82 dm_campaign includes). Journal health: 89 entries, 0 "see vault", ~55 solid structured, colored summaries present.
+- Validation: script-checker clean (minor -1 deprecation on invisible markers expected, non-fatal); ./tools/check-campaign.sh and ./tools/campaign-preflight.sh OK. Journal health: 89 entries, 0 "see vault", ~55 solid structured, colored summaries present.
 - Quest/Data Layer complete and elegant. Ready to merge lua source into OngoingQuestInfoList_True_EN.lub.
 - DM Tooling (console, beats, helpers, flags, instances, rewards, symptoms, combat, scene): feature-complete per vault (Rina 3-way, Pratt, Bjorn, Carrion, finale 6 endings all wired in @dmbeat + scripts + Central Choice menu). No major missing @dm subcommands (full dispatch in dm_console + split helpers). Server side elegant and ready. Small polish: @dm status now reminds players about merged client journal for full experience.
 - Next focus: live client validation + full playtest checklist execution (see "Live Client Validation", "Encounter And Branch Validation", "Hazard..." sections below); client asset distribution (BGM/cutins per campaign_client_assets.md); prep for game night.

@@ -81,6 +81,8 @@ The in-game DM layer is script-first and exposed through DM-group commands
   hazard, cleanup, warp, recall, and instance control
 - `@dmbeat` menus for all 19 arcs
 - `@dmflag arc01` through `@dmflag arc19` plus matching clear shortcuts
+- `@dmflag sync <player>` to copy registered story flags from a present party
+  member onto returning online members
 - `@roll`, `@roll hidden`, `@roll fudge`, and `@roll override`
 
 Use `planning/dm-tooling.md` for command syntax and examples.

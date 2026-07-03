@@ -206,6 +206,19 @@ villain confrontation, then an MVP boss spawned via DM console.
 `$dm_active_party` stores the active party ID. If you need to check which party
 is currently active: `@dm mode` with no argument reports the current state.
 
+### State Lifetimes
+
+`@dm status` shows the live values in this table. After any server restart or
+DM relog, check it before resuming play.
+
+| State | Vars | Lifetime | After server restart | After owner relogs |
+|---|---|---|---|---|
+| Session on/off, active party | `$dm_mode`, `$dm_active_party`, `$dm_inst_<pid>` | permanent global | survives | survives |
+| EXP scaling, downed rule | `$@dm_exp_*`, `$@dm_downed_rule` | server-temp global | reset | survives |
+| Encounter registry, hazard, bloodied watcher | `@dm_enc_*`, `@dm_hazard_*`, `@dm_bloodied_*` | DM char-temp | lost | lost |
+| Player campaign state | `dm_arc*` flags, `dm_inspiration` | permanent char | survives | survives |
+| Player live state | `@dm_downed`, `@dm_down_*`, `dm_cutscene_blocked` | char-temp | lost | lost |
+
 ---
 
 ## How Encounters Work
@@ -259,6 +272,47 @@ Access via `@dm` in-game (DM account only).
 
 Beat numbers: 1–499 = Act I, 500–999 = Act II, 1000–1499 = Act III,
 1500–1999 = Act IV. Beat 1999 = campaign complete.
+
+Story outcome shortcuts live in `@dm decide` / `@dmdecide`: use
+`@dm decide <key> <outcome>` for the fast path, `@dm decide [arc]` for menus,
+and `@dm decide status [arc]` for the branch ledger. `@dmbeat` branch options
+delegate to the same registry.
+
+If a player missed a branch decision, use `@dm flag sync <present-player>` to
+copy registered story flags from someone who was present.
+
+---
+
+## Adding A New Arc Checklist
+
+When adding a future arc, update every current copy point in one pass:
+
+1. Add the arc script under `npc/custom/dm_campaign/act_XX/arc_YY_*.txt` and
+   include it from `npc/scripts_custom.conf`.
+2. Register all new quest IDs in `db/quest_db.conf`.
+3. Add player journal text in `planning/campaign_quest_journal_entries.lua`
+   and `planning/SealCascade_QuestList_addon.lua`; update
+   `tools/campaign_quest_merge.py` ID bounds if the range expands.
+4. Update quest ID arrays/ranges in the Session Board
+   (`act_01/arc_01_prontera.txt`), `S_Status` (`dm_console.txt`), and
+   `DM_EraseAllCampaignQuests` (`dm_quests.txt`).
+5. Add story flags to `DM_FlagRegistry` in `dm_flags.txt`; add console
+   print/clear wrappers and `S_Flag` cases if the arc number exceeds 19.
+6. Add any exclusive story choices to `dm_decisions.txt`, then route matching
+   `@dmbeat` branch options through `DM_Decide`.
+7. Add the `@dmbeat` menu and beat actions in `dm_beats.txt`.
+8. Add hunt minimap markers in `dm_hunt_markers.txt`.
+9. Add symptom or pressure events in `dm_symptoms.txt` if the arc has a custom
+   pulse/hazard.
+10. Add or verify reward scaling in `dm_rewards.txt` and the `@dm levels`
+    table in `dm_console.txt`.
+11. Update this file's quick-reference table, cross-arc dependency map, and
+    mob ID table for new bosses/hunts.
+12. Rebuild/merge the client quest journal with
+    `tools/campaign_quest_merge.py`, then run `./tools/campaign-preflight.sh`.
+
+When WP-9's quest registry ships, it should replace the Session Board,
+`S_Status`, and `DM_EraseAllCampaignQuests` quest-ID copies above.
 
 ---
 

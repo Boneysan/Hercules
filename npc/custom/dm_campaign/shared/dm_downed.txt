@@ -25,7 +25,17 @@
 // drop; use @dm exp to compensate if it matters at the table.
 
 function	script	DM_DownedBlock	{
-	setpcblock(PCBLOCK_MOVE|PCBLOCK_ATTACK|PCBLOCK_SKILL|PCBLOCK_USEITEM|PCBLOCK_SITSTAND|PCBLOCK_IMMUNE, getarg(0, 0));
+	.@block = getarg(0, 0);
+
+	if (.@block) {
+		setpcblock(PCBLOCK_MOVE|PCBLOCK_ATTACK|PCBLOCK_SKILL|PCBLOCK_USEITEM|PCBLOCK_SITSTAND|PCBLOCK_IMMUNE, 1);
+		return 1;
+	}
+
+	if (dm_cutscene_blocked)
+		setpcblock(PCBLOCK_ATTACK|PCBLOCK_SKILL|PCBLOCK_USEITEM|PCBLOCK_SITSTAND|PCBLOCK_IMMUNE, 0);
+	else
+		setpcblock(PCBLOCK_MOVE|PCBLOCK_ATTACK|PCBLOCK_SKILL|PCBLOCK_USEITEM|PCBLOCK_SITSTAND|PCBLOCK_IMMUNE, 0);
 	return 1;
 }
 

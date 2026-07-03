@@ -1,11 +1,20 @@
 // Seal Cascade shared DM helpers.
 
+-	script	DM_Config	FAKE_NPC,{
+OnInit:
+	// Group 5 ("Dungeon Master") is created by tools/promote-dm.sh at level 1.
+	.gm_level = 1;
+	end;
+}
+
 function	script	DM_IsDM	{
-	return getgmlevel() >= getarg(0, 1);
+	.@required = (getargcount() > 0) ? getarg(0) : getvariableofnpc(.gm_level, "DM_Config");
+	return getgmlevel() >= .@required;
 }
 
 function	script	DM_RequireDM	{
-	if (callfunc("DM_IsDM", getarg(0, 1)))
+	.@required = (getargcount() > 0) ? getarg(0) : getvariableofnpc(.gm_level, "DM_Config");
+	if (callfunc("DM_IsDM", .@required))
 		return 1;
 
 	dispbottom("[DM] You do not have permission to use this tool.");

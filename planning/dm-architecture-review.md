@@ -118,15 +118,15 @@ work package that fixes it.
 | # | Finding | Risk | Fix |
 |---|---|---|---|
 | F1 | Script↔C variable-name contract undocumented (was §3 — now documented; keep it current) | high | done / WP-5 |
-| F2 | Per-character story flags drift when a player misses a session; NPC branches then differ depending on who clicks | high | WP-2 + WP-3 |
-| F3 | `dm_flags.txt` is 387 lines of copy-paste; every new arc adds two hand-maintained functions; flag lists exist only inside code | med | WP-2 |
+| F2 | Per-character story flags drift when a player misses a session; NPC branches then differ depending on who clicks | high | WP-2 + WP-3 (shipped server-side; live smoke test pending) |
+| F3 | `dm_flags.txt` was copy-paste heavy; every new arc added two hand-maintained functions; flag lists existed only inside code | med | WP-2 (shipped server-side; live smoke test pending) |
 | F4 | Attach-RID party loop is duplicated ~15× across 8 files; a fix to iteration logic (e.g. isloggedin edge) must be applied everywhere | med | WP-4 |
-| F5 | Docs claimed "GM level 60"; code gates at group level ≥ 1; the actual DM group (id 5) has level 1. Code is right — the stale doc lines (dm-tooling.md, dm-handoff.md, campaign-implementation-plan.md) were fixed with this review, but the threshold is still hardcoded in ~25 `bindatcmd` calls + `DM_RequireDM` | med | WP-1 |
-| F6 | Downed and cutscene both toggle `PCBLOCK_MOVE`: releasing one releases the other's move lock (e.g. downed wake during a cutscene frees that player early) | low | WP-6 |
-| F7 | `@dm status` shows story state but nothing about live-session health (exp rate, downed rule, registry size, hazard, active instance) — after a restart the DM can't see what silently reset | med | WP-5 |
+| F5 | Docs claimed "GM level 60"; code gates at group level >= 1; the actual DM group (id 5) has level 1. The default threshold now lives in `DM_Config.gm_level`; `bindatcmd(..., 1, 99, 1)` remains the engine floor. | med | WP-1 (shipped server-side) |
+| F6 | Downed and cutscene both toggle `PCBLOCK_MOVE`: releasing one used to release the other's move lock (e.g. downed wake during a cutscene frees that player early) | low | WP-6 (shipped server-side; live movement test pending) |
+| F7 | `@dm status` showed story state but nothing about live-session health (exp rate, downed rule, registry size, hazard, active instance) — after a restart the DM could not see what silently reset | med | WP-5 (shipped server-side; live smoke test pending) |
 | F8 | `.dm_params$` (NPC-scope) passes args from dispatcher to `callsub` subs; concurrent executions share it. Single-DM tables make this near-zero risk, but it's a trap for future contributors | low | WP-4 (convention), accepted meanwhile |
 | F9 | Kill callbacks and timers reference FAKE_NPC names as strings (`"DM_Console::OnDMKilled"`, `"DM_DownedConsole::OnDeathSaveTick"`). Renaming an NPC breaks them silently | low | convention: grep before renaming any `DM_*Console` NPC; no code change |
-| F10 | Quest-ID lists are duplicated (Session Board array, `S_Status`, `DM_EraseAllCampaignQuests`, quest_db, journal lua, hunt markers). Accepted: client tooling owns its copy; server copies are stable. Mitigate with an "adding an arc" checklist | low | WP-7 |
+| F10 | Quest-ID lists are duplicated (Session Board array, `S_Status`, `DM_EraseAllCampaignQuests`, quest_db, journal lua, hunt markers). Accepted: client tooling owns its copy; server copies are stable. Mitigated with an "adding an arc" checklist. | low | WP-7 (complete) |
 | F11 | No in-game session/audit log. Note: `bindatcmd(..., 1)` already logs every `@dm*` use to the SQL atcommand log if `conf` logging is on — that covers audit. Table-facing recap remains a roadmap feature | low | roadmap (`dm_session_log.txt`) |
 | F12 | The DM-facing quest surface is numeric-only: `@dm quest start 20121` with no in-game id→name lookup or per-arc listing; the DM plays with CAMPAIGN.md alt-tabbed. (Players are fine — journal, questinfo, hunt markers.) | med | WP-9 |
 | F13 | No improv-friendly way to record a story outcome. `@dmbeat` handles branch exclusivity correctly but buries decisions in nested menus among warps/spawns; raw `@dm flag set` knows nothing about exclusivity, so the DM can produce contradictory state (`manfred_spared=1` AND `manfred_killed=1` — downstream gates then pick one silently) | **high** | WP-10 |
@@ -152,6 +152,10 @@ them). If picking by table impact instead: WP-10 (decisions), then WP-3
 
 ### WP-1: Single source of truth for the DM permission gate (S)
 
+Status 2026-07-02: shipped server-side. `DM_Config.gm_level` is now the
+default permission gate for `DM_IsDM` / `DM_RequireDM`, while `bindatcmd(...,
+1, 99, 1)` remains the engine floor. Preflight passed.
+
 Goal: one constant decides who is a DM; docs match reality.
 
 Files: `shared/dm_common.txt`, `shared/dm_console.txt`.
@@ -172,6 +176,11 @@ command; a group-0 account gets the refusal message on every `@dm*` command.
 
 ### WP-2: Flag registry — turn dm_flags.txt into data (M)
 
+Status 2026-07-02: shipped server-side. `DM_FlagRegistry` now owns 178 story
+flag names, `DM_ArcFlagCount` / `DM_ArcFlagName` expose them for WP-3, and
+clear/print/reset/party-clear paths all loop the same registry. Preflight
+passed; still smoke-test `@dm flag arc03` and `@dm flag cleararc03` in-client.
+
 Goal: each arc's flag list exists exactly once, as an array, usable by
 clear/print/sync/status.
 
@@ -185,9 +194,9 @@ Steps:
    `dm_echo_trusts_party`, `dm_act01_complete`, ...) stay in the arc that
    currently clears them.
 2. Add `DM_ArcFlagCount(arc)` and `DM_ArcFlagName(arc, i)` helpers that read
-   the registry via `getd("getvariableofnpc(.arc" + ... )` — follow the
-   existing `getvariableofnpc` usage pattern; script-check early, this is the
-   fiddly part.
+   the registry. The shipped version flattens the per-arc arrays into
+   `.flag_names$`, `.arc_start`, and `.arc_count` during `OnInit`, then reads
+   them via `getelementofarray(getvariableofnpc(...))`.
 3. Reimplement `DM_ClearArcXXFlags` as one generic `DM_ClearArcFlags(arc)`
    loop; keep the 19 old function names as one-line wrappers so arc files and
    `@dm flag cleararcXX` keep working.
@@ -196,10 +205,16 @@ Steps:
 5. `DM_ClearAllArcFlags` becomes a 1..19 loop.
 
 Acceptance: `@dm flag arc03` prints every arc-3 flag; `@dm flag cleararc03`
-zeroes them all (verify one manually with `@dm flag get dm_arc03_started`);
-file shrinks substantially; adding a future arc means adding one `setarray`.
+zeroes them all party-wide (verify one manually with
+`@dm flag get dm_arc03_started`); adding a future arc means adding one per-arc
+`setarray` and one registration call.
 
 ### WP-3: `@dm flag sync` — fix branch drift for absent players (M)
+
+Status 2026-07-02: shipped server-side. `@dm flag sync <player>` snapshots all
+registered story flags from an online member of the DM's current party and
+writes them to the other online party members. Preflight passed; still
+smoke-test with one returning player in-client.
 
 Goal: after a session where a party member was offline, one command copies the
 canonical story state onto them. Depends on WP-2.
@@ -254,6 +269,12 @@ contains its own getpartymember loop for portraits.
 
 ### WP-5: Session health in `@dm status` + lifetime doc (S)
 
+Status 2026-07-02: shipped server-side. `@dm status` now starts with a
+`[Session]` block for mode, active party, instance, downed rule/counts, EXP
+scope, encounter registry, hazard ticks, and bloodied watcher state. The
+operator lifetime matrix is copied into `CAMPAIGN.md`. Preflight passed; live
+smoke-test during an encounter is still pending.
+
 Goal: the DM can see at a glance what live state exists and what a restart
 reset. Protects real game nights (F1, F7).
 
@@ -276,6 +297,11 @@ run after a `map-server` restart it shows the reset state plus the hint.
 
 ### WP-6: Downed vs cutscene PCBLOCK interplay (S)
 
+Status 2026-07-02: shipped server-side. Downed release now preserves movement
+blocking while `dm_cutscene_blocked` is set, and cutscene release preserves
+movement blocking while `@dm_downed` is set. Preflight passed; two-order live
+movement test pending.
+
 Goal: releasing one movement lock must not release the other (F6).
 
 Files: `shared/dm_downed.txt`, `shared/dm_scene.txt`.
@@ -295,6 +321,11 @@ Acceptance: in both orders, the surviving lock still holds and the final
 release (revive + cutscene off, any order) leaves the player fully mobile.
 
 ### WP-7: "Adding a new arc" checklist (S, docs only)
+
+Status 2026-07-02: complete. `CAMPAIGN.md` now has a repo-specific checklist
+covering arc scripts/includes, quest DB and journal source, server quest-ID
+copies, flag and decision registries, beats, hunt markers, symptoms, rewards,
+levels, reference tables, client merge, and preflight.
 
 Goal: the quest-ID duplication (F10) is safe because a checklist enumerates
 every copy that must be updated together.
@@ -361,6 +392,12 @@ editing only the registry.
 Goal: after a roleplayed scene, the DM records the outcome in one command;
 mutually exclusive branch flags can never contradict. Depends on WP-2's
 registry idiom (build them the same way; they can share a file).
+
+Status 2026-07-02: shipped server-side. `shared/dm_decisions.txt` now owns the
+decision registry and `@dm decide` / `@dmdecide`; `@dmbeat` branch cases
+delegate to it; `@dm flag cleararcXX` is party-wide. Preflight parse/load
+passes. Live client playtest still needs the decision-drift test added to
+`planning/dm-playtest-notes.md`.
 
 Files: new `shared/dm_decisions.txt`, `shared/dm_console.txt` (dispatcher +
 help), `shared/dm_beats.txt` (decision cases delegate), `dm-playtest-notes.md`.
@@ -493,12 +530,12 @@ timestamped, optional label, keeps the newest 20) into `backups/`
 the restore one-liner. `campaign-preflight.sh` now runs it as step 0, so
 every game night starts with a snapshot automatically.
 
-Remaining: the success path and a restore drill need one run with MariaDB
-up (it was down during the build session; the failure path is verified).
-**The complete step-by-step verification procedure — environment facts,
-expected outputs, restore drill, and what to tick afterward — is in
-`planning/backup-verification-handoff.md`. Hand that file to whoever is at
-the keyboard when the DB is running.**
+Verified 2026-07-02 with MariaDB up. `./tools/backup-campaign.sh verify`
+wrote `backups/ragnarok_20260702_180239_verify.sql.gz` (13K on disk; 16K via
+`du -h`). Restoring that dump into `ragnarok_restore_test` matched the live
+campaign tables exactly: `char_reg_num_db` 8/8, `quest` 14/14,
+`map_reg_num_db` 14/14, and `map_reg_str_db` 26/26. `campaign-preflight.sh`
+also wrote a fresh pre-session backup and passed script/load validation.
 
 ---
 
@@ -604,14 +641,14 @@ Pick from the top unless a dependency says otherwise.
 
 | # | Item | Size | Depends on | Why this position |
 |---|---|---|---|---|
-| 1 | WP-13 backups — **shipped**; do its 3 leftover steps | S | — | Protects everything below |
-| 2 | WP-10 decision registry + `@dm decide` | M–L | WP-2 idiom (can be built together) | Highest table value; protects story integrity |
-| 3 | WP-2 flag registry as data | M | — | Unblocks WP-3; shrinks dm_flags.txt |
-| 4 | WP-3 `@dm flag sync` | M | WP-2 | Fixes absent-player branch drift |
-| 5 | WP-5 session health in `@dm status` | S | — | Restart/relog visibility at the table |
+| 1 | WP-13 backups — **complete** | S | — | Protects everything below |
+| 2 | WP-10 decision registry + `@dm decide` — **shipped; live drift test pending** | M–L | WP-2 idiom (can be built together) | Highest table value; protects story integrity |
+| 3 | WP-2 flag registry as data — **shipped server-side; live smoke test pending** | M | — | Unblocks WP-3; removes flag-list duplication |
+| 4 | WP-3 `@dm flag sync` — **shipped server-side; live smoke test pending** | M | WP-2 | Fixes absent-player branch drift |
+| 5 | WP-5 session health in `@dm status` — **shipped server-side; live smoke test pending** | S | — | Restart/relog visibility at the table |
 | 6 | LT: `@dm secret <player> <text>` | S | — | Quick win; spec in dm-live-table.md §8 |
-| 7 | WP-1 permission-gate constant | S | — | Trivial; do alongside anything |
-| 8 | WP-6 downed/cutscene PCBLOCK interplay | S | — | Known interaction bug |
+| 7 | WP-1 permission-gate constant — **shipped server-side** | S | — | Trivial; do alongside anything |
+| 8 | WP-6 downed/cutscene PCBLOCK interplay — **shipped server-side; live movement test pending** | S | — | Known interaction bug |
 | 9 | WP-11 `@dm trap` | M | read the traps/puzzles guide | First big feel upgrade for dungeons |
 | 10 | WP-12 puzzle templates + `@dm exp challenge` | S–M | guide §4; `DM_CurrentArc()` from WP-9 (or inline it) | Pays out non-combat play |
 | 11 | WP-9 quest registry + `@dm quest list` | M | — | DM quality-of-life; kills ID memorization |
@@ -619,7 +656,7 @@ Pick from the top unless a dependency says otherwise.
 | 13 | LT: initiative/spotlight | M | WP-11's `DM_RollCheck` extraction | Spec in dm-live-table.md §10 |
 | 14 | LT: recap log (`@dm log` / `@dm recap`) | S–M | — | Spec in dm-live-table.md §12 |
 | 15 | LT: tavern downtime hub | M | — | Spec in dm-live-table.md §11; session-flow polish |
-| 16 | WP-7 new-arc checklist | S | after WP-9/10 land (they change the list) | Docs |
+| 16 | WP-7 new-arc checklist — **complete** | S | after WP-9/10 land (they change the list) | Docs |
 | 17 | WP-8 HPM plugin migration | M–L | first upstream merge conflict | Deferred by design |
 
 Two scheduling notes: items 2–4 all touch flag machinery — one developer

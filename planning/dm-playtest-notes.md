@@ -51,6 +51,25 @@ Key examples:
 - Arc 16: Rina exposed/rolled/defected → Bijou/Maret
 - Arc 17: Admin choices
 
+Decision registry checks:
+```
+@dm decide arc08.manfred killed
+@dm decide status 8
+@dm decide arc08.manfred spared
+@dm decide status 8
+@dm decide undo arc08.manfred
+```
+
+Verify `killed` and `spared` fully flip each other for every online party
+member, `20124` completes, and `@dmbeat` Arc 8 Manfred options produce the same
+state as `@dm decide`.
+
+Decision-drift test: log one party member out, run
+`@dm decide arc08.manfred killed`, log them back in, then run
+`@dm flag sync <present-player>` using a player who had the decision. Confirm
+the returning member catches the chosen branch and does not keep a
+contradictory sibling flag.
+
 After setting:
 ```
 @dmbeat
@@ -93,12 +112,21 @@ Clear with `@dm hazard clear` or `@dmcleanup`.
 7. `@dm downrule status` — lists downed members with save counts.
 8. Safety: with someone downed, run `@dmcleanup` and `@dm mode off` — pin must release both times; relog while downed must also clear the pin.
 9. Confirm normal deaths (rule off, or non-party player) are untouched.
+10. Cutscene overlap:
+   - Start `@dm cutscene on`, down a player, then `@dm cutscene off`; the
+     player must stay pinned until `@dm revive`.
+   - Down a player, start `@dm cutscene on`, revive them, then
+     `@dm cutscene off`; the final release must leave them mobile.
 
 Known knob: the initial death still applies the RO EXP penalty before the
 intercept; use `@dm exp` to hand it back if it matters.
 
 ## Other Quick Tests
 - `@dm inspire <name>`, spend on `adv` check.
+- Flag registry smoke: set `dm_arc03_started`, run `@dm flag arc03`, then
+  `@dm flag cleararc03`; verify `@dm flag get dm_arc03_started` returns 0.
+- `@dm status` mid-fight: confirm `[Session]` shows mode, party, instance,
+  EXP scope, downed rule/counts, encounter count, hazard ticks, and bloodied GID.
 - `@dm spawn`, `@dm encounter`, `@dm scale hp 50 boss`, `@dm bloodied`.
 - Full instance: `@dminstance` for an arc (e.g. Arc 4), complete a quest chain, check warps and hidden NPCs.
 - Branch flags persist across logouts for party members.

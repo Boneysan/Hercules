@@ -39,8 +39,10 @@ by `tools/promote-dm.sh`). The gate is `DM_RequireDM` in `dm_common.txt`.
 @dmmode <on|off>
 @dm reward [arc] [common|uncommon|rare|boss] [preview|dryrun|1]
 @dmreward [arc] [common|uncommon|rare|boss] [preview|dryrun|1]
-@dm flag <get|set|clear|arc01..arc19|cleararc01..cleararc19> [name] [value]
-@dmflag <get|set|clear|arc01..arc19|cleararc01..cleararc19> [name] [value]
+@dm flag <get|set|clear|sync> [name] [value]
+@dm flag <arc01..arc19|cleararc01..cleararc19>
+@dmflag <get|set|clear|sync> [name] [value]
+@dmflag <arc01..arc19|cleararc01..cleararc19>
 @dm quest <start|complete|erase> <quest_id>
 @dmquest <start|complete|erase> <quest_id>
 @dm beat
@@ -355,6 +357,7 @@ Examples:
 @dmflag arc01
 @dmflag arc05
 @dmflag cleararc01
+@dmflag sync Alice
 ```
 
 Arc helper shortcuts currently available:
@@ -362,8 +365,10 @@ Arc helper shortcuts currently available:
 - `@dmflag arc01` through `@dmflag arc19`
 - `@dmflag cleararc01` through `@dmflag cleararc19`
 
-Generic `@dmflag set` and `@dmflag clear` are party-scoped through
-`DM_InstanceSetFlag` / `DM_InstanceClearFlag`.
+Generic `@dmflag set`, `@dmflag clear`, and arc clears are party-scoped through
+the online members of the DM's current party. `@dmflag sync <player>` copies
+every registered story flag from that online party member to the other online
+party members; use it when someone missed a session.
 
 ## Story And Encounter Tools
 

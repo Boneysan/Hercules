@@ -141,9 +141,9 @@ function	script	DM_CutsceneSelf	{
 	.@duration_ms = getarg(2, 60000);
 
 	deltimer("DM_SceneConsole::OnCutsceneTimeout");
-	setpcblock(PCBLOCK_MOVE, .@block);
 
 	if (.@block) {
+		setpcblock(PCBLOCK_MOVE, 1);
 		dm_cutscene_blocked = 1;
 		if (.@portrait$ != "")
 			cutin(.@portrait$, 2);
@@ -151,6 +151,8 @@ function	script	DM_CutsceneSelf	{
 			addtimer(.@duration_ms, "DM_SceneConsole::OnCutsceneTimeout");
 	} else {
 		dm_cutscene_blocked = 0;
+		if (!@dm_downed)
+			setpcblock(PCBLOCK_MOVE, 0);
 		cutin("", 255);
 	}
 

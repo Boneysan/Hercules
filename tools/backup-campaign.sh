@@ -2,8 +2,9 @@
 # backup-campaign.sh — snapshot the campaign database.
 #
 # All Seal Cascade campaign state lives in MariaDB: story flags + inspiration
-# (char_reg_num_db), quest states (quest), global $dm_* flags (mapreg), and
-# the characters themselves. One bad `@dm reset confirm` or `@dm flag sync`
+# (char_reg_num_db), quest states (quest), global $dm_* flags
+# (map_reg_num_db / map_reg_str_db), and the characters themselves. One bad
+# `@dm reset confirm` or `@dm flag sync`
 # from the wrong source loses a 19-arc playthrough — run this before every
 # session and before any risky bulk operation.
 #
