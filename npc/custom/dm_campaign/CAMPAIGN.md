@@ -13,9 +13,9 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 | 01 | Omens at the Fountain | Prontera (Wynne / Frightened Mother / Tibbets) | Deviruchi (1109) | 20001–20006 (+ session 20000) |
 | 02 | The Sleeping Forest | Payon (Elder Gyeong / Sun-Hwa / Voss) | Moonlight Flower (1150) | 20007–20012 |
 | 03 | Sand and Whispers | Morroc (Mira / Assassin / High Priest) | Amon Ra / Osiris | 20013–20018 |
-| 04 | City Above the Beast | Geffen (Elsbeth / Doran) | Baphomet | 20019–20024 |
-| 05 | Tides and Trade | Alberta / Izlude (Mara / Brode) | Tao Gunka | 20025–20030 |
-| 06 | The Floating Republic | Yuno | Mistress (1059) | 20101–20105 |
+| 04 | City Above the Beast | Geffen (Vella / Elsbeth / Cassell / Doran) | Baphomet | 20019–20024 |
+| 05 | Tides and Trade | Alberta / Izlude (Mara / Sea-Cultist Captain / Brode / Wynne) | Tao Gunka | 20025–20030 |
+| 06 | The Floating Republic | Yuno / Juperos (Vahl / Gramps / Krenn / Engineer) | Mistress (1059) | 20101–20105 |
 | 07 | Iron and Ash | Einbroch | RSX-0806 (1623) | 20111–20115 |
 | 08 | The Cursed Kingdom | Glast Heim | Dark Lord (1272) | 20121–20124 |
 | 09 | Frozen Faith | Rachel | Gloom Under Night (1768) | 20131–20134 |
