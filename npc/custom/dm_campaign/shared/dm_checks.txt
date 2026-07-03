@@ -79,7 +79,9 @@ function	script	DM_CheckList	{
 }
 
 function	script	DM_Initiative	{
+	.@caller_aid = getcharid(CHAR_ID_ACCOUNT);
 	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@map$ = callfunc("DM_CurrentMap");
 	if (.@party_id <= 0) {
 		dispbottom("[DM] You must be in a party for initiative.");
 		return;
@@ -118,7 +120,9 @@ function	script	DM_Initiative	{
 		}
 	}
 
-	.@map$ = callfunc("DM_CurrentMap");
+	if (.@caller_aid)
+		attachrid(.@caller_aid);
+
 	mapannounce .@map$, "[Initiative Order]", bc_map, 0x00FFFF;
 	for (.@i = 0; .@i < .@n; ++.@i) {
 		mapannounce .@map$, " " + (.@i + 1) + ". " + .@names$[.@i] + " (" + .@rolls[.@i] + ")", bc_map, 0xFFFFFF;
