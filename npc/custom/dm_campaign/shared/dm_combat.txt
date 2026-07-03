@@ -43,6 +43,10 @@ function	script	DM_EncounterForgetIndex	{
 	deletearray @dm_enc_base_maxhp[.@idx], 1;
 	deletearray @dm_enc_base_atkmin[.@idx], 1;
 	deletearray @dm_enc_base_atkmax[.@idx], 1;
+	deletearray @dm_enc_base_flee[.@idx], 1;
+	deletearray @dm_enc_base_hit[.@idx], 1;
+	deletearray @dm_enc_base_def[.@idx], 1;
+	deletearray @dm_enc_base_mdef[.@idx], 1;
 	deletearray @dm_enc_held[.@idx], 1;
 	deletearray @dm_enc_name$[.@idx], 1;
 	--@dm_enc_count;
@@ -127,6 +131,10 @@ function	script	DM_EncounterTrack	{
 	@dm_enc_base_maxhp[.@slot] = .@maxhp;
 	@dm_enc_base_atkmin[.@slot] = .@atkmin;
 	@dm_enc_base_atkmax[.@slot] = .@atkmax;
+	@dm_enc_base_flee[.@slot] = getunitdata(.@gid, UDT_FLEE);
+	@dm_enc_base_hit[.@slot] = getunitdata(.@gid, UDT_HIT);
+	@dm_enc_base_def[.@slot] = getunitdata(.@gid, UDT_DEF);
+	@dm_enc_base_mdef[.@slot] = getunitdata(.@gid, UDT_MDEF);
 	@dm_enc_held[.@slot] = .@held;
 	@dm_enc_name$[.@slot] = .@name$;
 	++@dm_enc_count;
@@ -200,6 +208,10 @@ function	script	DM_EncounterReset	{
 	deletearray @dm_enc_base_maxhp[0], getarraysize(@dm_enc_base_maxhp);
 	deletearray @dm_enc_base_atkmin[0], getarraysize(@dm_enc_base_atkmin);
 	deletearray @dm_enc_base_atkmax[0], getarraysize(@dm_enc_base_atkmax);
+	deletearray @dm_enc_base_flee[0], getarraysize(@dm_enc_base_flee);
+	deletearray @dm_enc_base_hit[0], getarraysize(@dm_enc_base_hit);
+	deletearray @dm_enc_base_def[0], getarraysize(@dm_enc_base_def);
+	deletearray @dm_enc_base_mdef[0], getarraysize(@dm_enc_base_mdef);
 	deletearray @dm_enc_held[0], getarraysize(@dm_enc_held);
 	deletearray @dm_enc_name$[0], getarraysize(@dm_enc_name$);
 	@dm_enc_count = 0;
@@ -249,7 +261,7 @@ function	script	DM_EncounterCommand	{
 
 	if (.@action$ == "help") {
 		dispbottom("[DM] @dm encounter [status|clear|kill|boss <last|gid>]");
-		dispbottom("[DM] @dm scale <hp|damage> <percent> [all|boss|last|gid]");
+		dispbottom("[DM] @dm scale <hp|damage|flee|hit|def|mdef> <percent> [all|boss|last|gid]");
 		dispbottom("[DM] @dm bloodied <on|off|status> [boss|last|gid]");
 		return 0;
 	}
@@ -320,6 +332,40 @@ function	script	DM_EncounterApplyScale	{
 		return 1;
 	}
 
+	if (.@kind$ == "flee") {
+		.@base = @dm_enc_base_flee[.@idx];
+		if (.@base < 0) .@base = getunitdata(.@gid, UDT_FLEE);
+		if (.@base < 0) return 0;
+		setunitdata(.@gid, UDT_FLEE, cap_value(.@base * .@pct / 100, 0, 65000));
+		return 1;
+	}
+
+	if (.@kind$ == "hit") {
+		.@base = @dm_enc_base_hit[.@idx];
+		if (.@base < 0) .@base = getunitdata(.@gid, UDT_HIT);
+		if (.@base < 0) return 0;
+		setunitdata(.@gid, UDT_HIT, cap_value(.@base * .@pct / 100, 0, 65000));
+		return 1;
+	}
+
+	if (.@kind$ == "def") {
+		.@base = @dm_enc_base_def[.@idx];
+		if (.@base < 0) .@base = getunitdata(.@gid, UDT_DEF);
+		if (.@base < 0) return 0;
+		setunitdata(.@gid, UDT_DEF, cap_value(.@base * .@pct / 100, 0, 65000));
+		return 1;
+	}
+
+	if (.@kind$ == "mdef") {
+		.@base = @dm_enc_base_mdef[.@idx];
+		if (.@base < 0) .@base = getunitdata(.@gid, UDT_MDEF);
+		if (.@base < 0) return 0;
+		setunitdata(.@gid, UDT_MDEF, cap_value(.@base * .@pct / 100, 0, 65000));
+		return 1;
+	}
+
+	// Damage scaling
+
 	.@base_min = @dm_enc_base_atkmin[.@idx];
 	.@base_max = @dm_enc_base_atkmax[.@idx];
 	if (.@base_min < 0)
@@ -340,8 +386,8 @@ function	script	DM_Scale	{
 	.@target$ = strtolower(getarg(2, "all"));
 
 	if (.@kind$ == "" || .@kind$ == "help") {
-		dispbottom("[DM] @dm scale <hp|damage> <percent> [all|boss|last|gid]");
-		dispbottom("[DM] Example: @dm scale hp 150 boss   or   @dm scale damage 75 all");
+		dispbottom("[DM] @dm scale <hp|damage|flee|hit|def|mdef> <percent> [all|boss|last|gid]");
+		dispbottom("[DM] Example: @dm scale hp 150 boss   or   @dm scale flee 50 all");
 		return 0;
 	}
 
@@ -352,8 +398,8 @@ function	script	DM_Scale	{
 
 	if (.@kind$ == "dmg" || .@kind$ == "damage" || .@kind$ == "atk" || .@kind$ == "attack")
 		.@kind$ = "damage";
-	if (.@kind$ != "hp" && .@kind$ != "damage") {
-		dispbottom("[DM] Scale type must be hp or damage.");
+	if (.@kind$ != "hp" && .@kind$ != "damage" && .@kind$ != "flee" && .@kind$ != "hit" && .@kind$ != "def" && .@kind$ != "mdef") {
+		dispbottom("[DM] Scale type must be hp, damage, flee, hit, def, or mdef.");
 		return 0;
 	}
 
