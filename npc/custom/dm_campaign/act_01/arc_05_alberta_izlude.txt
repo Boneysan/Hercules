@@ -3,14 +3,11 @@
 //===== By: ==================================================
 //= Seal Cascade DM tooling
 //===== Description: =========================================
-//= The Morroc refugees reach Alberta by sea, and the same
-//= ships carry Whisperer cargo. Captain Mara and Smuggler-Baron
-//= Brode reveal the cult as a logistics network before Tao Gunka
+//= Alberta's crisis, adapted from the Obsidian Dialogue Script.
+//= Captain Mara names Brode's exempt holds. A Sea-Cultist Captain
+//= is caught feeding captives to the anomaly below the exempt
+//= hold. Smuggler-Baron Brode sells his manifest before Tao Gunka
 //= rises from the disturbed deep.
-//=
-//= Source notes:
-//= H:\Docs\Obsidian Notes\Game Design\Ragnarok_Online\Campaign\
-//=   Act_I_World_at_Peace\Arc_05_Tides_and_Trade
 //=
 //= Quests (db/quest_db.conf):
 //=   20025 Tides and Trade             (arc tracker)
@@ -58,7 +55,7 @@ OnInit:
 
 S_StartArc:
 	mes("[Captain Mara]");
-	mes("Welcome to Alberta. Smells like salt, tar, fish, and men pretending cargo has no conscience.");
+	mes("You're the ones asking about the refugee ships. Ask quieter. Half this harbor is on Smuggler-Baron Brode's payroll — and Brode's hulls sail with holds the inspectors are paid never to open.");
 	next();
 	if (countitem(50001) > 0 || dm_arc01_sigil_ring_obtained) {
 		mes("^3355FF*The Sigil Ring sweats cold at the waterline. The cold moves with the tide.*^000000");
@@ -73,25 +70,22 @@ S_StartArc:
 		mes("Some of Morroc's survivors made it. Starving. Angry. Justice must have looked cleaner from shore.");
 		next();
 	}
-	mes("[Captain Mara]");
-	mes("Brode owns the blind spots between Izlude and Alberta. I know them because I used to sail them.");
-	next();
-	switch (select("We're here to stop smuggling, not refugees.", "Just point us at Brode.", "Stay out of our way, smuggler.")) {
+	switch (select("We're looking for the Whisperer cult. We know they're moving through Alberta.", "We'll pay for passage and information.", "Talk, or we'll take a ship and find out ourselves.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_trust", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_network", 1);
 		mes("[Captain Mara]");
-		mes("Good. Then my crew is yours, and every honest deckhand I know hears your name kindly.");
+		mes("Then you're looking for Brode's manifests. Robed weirdos paid him double to be dropped off near the Sunken Ship. Said they were looking for an 'ancient current'.");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_pragmatic", 1);
 		mes("[Captain Mara]");
-		mes("Brode's counting-house. Locked holds. Inspection exemptions. That is the route.");
+		mes("Keep your zeny. My price is proof — crack Brode's 'ballast' hold and show me what he's really shipping. Do that, and the Saltmother and her crew are yours for the dive.");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_insulted", 1);
 		mes("[Captain Mara]");
-		mes("I've heard worse from better sailors. You get directions, not shelter.");
+		mes("Threaten me on my own dock and you'll swim to Byalan. Save the knives for Brode — his crew dumped 'heavy crates' in the trench right before the sea turned wrong. The nets have come up screaming ever since.");
 		break;
 	}
 	next();
@@ -353,12 +347,31 @@ treasure01,153,160,4	script	Exempt Hold#dm	4_TREASURE_BOX,{
 	}
 	next();
 
+	mes("^3355FF*Brode's chartered 'passengers' are down here too — sea-cultists, tipping sigil-stamped crates and captives into the churning water below the false wall. It is the Culvert method writ ocean-wide.*^000000");
+	next();
+	mes("[Sea-Cultist Captain]");
+	mes("The oceans must rise! The seal of the deep must be washed away! The Gray Pilgrim promised us the tide!");
+	next();
+	switch (select("Stop throwing people in! Your Pilgrim is a madman!", "Is this about the Morroc refugees? You're sinking their ships?")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc05_cultist_path", 1);
+		mes("[Sea-Cultist Captain]");
+		mes("He is the herald! The Voice spoke to him, and the Voice commands the waves!");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc05_cultist_path", 2);
+		mes("[Sea-Cultist Captain]");
+		mes("The refugees are cattle. We use their despair to feed the anomaly. The more who drown, the stronger the beast becomes!");
+		break;
+	}
+	next();
+
 	.@map$ = strnpcinfo(NPC_MAP);
 	getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
 	'boss_up = 1;
-	mapannounce .@map$, "[Cargo of Souls] Brode's sealed hold opens. His crew tries to close it with blood.", bc_map, 0xFFAA33;
-	areamonster .@map$, .@x - 6, .@y - 6, .@x + 6, .@y + 6, "Brode's Knife", 1071, 6, "Exempt Hold#dm::OnCrewDead";
-	areamonster .@map$, .@x - 6, .@y - 6, .@x + 6, .@y + 6, "Cargo Hydra", 1068, 4, "Exempt Hold#dm::OnCrewDead";
+	mapannounce .@map$, "[Cargo of Souls] The Sea-Cultist Captain orders the hold defended. Cultists and undead pirates rise from the ballast.", bc_map, 0xFFAA33;
+	areamonster .@map$, .@x - 6, .@y - 6, .@x + 6, .@y + 6, "Sea-Cultist Captain", 1071, 6, "Exempt Hold#dm::OnCrewDead";
+	areamonster .@map$, .@x - 6, .@y - 6, .@x + 6, .@y + 6, "Undead Pirate", 1068, 4, "Exempt Hold#dm::OnCrewDead";
 	close();
 
 OnCrewDead:
@@ -370,6 +383,8 @@ OnCrewDead:
 	callfunc("DM_InstanceQuestComplete", 20029);
 	callfunc("DM_InstanceSetFlag", "dm_arc05_refugees_freed", 1);
 	callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_taken", 1);
+	if (dm_arc05_mara_pragmatic)
+		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_trust", 1);
 	callfunc("DM_PartyExp", 110000, 50000);
 	callfunc("DM_GivePartyZeny", 12000);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 529);
@@ -474,6 +489,30 @@ OnTaoDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20030, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
+}
+
+// Quartermaster Wynne - Act I closing beat, travelled down from Prontera
+alberta,180,145,4	script	Quartermaster Wynne#dm05	4_F_01,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_act01_complete) {
+		mes("^3355FF*No one is here yet.*^000000");
+		close();
+	}
+
+	mes("[Quartermaster Wynne]");
+	mes("You're making waves, kids. Literally.");
+	next();
+	mes("[Quartermaster Wynne]");
+	mes("The Guild is promoting you. Act I of your careers is over. But listen to me... the reports coming in from Yuno and the Schwarzwald Republic... it's not just local cults anymore. Corporations. Governments. The rot is moving upstairs.");
+	next();
+	mes("[Quartermaster Wynne]");
+	mes("Pack your bags. We're going north.");
+	close();
+
+OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
