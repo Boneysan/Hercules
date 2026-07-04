@@ -216,7 +216,11 @@ To reward non-combat solutions, use the **challenge EXP preset**:
 2. Run `@dm mode on` — this enables DnD mode AND locks campaign NPCs to your party.
    - Only players in your party can interact with campaign NPCs.
    - Players outside the party see the NPC sprites but get silence if they click.
-3. Run `@dm mode off` at end of session to reset everything.
+3. Before the arc's boss beat, check `planning/mvp-party-balance-checker.md`
+   for that arc's `@dm scale` starting point — most raw MVP stat blocks are
+   badly out of line with the party's story level band (see Boss Level
+   Reference below).
+4. Run `@dm mode off` at end of session to reset everything.
 
 `$dm_active_party` stores the active party ID. If you need to check which party
 is currently active: `@dm mode` with no argument reports the current state.
@@ -385,18 +389,26 @@ Arc 18: himmelmez_bargained → Arc 19 boss flavor, unlocks queens_bargain endin
 | Amon Ra | 1511 | AMON_RA (Arc 03, dual boss with Osiris) |
 | Baphomet | 1039 | BAPHOMET (Arc 04 — not Baphomet Jr. 1101) |
 | Tao Gunka | 1583 | TAO_GUNKA (Arc 05) |
+| Nidhoggr's Shadow | 2022 | Overview's Arc 12 boss — not the current implementation (Naght Sieger 1956 is used instead); alternate if Naght Sieger feels wrong |
 
 ---
 
 ## Boss Level Reference (Renewal)
 
-Canonical Renewal `Lv` from `db/re/mob_db.conf` vs. each arc's target
-finish/reward level (`@dm levels`, ¶ Session Start Checklist). `@dm scale`
-rescales HP/ATK/DEF/MDEF/HIT/FLEE as a **percentage of the mob's own spawned
-base stats** — it does not touch the `Lv` field or retune it toward the arc's
-target level. A large delta below is a cue to scale a boss down hard (or,
-rarely, up) before dropping it on the party; it is not a bug to "fix" in
-`mob_db.conf`. Regenerate with `python3 tools/verify_boss_levels.py`.
+Canonical Renewal `Lv` from `db/re/mob_db.conf` vs. each arc's **EXP/reward
+target level** (`@dm levels`, ¶ Session Start Checklist — not the same as the
+party's story level band, see below). `@dm scale` rescales
+HP/ATK/DEF/MDEF/HIT/FLEE as a **percentage of the mob's own spawned base
+stats** — it does not touch the `Lv` field or retune it toward the target
+level. A large delta is not a bug to "fix" in `mob_db.conf`. Regenerate with
+`python3 tools/verify_boss_levels.py`.
+
+For the actual pre-session scaling call — HP/ATK numbers, per-arc `@dm scale`
+starting percentages, and add-count guidance against the party's real story
+level band — use **`planning/mvp-party-balance-checker.md`**, which is the
+source of truth for live tuning. The table below is a quick sanity check
+only; its "delta" uses the reward-level target, not the party band, so it
+will not exactly match that document's "Gap" column.
 
 | Arc | Boss | Target Lv | Boss Lv (RE) | Delta |
 |-----|------|-----------|--------------|-------|
@@ -420,9 +432,6 @@ rarely, up) before dropping it on the party; it is not a bug to "fix" in
 | 19 | Surt / Garm | 99 | 98 | -1 |
 
 Every Act I–III boss (arcs 1–14) runs 20–75 levels hotter than the arc's
-target level — these are stock RO MVP/boss stat blocks picked for lore, not
-tuned for the story's pacing, so **expect to `@dm scale` them down
-substantially** (start well under 50% and adjust live) before the first hit
-lands. Arcs 15, 16, and 19 are already close to the target and need little or
-no scaling. Arc 18 (Himmelmez) has no mob and is resolved narratively — see
-its arc note above.
+reward-target level — these are stock RO MVP/boss stat blocks picked for
+lore, not tuned for pacing. Arc 18 (Himmelmez) has no mob and is resolved
+narratively — see its arc note above.

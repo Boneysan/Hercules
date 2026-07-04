@@ -91,7 +91,15 @@ These bosses are mentioned in the design overview or used as supporting beats. T
 
 ## Recommended Follow-Up Work
 
-1. Add a generated version of this table so it can refresh from `CAMPAIGN.md` and `mob_db.conf`.
-2. Add explicit boss IDs to `CAMPAIGN.md` for arcs 3, 4, 5, 18, and the support bosses.
+1. **Partially done (2026-07-04):** `tools/verify_boss_levels.py` generates a
+   boss-vs-target-level table (CAMPAIGN.md's "Boss Level Reference") from
+   `CAMPAIGN.md` + `mob_db.conf`, but it checks the EXP/reward target level
+   (`@dm levels`), not the story party band used in this doc's `Gap` column —
+   still open: a generator that reproduces *this* table (party band, HP/ATK,
+   risk) from source data.
+2. **Done (2026-07-04):** explicit boss IDs for arcs 3, 4, 5 added to
+   `CAMPAIGN.md`'s Mob IDs table (Osiris 1038, Amon Ra 1511, Baphomet 1039,
+   Tao Gunka 1583), plus support boss Nidhoggr's Shadow (2022). Arc 18 has no
+   boss mob by design (see CAMPAIGN.md's Arc 18 note).
 3. Consider custom proxy mobs for Arc 16 Bijou, Arc 18 Himmelmez, and Arc 19 Surt instead of reusing lower-level stock bodies.
 4. Add per-arc "weakened by choice" notes directly to boss spawn scripts where the story already supports it.
