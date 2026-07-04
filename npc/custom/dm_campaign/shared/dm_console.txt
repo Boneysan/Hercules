@@ -19,6 +19,7 @@ OnInit:
 	bindatcmd("dmhazard", strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazard", 1, 99, 1);
 	bindatcmd("dmexp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnExp", 1, 99, 1);
 	bindatcmd("dmexprate", strnpcinfo(NPC_NAME_UNIQUE)+"::OnExpRate", 1, 99, 1);
+	bindatcmd("dmpoints", strnpcinfo(NPC_NAME_UNIQUE)+"::OnPoints", 1, 99, 1);
 	bindatcmd("dmlevels", strnpcinfo(NPC_NAME_UNIQUE)+"::OnLevels", 1, 99, 1);
 	bindatcmd("dmreset", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReset", 1, 99, 1);
 	bindatcmd("dmstatus", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStatus", 1, 99, 1);
@@ -163,6 +164,11 @@ OnDM:
 
 	if (.@sub$ == "exprate") {
 		callsub(S_ExpRate, 1);
+		end;
+	}
+
+	if (.@sub$ == "points") {
+		callsub(S_Points, 1);
 		end;
 	}
 
@@ -382,6 +388,14 @@ OnExp:
 	callsub(S_Exp, 0);
 	end;
 
+OnPoints:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
+	callsub(S_Points, 0);
+	end;
+
 OnExpRate:
 	if (!callfunc("DM_RequireDM"))
 		end;
@@ -547,6 +561,7 @@ S_Help:
 	dispbottom("[DM] @dm symptom <arc> [pulse|setup|read|clear]  (updated arc symptom mechanics)");
 	dispbottom("[DM] @dm exp <base> [job]    (grants EXP to your whole party)");
 	dispbottom("[DM] @dm exprate <percent|off|status>  (monster EXP for your party)");
+	dispbottom("[DM] @dm points <amount> [cash]  (Cash Shop currency for your whole party; default Kafra Points)");
 	dispbottom("[DM] @dm levels              (target finish/reward level by arc)");
 	dispbottom("[DM] @dm warp <map> [x] [y]   (warps your whole party)");
 	dispbottom("[DM] @dm recall              (pulls party to you)");
@@ -572,7 +587,7 @@ S_Help:
 	dispbottom("[DM] @dm down <player> | @dm revive <player|party>");
 	dispbottom("[DM] @dm trap set <radius> <dc> <dmg%> [status] [status_ms]");
 	dispbottom("[DM] @dm trap list | clear [i|all] | reveal [i] | disarm <player> [i]   (latent trap MVP; full impl in progress)");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmdecide, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmsecret, @dmcheck, @dminspire, @dminitiative, @dmscene, @dmcutscene, @dmspotlight, @dmencounter, @dmscale, @dmbloodied, @dmdownrule, @dmdown, @dmrevive, @dmtrap, @dmlog, @dmrecap, @dmrest");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmdecide, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmpoints, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmsecret, @dmcheck, @dminspire, @dminitiative, @dmscene, @dmcutscene, @dmspotlight, @dmencounter, @dmscale, @dmbloodied, @dmdownrule, @dmdown, @dmrevive, @dmtrap, @dmlog, @dmrecap, @dmrest");
 	return;
 
 S_Reset:
@@ -750,6 +765,23 @@ S_Exp:
 
 	.@given = callfunc("DM_PartyExp", .@base, .@job);
 	dispbottom("[DM] Granted " + .@base + " base / " + .@job + " job EXP to " + .@given + " party member(s).");
+	return;
+
+S_Points:
+	.@offset = getarg(0, 0);
+	.@amount = atoi(.dm_params$[.@offset]);
+	.@kind$ = strtolower(.dm_params$[.@offset + 1]);
+
+	if (.@amount == 0) {
+		dispbottom("[DM] Usage: @dm points <amount> [cash]   (default: Kafra Points, spent first by the Cash Shop)");
+		dispbottom("[DM] Example: @dm points 500          (500 Kafra Points to the party)");
+		dispbottom("[DM]          @dm points -200 cash     (remove 200 Cash Points from the party)");
+		return;
+	}
+
+	.@cash = (.@kind$ == "cash") ? 1 : 0;
+	.@given = callfunc("DM_PartyPoints", .@amount, .@cash);
+	dispbottom("[DM] Granted " + .@amount + " " + (.@cash ? "Cash" : "Kafra") + " Point(s) to " + .@given + " party member(s).");
 	return;
 
 S_ExpRate:
