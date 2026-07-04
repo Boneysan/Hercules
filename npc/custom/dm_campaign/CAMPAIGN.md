@@ -322,7 +322,9 @@ When adding a future arc, update every current copy point in one pass:
 10. Add or verify reward scaling in `dm_rewards.txt` and the `@dm levels`
     table in `dm_console.txt`.
 11. Update this file's quick-reference table, cross-arc dependency map, and
-    mob ID table for new bosses/hunts.
+    mob ID table for new bosses/hunts. Add the boss to `ARC_BOSSES` in
+    `tools/verify_boss_levels.py` and re-run it to refresh the Boss Level
+    Reference table above.
 12. Rebuild/merge the client quest journal with
     `tools/campaign_quest_merge.py`, then run `./tools/campaign-preflight.sh`.
 
@@ -379,3 +381,48 @@ Arc 18: himmelmez_bargained → Arc 19 boss flavor, unlocks queens_bargain endin
 | Khalitzburg | 1132 | |
 | Cornus | 1992 | (Arc 12, was wrong as 1993 in earlier draft) |
 | Naga | 1993 | (Arc 12, was wrong as 1994 in earlier draft) |
+| Osiris | 1038 | OSIRIS (Arc 03, dual boss with Amon Ra) |
+| Amon Ra | 1511 | AMON_RA (Arc 03, dual boss with Osiris) |
+| Baphomet | 1039 | BAPHOMET (Arc 04 — not Baphomet Jr. 1101) |
+| Tao Gunka | 1583 | TAO_GUNKA (Arc 05) |
+
+---
+
+## Boss Level Reference (Renewal)
+
+Canonical Renewal `Lv` from `db/re/mob_db.conf` vs. each arc's target
+finish/reward level (`@dm levels`, ¶ Session Start Checklist). `@dm scale`
+rescales HP/ATK/DEF/MDEF/HIT/FLEE as a **percentage of the mob's own spawned
+base stats** — it does not touch the `Lv` field or retune it toward the arc's
+target level. A large delta below is a cue to scale a boss down hard (or,
+rarely, up) before dropping it on the party; it is not a bug to "fix" in
+`mob_db.conf`. Regenerate with `python3 tools/verify_boss_levels.py`.
+
+| Arc | Boss | Target Lv | Boss Lv (RE) | Delta |
+|-----|------|-----------|--------------|-------|
+| 01 | Deviruchi | 18 | 93 | +75 |
+| 02 | Moonlight Flower | 28 | 79 | +51 |
+| 03 | Osiris / Amon Ra | 38 | 68 / 69 | +30 / +31 |
+| 04 | Baphomet | 48 | 81 | +33 |
+| 05 | Tao Gunka | 58 | 110 | +52 |
+| 06 | Mistress | 68 | 78 | +10 |
+| 07 | RSX-0806 | 72 | 100 | +28 |
+| 08 | Dark Lord | 76 | 96 | +20 |
+| 09 | Gloom Under Night | 80 | 139 | +59 |
+| 10 | Kiel D-01 | 84 | 125 | +41 |
+| 11 | Valkyrie Randgris | 88 | 141 | +53 |
+| 12 | Naght Sieger | 90 | 99 | +9 |
+| 13 | Beelzebub | 92 | 147 | +55 |
+| 14 | Ifrit | 94 | 146 | +52 |
+| 15 | Memory of Thanatos | 95 | 99 | +4 |
+| 16 | Bijou / Doppelganger | 96 | 77 | -19 |
+| 17 | Amdarais | 97 | 150 | +53 |
+| 19 | Surt / Garm | 99 | 98 | -1 |
+
+Every Act I–III boss (arcs 1–14) runs 20–75 levels hotter than the arc's
+target level — these are stock RO MVP/boss stat blocks picked for lore, not
+tuned for the story's pacing, so **expect to `@dm scale` them down
+substantially** (start well under 50% and adjust live) before the first hit
+lands. Arcs 15, 16, and 19 are already close to the target and need little or
+no scaling. Arc 18 (Himmelmez) has no mob and is resolved narratively — see
+its arc note above.
