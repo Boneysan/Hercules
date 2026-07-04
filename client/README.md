@@ -65,7 +65,13 @@ To go back to single-PC:
 - For full experience, the GM/DM account should be promoted to group 5 (see `tools/promote-dm.sh` on server).
 - Test `@roll`, `@dm status`, `@dm warp`, and `@dmbeat` after connecting.
 
-## 5. Quick Test After Merge
+## 5. Cash Shop (DM rewards)
+
+The DM can grant Cash Shop currency to the whole party with `@dm points <amount>` (Kafra Points, spent first) or `@dm points <amount> cash` (Cash Points, used only as backup when Kafra Points run short).
+
+**Important client quirk:** the in-game Cash Shop window has a "Use Free Points" box that does **not** auto-fill. You must click into it and manually type the item's price (or however much of your Kafra Points balance you want to spend) before clicking Buy — otherwise it sends 0 and you'll get a "You do not have enough Kafra Credit Points" error even with plenty of points. Cash Points cover whatever the Free Points box doesn't.
+
+## 6. Quick Test After Merge
 
 1. Connect with a test character in a party.
 2. Have the DM run:
@@ -81,5 +87,6 @@ To go back to single-PC:
 - Quests not appearing? Wrong .lub used, or not recompiled, or wrong language file (try _True_EN or your locale).
 - No @dm commands? You must be in the active DM party + group level high enough.
 - Warps not working? Make sure you are in the correct DM session and the maps exist on the server.
+- Cash Shop says you don't have enough Kafra Credit Points? Type the price into the "Use Free Points" box first — see section 5.
 
 See `planning/dm-handoff.md` and `planning/dm-tooling.md` in the server repo for full command reference.
