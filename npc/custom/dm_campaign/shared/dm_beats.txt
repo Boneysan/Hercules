@@ -924,7 +924,7 @@ function	script	DM_BeatArc12	{
 	mes("[DM Beat Director]");
 	mes("Act III / Arc 12 - New World (Beyond the Horizon)");
 	next();
-	switch (select("Warp: Envoy Aelith", "Beat: Start Arc 12", "Beat: Vance Exposed", "Beat: Vance Helped", "Warp: Captain Vance", "Warp: Rift Anchor", "Beat: Spawn Naght Sieger", "Beat: Naght Sieger slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Envoy Aelith", "Beat: Start Arc 12", "Beat: Start First Contact", "Beat: First Contact Truth", "Beat: First Contact Peace", "Beat: First Contact Order", "Beat: Vance Exposed", "Beat: Vance Turned", "Beat: Vance Occupation", "Warp: Captain Vance", "Warp: Rift Anchor", "Beat: Spawn Nidhoggr's Shadow", "Beat: Nidhoggr slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "mid_camp", 100, 100);
 		mes("Party warped to Envoy Aelith.");
@@ -934,49 +934,71 @@ function	script	DM_BeatArc12	{
 		callfunc("DM_InstanceQuestStart", 20161);
 		callfunc("DM_InstanceQuestStart", 20163);
 		callfunc("DM_InstanceQuestStart", 20164);
+		callfunc("DM_InstanceQuestStart", 20165);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1201);
 		callfunc("DM_MapStory", "The dimensional walls are dissolving. The New World bleeds into Midgard.");
 		mes("Arc 12 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_Decide", "arc12.vance", "exposed");
-		mes("Vance exposed. Vance Proposal complete.");
+		callfunc("DM_InstanceQuestStart", 20162);
+		mes("First Contact Done Wrong started for the current party.");
 		break;
 	case 4:
-		callfunc("DM_Decide", "arc12.vance", "helped");
-		mes("Vance helped. Vance Proposal complete.");
+		callfunc("DM_Decide", "arc12.first_contact", "truth");
+		mes("First contact truth recorded.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc12.first_contact", "peace");
+		mes("First contact peace recorded.");
+		break;
+	case 6:
+		callfunc("DM_Decide", "arc12.first_contact", "order");
+		mes("First contact cover-up recorded.");
+		break;
+	case 7:
+		callfunc("DM_Decide", "arc12.vance", "exposed");
+		mes("Vance exposed. The anchor perimeter is open.");
+		break;
+	case 8:
+		callfunc("DM_Decide", "arc12.vance", "helped");
+		mes("Vance turned. The anchor perimeter is open.");
+		break;
+	case 9:
+		callfunc("DM_Decide", "arc12.vance", "occupation");
+		mes("Vance occupation backed. The anchor perimeter is open.");
+		break;
+	case 10:
 		callfunc("DM_WarpParty", "mid_camp", 110, 100);
 		mes("Party warped to Captain Vance.");
 		break;
-	case 6:
+	case 11:
 		callfunc("DM_WarpParty", "spl_fild01", 150, 150);
 		mes("Party warped to Rift Anchor.");
 		break;
-	case 7:
+	case 12:
 		.@dm_map$ = strcharinfo(3);
-		monster .@dm_map$, 150, 150, "Naght Sieger", 1956, 1, "Rift Anchor#dm::OnNaghtDead";
+		monster .@dm_map$, 150, 150, "Nidhoggr's Shadow", 2022, 1, "Rift Anchor#dm::OnNidhoggrDead";
 		$@dm_arc12_rift_party_id = getcharid(CHAR_ID_PARTY);
-		$@dm_arc12_rift_damage = (dm_arc12_vance_helped ? 4 : 7);
+		$@dm_arc12_rift_damage = ((dm_arc12_vance_helped || dm_new_world_alliance) ? 4 : (dm_arc12_vance_occupation ? 9 : 7));
 		$@dm_arc12_rift_status = SC_CONFUSION;
 		$@dm_arc12_rift_status_ms = 5000;
 		callfunc("DM_TriggerEvent", "Rift Anchor#dm", "OnRiftStart");
 		if ($@dm_arc12_rift_party_id <= 0)
 			dispbottom("[DM] No party detected; Rift Anchor pulses did not start.");
-		dispbottom("[DM] Naght Sieger spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
-		mes("Naght Sieger spawned. Kill to trigger arc complete.");
+		dispbottom("[DM] Nidhoggr's Shadow spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
+		mes("Nidhoggr's Shadow spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 13:
 		callfunc("DM_TriggerEvent", "Rift Anchor#dm", "OnRiftStop");
 		callfunc("DM_InstanceQuestComplete", 20161);
+		callfunc("DM_InstanceSetFlag", "dm_arc12_nidhoggr_killed", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc12_naght_killed", 1);
 		callfunc("DM_PartyExp", 1400000, 800000);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1299);
-		callfunc("DM_MapStory", "Naght Sieger falls. The rift anchor shudders. The Ash Vacuum holds — for now.");
+		callfunc("DM_MapStory", "Nidhoggr's Shadow falls. The rift anchor shudders. The wall is stitched, not restored.");
 		mes("Arc 12 marked complete for the current party.");
 		break;
-	case 9:
+	case 14:
 		callfunc("DM_BeatMenu");
 		break;
 	}

@@ -3,19 +3,25 @@
 //===== By: ==================================================
 //= Seal Cascade DM tooling
 //===== Description: =========================================
-//= The New World's dimensional membrane dissolves fastest
-//= because it sits closest to the Ash Vacuum's expansion front.
-//= The Sapha warned Midgard. Midgard sent soldiers.
+//= The rift held long enough to cross. The New World is not a
+//= destination or a resource zone; it is a living world where the
+//= dimensional wall is dissolving. Aelith asks whether humanity
+//= can arrive as help instead of the wound. Vance tries to plant
+//= a flag in the apocalypse.
 //=
 //= Quests (db/quest_db.conf):
-//=   20161 The Wound With a Keeper    (arc tracker / Naght Sieger)
-//=   20163 New World Cornus Survey    (Cornus x20)
-//=   20164 Naga Border Patrol        (Naga x20)
-//=   20165 The Vance Proposal        (Captain Vance)
+//=   20161 The Wound With a Keeper     (arc tracker / Nidhoggr's Shadow)
+//=   20162 First Contact Done Wrong    (diplomacy story)
+//=   20163 Manuk Supply Line           (Manuk Field x20)
+//=   20164 Cornus Mercy Run            (Cornus/Dark Pinguicula x20)
+//=   20165 Dicastes Border Papers      (Centipede/Dolomedes x20)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
 //=   dm_arc12_started, dm_arc12_vance_exposed,
-//=   dm_arc12_vance_helped, dm_arc12_naght_killed
+//=   dm_arc12_vance_helped, dm_arc12_vance_occupation,
+//=   dm_arc12_first_contact_truth, dm_arc12_first_contact_peace,
+//=   dm_arc12_first_contact_order, dm_new_world_alliance,
+//=   dm_arc12_nidhoggr_killed, dm_arc12_naght_killed
 //===========================================================
 
 // ── Envoy Aelith — Voice of the New World ──────────────────────────────────
@@ -23,10 +29,12 @@ mid_camp,100,100,5	script	Envoy Aelith#dm	4_F_01,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20161) == 2) {
 		mes("[Envoy Aelith]");
-		if (dm_arc12_vance_helped)
-			mes("The wound is quieter. Captain Vance has his reports. Whether your nations learn to share this world before the cascade finishes it remains an open question.");
+		if (dm_new_world_alliance)
+			mes("The wound is stitched, for now. You proved humans can cross a threshold without making conquest the first language spoken there.");
+		else if (dm_arc12_vance_occupation)
+			mes("The Shadow is gone. The wound remains politically useful to people who should know better. That may be the deeper danger.");
 		else
-			mes("The wound is quieter. Naght Sieger is gone. Vance's ambitions are smaller than the problem they are embedded in. We will manage the rest.");
+			mes("The wound is quieter. I do not yet know whether your people came as healers or merely as frightened soldiers who found a larger battlefield.");
 		close();
 	}
 
@@ -48,51 +56,57 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20164, 1;
 	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20165, 1;
+	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
 	mes("[Envoy Aelith]");
-	mes("You are not soldiers. Good. The soldiers that came before you are part of why the Naga have stopped distinguishing between Midgard and the cascade as threats.");
+	mes("You are not soldiers. Good. The soldiers that came before you are part of why some villages now hear the word human and reach for weapons.");
 	next();
-	if (dm_arc10_kiel_killed || dm_arc10_echo_freed) {
+	if (dm_arc09_gloom_killed || dm_arc09_karsh_exposed) {
 		mes("[Aelith]");
-		mes("The Lighthalzen laboratory. Your actions there reduced the cascade's industrial amplification in this region by a measurable amount. We noticed. My council noticed. You have credibility here that soldiers do not.");
+		mes("The bleed under Rachel was one mouth of this wound. You closed a symptom. Now you stand on the far side of the sickness.");
 		next();
 	}
 	if (dm_arc11_randgris_killed) {
 		mes("[Aelith]");
-		mes("Randgris. The Valkyrie. We share a pantheon's boundary with Odin's domain. What happened to her — the cascade severing divine communication — is happening here too. Our own spirit-guides have gone silent.");
+		mes("Your Valkyrie fell because a divine road filled with noise. Here the roads between worlds are dissolving outright.");
 		next();
 	}
 	mes("[Aelith]");
-	mes("The Ash Vacuum's expansion front is here. The New World sits closest to it. Our membrane is the thinnest. We have been watching it dissolve for three years.");
+	mes("The New World is not empty. It has nations, borders, children, debts, and ordinary lives that were not waiting to become your frontier.");
 	next();
-	switch (select("What is the Ash Vacuum actually doing to the membrane?", "What does the New World need from Midgard?", "What is at the Rift Anchor?")) {
+	switch (select("Teach us how to help.", "Point us at what holds the rift open.", "This is Rune-Midgard's expedition. Stand aside.")) {
 	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_new_world_alliance", 1);
 		mes("[Aelith]");
-		mes("Consuming it. The membrane is dimensional tension — the difference in pressure between what-is and what-isn't. The cascade equalizes that pressure. Where the pressure equalizes, the membrane ceases to have a reason to exist.");
+		mes("Then listen before you act. If you keep doing that when it costs you, my people may believe you came to close a wound, not widen it.");
 		break;
 	case 2:
 		mes("[Aelith]");
-		mes("Honesty. We needed you to acknowledge what the cascade is and where it leads. Instead you sent Captain Vance to survey 'resource potential.' We are not a resource.");
+		mes("Practical. I will help you reach the anchor. Whether the New World helps you in return depends on what you do before you get there.");
 		break;
 	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc12_vance_occupation", 1);
 		mes("[Aelith]");
-		mes("A nexus. The point where the cascade's pressure is highest in this region. Naght Sieger — a creature born from that nexus — guards it instinctively. It does not intend harm. It is the harm.");
+		mes("Then you have already answered one of my questions. I will still tell you where the wound is, because it will kill us both.");
 		break;
 	}
 	next();
 	mes("[Aelith]");
-	mes("The Cornus clusters near the anchor have been absorbing cascade energy and overgrowing — they are blocking the approaches. The Naga are hostile because Vance's soldiers shot at them last week. Both problems need to be addressed before we can reach the anchor.");
+	mes("Three small tests first. The Manuk supply manifests are unequal. The Splendide field is not yours to clear like a quarry. The Dicastes border exists even when your paperwork pretends it does not.");
 	callfunc("DM_InstanceSetFlag", "dm_arc12_started", 1);
 	callfunc("DM_InstanceQuestStart", 20161);
 	callfunc("DM_InstanceQuestStart", 20163);
 	callfunc("DM_InstanceQuestStart", 20164);
+	callfunc("DM_InstanceQuestStart", 20165);
 	next();
 	mes("^3355FF[Quest started: The Wound With a Keeper]^000000");
-	mes("^3355FFNew World Cornus Survey - clear 20 Cornus overgrowth near the rift anchor.^000000");
-	mes("^3355FFNaga Border Patrol - engage 20 Naga along the border corridor.^000000");
+	mes("^3355FFManuk Supply Line - clear the Manuk route and decide whose cart receives protection first.^000000");
+	mes("^3355FFCornus Mercy Run - handle feral field creatures with the Sapha watching.^000000");
+	mes("^3355FFDicastes Border Papers - clear the outskirts and process the crossing writs honestly or otherwise.^000000");
 	close();
 
 S_TurnIns:
@@ -103,20 +117,24 @@ S_TurnIns:
 		callfunc("DM_GivePartyZeny", 28000);
 		.@paid = 1;
 		mes("[Aelith]");
-		mes("The Cornus growth has been trimmed back. They were not aggressive — they were panicking. The cascade frequency matches their growth signal and they responded as if spring had arrived permanently.");
+		mes("The Manuk route is open. Two carts left the yard today: one full for the barracks, one thin for the Sapha village. Which one did you guard first?");
 		next();
-		switch (select("Document the growth pattern for the survey.", "They can grow back once the anchor is stable.", "The anchor's signal is driving local ecology crazy.")) {
+		switch (select("The Sapha village cart, every run.", "Sapha and expedition on an even rotation.", "We skimmed a private stockpile from both manifests.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc12_supply_sapha", 1);
+			callfunc("DM_InstanceSetFlag", "dm_new_world_alliance", 1);
 			mes("[Aelith]");
-			mes("Good data. The Sapha botanists will want this. Understanding how the cascade interacts with New World ecology is a question that outlasts this crisis.");
+			mes("Then you noticed what no one asked you to notice. The Blue Supply Knot reads as a debt honored.");
 			break;
 		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc12_supply_even", 1);
 			mes("[Aelith]");
-			mes("They will. The Cornus are not the problem. The anchor is. We are treating symptoms here.");
+			mes("Fair by your ledgers, acceptable by ours. Not a declaration, but not an insult.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc12_supply_skimmed", 1);
 			mes("[Aelith]");
-			mes("Yes. Every living thing in range of the anchor is responding to a signal it was never built to receive. The Naga have been affected longer and more severely than the flora.");
+			mes("Efficient. The knot reads unpaid. It is possible to steal from two sides and still call it balance, but only in human mathematics.");
 			break;
 		}
 		next();
@@ -128,80 +146,163 @@ S_TurnIns:
 		callfunc("DM_GivePartyZeny", 30000);
 		.@paid = 1;
 		mes("[Aelith]");
-		mes("You engaged the Naga. How did you approach it?");
+		mes("The Splendide field is quiet. A Sapha herder watched your work from the grass line. What did she see?");
 		next();
-		switch (select("We fought through them. The path is open.", "We tried to communicate before engaging.", "We pushed them back without killing more than necessary.")) {
+		switch (select("We killed only what was actively hostile.", "We drove threats off the herding grounds.", "We cleared the field completely and brought proof.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc12_cornus_spared", 1);
+			callfunc("DM_InstanceSetFlag", "dm_new_world_alliance", 1);
 			mes("[Aelith]");
-			mes("The border is clear. The Naga will remember. Whether that becomes a longer problem depends on what Vance does next.");
+			mes("Then she will give you a White Horn Splinter, shed rather than harvested. That distinction matters here.");
 			break;
 		case 2:
-			callfunc("DM_InstanceSetFlag", "dm_arc12_vance_helped", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc12_cornus_driven", 1);
 			mes("[Aelith]");
-			mes("They do not speak Midgard languages easily. But they understand posture and intent. The fact that you tried — that will carry.");
+			mes("A field kept safe without pretending every frightened creature is a monster. Good enough work earns good enough trust.");
 			break;
 		case 3:
-			callfunc("DM_InstanceSetFlag", "dm_arc12_vance_helped", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc12_cornus_slaughtered", 1);
+			callfunc("DM_InstanceSetFlag", "dm_new_world_alliance", 0);
+			dm_catechism_tally += 1;
 			mes("[Aelith]");
-			mes("Restraint. The Naga will remember that too. These things matter more than Vance's reports.");
+			mes("Proof of restraint cannot be stacked in corpses. You have proved something, but not the thing you meant.");
 			break;
 		}
 		next();
 	}
 
-	if (questprogress(20163) == 2 && questprogress(20164) == 2 && questprogress(20165) == 0) {
+	if (questprogress(20165) == 1 && questprogress(20165, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20165);
+		callfunc("DM_PartyExp", 360000, 175000);
+		callfunc("DM_GivePartyZeny", 30000);
+		.@paid = 1;
 		mes("[Aelith]");
-		mes("The approaches are clear. But Captain Vance is standing at the anchor's perimeter with a survey team. He has not engaged Naght Sieger. He does not know what Naght Sieger is. He will if he gets closer.");
+		mes("The Dicastes crossing is clear enough to argue at again. That is what borders are, usually: enough safety for paperwork to become the danger.");
 		next();
-		switch (select("We need to deal with Vance before he does something irreversible.", "Can Vance's survey data help?", "Vance is secondary. The anchor is what matters.")) {
+		switch (select("Process every writ by its real terms.", "Forge access for urgent cases.", "Design a process favoring expedition access.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc12_border_honest", 1);
+			callfunc("DM_InstanceSetFlag", "dm_new_world_alliance", 1);
 			mes("[Aelith]");
-			mes("Yes. He is not malicious. He is ambitious. Those are different problems and the second is solvable.");
+			mes("Slow and honest. The people crossing know what they agreed to. That is rarer than your officers think.");
 			break;
 		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc12_border_forged", 1);
 			mes("[Aelith]");
-			mes("It might. If he can be redirected from territorial survey to dimensional survey. That is a different brief and it requires him to understand what he is actually looking at.");
+			mes("Merciful lawbreaking is still lawbreaking. Several families crossed who would not have. Several officials now have reason to distrust the table.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc12_border_expedition", 1);
+			callfunc("DM_InstanceSetFlag", "dm_new_world_alliance", 0);
 			mes("[Aelith]");
-			mes("The anchor is what matters. But Vance in the wrong place at the wrong moment becomes a variable.");
+			mes("Efficient and clever. Also the beginning of occupation written in polite ink.");
 			break;
 		}
-		callfunc("DM_InstanceQuestStart", 20165);
 		next();
-		mes("^3355FF[Quest started: The Vance Proposal]^000000");
-		mes("^3355FFConfront Captain Vance. Then proceed to spl_fild01 and face Naght Sieger.^000000");
+	}
+
+	if (questprogress(20163) == 2 && questprogress(20164) == 2 && questprogress(20165) == 2 && questprogress(20162) == 0) {
+		mes("[Aelith]");
+		mes("Supply, mercy, border. You have shown the New World what humans do when watched. Now we address what humans did when no diplomat was present.");
+		next();
+		mes("[Aelith]");
+		mes("A scouting party panicked in a Sapha border-village. A child died. Vance's command has named it a hostile ambush. The village has another name for it.");
+		callfunc("DM_InstanceQuestStart", 20162);
+		next();
+		mes("^3355FF[Quest started: First Contact Done Wrong]^000000");
+		mes("^3355FFSpeak to the Sapha elder and decide what justice costs when both sides must keep living afterward.^000000");
 		close();
 	}
 
-	if (questprogress(20165) == 1 && !dm_arc12_vance_exposed && !dm_arc12_vance_helped) {
+	if (questprogress(20162) == 1) {
 		mes("[Aelith]");
-		mes("Captain Vance is at the anchor perimeter. He has been there for two hours. I do not know what he is planning.");
+		mes("The elder is waiting near the command tents. Walk in with weapons down. If you cannot do that, you already know how the hearing ends.");
 		close();
 	}
 
-	if (questprogress(20165) == 1 && (dm_arc12_vance_exposed || dm_arc12_vance_helped)) {
+	if (questprogress(20162) == 2 && !dm_arc12_vance_exposed && !dm_arc12_vance_helped && !dm_arc12_vance_occupation) {
 		mes("[Aelith]");
-		mes("Vance is resolved. Naght Sieger remains. The rift anchor is in the Splendide field. You will feel it before you see it.");
+		mes("First contact has its verdict. Vance is at the rift-anchor now, trying to decide whether the wound is a threat or a prize.");
+		close();
+	}
+
+	if (questprogress(20162) == 2 && (dm_arc12_vance_exposed || dm_arc12_vance_helped || dm_arc12_vance_occupation)) {
+		mes("[Aelith]");
+		mes("The anchor perimeter is open. Nidhoggr's Shadow keeps the wound from closing. Vance wanted it open too. Make sure both keepers are answered.");
 		close();
 	}
 
 	if (.@paid) {
 		mes("[Aelith]");
-		mes("Both field contracts need to be done before we can reach Vance's position safely.");
+		mes("Finish the other routes. First contact is not one conversation. It is who gets fed, spared, and translated before the formal apology.");
 		close();
 	}
 
 	mes("[Aelith]");
-	if (questprogress(20163) == 1 && questprogress(20164) == 1)
-		mes("The Cornus survey and the Naga border patrol are both still active.");
+	if (questprogress(20163) == 1 && questprogress(20164) == 1 && questprogress(20165) == 1)
+		mes("The supply route, mercy run, and border papers are all still open.");
 	else if (questprogress(20163) == 1)
-		mes("New World Cornus Survey is still open. The overgrowth near the anchor approach.");
+		mes("Manuk Supply Line is still open. The carts do not guard themselves.");
 	else if (questprogress(20164) == 1)
-		mes("Naga Border Patrol is still open. The border corridor is hostile.");
+		mes("Cornus Mercy Run is still open. The Sapha are watching how you clear their field.");
+	else if (questprogress(20165) == 1)
+		mes("Dicastes Border Papers is still open. The crossing needs safety before it can negotiate.");
 	else
-		mes("The approaches are clear. Vance is at the anchor perimeter.");
+		mes("The small answers are recorded. The dead child is the next question.");
 	close();
+}
+
+// ── Sapha Elder — The Blood-Price Hearing ──────────────────────────────────
+mid_camp,104,100,5	script	Sapha Elder#dm12	4_M_04,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (questprogress(20162) == 0) {
+		mes("[Sapha Elder]");
+		mes("You wear the posture of people who have not yet been told what they owe.");
+		close();
+	}
+	if (questprogress(20162) == 2) {
+		mes("[Sapha Elder]");
+		if (dm_arc12_first_contact_order)
+			mes("Your order is tidy. Our child remains dead inside it.");
+		else
+			mes("The carved bird is carried. That is not enough. It is something.");
+		close();
+	}
+
+	mes("[Sapha Elder]");
+	mes("A human scout saw a child running and called it an ambush. Your captain's paper says hostile native contact. My house says a name.");
+	next();
+	mes("^3355FF*The elder places a small carved bird in your hands. It is light enough to forget until everyone in the room looks at it.*^000000");
+	next();
+	switch (select("Expose the scouts' panic and Vance's cover-up.", "Negotiate a blood-price the village will accept.", "Back the report to keep the expedition united.")) {
+	case 1:
+		callfunc("DM_Decide", "arc12.first_contact", "truth");
+		mes("[Sapha Elder]");
+		mes("Truth is not payment. But a debt cannot be paid while hidden under another name.");
+		next();
+		mes("^3355FF*Aelith accepts the testimony. The expedition loses its clean story; the New World gains a reason to keep speaking.*^000000");
+		break;
+	case 2:
+		callfunc("DM_Decide", "arc12.first_contact", "peace");
+		mes("[Sapha Elder]");
+		mes("Blood-price does not buy the child back. It tells the village the death entered your ledger as more than inconvenience.");
+		next();
+		mes("^3355FF*The guilty scouts are surrendered to New World justice. No one in the command tent thanks you.*^000000");
+		break;
+	case 3:
+		callfunc("DM_Decide", "arc12.first_contact", "order");
+		mes("[Sapha Elder]");
+		mes("Then keep your order. We will keep the name.");
+		next();
+		mes("^3355FF*The carved bird remains in your hand, not accepted, not released.*^000000");
+		break;
+	}
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20162, 1;
+	end;
 }
 
 // ── Captain Roderick Vance — The Wrong Expedition ──────────────────────────
@@ -216,64 +317,68 @@ mid_camp,110,100,5	script	Captain Vance#dm	4_M_03,{
 	if (questprogress(20161) == 2) {
 		mes("[Captain Vance]");
 		if (dm_arc12_vance_helped)
-			mes("I have filed an amended survey report. 'Dimensional stabilization assessment' instead of 'resource potential.' It reads differently. The brass will ask questions. I will answer them honestly this time.");
+			mes("I have filed an amended report. 'Dimensional breach sealed by allied action.' It sounds better than admitting I nearly tried to own the wound.");
+		else if (dm_arc12_vance_occupation)
+			mes("The Shadow is gone. The corridor remains strategically significant. History will decide whether that was wisdom.");
 		else
-			mes("Naght Sieger is dead. I have filed a report. I do not think my superiors will understand what I am describing.");
+			mes("Nidhoggr's Shadow is dead. I have filed a report. My superiors will dislike the honesty in it.");
 		close();
 	}
 
-	if (dm_arc12_vance_exposed || dm_arc12_vance_helped) {
+	if (questprogress(20162) != 2) {
 		mes("[Captain Vance]");
-		mes("I have the amended brief. We will stand down from the perimeter.");
+		mes("I am not discussing the anchor while the first-contact hearing is still making everyone sentimental.");
+		close();
+	}
+
+	if (dm_arc12_vance_exposed || dm_arc12_vance_helped || dm_arc12_vance_occupation) {
+		mes("[Captain Vance]");
+		mes("The decision is made. The anchor is waiting.");
 		close();
 	}
 
 	mes("[Captain Vance]");
-	mes("We will secure this zone. Whatever that creature is, it guards a significant dimensional anomaly. That anomaly has strategic value.");
+	mes("The rift is a strategic corridor. If the world is ending, Rune-Midgard has a duty to hold the high ground that remains.");
 	next();
-	switch (select("The anomaly is consuming this world. It is not a resource.", "We need your survey data. But you need to understand what you are surveying.", "Stand your people down. This is not a military operation.")) {
+	switch (select("Holding it open is killing two worlds.", "Close it and you are still the hero who sealed the breach.", "What is Rune-Midgard's cut?")) {
 	case 1:
 		callfunc("DM_Decide", "arc12.vance", "exposed");
 		mes("[Vance]");
-		mes("Consuming. You mean the cascade. I have read the Yuno reports. I chose to interpret them optimistically.");
+		mes("One of those worlds is mine.");
 		next();
 		mes("[Vance]");
-		mes("That was a mistake. I can see that from here. All right. I pull my team back. The anomaly is yours.");
+		mes("And that was the wrong answer. I heard it when I said it. Pulling back.");
 		next();
-		mes("^3355FF*Vance withdraws. He will file an honest report. His superiors will not like it.*^000000");
+		mes("^3355FF*Vance withdraws the expedition from the anchor perimeter. He does not forgive you for making him hear himself clearly.*^000000");
 		break;
 	case 2:
 		callfunc("DM_Decide", "arc12.vance", "helped");
 		mes("[Vance]");
-		mes("What I am surveying. I am surveying a dimensional nexus consuming a world. Yes. I understand that intellectually. Emotionally I was writing a survey about unclaimed territory.");
+		mes("The officer who sealed the breach. That report would travel well.");
 		next();
 		mes("[Vance]");
-		mes("You are right. I will amend the brief. Dimensional stabilization assessment instead of resource survey. Different priorities, different conclusions.");
+		mes("Fine. We close it. If there is glory in this disaster, I would rather it belong to survival than occupation.");
 		next();
-		mes("^3355FF*Vance redirects his team. The data they collect will be scientifically useful rather than strategically convenient.*^000000");
+		mes("^3355FF*Vance redirects his troops. For once, the flag points toward the same place as mercy.*^000000");
 		break;
 	case 3:
-		callfunc("DM_Decide", "arc12.vance", "exposed");
+		callfunc("DM_Decide", "arc12.vance", "occupation");
 		mes("[Vance]");
-		mes("On whose authority?");
+		mes("Access, survey rights, and a defensible corridor when the old maps stop meaning anything.");
 		next();
 		mes("[Vance]");
-		mes("...");
+		mes("Good. I was beginning to think I was the only patriot left in the camp.");
 		next();
-		mes("[Vance]");
-		mes("On the authority of that thing in there that I have been standing here trying not to look at for two hours. Fine. We pull back.");
-		next();
-		mes("^3355FF*Vance's team withdraws. He does not look like a man whose confidence was dented.*^000000");
-		mes("^3355FF*He looks like a man who has been waiting for permission to stop pretending.*^000000");
+		mes("^3355FF*Aelith's people hear the bargain before the ink dries. Some verdicts do not need translation.*^000000");
 		break;
 	}
 	next();
-	mes("^3355FF[The Vance Proposal resolved. Proceed to spl_fild01 and face Naght Sieger.]^000000");
+	mes("^3355FF[Vance resolved. Proceed to spl_fild01 and face Nidhoggr's Shadow.]^000000");
 	close();
 
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20165, 1;
+	setquestinfo QINFO_QUEST, 20161, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
@@ -283,21 +388,21 @@ OnInit:
 mid_camp,106,96,3	script	Anchor Survey Slate#dm	2_BOARD1,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc12_started) {
-		mes "^3355FF*A blank survey slate waits under a weighted cloth. No one has started the measurements yet.*^000000";
-		close;
+		mes("^3355FF*A blank survey slate waits under a weighted cloth. No one has started the measurements yet.*^000000");
+		close();
 	}
 
-	mes "^3355FF*The slate is packed with layered field notes in two hands: one military, one Sapha. The disagreement between them gets more urgent line by line.*^000000";
-	next;
-	mes "^0000AA[Anchor Perimeter Notes]^000000";
-	mes "Midgard survey hand: anomaly perimeter stable enough for claim markers. Sapha margin: not stable, only briefly symmetrical.";
-	next;
-	mes "^0000AA[Anchor Perimeter Notes]^000000";
-	mes "Observed effect: local fauna respond to pressure differential before visible rupture. Border aggression may be anticipatory rather than territorial.";
-	next;
-	mes "^0000AA[Anchor Perimeter Notes]^000000";
-	mes "Revised conclusion: if this place is treated as a frontier instead of a wound, every later reading will be wrong on purpose.";
-	close;
+	mes("^3355FF*The slate is packed with layered field notes in two hands: one military, one Sapha. The disagreement between them gets more urgent line by line.*^000000");
+	next();
+	mes("^0000AA[Anchor Perimeter Notes]^000000");
+	mes("Midgard survey hand: anomaly perimeter stable enough for claim markers. Sapha margin: not stable, only briefly symmetrical.");
+	next();
+	mes("^0000AA[Anchor Perimeter Notes]^000000");
+	mes("Observed effect: local fauna respond to pressure differential before visible rupture. Border aggression may be anticipatory rather than territorial.");
+	next();
+	mes("^0000AA[Anchor Perimeter Notes]^000000");
+	mes("Revised conclusion: if this place is treated as a frontier instead of a wound, every later reading will be wrong on purpose.");
+	close();
 }
 
 // ── Rift Anchor Set-piece ──────────────────────────────────────────────────
@@ -342,16 +447,19 @@ OnTimer28000:
 	stopnpctimer;
 	end;
 
-OnNaghtDead:
+OnNidhoggrDead:
 	stopnpctimer;
 	callfunc("DM_InstanceQuestComplete", 20161);
+	callfunc("DM_InstanceSetFlag", "dm_arc12_nidhoggr_killed", 1);
 	callfunc("DM_InstanceSetFlag", "dm_arc12_naght_killed", 1);
 	callfunc("DM_PartyExp", 1400000, 800000);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1299);
-	if (dm_arc12_vance_helped)
-		instance_announce(instance_id(), "^3355FF[DM] Naght Sieger disperses. The rift anchor shudders and holds. Vance's team records everything.^000000", bc_all);
+	if (dm_new_world_alliance && dm_arc12_vance_helped)
+		instance_announce(instance_id(), "^3355FF[DM] Nidhoggr's Shadow collapses. Aelith's people and Vance's soldiers stitch the anchor from opposite sides.^000000", bc_all);
+	else if (dm_arc12_vance_occupation)
+		instance_announce(instance_id(), "^3355FF[DM] Nidhoggr's Shadow collapses. The rift remains valuable, unstable, and claimed.^000000", bc_all);
 	else
-		instance_announce(instance_id(), "^3355FF[DM] Naght Sieger disperses. The rift anchor shudders. The wound is not healed — it is cauterized.^000000", bc_all);
+		instance_announce(instance_id(), "^3355FF[DM] Nidhoggr's Shadow collapses. The wound is cauterized, not healed.^000000", bc_all);
 	sleep(2000);
 	instance_announce(instance_id(), "^FF6600[DM] The Ash Vacuum's front is held here. The demon lords on the Nameless Island are watching. They are coordinating.^000000", bc_all);
 	end;

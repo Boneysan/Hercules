@@ -447,6 +447,21 @@ OnInit:
 		"dm_arc12_started",
 		"dm_arc12_vance_exposed",
 		"dm_arc12_vance_helped",
+		"dm_arc12_vance_occupation",
+		"dm_arc12_supply_sapha",
+		"dm_arc12_supply_even",
+		"dm_arc12_supply_skimmed",
+		"dm_arc12_cornus_spared",
+		"dm_arc12_cornus_driven",
+		"dm_arc12_cornus_slaughtered",
+		"dm_arc12_border_honest",
+		"dm_arc12_border_forged",
+		"dm_arc12_border_expedition",
+		"dm_arc12_first_contact_truth",
+		"dm_arc12_first_contact_peace",
+		"dm_arc12_first_contact_order",
+		"dm_new_world_alliance",
+		"dm_arc12_nidhoggr_killed",
 		"dm_arc12_naght_killed";
 	callsub S_RegisterArc, 12, .arc12$;
 

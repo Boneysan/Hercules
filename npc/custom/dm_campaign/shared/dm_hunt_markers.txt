@@ -367,15 +367,30 @@ OnInit:
 
 // ── Arc 12 ────────────────────────────────────────────────────────────────
 
-// Quest 20163: New World Cornus Survey (Cornus x20 → MobId 1992) → spl_fild01 (25 Cornus)
-// Quest 20164: Naga Border Patrol (Naga x20 → MobId 1993) → spl_fild01 (35 Naga)
-spl_fild01,200,200,0	script	Hunt Marker#dm_h_arc12a	HIDDEN_NPC,{
+// Quest 20163: Manuk Supply Line (Tatacho/Centipede/Hillslion → MobId 1986/1987/1989) → man_fild03
+man_fild03,200,200,0	script	Hunt Marker#dm_h_arc12a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20163, 1;
+	end;
+}
+
+// Quest 20164: Cornus Mercy Run (Cornus/Dark Pinguicula → MobId 1992/2015) → spl_fild01
+spl_fild01,200,200,0	script	Hunt Marker#dm_h_arc12b	HIDDEN_NPC,{
+	end;
+OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20164, 1;
+	end;
+}
+
+// Quest 20165: Dicastes Border Papers (Centipede/Dolomedes → MobId 1987/2092) → dic_fild02
+dic_fild02,100,100,0	script	Hunt Marker#dm_h_arc12c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20165, 1;
 	end;
 }
 

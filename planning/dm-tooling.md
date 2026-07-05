@@ -262,7 +262,7 @@ Current scripted arc entry points:
 | 9 | Sister Ilya, Rachel | Gloom Under Night, `ra_san05` | 20131-20135 |
 | 10 | Doctor Reuter, Lighthalzen | Kiel D-01, `lhz_dun04` | 20141-20145 |
 | 11 | Priest Eadric, Hugel | Randgris, `abyss_03` | 20151-20155 |
-| 12 | Quartermaster Lian, New World | Naght Sieger, `spl_fild01` | 20161-20165 |
+| 12 | Envoy Aelith, New World | Nidhoggr's Shadow, `spl_fild01` | 20161-20165 |
 | 13 | Scholar Nadir, Nameless Island | Beelzebub / coalition deal, `abbey03` | 20171-20175 |
 | 14 | Foreman Dunmar, Veins | Ifrit / Magma Cathedral, `thor_v03` | 20181-20185 |
 | 15 | Keeper Lysandra, Aldebaran | Thanatos Memory, `thana_boss` | 20191-20194 |
@@ -477,7 +477,7 @@ organized by act, then arc:
   Act I / Arc 5 - Alberta -> Beat: Complete Act I
   Act II / Arc 6 - Yuno -> Beat: Start Arc 6
   Act II / Arc 10 - Lighthalzen -> Beat: Kiel slain (Act II Complete)
-  Act III / Arc 12 - New World -> Beat: Spawn Naght Sieger
+  Act III / Arc 12 - New World -> Beat: Spawn Nidhoggr's Shadow
   Act III / Arc 14 - Veins -> Beat: Ifrit slain (Act III Complete)
   Act IV / Arc 15 - Thanatos -> Beat: Spawn Thanatos
   Act IV / Arc 19 - Finale -> Beat: Campaign Complete

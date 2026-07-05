@@ -130,22 +130,22 @@ Target: 20151 **When Heaven Turns** (climax, keep) · 20153/54/55 + 20152 remap 
 - [x] 9. doc tables → 20151–20155 — 2026-07-05
 - [x] ✔ Validation passes → **Arc 11 done** (date: 2026-07-05)
 
-## Arc 12 — Beyond the Horizon / New World (IDs 20161–20165, +20162 free)
+## ✅ Arc 12 — Beyond the Horizon / New World (IDs 20161–20165, +20162 free) (DONE 2026-07-05)
 
 Target: 20161 **The Wound With a Keeper** (climax, keep) · story **First Contact
 Done Wrong** · hunts **Manuk Supply Line** / **Cornus Mercy Run** /
 **Dicastes Border Papers**.
 
-- [ ] 1. Vault docs read
-- [ ] 2. quest_db block (+20162)
-- [ ] 3. dm_quests registry
-- [ ] 4. dm_flags additions
-- [ ] 5. arc file rewrite
-- [ ] 6. dm_decisions rows
-- [ ] 7. dm_beats
-- [ ] 8. hunt markers
-- [ ] 9. doc tables
-- [ ] ✔ Validation passes → **Arc 12 done** (date: ______)
+- [x] 1. Vault docs read — 2026-07-05
+- [x] 2. quest_db block (+20162) — 2026-07-05
+- [x] 3. dm_quests registry — 2026-07-05
+- [x] 4. dm_flags additions — 2026-07-05
+- [x] 5. arc file rewrite — 2026-07-05
+- [x] 6. dm_decisions rows — 2026-07-05
+- [x] 7. dm_beats — 2026-07-05
+- [x] 8. hunt markers — 2026-07-05
+- [x] 9. doc tables — 2026-07-05
+- [x] ✔ Validation passes → **Arc 12 done** (date: 2026-07-05)
 
 ## Arc 13 — Island of the Damned / Nameless (IDs 20171–20175, +20172 free)
 

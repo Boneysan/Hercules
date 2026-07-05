@@ -21,7 +21,7 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 | 09 | Frozen Faith | Rachel | Gloom Under Night (1768) | 20131–20135 |
 | 10 | The Lab Beneath | Lighthalzen | Kiel D-01 (1734) | 20141–20145 |
 | 11 | Wrath of Heaven | Hugel | Valkyrie Randgris (1751) | 20151–20155 |
-| 12 | Beyond the Horizon | New World | Naght Sieger (1956) | 20161–20165 |
+| 12 | Beyond the Horizon | New World | Nidhoggr's Shadow (2022) | 20161–20165 |
 | 13 | Island of the Damned | Nameless Island | Beelzebub (1874) | 20171–20175 |
 | 14 | The Fire That Ends the World | Veins | Ifrit (1832) | 20181–20185 |
 | 15 | The Hero's Tomb | Aldebaran / Thanatos | Memory of Thanatos (1708) | 20191–20194 |
@@ -87,13 +87,14 @@ villain confrontation, then an MVP boss spawned via DM console.
 - Flags: `dm_arc11_sigrun_voice`, `dm_arc11_sigrun_comforted`, `dm_arc11_bjorn_joined`
 - Bjorn_joined or Sigrun comfort softens court adds; forced/exploited routes increase pressure.
 
-### Arc 12 — Captain Vance (New World)
-- Hunting: Cornus (1992 × 15), Naga (1993 × 15)
-- Villain: Vance — exposed / **helped**
-- Boss: Naght Sieger (1956) at `spl_fild01`
-- Flags: `dm_arc12_vance_exposed`, `dm_arc12_vance_helped`
-- Naght Sieger starts the Rift Anchor pressure hazard: four pulses around
-  `spl_fild01` 150,150. Helping Vance lowers pulse damage from 7% to 4%.
+### Arc 12 — Beyond the Horizon (New World)
+- Hunting: Manuk Supply Line (20163), Cornus Mercy Run (20164), Dicastes Border Papers (20165)
+- Story: First Contact Done Wrong (20162) — truth / peace / order
+- Gate: Vance — exposed / turned / occupation
+- Boss: Nidhoggr's Shadow (2022) at `spl_fild01`
+- Flags: `dm_arc12_first_contact_truth`, `dm_arc12_first_contact_peace`, `dm_arc12_vance_helped`, `dm_new_world_alliance`
+- Nidhoggr's Shadow starts the Rift Anchor pressure hazard: four pulses around
+  `spl_fild01` 150,150. Vance_helped or New World alliance lowers pulse damage from 7% to 4%; occupation raises it to 9%.
 - Vance_helped → callback in Arc 15 (Lysandra)
 
 ### Arc 13 — Broker Carrion (Nameless Island)
@@ -368,7 +369,7 @@ Arc 18: himmelmez_bargained → Arc 19 boss flavor, unlocks queens_bargain endin
 | Dark Lord | 1272 | DARK_LORD |
 | Gloom Under Night | 1768 | GLOOMUNDERNIGHT |
 | Randgris | 1751 | VALKYRIE_RANDGRIS |
-| Naght Sieger | 1956 | NAGHT_SIEGER (not 1957 ENTWEIHEN) |
+| Naght Sieger | 1956 | NAGHT_SIEGER (not 1957 ENTWEIHEN); old Arc 12 stand-in |
 | Beelzebub | 1874 | BEELZEBUB |
 | Ifrit | 1832 | IFRIT |
 | Thanatos | 1708 | THANATOS |
@@ -390,7 +391,7 @@ Arc 18: himmelmez_bargained → Arc 19 boss flavor, unlocks queens_bargain endin
 | Amon Ra | 1511 | AMON_RA (Arc 03, dual boss with Osiris) |
 | Baphomet | 1039 | BAPHOMET (Arc 04 — not Baphomet Jr. 1101) |
 | Tao Gunka | 1583 | TAO_GUNKA (Arc 05) |
-| Nidhoggr's Shadow | 2022 | Overview's Arc 12 boss — not the current implementation (Naght Sieger 1956 is used instead); alternate if Naght Sieger feels wrong |
+| Nidhoggr's Shadow | 2022 | Arc 12 boss |
 
 ---
 
@@ -424,7 +425,7 @@ will not exactly match that document's "Gap" column.
 | 09 | Gloom Under Night | 80 | 139 | +59 |
 | 10 | Kiel D-01 | 84 | 125 | +41 |
 | 11 | Valkyrie Randgris | 88 | 141 | +53 |
-| 12 | Naght Sieger | 90 | 99 | +9 |
+| 12 | Nidhoggr's Shadow | 90 | 117 | +27 |
 | 13 | Beelzebub | 92 | 147 | +55 |
 | 14 | Ifrit | 94 | 146 | +52 |
 | 15 | Memory of Thanatos | 95 | 99 | +4 |

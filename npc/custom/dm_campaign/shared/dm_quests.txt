@@ -183,8 +183,8 @@ OnInit:
 	setarray .arc10_nm$[0], "The Factory of Heroes", "The One Who Said No", "Slum Sample Run", "Scaraba Chitin Order", "Clone Name Registry";
 	setarray .arc11_id[0], 20151, 20152, 20153, 20154, 20155;
 	setarray .arc11_nm$[0], "When Heaven Turns", "The Dying Valkyrie's Word", "Hugel Airship Muster", "Dragon Scale Turn-In", "Temple Edge Vigil";
-	setarray .arc12_id[0], 20161, 20163, 20164, 20165;
-	setarray .arc12_nm$[0], "The Wound With a Keeper", "New World Cornus Survey", "Naga Border Patrol", "The Vance Proposal";
+	setarray .arc12_id[0], 20161, 20162, 20163, 20164, 20165;
+	setarray .arc12_nm$[0], "The Wound With a Keeper", "First Contact Done Wrong", "Manuk Supply Line", "Cornus Mercy Run", "Dicastes Border Papers";
 	setarray .arc13_id[0], 20171, 20173, 20174, 20175;
 	setarray .arc13_nm$[0], "The Council of the Drowned", "Abbey Bell Silencing", "Sanctum Sweep", "The Broker's Terms";
 	setarray .arc14_id[0], 20181, 20183, 20184, 20185;
