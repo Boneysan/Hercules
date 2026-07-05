@@ -658,39 +658,49 @@ QuestList[20171] = {
 	Description = {
 		"The Council of the Drowned. Nameless Island keeps voting on who gets to leave.",
 		"Location: Nameless Island",
-		"Start Arc 13. Beelzebub / Carrion.",
-		"Return: @dm warp nameless_n 100 100",
+		"Start Arc 13. Beelzebub hosts the demon coalition in the Abbey.",
+		"Return: Father Quill on Nameless Island.",
 		"^3355FFSummary: The Council of the Drowned.^000000",
 	},
 }
 
-QuestList[20173] = {
-	Title = "Abbey Bell Silencing",
+QuestList[20172] = {
+	Title = "A Name You Knew",
 	Description = {
-		"Abbey Bell Silencing. The bells will not stop until someone answers.",
-		"Location: abbey",
-		"Mob x20",
-		"^3355FFSummary: Abbey Bell Silencing.^000000",
+		"A Name You Knew. One of the dead came to the island for you.",
+		"Location: Nameless Island",
+		"Reckon honestly or put the familiar dead down and keep moving.",
+		"^3355FFSummary: A Name You Knew.^000000",
+	},
+}
+
+QuestList[20173] = {
+	Title = "Abbey Bell Rotation",
+	Description = {
+		"Abbey Bell Rotation. Ring the Abbey routes without letting the dead organize around the sound.",
+		"Location: abbey01",
+		"Hunt Banshee, Zombie Slaughter, and Ragged Zombie.",
+		"^3355FFSummary: Abbey Bell Rotation.^000000",
 	},
 }
 
 QuestList[20174] = {
-	Title = "Sanctum Sweep",
+	Title = "Drowned Coin Tithe",
 	Description = {
-		"Sanctum Sweep. The last faithful are not all human.",
-		"Location: abbey deeper",
-		"^3355FFSummary: Sanctum Sweep.^000000",
+		"Drowned Coin Tithe. Recover the old payments from the lower crypt route.",
+		"Location: abbey02",
+		"Hunt Zombie Slaughter and Ragged Zombie.",
+		"^3355FFSummary: Drowned Coin Tithe.^000000",
 	},
 }
 
 QuestList[20175] = {
-	Title = "The Broker's Terms",
+	Title = "Lasagna Root Wardens",
 	Description = {
-		"The Broker's Terms. Carrion will deal — or he will feast.",
-		"Location: Nameless",
-		"Boss: Beelzebub or coalition deal (Carrion bribed). Branch flag.",
-		"Hunt: @dm warp abbey01 50 50",
-		"^3355FFSummary: The Broker's Terms.^000000",
+		"Lasagna Root Wardens. Living roots still hold one edge of the island's boundary.",
+		"Location: Bifrost root route stand-in",
+		"Hunt Pom Spider, Angra Mantis, and Miming until Lasagna natural spawns exist.",
+		"^3355FFSummary: Lasagna Root Wardens.^000000",
 	},
 }
 
@@ -699,40 +709,49 @@ QuestList[20181] = {
 	Description = {
 		"The Herald in the Magma. Veins is burning and the mountain is preaching.",
 		"Location: Veins",
-		"Start Arc 14. Ifrit.",
-		"Return: @dm warp veins 100 120",
+		"Start Arc 14. Ifrit is the herald, not the god.",
+		"Return: Foreman Dunmar in Veins.",
 		"^3355FFSummary: The Herald in the Magma.^000000",
 	},
 }
 
-QuestList[20183] = {
-	Title = "Volcanic Salamander Hunt",
+QuestList[20182] = {
+	Title = "The Deep Shift",
 	Description = {
-		"Volcanic Salamander Hunt. The lava has teeth.",
-		"Location: thor_v01 / veins lava",
-		"Mob: Salamander x20",
-		"^3355FFSummary: Volcanic Salamander Hunt.^000000",
+		"The Deep Shift. Crews are trapped below while Hesma's sealed reports burn time.",
+		"Location: Veins temple office / deep galleries",
+		"Expose Hesma or take the deep approach seal for silence.",
+		"^3355FFSummary: The Deep Shift.^000000",
+	},
+}
+
+QuestList[20183] = {
+	Title = "Veins Evacuation Ledger",
+	Description = {
+		"Veins Evacuation Ledger. Names on paper become people moving through smoke.",
+		"Location: ve_fild03",
+		"Hunt Magmaring, Muscipular, and Drosera while updating the ledger.",
+		"^3355FFSummary: Veins Evacuation Ledger.^000000",
 	},
 }
 
 QuestList[20184] = {
-	Title = "Lava Golem Firebreak",
+	Title = "Bifrost Ash Scouting",
 	Description = {
-		"Lava Golem Firebreak. Stop the flow or ride it.",
-		"Location: thor_v02",
-		"^3355FFSummary: Lava Golem Firebreak.^000000",
+		"Bifrost Ash Scouting. The ash is fusing into glass on a breathing cycle.",
+		"Location: ecl_tdun02 / ecl_tdun03",
+		"Hunt Antique Book and Lichterns while mapping evacuation routes.",
+		"^3355FFSummary: Bifrost Ash Scouting.^000000",
 	},
 }
 
 QuestList[20185] = {
-	Title = "The Prelate's Silence",
+	Title = "Magmaring Firebreak",
 	Description = {
-		"The Prelate's Silence. Ifrit's voice is the heat itself.",
-		"Location: thor_v03 / Magma Cathedral",
-		"Boss: Ifrit",
-		"Hunt: @dm warp thor_v03 150 150",
-		"Arc 14 heat pulse hazard. Hesma exposed lowers damage.",
-		"^3355FFSummary: The Prelate's Silence.^000000",
+		"Magmaring Firebreak. The clusters are drifting toward the tenement wall.",
+		"Location: ve_fild03",
+		"Hunt Magmaring and choose how much of the firebreak is real.",
+		"^3355FFSummary: Magmaring Firebreak.^000000",
 	},
 }
 
@@ -768,12 +787,22 @@ QuestList[20193] = {
 }
 
 QuestList[20194] = {
-	Title = "The Method's Price",
+	Title = "Clock Tower Daily Wounds",
 	Description = {
-		"The Method's Price. The hero's road is paved with the ones he left behind.",
-		"Location: thana_boss area",
-		"Lead to Pratt branch and Thanatos reveal.",
-		"^3355FFSummary: The Method's Price.^000000",
+		"Clock Tower Daily Wounds. Nightmare Clock Tower loses minutes, and every lost minute leaves something behind.",
+		"Location: c_tower3_",
+		"Hunt Big Bell and decide whether to witness the trapped loops.",
+		"^3355FFSummary: Clock Tower Daily Wounds.^000000",
+	},
+}
+
+QuestList[20195] = {
+	Title = "Fragment Relief Rotation",
+	Description = {
+		"Fragment Relief Rotation. Sort the Thanatos fragments before turning them into experience.",
+		"Location: tha_t09 through tha_t12",
+		"Hunt Thanatos Tower fragment-floor mobs and read what the pouch says.",
+		"^3355FFSummary: Fragment Relief Rotation.^000000",
 	},
 }
 

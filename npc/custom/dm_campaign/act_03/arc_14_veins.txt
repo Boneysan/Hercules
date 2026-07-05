@@ -3,29 +3,37 @@
 //===== By: ==================================================
 //= Seal Cascade DM tooling
 //===== Description: =========================================
-//= Surt stirs below Thor's Volcano. His herald Ifrit wakes first.
-//= Foreman Dunmar's miners are dying in unstable tunnels while
-//= Prelate Hesma suppresses the evidence. The faith-corruption
-//= arc closes here.
+//= Surt stirs below Thor's Volcano. His herald Ifrit wakes
+//= first. Foreman Dunmar's miners are trapped between a living
+//= mountain and Prelate Hesma's sealed reports.
 //=
 //= Quests (db/quest_db.conf):
-//=   20181 The Herald in the Magma    (arc tracker / Ifrit)
-//=   20183 Volcanic Salamander Hunt   (Salamander x20)
-//=   20184 Lava Golem Firebreak       (Lava Golem x20)
-//=   20185 The Prelate's Silence      (Prelate Hesma)
+//=   20181 The Herald in the Magma   (arc tracker / Ifrit)
+//=   20182 The Deep Shift            (evacuation story / Hesma)
+//=   20183 Veins Evacuation Ledger   (Veins field support)
+//=   20184 Bifrost Ash Scouting      (Bifrost Tower support)
+//=   20185 Magmaring Firebreak       (Veins field firebreak)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc14_started, dm_arc14_hesma_exposed,
-//=   dm_arc14_hesma_bribed, dm_arc14_ifrit_killed,
-//=   dm_act03_complete
+//=   dm_arc14_started, dm_arc14_ledger_families,
+//=   dm_arc14_ledger_equipment, dm_arc14_ledger_fighters,
+//=   dm_arc14_ash_routes, dm_arc14_ash_bounty,
+//=   dm_arc14_ash_source, dm_arc14_firebreak_full,
+//=   dm_arc14_firebreak_rescue, dm_arc14_firebreak_reagents,
+//=   dm_arc14_hesma_exposed, dm_arc14_hesma_bribed,
+//=   dm_arc14_evacuated, dm_arc14_miners_lost,
+//=   dm_arc14_ifrit_killed, dm_act03_complete
 //===========================================================
 
-// ── Foreman Dunmar — The Man With Miners ───────────────────────────────────
+// -- Foreman Dunmar ---------------------------------------------------------
 veins,100,100,5	script	Foreman Dunmar#dm	4_M_06,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20181) == 2) {
 		mes("[Foreman Dunmar]");
-		mes("Ifrit is gone. The tunnels are cooler. Not cool — cooler. My people are alive. That is what I wanted from this.");
+		if (dm_arc14_evacuated)
+			mes("Ifrit is gone. The tunnels are cooler. Not cool, but cooler. My people got out with names still attached to them.");
+		else
+			mes("Ifrit is gone. The mountain is quieter. Some names on my board are still crossed out. Do not ask me to call that clean.");
 		close();
 	}
 
@@ -43,9 +51,13 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20181, 1;
 	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20182, 1;
+	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20183, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20184, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20185, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
@@ -56,71 +68,83 @@ S_StartArc:
 	next();
 	if (dm_arc09_karsh_exposed) {
 		mes("[Dunmar]");
-		mes("Rachel's Prelate admitted to the blessing being a rift. That broke like news here. Hesma saw it. He has been very quiet since. I think he is waiting to see if confession is survivable.");
+		mes("Rachel's prelate admitted the blessing was a rift. Hesma saw that confession and learned exactly the wrong lesson.");
+		next();
+	} else if (dm_arc09_karsh_deal) {
+		mes("[Dunmar]");
+		mes("Karsh made a managed deal in Rachel. Hesma has been waiting to see whether a volcano accepts paperwork.");
 		next();
 	}
-	if (dm_arc09_karsh_deal) {
+	if (dm_arc13_beelzebub_killed || dm_arc13_carrion_minutes) {
 		mes("[Dunmar]");
-		mes("Karsh in Rachel made a deal. Managed transition. Hesma has been watching that situation carefully. He is calculating whether a deal is available for him.");
-		next();
-	}
-	if (dm_arc13_beelzebub_killed || dm_arc13_carrion_bribed) {
-		mes("[Dunmar]");
-		mes("The demon situation on the Nameless Island. Word travels in the deep trades. The volcano got three degrees hotter the week after Beelzebub's coalition collapsed. The Ash Vacuum's secondary effects are being felt here.");
+		mes("The Nameless Island agenda pointed here. The Sigil Ring does not chill near this mountain anymore. It scalds.");
 		next();
 	}
 	mes("[Dunmar]");
-	mes("The rock is alive. That sounds like a priest's metaphor. It is not. The tunnels are moving. Thermal spikes. Lava intrusions in shafts that have been dry for forty years. Three of my people are dead and Hesma is calling it a geological adjustment.");
+	mes("The rock is breathing on a schedule. Hesma calls that miner superstition. My ledger says three families are still in the shaft tenements and two crews are on the deep shift.");
 	next();
-	switch (select("What is actually causing this?", "Who is Hesma protecting?", "What do you need us to do?")) {
+	switch (select("We'll get your people out.", "Show us the practical routes.", "Point us at the fire.")) {
 	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc14_dunmar_solidarity", 1);
 		mes("[Dunmar]");
-		mes("The big thing below. Veins is built above Thor's Volcano because the geothermal heat was economically convenient. Nobody asked what was using the heat from the other side.");
+		mes("Then you get maps, names, and my best warding gear. People first. Proof second. Revenge never.");
 		break;
 	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc14_dunmar_pragmatic", 1);
 		mes("[Dunmar]");
-		mes("The pilgrimage revenue. Veins's economy runs on pilgrims coming to see the sacred fires. A volcanic emergency empties the city in three days. Hesma knows that. He has known for six months.");
+		mes("Practical is good. Practical keeps people alive when sermons do not.");
 		break;
 	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc14_dunmar_hardline", 1);
 		mes("[Dunmar]");
-		mes("Clear the outer shafts so my people can get the remaining equipment out. The Salamander have migrated up from the deep levels — they are nesting in the working shafts. And the Lava Golem formations near the approach are blocking the main evacuation route.");
+		mes("You will get there faster than my miners can climb out. Remember that when the mountain asks for names.");
 		break;
 	}
 	next();
 	mes("[Dunmar]");
-	mes("Then Hesma. He holds the authorizations for the deep approach to the Cathedral. You cannot reach Thor's core without his seal.");
+	mes("Three jobs make the evacuation real: update the ledger, scout the ash route, and cut the Magmaring firebreak. When those are done, we go after the deep shift.");
 	callfunc("DM_InstanceSetFlag", "dm_arc14_started", 1);
 	callfunc("DM_InstanceQuestStart", 20181);
 	callfunc("DM_InstanceQuestStart", 20183);
 	callfunc("DM_InstanceQuestStart", 20184);
+	callfunc("DM_InstanceQuestStart", 20185);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1401);
 	next();
 	mes("^3355FF[Quest started: The Herald in the Magma]^000000");
-	mes("^3355FFVolcanic Salamander Hunt - clear 20 Salamander from the working shafts.^000000");
-	mes("^3355FFLava Golem Firebreak - break through 20 Lava Golem on the evacuation route.^000000");
+	mes("^3355FFSupport routes started: Veins Evacuation Ledger, Bifrost Ash Scouting, Magmaring Firebreak.^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
 	if (questprogress(20183) == 1 && questprogress(20183, HUNTING) == 2) {
 		callfunc("DM_InstanceQuestComplete", 20183);
-		callfunc("DM_PartyExp", 420000, 200000);
+		callfunc("DM_PartyExp", 430000, 205000);
 		callfunc("DM_GivePartyZeny", 35000);
 		.@paid = 1;
 		mes("[Dunmar]");
-		mes("The working shafts are clear. The Salamander came up because something pushed them — the deep levels are too hot even for them now. That is not a normal geological adjustment.");
+		mes("The ledger is current. That is not a miracle. It is names, addresses, and someone willing to carry them through smoke.");
 		next();
-		switch (select("Get your people out of the shafts now.", "Document the thermal readings from where the Salamander nested.", "How deep are the usable shafts?")) {
+		switch (select("Move families first.", "Move equipment with partial evacuations.", "Move fighters and able miners first.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ledger_families", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ledger_equipment", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ledger_fighters", 0);
 			mes("[Dunmar]");
-			mes("Already started. The last crew pulled out an hour ago. The equipment stays — people first.");
+			mes("The old and the children leave first. That is the order I would have written if Hesma ever let me post it.");
 			break;
 		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ledger_equipment", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ledger_families", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ledger_fighters", 0);
 			mes("[Dunmar]");
-			mes("Three hundred meters down the Salamander were still nesting comfortably. Below that the temperature spiked. Something is generating heat that is not geothermal. That reading will matter when this goes before an inquest.");
+			mes("Tools and people together. Slower, but Veins might still have work after it has survivors.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ledger_fighters", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ledger_families", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ledger_equipment", 0);
 			mes("[Dunmar]");
-			mes("Above the three-hundred-meter mark, for now. The deeper shafts are closed. Have been since Hesma told us there was no problem, which was when I decided Hesma had a problem.");
+			mes("Cold math. It gives me more hands near the volcano and worse dreams after.");
 			break;
 		}
 		next();
@@ -128,73 +152,110 @@ S_TurnIns:
 
 	if (questprogress(20184) == 1 && questprogress(20184, HUNTING) == 2) {
 		callfunc("DM_InstanceQuestComplete", 20184);
-		callfunc("DM_PartyExp", 440000, 210000);
-		callfunc("DM_GivePartyZeny", 37000);
+		callfunc("DM_PartyExp", 470000, 225000);
+		callfunc("DM_GivePartyZeny", 39000);
 		.@paid = 1;
 		mes("[Dunmar]");
-		mes("The Lava Golem formations. Those have not been on the evacuation route before. They form where magma pools and solidifies under specific pressure — the pressure variance in that tunnel has changed significantly.");
+		mes("The Bifrost ash fused into glass on a repeating cycle. Heat does not breathe unless something below it does.");
 		next();
-		switch (select("The route is clear. Start moving people out.", "The formations are new. Something changed below three months ago.", "What happens if the evacuation route closes?")) {
+		switch (select("Map safe routes methodically.", "Balance scouting with bounty work.", "Follow the heat signature directly.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ash_routes", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ash_bounty", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ash_source", 0);
 			mes("[Dunmar]");
-			mes("Already moving. I had teams staged. Thank you.");
+			mes("A complete map. That saves lives when panic makes every corridor look the same.");
 			break;
 		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ash_bounty", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ash_routes", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ash_source", 0);
 			mes("[Dunmar]");
-			mes("Three months ago is when the first thermal spike hit. And when Hesma's office began receiving more pilgrimage revenue than usual. The timing matters.");
+			mes("Useful work, useful coin, and a few blank places on the map. I can work with that.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ash_source", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ash_routes", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_ash_bounty", 0);
 			mes("[Dunmar]");
-			mes("Then the city evacuates through the north gate, which takes four times as long, and we lose everyone in the eastern residential sector. I have been having that nightmare for six months.");
+			mes("You found the breathing pattern faster than anyone. The evacuees will not be walking that pattern. They will be walking blind spots.");
 			break;
 		}
 		next();
 	}
 
-	if (questprogress(20183) == 2 && questprogress(20184) == 2 && questprogress(20185) == 0) {
+	if (questprogress(20185) == 1 && questprogress(20185, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20185);
+		callfunc("DM_PartyExp", 450000, 215000);
+		callfunc("DM_GivePartyZeny", 37000);
+		.@paid = 1;
 		mes("[Dunmar]");
-		mes("The shafts are clear and the route is open. Now we need Hesma's seal for the deep Cathedral approach.");
+		mes("The Magmaring clusters pulled back from the tenement wall. For now. The burn rings say they were reacting to something underneath them.");
+		next();
+		switch (select("Cut the firebreak at full width.", "Rescue miners caught in the open.", "Harvest the flame for reagents.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc14_firebreak_full", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_firebreak_rescue", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_firebreak_reagents", 0);
+			mes("[Dunmar]");
+			mes("A real firebreak. Not pretty, not profitable. Useful.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc14_firebreak_rescue", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_firebreak_full", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_firebreak_reagents", 0);
+			mes("[Dunmar]");
+			mes("You saved the ones in front of you. The wall is still weaker than I want. Both facts are true.");
+			break;
+		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc14_firebreak_reagents", 1);
+			callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_firebreak_full", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc14_firebreak_rescue", 0);
+			mes("[Dunmar]");
+			mes("Weapon-grade flame and a firebreak that is mostly wishful thinking. I hope the reagent was worth the scorch.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20183) == 2 && questprogress(20184) == 2 && questprogress(20185) == 2 && questprogress(20182) == 0) {
+		mes("[Dunmar]");
+		mes("The ledger is current, the ash route is mapped enough to risk, and the firebreak is cut. Now the mountain takes the deep shift.");
 		next();
 		mes("[Dunmar]");
-		mes("He will not give it willingly. He has been delaying that conversation for six months. But I think he has been waiting too — for something to make the decision for him.");
-		callfunc("DM_InstanceQuestStart", 20185);
+		mes("Hesma has the sealed survey data. She can authorize the descent and admit what she buried, or she can give us the seal and keep lying.");
+		callfunc("DM_InstanceQuestStart", 20182);
 		next();
-		mes("^3355FF[Quest started: The Prelate's Silence]^000000");
-		mes("^3355FFConfront Prelate Hesma. Then descend to thor_v03 and face Ifrit.^000000");
+		mes("^3355FF[Quest started: The Deep Shift]^000000");
+		mes("^3355FFConfront Prelate Hesma, then descend toward the Magma Cathedral.^000000");
 		close();
 	}
 
-	if (questprogress(20185) == 1 && !dm_arc14_hesma_exposed && !dm_arc14_hesma_bribed) {
+	if (questprogress(20182) == 1 && !dm_arc14_hesma_exposed && !dm_arc14_hesma_bribed) {
 		mes("[Dunmar]");
-		mes("Hesma is at the Temple of Fire. He has not left in two days. He knows something is coming.");
+		mes("Hesma is at the temple office. She has not left in two days. She knows something is coming.");
 		close();
 	}
 
-	if (questprogress(20185) == 1 && (dm_arc14_hesma_exposed || dm_arc14_hesma_bribed)) {
+	if (questprogress(20182) == 2) {
 		mes("[Dunmar]");
-		mes("Hesma is handled. The deep approach is open. Thor's Volcano, Cathedral level — thor_v03. The heat starts feeling like intent rather than geology about halfway down.");
+		mes("The deep approach is open. Thor's Volcano, Cathedral level. Ifrit is only the herald. Remember that when victory starts sounding too clean.");
 		close();
 	}
 
 	if (.@paid) {
 		mes("[Dunmar]");
-		mes("Both field contracts need to be done first. People are still moving through those routes.");
+		mes("Finish all three support routes. Then we start crossing names off the deep-shift board, one way or another.");
 		close();
 	}
 
 	mes("[Dunmar]");
-	if (questprogress(20183) == 1 && questprogress(20184) == 1)
-		mes("The Salamander hunt and Lava Golem firebreak are both still active.");
-	else if (questprogress(20183) == 1)
-		mes("Volcanic Salamander Hunt is still open. The working shafts need to be cleared.");
-	else if (questprogress(20184) == 1)
-		mes("Lava Golem Firebreak is still open. The evacuation route is blocked.");
-	else
-		mes("Both contracts done. Hesma is the last obstacle. Temple of Fire, south of the city.");
+	mes("The ledger, ash route, and firebreak all matter. This is what saving people looks like before it looks like heroics.");
 	close();
 }
 
-// ── Prelate Hesma — The Silence Before the Fire ────────────────────────────
+// -- Prelate Hesma ----------------------------------------------------------
 veins,110,100,5	script	Prelate Hesma#dm	4_M_06,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc14_started) {
@@ -206,15 +267,15 @@ veins,110,100,5	script	Prelate Hesma#dm	4_M_06,{
 	if (questprogress(20181) == 2) {
 		mes("[Prelate Hesma]");
 		if (dm_arc14_hesma_exposed)
-			mes("Ifrit is gone. My confession is on file. I will cooperate with whatever process follows. I owe Dunmar's people that much.");
+			mes("Ifrit is gone. My confession is public. I will cooperate with the inquiry.");
 		else
-			mes("An arrangement was made. The city was evacuated safely. That is the result I was working toward, in my own way.");
+			mes("The city is alive. Some of them are alive because they were calm. I know which names that sentence avoids.");
 		close();
 	}
 
-	if (dm_arc14_hesma_exposed || dm_arc14_hesma_bribed) {
+	if (questprogress(20182) != 1) {
 		mes("[Prelate Hesma]");
-		mes("The deep Cathedral approach is open. I have nothing else to add at this time.");
+		mes("Foreman Dunmar has work for you before this office becomes useful.");
 		close();
 	}
 
@@ -223,81 +284,73 @@ veins,110,100,5	script	Prelate Hesma#dm	4_M_06,{
 	next();
 	if (dm_arc09_karsh_exposed) {
 		mes("[Hesma]");
-		mes("Karsh signed his confession. The precedent exists now. I have been reading the accounts. He still has a position in Arunafeltz's administration. The institution survived. That is more than I assumed it could.");
+		mes("Karsh signed his confession. I watched Rachel's faith crack and told myself Veins deserved a gentler lie.");
 		next();
-	}
-	if (dm_arc09_karsh_deal) {
+	} else if (dm_arc09_karsh_deal) {
 		mes("[Hesma]");
-		mes("Karsh made a deal. Managed transition. I have been calculating whether the same terms apply here. I think the answer is: no. The volcano does not negotiate.");
+		mes("Karsh survived by managing the truth. I thought I could do the same with a volcano. That sentence sounds worse aloud.");
 		next();
 	}
 	mes("[Hesma]");
-	mes("I have known about the deep thermal readings for six months. I have known about Surt's stirring below the Cathedral level for three. I told no one because I was trying to manage the information carefully.");
+	mes("I have known about the deep thermal readings for six months. I sealed them because panic kills people. So does fire. I chose which killer got more time.");
 	next();
-	mes("[Hesma]");
-	mes("What I was actually doing was waiting. I do not know what I was waiting for. I think I was waiting for it to stop being true.");
-	next();
-	switch (select("Sign the evacuation authorization and file an honest report.", "Give us the deep approach seal and step back.", "What will you do about what you know?")) {
+	switch (select("Release the survey data and authorize evacuation.", "Give us the seal and keep the city calm.", "Certainty is the curse, Prelate.")) {
 	case 1:
 		callfunc("DM_Decide", "arc14.hesma", "exposed");
 		mes("[Hesma]");
-		mes("Yes. The authorization and the report. Both. I should have done this three months ago. I have a very clear sense of what I should have done three months ago.");
+		mes("Yes. The records, the authorization, the confession. All of it. I should have done this before the mountain started counting for me.");
 		next();
-		mes("^3355FF*Hesma signs both documents. His hand does not shake.*^000000");
-		mes("^3355FF*The evacuation order is posted. The deep approach is open.*^000000");
+		mes("^3355FF*Hesma signs the evacuation order and releases the sealed survey data.*^000000");
 		break;
 	case 2:
 		callfunc("DM_Decide", "arc14.hesma", "bribed");
 		mes("[Hesma]");
-		mes("The seal. And I will... manage the city response. Quietly. The evacuation will happen. The public account will be a geological emergency, not a divine manifestation. The pilgrimage revenue may recover.");
+		mes("The seal is yours. The city account will remain a geological emergency. People move better when they are not screaming about gods.");
 		next();
-		mes("^3355FF*The seal is transferred. Hesma's silence is purchased with the same currency he used to buy his own.*^000000");
+		mes("^3355FF*The deep approach seal changes hands. The official lie survives another hour.*^000000");
 		break;
 	case 3:
 		callfunc("DM_Decide", "arc14.hesma", "exposed");
 		mes("[Hesma]");
-		mes("What I will do. I will authorize the evacuation. I will file the report. I will testify at whatever inquiry follows. I am sixty-three years old. I have been a prelate for thirty-one of those years.");
+		mes("Aldric's old lesson. I hated it when Rachel used it as a sermon. I hate more that it is useful.");
 		next();
-		mes("[Hesma]");
-		mes("I have no idea what I will do after that. But I will do those things first.");
-		next();
-		mes("^3355FF*Hesma signs both documents without being asked for a second time.*^000000");
+		mes("^3355FF*Hesma opens the sealed records and writes her name under the evacuation order.*^000000");
 		break;
 	}
 	next();
-	mes("^3355FF[The Prelate's Silence resolved. Descend to thor_v03 and face Ifrit.]^000000");
+	mes("^3355FF[The Deep Shift resolved. Descend to thor_v03 and face Ifrit.]^000000");
 	close();
 
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20185, 1;
+	setquestinfo QINFO_QUEST, 20182, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
-// Hesma's withheld notice - records the cover-up in his own words
+// Hesma's withheld notice - records the cover-up in her own words.
 veins,112,96,3	script	Withheld Notice#dm14	2_BOARD1,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc14_started) {
-		mes "^3355FF*A sealed civic notice hangs here, unsigned and undelivered.*^000000";
-		close;
+		mes("^3355FF*A sealed civic notice hangs here, unsigned and undelivered.*^000000");
+		close();
 	}
 
-	mes "^3355FF*A notice meant for the city council has been folded and refolded until the edges are white. It was never posted.*^000000";
-	next;
+	mes("^3355FF*A notice meant for the city council has been folded and refolded until the edges are white. It was never posted.*^000000");
+	next();
 	mes("^0000AA[Draft Emergency Notice]^000000");
-	mes("Pilgrimage activity is to be suspended pending review of thermal instability below the Cathedral routes. Civil evacuation planning should begin immediately and without public framing related to divine displeasure.");
-	next;
+	mes("Pilgrimage activity is to be suspended pending review of thermal instability below the Cathedral routes. Civil evacuation planning should begin immediately.");
+	next();
 	mes("^0000AA[Draft Emergency Notice]^000000");
 	mes("Projected consequence of immediate disclosure: loss of revenue, panic flight, institutional embarrassment, survivable political damage.");
-	next;
+	next();
 	mes("^0000AA[Draft Emergency Notice]^000000");
 	mes("Projected consequence of continued delay: miner fatalities, route collapse, eventual manifestation event no rhetoric will survive.");
-	close;
+	close();
 }
 
-// ── Magma Cathedral Set-piece ──────────────────────────────────────────────
+// -- Magma Cathedral Set-piece ---------------------------------------------
 thor_v03,150,150,0	script	Magma Cathedral#dm	HIDDEN_NPC,{
 	end;
 
@@ -347,13 +400,14 @@ OnIfritDead:
 	callfunc("DM_InstanceQuestComplete", 20181);
 	callfunc("DM_InstanceSetFlag", "dm_arc14_ifrit_killed", 1);
 	callfunc("DM_InstanceSetFlag", "dm_act03_complete", 1);
+	callfunc("DM_InstanceSetFlag", "dm_arc14_cinder_taken", 1);
 	callfunc("DM_PartyExp", 2000000, 1000000);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1499);
 	if (dm_arc14_hesma_exposed)
-		instance_announce(instance_id(), "^3355FF[DM] Ifrit is banished. The herald is gone. Dunmar's people evacuated. Hesma's confession is public. Something that was wrong is less wrong.^000000", bc_all);
+		instance_announce(instance_id(), "^3355FF[DM] Ifrit is banished. Dunmar's people evacuate under a public order, and Hesma's confession burns hotter than the ash.^000000", bc_all);
 	else
-		instance_announce(instance_id(), "^3355FF[DM] Ifrit is banished. The herald is gone, but Surt still sleeps below. Act III is complete.^000000", bc_all);
+		instance_announce(instance_id(), "^3355FF[DM] Ifrit is banished. The herald is gone, but some miners die calm inside a lie that outlived its usefulness.^000000", bc_all);
 	sleep(2000);
-	instance_announce(instance_id(), "^FF6600[DM] Act III complete. Surt remains. The cascade's source is still open. Act IV leads to Thanatos, to Loki, and to the choice that ends everything.^000000", bc_all);
+	instance_announce(instance_id(), "^FF6600[DM] You carry a Cinder of the Sleeping Fire. It will not cool. Act III is complete; Act IV begins with Thanatos.^000000", bc_all);
 	end;
 }

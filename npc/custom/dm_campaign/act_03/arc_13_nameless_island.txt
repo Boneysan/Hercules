@@ -3,31 +3,40 @@
 //===== By: ==================================================
 //= Seal Cascade DM tooling
 //===== Description: =========================================
-//= The Nameless Island's seals are failing. The demon lords
-//= are not leaking through randomly — they are coordinating.
-//= Father Quill has held the wards alone for years. The Broker
-//= Carrion is offering a deal that is obviously a trap.
+//= Father Quill's nineteen-year vigil is failing. The Cursed
+//= Abbey's dead are no longer merely restless; Beelzebub has
+//= turned the boundary wound into a council hall for the demon
+//= coalition, with Broker Carrion arranging the agenda.
 //=
 //= Quests (db/quest_db.conf):
-//=   20171 The Council of the Drowned  (arc tracker / Beelzebub)
-//=   20173 Abbey Bell Silencing        (Banshee x20)
-//=   20174 Sanctum Sweep               (Zombie Slaughter x20)
-//=   20175 The Broker's Terms          (Broker Carrion)
+//=   20171 The Council of the Drowned   (arc tracker / Beelzebub)
+//=   20172 A Name You Knew              (personal dead story)
+//=   20173 Abbey Bell Rotation          (Abbey undead route)
+//=   20174 Drowned Coin Tithe           (Abbey lower crypt route)
+//=   20175 Lasagna Root Wardens         (living-root support route)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc13_started, dm_arc13_carrion_killed,
-//=   dm_arc13_carrion_bribed, dm_arc13_beelzebub_killed
+//=   dm_arc13_started, dm_arc13_bell_full, dm_arc13_bell_patrol,
+//=   dm_arc13_bell_named, dm_arc13_coins_returned,
+//=   dm_arc13_coins_ferrymen, dm_arc13_coins_hoarded,
+//=   dm_arc13_himmelmez_foreshadow, dm_arc13_roots_protected,
+//=   dm_arc13_roots_harvested, dm_arc13_roots_grafted,
+//=   dm_arc13_boundary_stable, dm_arc13_known_dead_reckoned,
+//=   dm_arc13_known_dead_refused, dm_arc13_known_dead_blessing,
+//=   dm_arc13_known_dead_host, dm_arc13_carrion_killed,
+//=   dm_arc13_carrion_bribed, dm_arc13_carrion_minutes,
+//=   dm_arc13_beelzebub_killed
 //===========================================================
 
-// ── Father Quill the Doorkeeper — The Last Ward ────────────────────────────
+// ── Father Quill the Doorkeeper ───────────────────────────────────────────
 nameless_i,100,100,5	script	Father Quill#dm	4_M_04,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20171) == 2) {
 		mes("[Father Quill]");
-		if (dm_arc13_carrion_bribed)
-			mes("Beelzebub is gone. Carrion's deal will cost us something later. I know how his contracts work. But the island is quiet tonight. I will take that.");
+		if (dm_arc13_dead_freed)
+			mes("The bell is cracked through. The chapel is quiet. I thought victory would sound louder.");
 		else
-			mes("Beelzebub is gone. Carrion is gone. The island is not safe — it never was — but the coordination is broken. My vigil may be pointless for a while. I have forgotten what that feels like.");
+			mes("The council is broken. The dead are quieter, but not free. I will keep saying their names until I cannot.");
 		close();
 	}
 
@@ -45,61 +54,67 @@ OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20171, 1;
 	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20172, 1;
+	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20173, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20174, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20175, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
 	mes("[Father Quill]");
-	mes("You found the island. That means something. Most people who find it were already dead before they arrived.");
+	mes("You found the island. That means something. Most people who find it were dead before they arrived.");
 	next();
-	if (dm_arc08_darklord_killed) {
+	if (dm_arc02_ancestor_helped) {
 		mes("[Quill]");
-		mes("The dark thing in Glast Heim. The Dark Lord. The dead of that kingdom found their way here eventually — everything that falls tends to wash up on this shore. I recognized some of them.");
+		mes("Payon's dead remember hands that returned what was stolen. That kindness reached farther than you knew.");
+		next();
+	} else if (dm_arc02_grove_burned || dm_arc02_voss_spared) {
+		mes("[Quill]");
+		mes("Payon's dead arrived with questions. Some name you kindly. Some do not.");
 		next();
 	}
-	if (dm_arc11_bjorn_joined) {
+	if (dm_arc12_vance_helped || dm_new_world_alliance) {
 		mes("[Quill]");
-		mes("A zealot walks with you. I can tell by the crook. This island was built by people who believed too completely in things that could not hold. He should be careful.");
+		mes("You have seen a wall between worlds fail. Here it fails in the direction of the dead.");
 		next();
 	}
 	mes("[Quill]");
-	mes("I have been maintaining the wards since the incident. Before that there were twelve of us. Attrition happens.");
+	mes("The dead will not rest because the boundary is failing. Worse, they are organized now. Beelzebub is not haunting the Abbey. He is hosting it.");
 	next();
-	mes("[Quill]");
-	mes("The problem is not that the demons are breaking through. The problem is that they have stopped trying to break through independently. Something has organized them.");
-	next();
-	switch (select("What organized them?", "How are the wards failing?", "What do you need from us?")) {
+	switch (select("Tell us how to lay them down.", "Get us to what is organizing this.", "They're monsters. Point us at the problem.")) {
 	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc13_quill_revered", 1);
 		mes("[Quill]");
-		mes("I believe the cascade. The cascade fills the space between intentions with noise. Demons that were individually chaotic now share a frequency. They have accidentally found consensus through the noise they all receive equally.");
+		mes("Then I give you routes, rites, and names. It is slower. It is also the only work here worth doing.");
 		break;
 	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc13_quill_pragmatic", 1);
 		mes("[Quill]");
-		mes("The cascade is providing them with a counter-resonance to the ward's sealing frequency. Like a key made of static. The wards were not built for this. Nothing was built for this.");
+		mes("I can point you at the council. I will not abandon the door while you take the shorter road.");
 		break;
 	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc13_quill_callous", 1);
 		mes("[Quill]");
-		mes("The Banshee in the outer passages are the remnants of the island's clerics — fallen, but tied to the old wards. They must be silenced before the wards can be recalibrated. The Zombie Slaughter in the sanctum are more recent casualties.");
+		mes("That is what the necromancers say too. Start with the bell anyway. Even monsters answer names.");
 		break;
 	}
 	next();
 	mes("[Quill]");
-	mes("And there is Carrion. The Broker. He arrived two days ago and he is waiting by the inner gate. He says he has a proposition. I have not spoken to him. I do not negotiate with demons.");
-	next();
-	mes("[Quill]");
-	mes("I am told you are different. You can decide for yourselves.");
+	mes("Three routes hold the island's edge: the bell rotation, the drowned coins, and the living roots. Clear them, and I can find the one dead name that came here for you.");
 	callfunc("DM_InstanceSetFlag", "dm_arc13_started", 1);
 	callfunc("DM_InstanceQuestStart", 20171);
 	callfunc("DM_InstanceQuestStart", 20173);
 	callfunc("DM_InstanceQuestStart", 20174);
+	callfunc("DM_InstanceQuestStart", 20175);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1301);
 	next();
 	mes("^3355FF[Quest started: The Council of the Drowned]^000000");
-	mes("^3355FFAbbey Bell Silencing - silence 20 Banshee in the outer passages.^000000");
-	mes("^3355FFSanctum Sweep - clear 20 Zombie Slaughter from the inner sanctum.^000000");
+	mes("^3355FFSupport routes started: Abbey Bell Rotation, Drowned Coin Tithe, Lasagna Root Wardens.^000000");
 	close();
 
 S_TurnIns:
@@ -110,20 +125,29 @@ S_TurnIns:
 		callfunc("DM_GivePartyZeny", 32000);
 		.@paid = 1;
 		mes("[Quill]");
-		mes("The outer passage is quiet. The Banshee were singing — not screaming. The old ward harmonics. They were trying to maintain the seals by resonating with them. They just could not stop anymore.");
+		mes("The bell answered. So did the dead. Now decide what the sound was for.");
 		next();
-		switch (select("Give them release. The seals stand without them now.", "Document what they were singing. It is ward lore.", "They were still protecting this place in their way.")) {
+		switch (select("Ring it fully and face them.", "Dampen it and patrol steadily.", "Tune it until one name answers.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc13_bell_full", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_bell_patrol", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_bell_named", 0);
 			mes("[Quill]");
-			mes("I said the words over the outer passage. It felt presumptuous. I said them anyway.");
+			mes("A true toll spent. The Abbey exhales all at once. I hope it was worth the bronze.");
 			break;
 		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc13_bell_patrol", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_bell_full", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_bell_named", 0);
 			mes("[Quill]");
-			mes("I can transcribe it from memory. The old resonance forms. Some of them predate the incident by centuries. Useful knowledge.");
+			mes("Slow, careful, merciful in the way chores can be merciful.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc13_bell_named", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_bell_full", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_bell_patrol", 0);
 			mes("[Quill]");
-			mes("Yes. I have been alone here long enough that I had started to think of them as neighbors. That is probably not healthy.");
+			mes("You made the bell ask for a specific dead thing. Useful. Ugly. Sometimes both words fit.");
 			break;
 		}
 		next();
@@ -135,84 +159,164 @@ S_TurnIns:
 		callfunc("DM_GivePartyZeny", 33000);
 		.@paid = 1;
 		mes("[Quill]");
-		mes("The sanctum is clear. The Zombie Slaughter were recent. Last year or two. People who came to investigate the island and encountered the seal's breakdown rather than the island's normal defenses.");
+		mes("The drowned coins are older than this chapel. Carrion wants them because old payments still move old doors.");
 		next();
-		switch (select("This island draws the curious and kills them.", "Were any of them from the Church?", "The coordinated demons are the greater danger. These were just in the way.")) {
+		switch (select("Pay the dead properly.", "Pay the ferrymen.", "Hoard the coins against Carrion.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc13_coins_returned", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_coins_ferrymen", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_coins_hoarded", 0);
 			mes("[Quill]");
-			mes("Always. The island does not advertise. But the absence of a name makes it a mystery, and mysteries draw people. I have been burying the curious for years.");
+			mes("The old rite takes time. Time is the only coin the dead still understand.");
 			break;
 		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc13_coins_ferrymen", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_coins_returned", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_coins_hoarded", 0);
 			mes("[Quill]");
-			mes("Two of them. Investigating the old heresy trials. The Church's memory is long and its curiosity is persistent.");
+			mes("Practical crossings for practical souls. The ferrymen will keep moving.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc13_coins_hoarded", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_himmelmez_foreshadow", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_coins_returned", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_coins_ferrymen", 0);
 			mes("[Quill]");
-			mes("They were. But they are cleared now. The sanctum holds. You can pass to the inner gate.");
+			mes("Then carry them carefully. Some debts grow colder when they are not paid.");
 			break;
 		}
 		next();
 	}
 
-	if (questprogress(20173) == 2 && questprogress(20174) == 2 && questprogress(20175) == 0) {
+	if (questprogress(20175) == 1 && questprogress(20175, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20175);
+		callfunc("DM_PartyExp", 400000, 195000);
+		callfunc("DM_GivePartyZeny", 34000);
+		.@paid = 1;
 		mes("[Quill]");
-		mes("The passages are clear. Carrion is still at the inner gate. He has been there for two days. He brought chairs.");
+		mes("The living root still holds. That is rare here. Rarer than courage.");
 		next();
-		mes("[Quill]");
-		mes("I will tell you what I know of him. He is a Broker. A demon of the second tier — not a lord but not an errand runner. He profits from the chaos that demon lords generate. He does not want the lords to be destroyed. He wants them to be... redistributed.");
-		next();
-		switch (select("What does a Broker's deal usually cost?", "We will hear what he offers.", "Carrion talks while Beelzebub moves. We go straight to Beelzebub.")) {
+		switch (select("Protect the roots and leave them growing.", "Harvest only what the bounty board needs.", "Graft the roots into the Abbey wards.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc13_roots_protected", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_boundary_stable", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_roots_harvested", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_roots_grafted", 0);
 			mes("[Quill]");
-			mes("More than you think. Less than you fear. And always something that will be useful to him later in a way that was not apparent at signing.");
+			mes("You left the one good thing better than you found it. The island notices.");
 			break;
 		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc13_roots_harvested", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_boundary_stable", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_roots_protected", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_roots_grafted", 0);
 			mes("[Quill]");
-			mes("Understand what you are walking into. A Broker's offer is always real. The catch is always real too. The catch is just harder to see than the offer.");
+			mes("A compromise. I dislike how often survival looks like one.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc13_roots_grafted", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_boundary_stable", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_roots_protected", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_roots_harvested", 0);
 			mes("[Quill]");
-			mes("The direct approach. Beelzebub is the logistics coordinator. Without him the coalition loses its coherence. That is the objective.");
+			mes("Effective triage. The Abbey will hold longer. Somewhere else will not.");
 			break;
 		}
-		callfunc("DM_InstanceQuestStart", 20175);
 		next();
-		mes("^3355FF[Quest started: The Broker's Terms]^000000");
-		mes("^3355FFConfront Broker Carrion at the inner gate. Then descend to abbey03 and face Beelzebub.^000000");
+	}
+
+	if (questprogress(20173) == 2 && questprogress(20174) == 2 && questprogress(20175) == 2 && questprogress(20172) == 0) {
+		mes("[Quill]");
+		mes("The three routes are clear. I found the name that came here for you.");
+		next();
+		mes("[Quill]");
+		mes("It is not enough to defeat Beelzebub. The dead have a memory of you now. Go to the grave-niche and answer it.");
+		callfunc("DM_InstanceQuestStart", 20172);
+		next();
+		mes("^3355FF[Quest started: A Name You Knew]^000000");
+		mes("^3355FFFind the Familiar Dead near the Abbey's outer grounds.^000000");
 		close();
 	}
 
-	if (questprogress(20175) == 1 && !dm_arc13_carrion_killed && !dm_arc13_carrion_bribed) {
+	if (questprogress(20172) == 1) {
 		mes("[Quill]");
-		mes("Carrion is at the inner gate. Still waiting.");
+		mes("The known dead is waiting. Do not bring a weapon first. Bring memory.");
 		close();
 	}
 
-	if (questprogress(20175) == 1 && (dm_arc13_carrion_killed || dm_arc13_carrion_bribed)) {
+	if (questprogress(20172) == 2 && !dm_arc13_carrion_killed && !dm_arc13_carrion_bribed) {
 		mes("[Quill]");
-		mes("Carrion is dealt with. Beelzebub waits in the abbey's deepest sanctum. abbey03. He knows you are coming — Beelzebub always knows.");
+		mes("Carrion is at the inner gate. He has the council's minutes. If he offers you the apocalypse in tidy handwriting, read the footnotes.");
+		close();
+	}
+
+	if (questprogress(20172) == 2 && (dm_arc13_carrion_killed || dm_arc13_carrion_bribed)) {
+		mes("[Quill]");
+		mes("The gate is open. Beelzebub waits in abbey03. Break the venue, not only the host.");
 		close();
 	}
 
 	if (.@paid) {
 		mes("[Quill]");
-		mes("Clear both the outer passages and the sanctum first. Carrion is patient.");
+		mes("Finish all three routes. Then I can name the dead that has been waiting for you.");
 		close();
 	}
 
 	mes("[Quill]");
-	if (questprogress(20173) == 1 && questprogress(20174) == 1)
-		mes("The Bell Silencing and Sanctum Sweep are both still active.");
-	else if (questprogress(20173) == 1)
-		mes("Abbey Bell Silencing is still open. The Banshee in the outer passages.");
-	else if (questprogress(20174) == 1)
-		mes("Sanctum Sweep is still open. Zombie Slaughter in the inner sanctum.");
-	else
-		mes("The passages are clear. Carrion waits at the inner gate.");
+	mes("The bell, the coins, and the roots are all still part of the same wound. Close what you can.");
 	close();
 }
 
-// ── The Broker Carrion — The Deal That Shouldn't Be Tempting ───────────────
+// ── The Familiar Dead — A Name You Knew ───────────────────────────────────
+nameless_i,105,96,3	script	The Familiar Dead#dm13	4_GHOST_STAND,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (questprogress(20172) == 0) {
+		mes("^3355FF*A cold shape turns its head as if it almost knows you. Not yet.*^000000");
+		close();
+	}
+	if (questprogress(20172) == 2) {
+		mes("[The Familiar Dead]");
+		if (dm_arc13_known_dead_reckoned)
+			mes("Thank you for saying my name correctly.");
+		else
+			mes("You were always better at endings than at burials.");
+		close();
+	}
+
+	mes("^3355FF*The dead thing is not a stranger. Quill never gives the name aloud; he lets recognition do the damage.*^000000");
+	next();
+	if (dm_arc02_ancestor_helped) {
+		mes("[The Familiar Dead]");
+		mes("You returned a comb once. Some of us remembered that kindness and followed it here.");
+	} else if (dm_arc02_grove_burned || dm_catechism_tally > 0) {
+		mes("[The Familiar Dead]");
+		mes("You have left fast answers behind you. We are one of them.");
+	} else {
+		mes("[The Familiar Dead]");
+		mes("I remember almost enough. Your face. Your hands. The thing you promised, or failed to promise.");
+	}
+	next();
+	switch (select("Reckon honestly and lay them to rest.", "Put them down and keep moving.")) {
+	case 1:
+		callfunc("DM_Decide", "arc13.known_dead", "reckoned");
+		mes("^3355FF*You do not fix the dead. You sit with them long enough that they can stop waiting.*^000000");
+		break;
+	case 2:
+		callfunc("DM_Decide", "arc13.known_dead", "refused");
+		mes("^3355FF*The shape breaks apart under force. Its face does not leave. It only moves farther ahead.*^000000");
+		break;
+	}
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20172, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
+}
+
+// ── The Broker Carrion — The Council's Concierge ──────────────────────────
 nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc13_started) {
@@ -220,80 +324,75 @@ nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
 		mes("Not yet. Come back when you have seen what Father Quill is protecting.");
 		close();
 	}
-
+	if (questprogress(20172) != 2) {
+		mes("[Broker Carrion]");
+		mes("You still have a private appointment with the dead. I try not to interrupt grief. It makes contracts imprecise.");
+		close();
+	}
 	if (questprogress(20171) == 2) {
 		mes("[Broker Carrion]");
 		if (dm_arc13_carrion_bribed)
-			mes("A deal is a deal. We will honor the terms. The lords are... not pleased. But they respect contractual obligation.");
+			mes("A deal is a deal. The minutes were accurate. What you do with them will be the entertaining part.");
 		else
-			mes("Beelzebub is gone. So is the coordination. You understand what comes next is messier, not safer? Uncoordinated demon pressure on a hundred seals simultaneously instead of one organized push. Messier.");
+			mes("The council is scattered. You understand that scattered is not the same as gone.");
 		close();
 	}
-
 	if (dm_arc13_carrion_killed || dm_arc13_carrion_bribed) {
 		mes("[Broker Carrion]");
 		if (dm_arc13_carrion_bribed)
-			mes("The terms stand. We will be watching.");
+			mes("You have the seating plan. Beelzebub has the room. Try to keep both facts in mind.");
 		else
 			mes("...");
 		close();
 	}
 
 	mes("[Broker Carrion]");
-	mes("You made it past the old doorkeeper. Good. I was beginning to think you would be here until the seals finished failing on their own.");
+	mes("You made it past Quill and your own dead. Good. I represent the Demon Lords' Coalition as its least sentimental appointment keeper.");
 	next();
+	if (dm_arc02_voss_spared) {
+		mes("[Carrion]");
+		mes("And yes. If you are wondering whether Payon's Scholar Voss learned anything after you let him walk away, the answer is: scale.");
+		next();
+	}
 	mes("[Carrion]");
-	mes("I represent the Demon Lords' Coalition. Not all of them — the reasonable fraction. The ones who understand that a destroyed Midgard produces no chaos, and demons need chaos the way plants need light.");
+	mes("Beelzebub chairs tonight's council. Satan Morroc has an empty seat. There is also a head-of-table mark no demon here recognizes. I dislike unknown clients.");
 	next();
-	mes("[Carrion]");
-	mes("The offer: withdraw from this island. Do not interfere with Beelzebub's coordination. In exchange, the coalition agrees to maintain the seals themselves — keep the unaffiliated demons contained. A self-enforcing containment treaty.");
-	next();
-	switch (select("Kill the messenger. This deal does not exist.", "What is the catch?", "If we take the deal, what happens to the cascade?")) {
+	switch (select("You broker for things that want everyone dead.", "Sell us the minutes.", "You've come a long way from Payon, Scholar.")) {
 	case 1:
 		callfunc("DM_Decide", "arc13.carrion", "killed");
 		mes("[Carrion]");
-		mes("Mm. The direct approach. I respect it.");
+		mes("Everyone will be dead. I am arranging the seating.");
 		next();
-		mes("^3355FF*Carrion dissolves into a scatter of flies. He will reform elsewhere. The inner gate is open.*^000000");
-		mes("^3355FF[Encounter: Beelzebub will fight with full coalition support.]^000000");
+		mes("^3355FF*Carrion dissolves into a hard black cloud. His bindings remain, but the inner gate opens.*^000000");
 		break;
 	case 2:
-		callfunc("DM_Decide", "arc13.carrion", "killed");
-		mes("[Carrion]");
-		mes("The catch is that Beelzebub remains. The cascade remains. The coalition's containment holds only while it suits us. Which is to say: until Loki makes a better offer.");
-		next();
-		mes("[Carrion]");
-		mes("You have identified the catch. Congratulations. The offer still stands, if you want it.");
-		next();
-		mes("[Broker Carrion]");
-		mes("No? Then I will let you through. I will be watching.");
-		next();
-		mes("^3355FF*Carrion dissolves. The inner gate is open. He was always going to let you through.*^000000");
-		mes("^3355FF[Encounter: Beelzebub will fight at full strength.]^000000");
-		break;
-	case 3:
 		callfunc("DM_Decide", "arc13.carrion", "bribed");
 		mes("[Carrion]");
-		mes("Nothing. The cascade is not our department. We exist within it the same way you do. The coalition wants the cascade to slow down — a world in the middle of an extinction event generates less productive chaos than a world in ordinary distress.");
+		mes("Safe passage off the island later. The minutes now. A practical trade, and the apocalypse has excellent handwriting.");
 		next();
-		mes("[Carrion]");
-		mes("Which is, I recognize, an alignment of interests that should make you suspicious. You are right to be suspicious. And the offer still stands.");
-		next();
-		mes("[Carrion]");
-		mes("Do we have a deal?");
-		next();
-		mes("^3355FF*The deal is struck. The coalition maintains the seals.*^000000");
-		mes("^3355FF*Beelzebub is withdrawn rather than fought. The coordination is dissolved by agreement.*^000000");
-		mes("^3355FF[Encounter: the Beelzebub fight is skipped if the coalition deal is honored.]^000000");
+		mes("^3355FF[You obtain the Coalition's Seating Plan.]^000000");
+		break;
+	case 3:
+		if (dm_arc02_voss_spared) {
+			callfunc("DM_Decide", "arc13.carrion", "bribed");
+			mes("[Carrion]");
+			mes("Remembered! How rare. Then here is the whole agenda, for old research's sake. Do not pretend mercy was free.");
+			next();
+			mes("^3355FF[You obtain the Coalition's Seating Plan. Carrion is delighted to be remembered.]^000000");
+		} else {
+			callfunc("DM_Decide", "arc13.carrion", "killed");
+			mes("[Carrion]");
+			mes("Wrong ghost. But I admire the attempt to make this personal.");
+			next();
+			mes("^3355FF*Carrion dissolves before the blade lands cleanly. The inner gate opens.*^000000");
+		}
 		break;
 	}
-	next();
-	mes("^3355FF[The Broker's Terms resolved.]^000000");
 	close();
 
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20175, 1;
+	setquestinfo QINFO_QUEST, 20171, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
@@ -303,24 +402,21 @@ OnInit:
 nameless_i,108,96,3	script	Broker's Card#dm13	2_BOARD1,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc13_started) {
-		mes "^3355FF*A lacquered card sits untouched on the stone. It looks important in the way poisons often do.*^000000";
-		close;
+		mes("^3355FF*A lacquered card sits untouched on the stone. It looks important in the way poisons often do.*^000000");
+		close();
 	}
 
-	mes "^3355FF*A black calling card has been left under a rusted bell weight. The handwriting is graceful enough to make the contents feel ruder.*^000000";
-	next;
-	mes "^0000AA[Carrion's Card]^000000";
-	mes "To the next practical souls through the gate: I am prepared to discuss de-escalation, provided we use a definition of peace that respects everyone's continued relevance.";
-	next;
-	mes "^0000AA[Carrion's Card]^000000";
-	mes "Please arrive with clear priorities. I dislike moral panic because it makes accounting imprecise.";
-	next;
-	mes "^0000AA[Carrion's Card]^000000";
-	mes "If Father Quill called me a demon before he called me useful, he was technically correct and strategically boring.";
-	close;
+	mes("^3355FF*A black calling card has been left under a rusted bell weight. The handwriting is graceful enough to make the contents feel ruder.*^000000");
+	next();
+	mes("^0000AA[Carrion's Card]^000000");
+	mes("To the next practical souls through the gate: I am prepared to discuss de-escalation, provided we use a definition of peace that respects everyone's continued relevance.");
+	next();
+	mes("^0000AA[Carrion's Card]^000000");
+	mes("Please arrive with clear priorities. I dislike moral panic because it makes accounting imprecise.");
+	close();
 }
 
-// ── Beelzebub Sanctum Set-piece ────────────────────────────────────────────
+// ── Beelzebub Sanctum Set-piece ───────────────────────────────────────────
 abbey03,150,150,0	script	Beelzebub Sanctum#dm	HIDDEN_NPC,{
 	end;
 
@@ -328,11 +424,21 @@ OnBeelzebubDead:
 	killmonster strnpcinfo(NPC_MAP), "Beelzebub Sanctum#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20171);
 	callfunc("DM_InstanceSetFlag", "dm_arc13_beelzebub_killed", 1);
+	callfunc("DM_InstanceSetFlag", "dm_arc13_coalition_deal_honored", 0);
+	if (dm_arc13_quill_revered && dm_arc13_known_dead_reckoned)
+		callfunc("DM_InstanceSetFlag", "dm_arc13_dead_freed", 1);
+	else
+		callfunc("DM_InstanceSetFlag", "dm_arc13_dead_burned", 1);
 	callfunc("DM_PartyExp", 1600000, 900000);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1399);
-	instance_announce(instance_id(), "^3355FF[DM] Beelzebub falls. The coalition's coordination shatters into a hundred independent grudges.^000000", bc_all);
+	instance_announce(instance_id(), "^3355FF[DM] Beelzebub falls. The council's room becomes only a ruined abbey again.^000000", bc_all);
 	sleep(2000);
-	instance_announce(instance_id(), "^FF6600[DM] The demon lords scatter. But Surt's herald stirs in the volcano. Veins is the last thread before the finale.^000000", bc_all);
+	if (dm_arc13_dead_freed)
+		instance_announce(instance_id(), "^88CCFF[DM] Quill's last bell rings clean. Thousands of dead names leave the island by the right door.^000000", bc_all);
+	else
+		instance_announce(instance_id(), "^FF6600[DM] The coalition scatters. The dead remain behind you, quieter but not free.^000000", bc_all);
+	sleep(2000);
+	instance_announce(instance_id(), "^FF6600[DM] The Seating Plan points at Surt's fire and the Morroc chair. Veins is next.^000000", bc_all);
 	end;
 
 OnAddDead:

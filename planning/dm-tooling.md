@@ -263,9 +263,9 @@ Current scripted arc entry points:
 | 10 | Doctor Reuter, Lighthalzen | Kiel D-01, `lhz_dun04` | 20141-20145 |
 | 11 | Priest Eadric, Hugel | Randgris, `abyss_03` | 20151-20155 |
 | 12 | Envoy Aelith, New World | Nidhoggr's Shadow, `spl_fild01` | 20161-20165 |
-| 13 | Scholar Nadir, Nameless Island | Beelzebub / coalition deal, `abbey03` | 20171-20175 |
+| 13 | Father Quill, Nameless Island | Beelzebub, `abbey03` | 20171-20175 |
 | 14 | Foreman Dunmar, Veins | Ifrit / Magma Cathedral, `thor_v03` | 20181-20185 |
-| 15 | Keeper Lysandra, Aldebaran | Thanatos Memory, `thana_boss` | 20191-20194 |
+| 15 | Keeper Lysandra, Aldebaran | Thanatos Memory, `thana_boss` | 20191-20195 |
 | 16 | Kronecker G Heine, Prontera | Prison Vault / Bijou-Maret, `prt_q` | 20201-20204 |
 | 17 | Doctor Mira Tressa, Biolabs | Biosphere Core / Amdarais, `ba_pw03` | 20211-20214 |
 | 18 | The Familiar Dead, Niflheim | Himmelmez choice, `nif_in` | 20221-20223 |

@@ -24,7 +24,7 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 | 12 | Beyond the Horizon | New World | Nidhoggr's Shadow (2022) | 20161–20165 |
 | 13 | Island of the Damned | Nameless Island | Beelzebub (1874) | 20171–20175 |
 | 14 | The Fire That Ends the World | Veins | Ifrit (1832) | 20181–20185 |
-| 15 | The Hero's Tomb | Aldebaran / Thanatos | Memory of Thanatos (1708) | 20191–20194 |
+| 15 | The Hero's Tomb | Aldebaran / Thanatos | Memory of Thanatos (1708) | 20191–20195 |
 | 16 | The Royal Banquet | Prontera | Bijou / Doppel (1046) | 20201–20204 |
 | 17 | The Sage's Legacy | Biolabs (Varmundt) | Amdarais (2476) | 20211–20214 |
 | 18 | The Witch of Death | Niflheim | Himmelmez | 20221–20223 |
@@ -97,40 +97,42 @@ villain confrontation, then an MVP boss spawned via DM console.
   `spl_fild01` 150,150. Vance_helped or New World alliance lowers pulse damage from 7% to 4%; occupation raises it to 9%.
 - Vance_helped → callback in Arc 15 (Lysandra)
 
-### Arc 13 — Broker Carrion (Nameless Island)
-- Hunting: Banshee (1868 × 20 / 20173), Zombie Slaughter (1865 × 20 / 20174)
-- Villain: Carrion — killed / **bribed**
+### Arc 13 — Island of the Damned (Nameless Island)
+- Hunting: Abbey Bell Rotation (20173), Drowned Coin Tithe (20174), Lasagna Root Wardens (20175)
+- Story: A Name You Knew (20172) — reckon / refuse the familiar dead
+- Gate: Broker Carrion — killed / minutes bought
 - Boss: Beelzebub (1874) at `abbey03`
-- Flags: `dm_arc13_carrion_killed`, `dm_arc13_carrion_bribed`
-- Carrion_killed spawns full coalition adds. Carrion_bribed can complete the arc
-  without spawning Beelzebub and sets `dm_arc13_coalition_deal_honored`.
+- Flags: `dm_arc13_known_dead_reckoned`, `dm_arc13_known_dead_refused`, `dm_arc13_carrion_killed`, `dm_arc13_carrion_bribed`, `dm_arc13_dead_freed`, `dm_arc13_dead_burned`
+- Abbey Bell Rotation uses Banshee (1867), Zombie Slaughter (1864), and Ragged Zombie (1865). Drowned Coin Tithe uses Zombie Slaughter and Ragged Zombie in abbey02. Lasagna Root Wardens uses verified Bifrost root-route stand-ins until Lasagna natural spawns exist.
+- Carrion changes Beelzebub's support wave instead of skipping the fight: killing him adds harsher necromancer discipline; buying the minutes weakens the council's formation.
 
-### Arc 14 — Prelate Hesma (Veins)
-- Hunting: Salamander (1832 × 20 / 20183), Lava Golem (1367 × 20 / 20184)
-- Villain: Hesma — exposed / **bribed**
+### Arc 14 — The Fire That Ends the World (Veins)
+- Hunting: Veins Evacuation Ledger (20183), Bifrost Ash Scouting (20184), Magmaring Firebreak (20185)
+- Story: The Deep Shift (20182) — expose Hesma / take the seal for silence
 - Boss: Ifrit (1832) at `thor_v03`
-- Flags: `dm_arc14_hesma_exposed`, `dm_arc14_hesma_bribed`
+- Flags: `dm_arc14_hesma_exposed`, `dm_arc14_hesma_bribed`, `dm_arc14_evacuated`, `dm_arc14_miners_lost`, `dm_arc14_cinder_taken`
 - Ifrit starts the Magma Cathedral heat pulse hazard: five pulses around
-  `thor_v03` 150,150. Exposing Hesma lowers pulse damage from 9% to 6%.
+  `thor_v03` 150,150. Exposing Hesma lowers pulse damage from 9% to 6%; ledger families, safe ash routes, and a full firebreak can each reduce it further.
 - Arc 14 complete sets `dm_act03_complete` and beat 1499
 
 ---
 
 ## Act IV (Arcs 15–19) — The Seal's Edge
 
-### Arc 15 — The Method's Price (Aldebaran)
+### Arc 15 — The Hero's Tomb (Aldebaran)
 - Hub: Keeper Lysandra (`aldebaran,100,100`)
-- Hunting: Hylozoist (1510 × 15 / 20192), Lude (1509 × 15 / 20193)
+- Hunting: What the Tower Remembers (20192), Aldebaran Last Letters (20193), Clock Tower Daily Wounds (20194), Fragment Relief Rotation (20195)
 - Villain: Scholar Pratt (`aldebaran,110,100`) — exposed / delayed / **challenged**
   - challenged reveals Thanatos is still living inside the seal
 - Boss: Thanatos (1708) at `thana_boss`
 - HIDDEN_NPC: `Memory of Thanatos#dm` at `thana_boss,150,150`
-- Flags: `dm_arc15_pratt_exposed`, `dm_arc15_pratt_challenged`
+- Flags: `dm_arc15_pratt_exposed`, `dm_arc15_pratt_challenged`, `dm_arc15_memory_readiness`, `dm_arc15_mirror_shard_strength`
 - Pratt_exposed/challenged alter the Thanatos echo adds. Pratt_challenged also
   callbacks in Arcs 18 (Familiar Dead) and 19 (Loki).
 - Thanatos starts the tower resonance hazard: four pulses around `thana_boss`
   150,150. Pratt_challenged lowers pulse damage to 4%; Pratt_exposed lowers it
-  to 6%; the unresolved default is 8%.
+  to 6%; the unresolved default is 8%. Memory readiness and Mirror-Shard strength
+  can reduce the pulse further.
 
 ### Arc 16 — The Prontera Banquet (Prontera)
 - Hub: Kronecker G Heine (`prontera,150,150`)

@@ -141,7 +141,7 @@ paths:
 
 - Arc 8 Dark Lord adds react to Manfred outcomes.
 - Arc 11 Randgris court adds react to Bjorn outcomes.
-- Arc 13 supports both Beelzebub combat and Carrion coalition deal/no-fight.
+- Arc 13 Beelzebub support waves react to Carrion killed vs minutes bought.
 - Arc 15 Thanatos echo adds react to Pratt outcomes.
 - Arc 16 resolves Bijou/Maret based on Rina's outcome.
 - Arc 17 exposes Administrator purged, negotiated, and running outcomes.

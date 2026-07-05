@@ -397,8 +397,9 @@ OnInit:
 
 // ── Arc 13 ────────────────────────────────────────────────────────────────
 
-// Quest 20173: Abbey Bell Silencing (Banshee x20 → MobId 1868 / Banshee 1867) → abbey01 (93)
-// Quest 20174: Sanctum Sweep (Zombie Slaughter x20 → MobId 1865 / Ragged Zombie 1865) → abbey02 (70 + 210)
+// Quest 20173: Abbey Bell Rotation (Banshee / Zombie Slaughter / Ragged Zombie) -> abbey01
+// Quest 20174: Drowned Coin Tithe (Zombie Slaughter / Ragged Zombie) -> abbey02
+// Quest 20175: Lasagna Root Wardens uses verified Bifrost root-route stand-ins until Lasagna spawns exist.
 abbey01,100,100,0	script	Hunt Marker#dm_h_arc13a	HIDDEN_NPC,{
 	end;
 OnInit:
@@ -415,11 +416,20 @@ OnInit:
 	end;
 }
 
+bif_fild01,100,100,0	script	Hunt Marker#dm_h_arc13c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20175, 1;
+	end;
+}
+
 // ── Arc 14 ────────────────────────────────────────────────────────────────
 
-// Quest 20183: Volcanic Salamander Hunt (Salamander → MobId 1832/Ifrit area) → thor_v03 (60 Salamander)
-// Quest 20184: Lava Golem Firebreak (Blazer → MobId 1367 / Lava Golem 1366) → mag_dun01
-thor_v03,100,100,0	script	Hunt Marker#dm_h_arc14a	HIDDEN_NPC,{
+// Quest 20183: Veins Evacuation Ledger (Magmaring / Muscipular / Drosera) -> ve_fild03
+// Quest 20184: Bifrost Ash Scouting (Antique Book / Lichterns) -> ecl_tdun02
+// Quest 20185: Magmaring Firebreak (Magmaring) -> ve_fild03
+ve_fild03,100,100,0	script	Hunt Marker#dm_h_arc14a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -427,7 +437,7 @@ OnInit:
 	end;
 }
 
-mag_dun01,100,100,0	script	Hunt Marker#dm_h_arc14b	HIDDEN_NPC,{
+ecl_tdun02,60,90,0	script	Hunt Marker#dm_h_arc14b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -435,10 +445,20 @@ OnInit:
 	end;
 }
 
+ve_fild03,110,100,0	script	Hunt Marker#dm_h_arc14c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20185, 1;
+	end;
+}
+
 // ── Arc 15 ────────────────────────────────────────────────────────────────
 
-// Quest 20192: What the Tower Remembers (Heirozoist x15 → MobId 1510) → niflheim (10)
-// Quest 20193: Aldebaran Last Letters (Lude x15 → MobId 1509) → nif_fild01 (20 Disguise + Lude area)
+// Quest 20192: What the Tower Remembers (Heirozoist x15 -> MobId 1510) -> niflheim
+// Quest 20193: Aldebaran Last Letters (Lude x15 -> MobId 1509) -> niflheim
+// Quest 20194: Clock Tower Daily Wounds (Big Bell x20 -> MobId 2917) -> c_tower3_
+// Quest 20195: Fragment Relief Rotation (Thanatos fragments) -> tha_t09
 niflheim,100,100,0	script	Hunt Marker#dm_h_arc15a	HIDDEN_NPC,{
 	end;
 OnInit:
@@ -446,6 +466,22 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20192, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20193, 1;
+	end;
+}
+
+c_tower3_,59,148,0	script	Hunt Marker#dm_h_arc15b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20194, 1;
+	end;
+}
+
+tha_t09,50,129,0	script	Hunt Marker#dm_h_arc15c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20195, 1;
 	end;
 }
 

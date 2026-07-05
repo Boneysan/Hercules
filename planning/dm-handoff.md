@@ -524,8 +524,7 @@ Implemented:
 
 - Arc 8 Dark Lord spawns branch-specific court adds based on Manfred's fate.
 - Arc 11 Randgris spawns reduced or full court adds based on Bjorn's fate.
-- Arc 13 can honor Carrion's coalition deal without spawning Beelzebub; combat
-  variants spawn explicit coalition adds.
+- Arc 13 Beelzebub support waves react to Carrion killed vs minutes bought.
 - Arc 15 Thanatos spawns deterministic echo adds based on Pratt's outcome.
 - Arc 16 Bijou resolves as `dm_arc16_maret_freed` when Rina defected, otherwise
   as `dm_arc16_bijou_killed`.
@@ -596,7 +595,7 @@ Use this checklist for the next implementation and validation passes.
 - [ ] Playtest Arc 8 Dark Lord branch adds for Manfred outcomes.
 - [ ] Playtest Arc 11 Randgris branch adds for Bjorn outcomes.
 - [ ] Playtest Arc 13 Beelzebub combat path with Carrion killed.
-- [ ] Playtest Arc 13 coalition deal/no-fight path with Carrion bribed.
+- [ ] Playtest Arc 13 Beelzebub path with Carrion minutes bought.
 - [ ] Playtest Arc 15 Thanatos echo adds for Pratt exposed, delayed, and
   challenged outcomes.
 - [ ] Playtest Arc 16 Bijou killed path.
@@ -753,7 +752,7 @@ Specific cases:
 - Arc 8: Manfred outcomes should alter Dark Lord court adds.
 - Arc 11: Bjorn joined should reduce Randgris court pressure.
 - Arc 13: Carrion killed should spawn Beelzebub and coalition adds.
-- Arc 13: Carrion bribed should support the deal/no-fight completion path.
+- Arc 13: Carrion minutes bought should weaken Beelzebub's council support wave.
 - Arc 15: Pratt exposed, delayed, and challenged outcomes should alter Thanatos
   pressure clearly.
 - Arc 16: Rina defected should resolve as Maret freed.

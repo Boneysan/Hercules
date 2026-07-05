@@ -153,16 +153,16 @@ Target: 20171 **The Council of the Drowned** (climax, keep) · story **A Name Yo
 Knew** · hunts **Abbey Bell Rotation** / **Drowned Coin Tithe** /
 **Lasagna Root Wardens**.
 
-- [ ] 1. Vault docs read
-- [ ] 2. quest_db block (+20172)
-- [ ] 3. dm_quests registry
-- [ ] 4. dm_flags additions
-- [ ] 5. arc file rewrite
-- [ ] 6. dm_decisions rows
-- [ ] 7. dm_beats
-- [ ] 8. hunt markers
-- [ ] 9. doc tables
-- [ ] ✔ Validation passes → **Arc 13 done** (date: ______)
+- [x] 1. Vault docs read
+- [x] 2. quest_db block (+20172)
+- [x] 3. dm_quests registry
+- [x] 4. dm_flags additions
+- [x] 5. arc file rewrite
+- [x] 6. dm_decisions rows
+- [x] 7. dm_beats
+- [x] 8. hunt markers
+- [x] 9. doc tables
+- [x] ✔ Validation passes → **Arc 13 done** (date: 2026-07-05)
 
 ## Arc 14 — The Fire That Ends the World / Veins (IDs 20181–20185, +20182 free)
 
@@ -170,16 +170,16 @@ Target: 20181 **The Herald in the Magma** (climax, keep) · story **The Deep
 Shift** · hunts **Veins Evacuation Ledger** / **Bifrost Ash Scouting** /
 **Magmaring Firebreak**.
 
-- [ ] 1. Vault docs read
-- [ ] 2. quest_db block (+20182; Magmaring MobId 1836 — verify)
-- [ ] 3. dm_quests registry
-- [ ] 4. dm_flags additions
-- [ ] 5. arc file rewrite
-- [ ] 6. dm_decisions rows
-- [ ] 7. dm_beats
-- [ ] 8. hunt markers
-- [ ] 9. doc tables
-- [ ] ✔ Validation passes → **Arc 14 done** (date: ______)
+- [x] 1. Vault docs read
+- [x] 2. quest_db block (+20182; Magmaring MobId 1836 — verify)
+- [x] 3. dm_quests registry
+- [x] 4. dm_flags additions
+- [x] 5. arc file rewrite
+- [x] 6. dm_decisions rows
+- [x] 7. dm_beats
+- [x] 8. hunt markers
+- [x] 9. doc tables
+- [x] ✔ Validation passes → **Arc 14 done** (date: 2026-07-05)
 
 ## Arc 15 — The Hero's Tomb / Aldebaran (IDs 20191–20195)
 
@@ -187,12 +187,12 @@ Gap-fill: server already matches 3/5. Replace 20194 "The Method's Price";
 add **Clock Tower Daily Wounds** + **Fragment Relief Rotation** (two in, one
 out — renumber inside the block, tracker 20191 Five Doors stays).
 
-- [ ] Vault docs read (esp. the two new quests)
-- [ ] quest_db: 20194 replaced + 20195 added, Targets verified
-- [ ] dm_quests registry (5 entries) + dm_flags if needed
-- [ ] arc file: turn-ins for the two new hunts wired into the giver
-- [ ] dm_beats + hunt markers + doc tables
-- [ ] ✔ Validation passes → **Arc 15 done** (date: ______)
+- [x] Vault docs read (esp. the two new quests)
+- [x] quest_db: 20194 replaced + 20195 added, Targets verified
+- [x] dm_quests registry (5 entries) + dm_flags if needed
+- [x] arc file: turn-ins for the two new hunts wired into the giver
+- [x] dm_beats + hunt markers + doc tables
+- [x] ✔ Validation passes → **Arc 15 done** (date: 2026-07-05)
 
 ## Arc 16 — The Royal Banquet / Prontera (IDs 20201–20205)
 

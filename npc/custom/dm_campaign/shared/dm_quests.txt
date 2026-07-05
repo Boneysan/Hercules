@@ -185,12 +185,12 @@ OnInit:
 	setarray .arc11_nm$[0], "When Heaven Turns", "The Dying Valkyrie's Word", "Hugel Airship Muster", "Dragon Scale Turn-In", "Temple Edge Vigil";
 	setarray .arc12_id[0], 20161, 20162, 20163, 20164, 20165;
 	setarray .arc12_nm$[0], "The Wound With a Keeper", "First Contact Done Wrong", "Manuk Supply Line", "Cornus Mercy Run", "Dicastes Border Papers";
-	setarray .arc13_id[0], 20171, 20173, 20174, 20175;
-	setarray .arc13_nm$[0], "The Council of the Drowned", "Abbey Bell Silencing", "Sanctum Sweep", "The Broker's Terms";
-	setarray .arc14_id[0], 20181, 20183, 20184, 20185;
-	setarray .arc14_nm$[0], "The Herald in the Magma", "Volcanic Salamander Hunt", "Lava Golem Firebreak", "The Prelate's Silence";
-	setarray .arc15_id[0], 20191, 20192, 20193, 20194;
-	setarray .arc15_nm$[0], "The Five Doors of a Dead Hero", "What the Tower Remembers", "Aldebaran Last Letters", "The Method's Price";
+	setarray .arc13_id[0], 20171, 20172, 20173, 20174, 20175;
+	setarray .arc13_nm$[0], "The Council of the Drowned", "A Name You Knew", "Abbey Bell Rotation", "Drowned Coin Tithe", "Lasagna Root Wardens";
+	setarray .arc14_id[0], 20181, 20182, 20183, 20184, 20185;
+	setarray .arc14_nm$[0], "The Herald in the Magma", "The Deep Shift", "Veins Evacuation Ledger", "Bifrost Ash Scouting", "Magmaring Firebreak";
+	setarray .arc15_id[0], 20191, 20192, 20193, 20194, 20195;
+	setarray .arc15_nm$[0], "The Five Doors of a Dead Hero", "What the Tower Remembers", "Aldebaran Last Letters", "Clock Tower Daily Wounds", "Fragment Relief Rotation";
 	setarray .arc16_id[0], 20201, 20202, 20203, 20204;
 	setarray .arc16_nm$[0], "The Royal Banquet", "Underground Prison Cleanup", "Terra Gloria", "Royal House Audience Rounds";
 	setarray .arc17_id[0], 20211, 20212, 20213, 20214;
