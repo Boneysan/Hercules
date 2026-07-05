@@ -247,7 +247,8 @@ Gap-fill: add **Illusion Grief Rotation** (20224) + **Opera House Encore** (2022
       parse errors. Stop with `./start-server.sh stop`.
       Verified via foreground `timeout 45 ./map-server`: quest_db + NPC parse
       reached server-ready; standalone char-server connection refusals expected
-      (date: 2026-07-05).
+      (date: 2026-07-05). Follow-up `./tools/check-campaign.sh` passed with
+      41 dm_campaign include lines and 0 errors (date: 2026-07-05).
 - [x] Regenerate `planning/campaign_quest_journal_entries.lua` for every
       changed/added ID (names + `@dm warp` lines) (date: 2026-07-05)
 - [ ] Re-merge client journal per `client/README.md` §1
@@ -258,8 +259,8 @@ Gap-fill: add **Illusion Grief Rotation** (20224) + **Opera House Encore** (2022
       20124 behavior) (date: 2026-07-05)
 - [ ] In-game smoke test per ported arc: `@dmbeat` → Start Arc → marker on map →
       turn-in → story quest → climax completes tracker
-- [ ] Commit per arc or per session; update this doc's checkboxes in the same
-      commit — **the doc is the work log** (date all boxes)
+- [x] Commit per arc or per session; update this doc's checkboxes in the same
+      commit — **the doc is the work log** (date: 2026-07-05)
 
 ## Gotchas (append as found)
 
