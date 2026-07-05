@@ -21,8 +21,16 @@
   (20000), but arcs 8–19 still carried **old pre-rewrite designs**. Zero rewritten
   titles appeared in `npc/` or `db/` before this port began.
 - Arcs 1–7 were already in sync. Arcs 8–9 ported 2026-07-04 (commit 89006fa91).
-- Design sources: vault `Campaign/Act_*/Arc_NN_*/Quests/0[1-5]_*.md`
-  (01–03 = `#xp-support` repeatables, 04–05 = story; one of them is the climax).
+- **Design sources are vendored IN-REPO** (self-contained — no access to the
+  Obsidian vault needed): `planning/obsidian-campaign/arcs/Arc_NN_*/`
+  containing the arc hub, `Quests/0[1-5]_*.md` (01–03 = `#xp-support`
+  repeatables, 04–05 = story; one of them is the climax), and `NPCs/*.md`.
+  Supporting docs also in-repo: `planning/obsidian-campaign/`
+  `Tabletop_Campaign_Overview.md` (level bands / renewal maps / mobs per arc),
+  `Choice_Tracker.md`, `Recurring_Cast.md`.
+  (Source of truth remains the Obsidian vault at
+  `/mnt/h/Docs/Obsidian Notes/Game Design/Ragnarok_Online/Campaign/` — if the
+  two ever disagree, the vault wins; re-copy before starting an arc.)
 
 ## Shared infrastructure already fixed (do NOT redo)
 
@@ -50,7 +58,11 @@ Registry entry order per arc = `[climax/tracker, other story quest, 01, 02, 03]`
 Exemplars: `act_02/arc_08_glast_heim.txt`, `act_02/arc_09_rachel.txt` (+ their
 diffs in commit 89006fa91 show every companion edit).
 
-1. **Vault docs**: read all 5 `Quests/*.md` + arc hub + `NPCs/*.md`.
+1. **Design docs** (in-repo): read all 5
+   `planning/obsidian-campaign/arcs/Arc_NN_*/Quests/*.md` + the arc hub `.md`
+   + `NPCs/*.md`, plus the arc's row/section in
+   `planning/obsidian-campaign/Tabletop_Campaign_Overview.md` (level band,
+   maps, mobs — the mechanical ground truth).
 2. **`db/quest_db.conf`**: rewrite the arc block — names, Targets (verified
    MobIds), keep old Exp/Jexp scale; update the `//=` header comment.
 3. **`shared/dm_quests.txt`**: the arc's `setarray .arcNN_id[]` / `.arcNN_nm$[]`.
@@ -227,8 +239,13 @@ Gap-fill: add **Illusion Grief Rotation** (20224) + **Opera House Encore** (2022
 ## Final pass (after all arcs)
 
 - [ ] script-checker over every touched file → exit 0
-- [ ] Full boot-parse: MariaDB up, all 3 servers start, `log/run-map.out` free of
-      quest_db + NPC parse errors
+      (always `bash ./script-checker` — it uses `[[`, fails under plain sh;
+      needs no DB)
+- [ ] Full boot-parse: start MariaDB first (`sudo service mariadb start`;
+      systemd is offline in this WSL — probe with
+      `mysqladmin -h 127.0.0.1 -u ragnarok -pragnarok ping`), then
+      `./start-server.sh`; `log/run-map.out` must be free of quest_db + NPC
+      parse errors. Stop with `./start-server.sh stop`.
 - [ ] Regenerate `planning/campaign_quest_journal_entries.lua` for every
       changed/added ID (names + `@dm warp` lines)
 - [ ] Re-merge client journal per `client/README.md` §1
