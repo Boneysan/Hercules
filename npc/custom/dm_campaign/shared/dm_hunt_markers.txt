@@ -489,6 +489,7 @@ OnInit:
 
 // Quest 20202: Underground Prison Cleanup (Disguise x20 → MobId 1506) → nif_fild01 (50 Disguise)
 // Quest 20203: Terra Gloria (Bloody Murderer x20 → MobId 1507) → nif_fild02 (11 Bloody Murderer)
+// Quest 20205: Invaded Prontera Relief uses DM-spawned corrupted relief waves in Prontera.
 nif_fild01,200,200,0	script	Hunt Marker#dm_h_arc16a	HIDDEN_NPC,{
 	end;
 OnInit:
@@ -505,10 +506,19 @@ OnInit:
 	end;
 }
 
+prontera,150,150,0	script	Hunt Marker#dm_h_arc16c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20205, 1;
+	end;
+}
+
 // ── Arc 17 ────────────────────────────────────────────────────────────────
 
-// Quest 20212: Sages Legacy (Aliza x20 → MobId 1737) → kh_dun01 (45 Aliza)
+// Quest 20212: Sage's Legacy Dailies (Aliza x20 -> MobId 1737) -> kh_dun01
 // Quest 20213: Tartaros Dive (Celia x15 → MobId 2223) → lhz_dun04 (81 Celia)
+// Quest 20215: Corridor of Phantom Map uses DM-spawned phantom-memory route mobs in ba_pw01.
 kh_dun01,100,100,0	script	Hunt Marker#dm_h_arc17a	HIDDEN_NPC,{
 	end;
 OnInit:
@@ -525,10 +535,20 @@ OnInit:
 	end;
 }
 
+ba_pw01,100,100,0	script	Hunt Marker#dm_h_arc17c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20215, 1;
+	end;
+}
+
 // ── Arc 18 ────────────────────────────────────────────────────────────────
 
 // Quest 20222: The Dead You Failed (Dullahan x15 → MobId 1504) → nif_fild01 (20 Dullahan)
 // Quest 20223: Banquet Hall Procession (Gibbet x15 → MobId 1503) → nif_fild02 (20 Gibbet)
+// Quest 20224: Illusion Grief Rotation (Quve/Lude/Hylozoist → 1508/1509/1510) → niflheim / fields
+// Quest 20225: Opera House Encore (Loli Ruri/Disguise/Bloody Murderer → 1505/1506/1507) → nif_fild02
 nif_fild01,150,150,0	script	Hunt Marker#dm_h_arc18a	HIDDEN_NPC,{
 	end;
 OnInit:
@@ -542,6 +562,22 @@ nif_fild02,150,150,0	script	Hunt Marker#dm_h_arc18b	HIDDEN_NPC,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20223, 1;
+	end;
+}
+
+niflheim,190,185,0	script	Hunt Marker#dm_h_arc18c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20224, 1;
+	end;
+}
+
+nif_fild02,180,180,0	script	Hunt Marker#dm_h_arc18d	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20225, 1;
 	end;
 }
 

@@ -89,8 +89,8 @@ Decision registry checks:
 ```
 
 Verify `killed` and `spared` fully flip each other for every online party
-member, `20124` completes, and `@dmbeat` Arc 8 Manfred options produce the same
-state as `@dm decide`.
+member. The decision registry path should not auto-complete a quest; the
+in-arc Manfred NPC completes `20122` before applying the same branch state.
 
 Decision-drift test: log one party member out, run
 `@dm decide arc08.manfred killed`, log them back in, then run

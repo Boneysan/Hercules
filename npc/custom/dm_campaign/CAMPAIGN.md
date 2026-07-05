@@ -25,9 +25,9 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 | 13 | Island of the Damned | Nameless Island | Beelzebub (1874) | 20171–20175 |
 | 14 | The Fire That Ends the World | Veins | Ifrit (1832) | 20181–20185 |
 | 15 | The Hero's Tomb | Aldebaran / Thanatos | Memory of Thanatos (1708) | 20191–20195 |
-| 16 | The Royal Banquet | Prontera | Bijou / Doppel (1046) | 20201–20204 |
-| 17 | The Sage's Legacy | Biolabs (Varmundt) | Amdarais (2476) | 20211–20214 |
-| 18 | The Witch of Death | Niflheim | Himmelmez | 20221–20223 |
+| 16 | The Royal Banquet | Prontera | Bijou / Doppel (1046) | 20201–20205 |
+| 17 | The Sage's Legacy | Biolabs (Varmundt) | Amdarais (2476) | 20211–20215 |
+| 18 | The Witch of Death | Niflheim | Himmelmez | 20221–20225 |
 | 19 | Nightmare of Midgard (Finale) | Morroc Ruins / Ash Vacuum | Surt (via Garm 1252) | 20230–20234 (incl. support + 20231–20233 core) |
 
 **Source of truth for all titles, beats, choices, flags, and quest prose:**  
@@ -136,34 +136,43 @@ villain confrontation, then an MVP boss spawned via DM console.
 
 ### Arc 16 — The Prontera Banquet (Prontera)
 - Hub: Kronecker G Heine (`prontera,150,150`)
-- Hunting: Disguise (1506 × 20 / 20202), Bloody Murderer (1507 × 20 / 20203)
+- Hunting: Underground Prison Cleanup (20202), Terra Gloria (20203), Invaded Prontera Relief (20205)
 - Villain: Matron Rina (`prt_q,100,100`) — exposed / rolled / **defected**
   - defected: Bijou is Maret, trying to introduce cascade errors from inside
 - Boss: Doppelganger (1046) as Bijou at `prt_q,150,150`
 - HIDDEN_NPC: `Prison Vault#dm` at `prt_q,150,150`
-- Flags: `dm_arc16_rina_exposed`, `dm_arc16_rina_rolled`,
+- Flags: `dm_arc16_relief_civilians`, `dm_arc16_relief_armories`,
+  `dm_arc16_relief_symbols`, `dm_arc16_rina_exposed`, `dm_arc16_rina_rolled`,
   `dm_arc16_rina_defected`, `dm_arc16_bijou_killed`, `dm_arc16_maret_freed`
 - Rina_defected resolves Bijou as Maret freed instead of a simple kill, and
   callbacks in Arc 18 (Familiar Dead / Maret lore).
 
 ### Arc 17 — The Sage's Legacy (Biolabs)
 - Hub: Doctor Mira Tressa (`ba_in01,100,100`)
-- Hunting: Aliza (1737 × 20 / 20212), Celia (2223 × 15 / 20213)
+- Hunting: Sage's Legacy Dailies (Aliza 1737 × 20 / 20212), Tartaros Dive (Celia 2223 × 15 / 20213), Corridor of Phantom Map (Shadow of Illusion 2077 × 6, Runaway Book 2414 × 6, Dark Illusion 1302 × 2 / 20215)
 - Villain: The Administrator (`ba_in01,110,100`) — purged / negotiated / **running**
   - running: sends cascade analysis updates; creates Arc 19 callback
 - Boss: Amdarais (2476) at `ba_pw03` (Biosphere Core)
 - HIDDEN_NPC: `Biosphere Core#dm` at `ba_pw03,150,150`
 - Flags: `dm_arc17_admin_purged`, `dm_arc17_admin_negotiated`,
-  `dm_arc17_admin_running`, `dm_arc17_beta_killed`
+  `dm_arc17_admin_running`, `dm_arc17_sage_stabilized`,
+  `dm_arc17_sage_components`, `dm_arc17_sage_forbidden`,
+  `dm_arc17_corridor_observed`, `dm_arc17_corridor_baited`,
+  `dm_arc17_corridor_sold`, `dm_arc17_tartaros_safe`,
+  `dm_arc17_beta_killed`
 - Admin_running → callback in Arc 19 (Loki cites 847% cascade deviation)
 
 ### Arc 18 — The Witch of Death (Niflheim)
 - Hub: The Familiar Dead (`niflheim,100,100`)
-- Hunting: Dullahan (1504 × 15 / 20222), Gibbet (1503 × 15 / 20223)
+- Hunting: The Dead You Failed (Dullahan 1504 × 15 / 20222), Banquet Hall Procession (Gibbet 1503 × 15 / 20223), Illusion Grief Rotation (Quve 1508 × 10, Lude 1509 × 10, Hylozoist 1510 × 10 / 20224), Opera House Encore (Loli Ruri 1505 × 8, Disguise 1506 × 10, Bloody Murderer 1507 × 8 / 20225)
 - Villain: Himmelmez (`nif_in,150,150`) — **killed** / **bargained**
   - bargained: Himmelmez holds the dead while party faces finale
-  - Himmelmez gates: both hunts must be complete before she will speak
-- Flags: `dm_arc18_himmelmez_killed`, `dm_arc18_himmelmez_bargained`
+  - Himmelmez gates: all four support hunts must be complete before she will speak
+- Flags: `dm_arc18_grief_honest`, `dm_arc18_grief_pragmatic`,
+  `dm_arc18_grief_weaponized`, `dm_arc18_grief_resilience`,
+  `dm_arc18_opera_silenced`, `dm_arc18_opera_witnessed`,
+  `dm_arc18_opera_joined`, `dm_arc18_bargain_leverage`,
+  `dm_arc18_himmelmez_killed`, `dm_arc18_himmelmez_bargained`
 - Himmelmez_killed starts the Himmelmez Pressure hazard: three pulses around
   `nif_in` 150,150 with curse pressure.
 - Himmelmez_bargained → major callback in Arc 19 (unlocks "Queen's Bargain" ending)

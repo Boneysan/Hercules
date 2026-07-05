@@ -266,10 +266,10 @@ Current scripted arc entry points:
 | 13 | Father Quill, Nameless Island | Beelzebub, `abbey03` | 20171-20175 |
 | 14 | Foreman Dunmar, Veins | Ifrit / Magma Cathedral, `thor_v03` | 20181-20185 |
 | 15 | Keeper Lysandra, Aldebaran | Thanatos Memory, `thana_boss` | 20191-20195 |
-| 16 | Kronecker G Heine, Prontera | Prison Vault / Bijou-Maret, `prt_q` | 20201-20204 |
-| 17 | Doctor Mira Tressa, Biolabs | Biosphere Core / Amdarais, `ba_pw03` | 20211-20214 |
-| 18 | The Familiar Dead, Niflheim | Himmelmez choice, `nif_in` | 20221-20223 |
-| 19 | Loki The Voice, Morroc Ruins | Surt / Central Choice, `moc_fild22` | 20231-20233 |
+| 16 | Kronecker G Heine, Prontera | Prison Vault / Bijou-Maret, `prt_q` | 20201-20205 |
+| 17 | Doctor Mira Tressa, Biolabs | Biosphere Core / Amdarais, `ba_pw03` | 20211-20215 |
+| 18 | The Familiar Dead, Niflheim | Himmelmez choice, `nif_in` | 20221-20225 |
+| 19 | Loki The Voice, Morroc Ruins | Surt / Central Choice, `moc_fild22` | 20230-20234 |
 
 `@dmbeat` has matching menus for Arc 1 through Arc 19. Each menu can warp the
 current party to the relevant NPC/location, start or complete arc quests, set

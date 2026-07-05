@@ -13,9 +13,12 @@
 //=   20202 Underground Prison Cleanup  (Disguise x20)
 //=   20203 Terra Gloria                (Bloody Murderer x20)
 //=   20204 Royal House Audience Rounds (Matron Rina)
+//=   20205 Invaded Prontera Relief     (city-defense support)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc16_started, dm_arc16_rina_exposed,
+//=   dm_arc16_started, dm_arc16_relief_civilians,
+//=   dm_arc16_relief_armories, dm_arc16_relief_symbols,
+//=   dm_arc16_army_quality, dm_arc16_rina_exposed,
 //=   dm_arc16_rina_rolled, dm_arc16_rina_defected,
 //=   dm_arc16_bijou_killed
 //===========================================================
@@ -51,6 +54,8 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20202, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20203, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20205, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
@@ -88,15 +93,17 @@ S_StartArc:
 	}
 	next();
 	mes("[Kronecker]");
-	mes("After the prison is clear, Matron Rina will have no shelter and no assets. She coordinates between Bijou and the court. She is in the east wing of the prison. She is the only one who knows how Bijou works.");
+	mes("After the prison is clear and the city relief lines are visibly neutral, Matron Rina will have no shelter and no assets. She coordinates between Bijou and the court. She is in the east wing of the prison. She is the only one who knows how Bijou works.");
 	callfunc("DM_InstanceSetFlag", "dm_arc16_started", 1);
 	callfunc("DM_InstanceQuestStart", 20201);
 	callfunc("DM_InstanceQuestStart", 20202);
 	callfunc("DM_InstanceQuestStart", 20203);
+	callfunc("DM_InstanceQuestStart", 20205);
 	next();
 	mes("^3355FF[Quest started: The Royal Banquet]^000000");
 	mes("^3355FFUnderground Prison Cleanup - clear 20 Disguise from the prison corridors.^000000");
 	mes("^3355FFTerra Gloria - eliminate 20 Bloody Murderer from the deeper prison levels.^000000");
+	mes("^3355FFInvaded Prontera Relief - hold the city line against corrupted court waves.^000000");
 	close();
 
 S_TurnIns:
@@ -151,9 +158,45 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20202) == 2 && questprogress(20203) == 2 && questprogress(20204) == 0) {
+	if (questprogress(20205) == 1 && questprogress(20205, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20205);
+		callfunc("DM_PartyExp", 560000, 280000);
+		callfunc("DM_GivePartyZeny", 46000);
+		.@paid = 1;
 		mes("[Kronecker]");
-		mes("The prison is clear. Matron Rina is in the east wing, room seven. She has not tried to leave. She is either very calm or she was expecting you to reach her eventually.");
+		mes("The relief writs are signed and witnessed. That matters. In a succession crisis, even saving people can look like choosing a house.");
+		next();
+		switch (select("Defend civilians first, regardless of district.", "Defend armories and supply lines.", "Defend royal symbols and house banners.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc16_relief_civilians", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc16_army_quality", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc16_relief_armories", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc16_relief_symbols", 0);
+			mes("[Kronecker]");
+			mes("The city saw neutral protection. When we ask for an army later, the streets will remember that.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc16_relief_armories", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc16_relief_civilians", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc16_relief_symbols", 0);
+			mes("[Kronecker]");
+			mes("Competent, defensible, and less comforting than people wanted. The Guard will be armed.");
+			break;
+		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc16_relief_symbols", 1);
+			callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc16_relief_civilians", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc16_relief_armories", 0);
+			mes("[Kronecker]");
+			mes("The houses will notice. So will the people whose street did not have a banner worth saving.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20202) == 2 && questprogress(20203) == 2 && questprogress(20205) == 2 && questprogress(20204) == 0) {
+		mes("[Kronecker]");
+		mes("The prison is clear and the relief lines held. Matron Rina is in the east wing, room seven. She has not tried to leave. She is either very calm or she was expecting you to reach her eventually.");
 		next();
 		switch (select("What does she want?", "How much does she actually know about Bijou?", "Is she dangerous?")) {
 		case 1:
@@ -190,19 +233,19 @@ S_TurnIns:
 
 	if (.@paid) {
 		mes("[Kronecker]");
-		mes("Both prison contracts need to be complete before you face Rina. She knows if we are still distracted.");
+		mes("The prison contracts and relief writs need to be complete before you face Rina. She knows if we are still distracted.");
 		close();
 	}
 
 	mes("[Kronecker]");
-	if (questprogress(20202) == 1 && questprogress(20203) == 1)
-		mes("The Underground Prison Cleanup and Terra Gloria are both still active.");
-	else if (questprogress(20202) == 1)
+	if (questprogress(20202) == 1)
 		mes("Underground Prison Cleanup is still open. The Disguise in the prison corridors.");
 	else if (questprogress(20203) == 1)
 		mes("Terra Gloria is still open. Bloody Murderer in the deeper levels.");
+	else if (questprogress(20205) == 1)
+		mes("Invaded Prontera Relief is still open. The relief writs need a neutral defense force.");
 	else
-		mes("Both done. Matron Rina is in the east wing of prt_q.");
+		mes("The support work is done. Matron Rina is in the east wing of prt_q.");
 	close();
 }
 

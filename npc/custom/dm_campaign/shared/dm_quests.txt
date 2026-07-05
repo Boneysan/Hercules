@@ -191,14 +191,14 @@ OnInit:
 	setarray .arc14_nm$[0], "The Herald in the Magma", "The Deep Shift", "Veins Evacuation Ledger", "Bifrost Ash Scouting", "Magmaring Firebreak";
 	setarray .arc15_id[0], 20191, 20192, 20193, 20194, 20195;
 	setarray .arc15_nm$[0], "The Five Doors of a Dead Hero", "What the Tower Remembers", "Aldebaran Last Letters", "Clock Tower Daily Wounds", "Fragment Relief Rotation";
-	setarray .arc16_id[0], 20201, 20202, 20203, 20204;
-	setarray .arc16_nm$[0], "The Royal Banquet", "Underground Prison Cleanup", "Terra Gloria", "Royal House Audience Rounds";
-	setarray .arc17_id[0], 20211, 20212, 20213, 20214;
-	setarray .arc17_nm$[0], "Illusion Investigation", "Sages Legacy", "Tartaros Dive", "Biosphere Sample Rotation";
-	setarray .arc18_id[0], 20221, 20222, 20223, 20230;
-	setarray .arc18_nm$[0], "The Queen the Drowned Chose", "The Dead You Failed", "Banquet Hall Procession", "Allied Front Muster";
-	setarray .arc19_id[0], 20231, 20232, 20233, 20234;
-	setarray .arc19_nm$[0], "Where Thanatos Stood", "Beyond the Veil", "The Choice He Never Had", "Ragnarok Aftermath Seeds";
+	setarray .arc16_id[0], 20201, 20202, 20203, 20204, 20205;
+	setarray .arc16_nm$[0], "The Royal Banquet", "Underground Prison Cleanup", "Terra Gloria", "Royal House Audience Rounds", "Invaded Prontera Relief";
+	setarray .arc17_id[0], 20211, 20212, 20213, 20214, 20215;
+	setarray .arc17_nm$[0], "Illusion Investigation", "Sage's Legacy Dailies", "Tartaros Dive", "Biosphere Sample Rotation", "Corridor of Phantom Map";
+	setarray .arc18_id[0], 20221, 20222, 20223, 20224, 20225;
+	setarray .arc18_nm$[0], "The Queen the Drowned Chose", "The Dead You Failed", "Banquet Hall Procession", "Illusion Grief Rotation", "Opera House Encore";
+	setarray .arc19_id[0], 20230, 20231, 20232, 20233, 20234;
+	setarray .arc19_nm$[0], "Allied Front Muster", "Where Thanatos Stood", "Beyond the Veil", "The Choice He Never Had", "Ragnarok Aftermath Seeds";
 	end;
 }
 

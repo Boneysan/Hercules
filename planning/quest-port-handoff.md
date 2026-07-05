@@ -198,60 +198,64 @@ out — renumber inside the block, tracker 20191 Five Doors stays).
 
 Gap-fill: add **Invaded Prontera Relief** (20205).
 
-- [ ] Vault doc read; quest_db entry added (Targets verified)
-- [ ] registry + arc file turn-in + beats + marker + doc tables
-- [ ] ✔ Validation passes → **Arc 16 done** (date: ______)
+- [x] Vault doc read; quest_db entry added (Targets verified)
+- [x] registry + arc file turn-in + beats + marker + doc tables
+- [x] ✔ Validation passes → **Arc 16 done** (date: 2026-07-05)
 
 ## Arc 17 — The Sage's Legacy / Varmundt (IDs 20211–20215)
 
 Gap-fill: add **Corridor of Phantom Map** (20215); rename "Sages Legacy" →
 "Sage's Legacy Dailies".
 
-- [ ] Vault doc read; quest_db add + rename
-- [ ] registry + arc file turn-in + beats + marker + doc tables
-- [ ] ✔ Validation passes → **Arc 17 done** (date: ______)
+- [x] Vault doc read; quest_db add + rename
+- [x] registry + arc file turn-in + beats + marker + doc tables
+- [x] ✔ Validation passes → **Arc 17 done** (date: 2026-07-05)
 
-## Arc 18 — The Witch of Death / Niflheim (IDs 20221–20225 + 20230)
+## Arc 18 — The Witch of Death / Niflheim (IDs 20221–20225)
 
 Gap-fill: add **Illusion Grief Rotation** (20224) + **Opera House Encore** (20225).
 
-- [ ] Vault docs read; quest_db entries added
-- [ ] registry + arc file turn-ins + beats + markers + doc tables
-- [ ] ✔ Validation passes → **Arc 18 done** (date: ______)
+- [x] Vault docs read; quest_db entries added
+- [x] registry + arc file turn-ins + beats + markers + doc tables
+- [x] ✔ Validation passes → **Arc 18 done** (date: 2026-07-05)
 
 ## Arc 19 — registry quirk only
 
-- [ ] Move 20230 "Allied Front Muster" from `.arc18_id[]/.arc18_nm$[]` to the
+- [x] Move 20230 "Allied Front Muster" from `.arc18_id[]/.arc18_nm$[]` to the
       arc19 arrays in dm_quests.txt (vault places it in Arc 19)
-- [ ] Re-check consumers of `DM_ArcQuestCount(18/19)` (console sync loops are
+- [x] Re-check consumers of `DM_ArcQuestCount(18/19)` (console sync loops are
       registry-driven, so this should be automatic — verify once)
-- [ ] ✔ Validation passes → **Arc 19 done** (date: ______)
+- [x] ✔ Validation passes → **Arc 19 done** (date: 2026-07-05)
 
 ## Eden Group loose end
 
-- [ ] Fix `eden_iro.txt`'s 4 unresolved `duplicate()` NPCs (Suhnbi#cash,
+- [x] Fix `eden_iro.txt`'s 4 unresolved `duplicate()` NPCs (Suhnbi#cash,
       MightyHammer, Ripped Cabus#GymPass, Alora): either load the source files
       (`npc/re/merchants/hd_refiner.txt`, `npc/merchants/cashheadgear_dye.txt`,
       + the refiner/gympass pair) in scripts.conf, or comment those 4 blocks out
-- [ ] `bash ./script-checker` on the whole eden set → exit 0 (date: ______)
+- [x] `bash ./script-checker` on the whole eden set → exit 0 (date: 2026-07-05)
 
 ## Final pass (after all arcs)
 
-- [ ] script-checker over every touched file → exit 0
+- [x] script-checker over every touched file → exit 0 (date: 2026-07-05)
       (always `bash ./script-checker` — it uses `[[`, fails under plain sh;
       needs no DB)
-- [ ] Full boot-parse: start MariaDB first (`sudo service mariadb start`;
+- [x] Full boot-parse: start MariaDB first (`sudo service mariadb start`;
       systemd is offline in this WSL — probe with
       `mysqladmin -h 127.0.0.1 -u ragnarok -pragnarok ping`), then
       `./start-server.sh`; `log/run-map.out` must be free of quest_db + NPC
       parse errors. Stop with `./start-server.sh stop`.
-- [ ] Regenerate `planning/campaign_quest_journal_entries.lua` for every
-      changed/added ID (names + `@dm warp` lines)
+      Verified via foreground `timeout 45 ./map-server`: quest_db + NPC parse
+      reached server-ready; standalone char-server connection refusals expected
+      (date: 2026-07-05).
+- [x] Regenerate `planning/campaign_quest_journal_entries.lua` for every
+      changed/added ID (names + `@dm warp` lines) (date: 2026-07-05)
 - [ ] Re-merge client journal per `client/README.md` §1
       (`tools/campaign_quest_merge.py` → recompile .lub) and hand the new file
-      to players
-- [ ] Update `planning/dm-playtest-notes.md` stale ID references (mentions old
-      20124 behavior)
+      to players. Merge helper fixed + verified with `--output` and temp
+      `--patch`; actual `.lub` needs the decompiled client target.
+- [x] Update `planning/dm-playtest-notes.md` stale ID references (mentions old
+      20124 behavior) (date: 2026-07-05)
 - [ ] In-game smoke test per ported arc: `@dmbeat` → Start Arc → marker on map →
       turn-in → story quest → climax completes tracker
 - [ ] Commit per arc or per session; update this doc's checkboxes in the same

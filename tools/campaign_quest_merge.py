@@ -37,18 +37,68 @@ SOURCE_PATH = os.path.join(REPO_ROOT, "planning", "campaign_quest_journal_entrie
 CAMPAIGN_ID_START = 20000
 CAMPAIGN_ID_END = 20234
 
+def find_block_end(text, open_pos):
+    """Return the index just after the matching closing brace."""
+    depth = 0
+    quote = None
+    escaped = False
+    i = open_pos
+    while i < len(text):
+        c = text[i]
+        if quote:
+            if escaped:
+                escaped = False
+            elif c == "\\":
+                escaped = True
+            elif c == quote:
+                quote = None
+        else:
+            if c in ("'", '"'):
+                quote = c
+            elif c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    return i + 1
+        i += 1
+    return -1
+
+def iter_questlist_blocks(text):
+    pattern = re.compile(r'QuestList\s*\[\s*(\d+)\s*\]\s*=\s*\{')
+    for match in pattern.finditer(text):
+        qid = int(match.group(1))
+        open_pos = match.end() - 1
+        end = find_block_end(text, open_pos)
+        if end < 0:
+            print(f"[warn] Could not find end of QuestList[{qid}] block; skipping.")
+            continue
+        while end < len(text) and text[end] in " \t\r\n":
+            end += 1
+        yield qid, match.start(), end, text[match.start():end].rstrip() + "\n"
+
 def find_questlist_blocks(text):
     """Extract all QuestList[ID] = { ... } blocks."""
-    # Match blocks starting with QuestList[NNNN] = {
-    pattern = re.compile(
-        r'(QuestList\s*\[\s*(\d+)\s*\]\s*=\s*\{.*?\n\s*\})',
-        re.DOTALL
-    )
     blocks = {}
-    for m in pattern.finditer(text):
-        qid = int(m.group(2))
-        blocks[qid] = m.group(1).rstrip() + "\n"
+    for qid, _start, _end, block in iter_questlist_blocks(text):
+        blocks[qid] = block
     return blocks
+
+def remove_campaign_blocks(text):
+    spans = [
+        (start, end)
+        for qid, start, end, _block in iter_questlist_blocks(text)
+        if CAMPAIGN_ID_START <= qid <= CAMPAIGN_ID_END
+    ]
+    if not spans:
+        return text
+    chunks = []
+    pos = 0
+    for start, end in spans:
+        chunks.append(text[pos:start])
+        pos = end
+    chunks.append(text[pos:])
+    return "".join(chunks)
 
 def load_campaign_blocks():
     """Load the campaign quest blocks from the best available source."""
@@ -93,12 +143,7 @@ def patch_file(target_path, blocks, backup=True):
             new_content += blocks[qid] + "\n"
     else:
         # Remove any existing campaign-range entries first (to allow clean overwrite)
-        cleaned = re.sub(
-            rf'QuestList\s*\[\s*({CAMPAIGN_ID_START}|{CAMPAIGN_ID_END}|20[0-2]\d{{2}})\s*\]\s*=\s*\{{\s*.*?\n\s*\}}\s*\n?',
-            '',
-            original,
-            flags=re.DOTALL
-        )
+        cleaned = remove_campaign_blocks(original)
 
         # Insert after the first "QuestList = QuestList or {}" (or the first QuestList = { )
         insert_pos = questlist_decl.end()

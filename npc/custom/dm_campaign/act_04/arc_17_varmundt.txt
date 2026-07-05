@@ -11,12 +11,17 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20211 Illusion Investigation    (arc tracker / Amdarais)
-//=   20212 Sages Legacy              (Aliza x20)
+//=   20212 Sage's Legacy Dailies     (Aliza x20)
 //=   20213 Tartaros Dive             (Celia x15)
 //=   20214 Biosphere Sample Rotation (The Administrator)
+//=   20215 Corridor of Phantom Map   (phantom-memory route)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc17_started, dm_arc17_admin_purged,
+//=   dm_arc17_started, dm_arc17_sage_stabilized,
+//=   dm_arc17_sage_components, dm_arc17_sage_forbidden,
+//=   dm_arc17_corridor_observed, dm_arc17_corridor_baited,
+//=   dm_arc17_corridor_sold, dm_arc17_tartaros_safe,
+//=   dm_arc17_admin_purged,
 //=   dm_arc17_admin_negotiated, dm_arc17_admin_running,
 //=   dm_arc17_beta_killed
 //===========================================================
@@ -52,6 +57,8 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20212, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20213, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20215, 1;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
@@ -89,15 +96,17 @@ S_StartArc:
 	}
 	next();
 	mes("[Tressa]");
-	mes("The Aliza specimens in the outer labs are escaped test subjects from when the Administrator locked down the facility. They were in ongoing experiments — they have been in the labs alone for a very long time. And the Celia security constructs in the inner corridors are the Administrator's active defense layer.");
+	mes("The Aliza specimens in the outer labs are escaped test subjects from when the Administrator locked down the facility. The Celia security constructs are the active defense layer. The Corridor of Phantom is worse: a map made out of memory traps.");
 	callfunc("DM_InstanceSetFlag", "dm_arc17_started", 1);
 	callfunc("DM_InstanceQuestStart", 20211);
 	callfunc("DM_InstanceQuestStart", 20212);
 	callfunc("DM_InstanceQuestStart", 20213);
+	callfunc("DM_InstanceQuestStart", 20215);
 	next();
 	mes("^3355FF[Quest started: Illusion Investigation]^000000");
-	mes("^3355FFSages Legacy - contain 20 Aliza escaped from the outer lab sections.^000000");
+	mes("^3355FFSage's Legacy Dailies - contain 20 Aliza escaped from the outer lab sections.^000000");
 	mes("^3355FFTartaros Dive - disable 15 Celia security constructs in the inner corridors.^000000");
+	mes("^3355FFCorridor of Phantom Map - scout the mansion's hostile memory route.^000000");
 	close();
 
 S_TurnIns:
@@ -110,18 +119,28 @@ S_TurnIns:
 		mes("[Tressa]");
 		mes("The Aliza subjects. They were in ongoing experiments when the lockdown happened. Three centuries in isolation, still following the survival patterns from their last instructions. The Administrator kept the labs running. It just had no protocol for specimen welfare.");
 		next();
-		switch (select("Document their conditions for the ethics record.", "They were effectively maintaining themselves. Survival is adaptation.", "Varmundt did not anticipate a three-century lockdown.")) {
+		switch (select("Prioritize rescue and stabilization tasks.", "Prioritize usable components.", "Recover the forbidden notes.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc17_sage_stabilized", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_sage_components", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_sage_forbidden", 0);
 			mes("[Tressa]");
-			mes("Already done. The ethics documentation will be significant. Varmundt's research was not cruel by his era's standards. By current standards, it is difficult to read.");
+			mes("Rescue and stabilization. Slower, but safer. Varmundt's work needs that correction badly.");
 			break;
 		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc17_sage_components", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_sage_stabilized", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_sage_forbidden", 0);
 			mes("[Tressa]");
-			mes("Yes. The lab environment changed over three centuries but they adapted. There is actually useful data in their adaptation record. The Administrator catalogued everything.");
+			mes("Faster weapon readiness. I understand the appeal. I am also writing down exactly what we skipped to get it.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc17_sage_forbidden", 1);
+			callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_sage_stabilized", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_sage_components", 0);
 			mes("[Tressa]");
-			mes("He anticipated five years maximum. The notes say 'interim holding.' Three centuries of interim. I find that very human of him.");
+			mes("Forbidden notes are usually forbidden for reasons. Sometimes those reasons are cowardice. Sometimes they are casualty reports.");
 			break;
 		}
 		next();
@@ -152,9 +171,45 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20212) == 2 && questprogress(20213) == 2 && questprogress(20214) == 0) {
+	if (questprogress(20215) == 1 && questprogress(20215, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20215);
+		callfunc("DM_PartyExp", 580000, 290000);
+		callfunc("DM_GivePartyZeny", 47000);
+		.@paid = 1;
 		mes("[Tressa]");
-		mes("The outer and inner corridors are clear. The Administrator's terminal is in the power wing — ba_pw03. The system is aware you are here. It has been aware since you entered.");
+		mes("The Phantom-Phase Map held its shape. That means the Corridor remembered you without rewriting the route behind you. That is rare.");
+		next();
+		switch (select("Map by careful observation.", "Bait the defenses to learn faster.", "Sell the route data to Vale.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc17_corridor_observed", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_tartaros_safe", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_corridor_baited", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_corridor_sold", 0);
+			mes("[Tressa]");
+			mes("A patient map. Tartaros access will be safer because you did not teach the Corridor to hate you faster.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc17_corridor_baited", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_corridor_observed", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_corridor_sold", 0);
+			mes("[Tressa]");
+			mes("Fast, useful, and slightly angry now. The route works. Some traps know you know.");
+			break;
+		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc17_corridor_sold", 1);
+			callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_corridor_observed", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc17_corridor_baited", 0);
+			mes("[Tressa]");
+			mes("Vale will profit from it. Alpha will notice. The map is no less accurate because it was sold, but the mansion will trust you less.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20212) == 2 && questprogress(20213) == 2 && questprogress(20215) == 2 && questprogress(20214) == 0) {
+		mes("[Tressa]");
+		mes("The outer labs, inner corridors, and Phantom route are clear. The Administrator's terminal is in the power wing — ba_pw03. The system is aware you are here. It has been aware since you entered.");
 		next();
 		mes("[Tressa]");
 		mes("It will not attack during the conversation. Its directive is data preservation, not aggression. It will only fight if you try to extract data without authorization. The question is what authorization looks like to a three-century-old automated system.");
@@ -179,19 +234,19 @@ S_TurnIns:
 
 	if (.@paid) {
 		mes("[Tressa]");
-		mes("Both lab contracts need to be complete before the core. The Administrator monitors access. It needs to see the corridor threat resolved before it will accept a conversation.");
+		mes("The lab contracts and Phantom map need to be complete before the core. The Administrator monitors access. It needs to see the route threat resolved before it will accept a conversation.");
 		close();
 	}
 
 	mes("[Tressa]");
-	if (questprogress(20212) == 1 && questprogress(20213) == 1)
-		mes("The Aliza containment and the Celia disable are both still active.");
-	else if (questprogress(20212) == 1)
-		mes("Sages Legacy is still open. Aliza specimens in the outer lab sections.");
+	if (questprogress(20212) == 1)
+		mes("Sage's Legacy Dailies is still open. Aliza specimens in the outer lab sections.");
 	else if (questprogress(20213) == 1)
 		mes("Tartaros Dive is still open. Celia constructs in the inner corridors.");
+	else if (questprogress(20215) == 1)
+		mes("Corridor of Phantom Map is still open. The mansion's memory route needs a stable chart.");
 	else
-		mes("Both done. The Administrator's terminal is in ba_pw03.");
+		mes("All support routes are done. The Administrator's terminal is in ba_pw03.");
 	close();
 }
 

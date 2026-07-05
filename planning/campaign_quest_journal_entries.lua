@@ -851,6 +851,16 @@ QuestList[20204] = {
 	},
 }
 
+QuestList[20205] = {
+	Title = "Invaded Prontera Relief",
+	Description = {
+		"Invaded Prontera Relief. Relief work must stay neutral while the houses circle the throne.",
+		"Location: Prontera relief line",
+		"DM-spawned relief wave: Corrupted Steward, Corrupted Monk, and Corrupted Palace Guard.",
+		"^3355FFSummary: Invaded Prontera Relief.^000000",
+	},
+}
+
 QuestList[20211] = {
 	Title = "Illusion Investigation",
 	Description = {
@@ -863,13 +873,13 @@ QuestList[20211] = {
 }
 
 QuestList[20212] = {
-	Title = "Sages Legacy",
+	Title = "Sage's Legacy Dailies",
 	Description = {
-		"The tools that sealed the demons are being recalibrated in secret. Varmundt's old machines are waking up with new instructions from the labs.",
+		"Sage's Legacy Dailies. Varmundt's old machines are waking up with new instructions from the labs.",
 		"Location: Biolabs / Mansion",
-		"Mob x20",
-		"Summary: Arc 17. Choices here affect dm_varmundt_tools_stabilized gate for the finale.",
-		"^3355FFSummary: Sages Legacy.^000000",
+		"Mob: Aliza x20",
+		"Branches: rescue/stabilization, components, or forbidden notes.",
+		"^3355FFSummary: Sage's Legacy Dailies.^000000",
 	},
 }
 
@@ -891,6 +901,15 @@ QuestList[20214] = {
 		"^3355FFSummary: Biosphere Sample Rotation.^000000",
 	},
 }
+QuestList[20215] = {
+	Title = "Corridor of Phantom Map",
+	Description = {
+		"Corridor of Phantom Map. The route through the phantom corridor can be studied, baited, or sold.",
+		"Location: Varmundt Power Corridor",
+		"DM-spawned corridor wave: Shadow of Illusion, Runaway Book, and Dark Illusion.",
+		"^3355FFSummary: Corridor of Phantom Map.^000000",
+	},
+}
 
 QuestList[20221] = {
 	Title = "The Queen the Drowned Chose",
@@ -908,8 +927,8 @@ QuestList[20222] = {
 	Description = {
 		"The Dead You Failed. Every ghost has your name on its ledger.",
 		"Location: Niflheim",
-		"Mob: Khalitzburg x15",
-		"Hunt: @dm warp nif_fild 100 100",
+		"Mob: Dullahan x15",
+		"Hunt: @dm warp nif_fild01 150 150",
 		"^3355FFSummary: The Dead You Failed.^000000",
 	},
 }
@@ -918,10 +937,30 @@ QuestList[20223] = {
 	Title = "Banquet Hall Procession",
 	Description = {
 		"Banquet Hall Procession. The queen's court does not eat. It remembers.",
-		"Location: Niflheim palace",
-		"Boss: Himmelmez encounter",
-		"Bargain choice gate for Queen's Bargain ending.",
+		"Location: Niflheim field / banquet route",
+		"Mob: Gibbet x15",
+		"Hunt: @dm warp nif_fild02 150 150",
 		"^3355FFSummary: Banquet Hall Procession.^000000",
+	},
+}
+
+QuestList[20224] = {
+	Title = "Illusion Grief Rotation",
+	Description = {
+		"Illusion Grief Rotation. Niflheim's overflow turns old grief into repeatable memory bleed.",
+		"Location: Niflheim grief route",
+		"Mob: Quve x10, Lude x10, Hylozoist x10",
+		"^3355FFSummary: Illusion Grief Rotation.^000000",
+	},
+}
+
+QuestList[20225] = {
+	Title = "Opera House Encore",
+	Description = {
+		"Opera House Encore. The dead perform Himmelmez's rise until someone interrupts, watches, or joins.",
+		"Location: Niflheim opera-route stand-ins",
+		"Mob: Loli Ruri x8, Disguise x10, Bloody Murderer x8",
+		"^3355FFSummary: Opera House Encore.^000000",
 	},
 }
 
