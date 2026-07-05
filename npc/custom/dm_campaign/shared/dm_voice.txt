@@ -1,0 +1,138 @@
+// Seal Cascade DM voice tools: improvised, attributed NPC dialogue.
+//
+// Lets the DM type dialogue live instead of pre-scripting every line in a beat.
+//
+//   @dm say <speaker> | <text>   -> "<speaker> : <text>" shown over the DM to
+//                                   everyone in view (the session party).
+//   @dm say @<npcname> <text>    -> makes an on-map NPC speak the line, using
+//                                   its own display name.
+//   @dm say <text>               -> a bare line over the DM, no speaker prefix.
+//
+// Logic lives in DM_Say so the @dm dispatcher and the @dmsay alias share it.
+
+// Trim leading/trailing spaces without touching interior spacing.
+function	script	DM_Trim	{
+	.@s$ = getarg(0, "");
+	.@len = getstrlen(.@s$);
+
+	.@i = 0;
+	while (.@i < .@len && charat(.@s$, .@i) == " ")
+		++.@i;
+
+	.@j = .@len - 1;
+	while (.@j >= .@i && charat(.@s$, .@j) == " ")
+		--.@j;
+
+	if (.@j < .@i)
+		return "";
+
+	return substr(.@s$, .@i, .@j);
+}
+
+function	script	DM_Say	{
+	.@raw$ = callfunc("DM_Trim", getarg(0, ""));
+
+	if (.@raw$ == "") {
+		dispbottom("[DM] Usage: @dm say <speaker> | <text>   (or  @dm say @<npc> <text>)");
+		return 0;
+	}
+
+	// NPC-puppet form: @<npcname> <line>
+	if (charat(.@raw$, 0) == "@") {
+		.@sp = strpos(.@raw$, " ", 0);
+		if (.@sp < 2) {
+			dispbottom("[DM] Usage: @dm say @<npcname> <text>");
+			return 0;
+		}
+		.@npc$ = substr(.@raw$, 1, .@sp - 1);
+		.@line$ = callfunc("DM_Trim", substr(.@raw$, .@sp + 1, getstrlen(.@raw$) - 1));
+		if (.@line$ == "") {
+			dispbottom("[DM] Nothing for " + .@npc$ + " to say.");
+			return 0;
+		}
+		npctalk(.@line$, .@npc$, true);
+		dispbottom("[DM] " + .@npc$ + ": " + .@line$);
+		return 1;
+	}
+
+	// Speaker | text form.
+	.@bar = strpos(.@raw$, "|", 0);
+	if (.@bar >= 0) {
+		.@speaker$ = (.@bar > 0 ? callfunc("DM_Trim", substr(.@raw$, 0, .@bar - 1)) : "");
+		.@line$ = callfunc("DM_Trim", substr(.@raw$, .@bar + 1, getstrlen(.@raw$) - 1));
+	} else {
+		.@speaker$ = "";
+		.@line$ = .@raw$;
+	}
+
+	if (.@line$ == "") {
+		dispbottom("[DM] Nothing to say.");
+		return 0;
+	}
+
+	.@msg$ = (.@speaker$ != "" ? .@speaker$ + " : " : "") + .@line$;
+
+	// A player's unit GID is their account id; voice the line over the DM to
+	// everyone in view (the default AREA send target).
+	unittalk(getcharid(CHAR_ID_ACCOUNT), .@msg$, false);
+	dispbottom("[DM] said: " + .@msg$);
+	return 1;
+}
+
+// DM_Secret("<playername>", "<text>")
+// Sends a private styled message only to the named online player.
+// The DM receives a confirmation dispbottom. Private asides for table secrets.
+function	script	DM_Secret	{
+	.@player$ = callfunc("DM_Trim", getarg(0, ""));
+	.@text$   = callfunc("DM_Trim", getarg(1, ""));
+
+	if (.@player$ == "" || .@text$ == "") {
+		dispbottom("[DM] Usage: @dm secret <player> <text>");
+		return 0;
+	}
+
+	.@acc = getcharid(CHAR_ID_ACCOUNT, .@player$);
+	if (.@acc <= 0) {
+		dispbottom("[DM] Player '" + .@player$ + "' is not online.");
+		return 0;
+	}
+
+	// Private delivery to target only. "message" works by name without attach.
+	message(.@player$, "^3355FF[The DM leans in to you...] " + .@text$ + "^000000");
+
+	// DM confirmation (visible only to issuer).
+	dispbottom("[DM] secret to " + .@player$ + ": " + .@text$);
+	return 1;
+}
+
+-	script	DM_VoiceConsole	FAKE_NPC,{
+	end;
+
+OnInit:
+	bindatcmd("dmsay", strnpcinfo(NPC_NAME_UNIQUE)+"::OnSay", 1, 99, 1);
+	bindatcmd("dmsecret", strnpcinfo(NPC_NAME_UNIQUE)+"::OnSecret", 1, 99, 1);
+	end;
+
+OnSay:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	.@text$ = "";
+	for (.@i = 0; .@i < .@atcmd_numparameters; ++.@i)
+		.@text$ += (.@i > 0 ? " " : "") + .@atcmd_parameters$[.@i];
+
+	callfunc("DM_Say", .@text$);
+	end;
+
+OnSecret:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	.@player$ = .@atcmd_parameters$[0];
+	.@text$ = "";
+	for (.@i = 1; .@i < .@atcmd_numparameters; ++.@i)
+		.@text$ += (.@i > 1 ? " " : "") + .@atcmd_parameters$[.@i];
+
+	callfunc("DM_Secret", .@player$, .@text$);
+	end;
+}

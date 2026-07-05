@@ -829,7 +829,7 @@ moc_para01,26,185,4	duplicate(Suhnbi#cash)	Suhnmi#eden	4_M_03
 
 //- HD Refiner "Blacksmith Mighty Hammer" (re/merchants/hd_refiner.txt) -
 // A combination of the +7~9 and +10 and up refiner, currently a placeholder.
-moc_para01,38,185,4	duplicate(MightyHammer)	Mighty Hammer#ed	4_M_DWARF
+moc_para01,38,185,4	duplicate(MightyHammer#re)	Mighty Hammer#ed	4_M_DWARF
 
 //- Refiner Effect -
 -	script	#eden_refine_effect	FAKE_NPC,{

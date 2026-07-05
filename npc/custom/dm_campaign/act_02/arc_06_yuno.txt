@@ -3,10 +3,10 @@
 //===== By: ==================================================
 //= Seal Cascade DM tooling
 //===== Description: =========================================
-//= Yuno floats on a Ymir shard. Scholars have measured the
-//= cascade and given it a number the city refuses to hear.
-//= Director Krenn is paid to keep Vahl's research buried.
-//= The Mistress MVP in Juperos feeds on the fragment below.
+//= Yuno's crisis, adapted from the Obsidian Dialogue Script.
+//= Doctor Vahl measures the cascade. Gramps stages the Juperos
+//= descent. A Whisperer Engineer has re-tuned Krenn's extraction
+//= rig into a siphon, and the Mistress nests in the leak.
 //=
 //= Quests (db/quest_db.conf):
 //=   20101 The Heart That Holds the City  (arc tracker / Mistress)
@@ -48,11 +48,19 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20101, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20101, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20103, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20104, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
+	mes("^3355FF*A woman stares intently at a vibrating brass instrument, not looking up as you approach.*^000000");
+	next();
 	mes("[Doctor Vahl]");
-	mes("You are not Rekenber's private security. That is already better than most of my visitors today.");
+	mes("You feel it, don't you? The Guild down south thinks it's just monster migrations, but the math doesn't lie. The dimensional weight of the world is dropping. I have measured how long we have left, and the Academy filed my number as a typo.");
 	next();
 	if (countitem(50001) > 0 || dm_arc01_sigil_ring_obtained) {
 		mes("^3355FF*The Sigil Ring grows warmer here, not colder. Yuno hums on a frequency the ring agrees with.*^000000");
@@ -63,39 +71,36 @@ S_StartArc:
 		mes("Brode's gray courier and the northern account? That money leads here. Director Krenn's suppression budget comes from the same Yuno investor chain. You already pulled that thread.");
 		next();
 	}
-	mes("[Vahl]");
-	mes("I am Doctor Vahl. I measure the dimensional instability in the Ymir shard that holds this city up.");
-	next();
-	mes("[Vahl]");
-	mes("The Republic built everything on a fragment the old gods used as a hinge. Fine. But the cascade is interfering with the fragment's resonance. I have the number now. The city has years, not decades.");
-	next();
-	switch (select("What does Yuno need from us?", "Who is paying to suppress this?", "Show us the data.")) {
+	switch (select("We know. The seals are weakening. We're trying to stop it.", "Are you hiring us to fix a machine, or hunt a monster?", "Who could siphon energy from a floating city?")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc06_vahl_trust", 1);
 		mes("[Vahl]");
-		mes("Atmospheric readings from the Harpy migration routes. They sense the disturbance before instruments do. And machine parts from Juperos — the ruins below are still reacting to the fragment.");
+		mes("Seals? Magic? Don't be primitive. It's physics! The harmonic frequency of the Ymir Fragment keeping this city afloat is de-syncing. Someone is actively drawing on the continent's anchor — and the readings spiked the week Director Krenn's 'sampling' rig went down the shaft.");
 		break;
 	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_vahl_trust", 1);
 		mes("[Vahl]");
-		mes("Director Krenn. Rekenber pays him to file my readings as 'within acceptable parameters.' The city floats on denial as much as the shard.");
+		mes("Both! A massive energy signature is surging from the Juperos Ruins. If they drain the Ymir Fragment, Yuno drops out of the sky. I need you to go down there and unplug whatever Krenn plugged in.");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc06_vahl_trust", 1);
 		mes("[Vahl]");
-		mes("This graph. The resonance frequency is diverging from baseline. That line will intersect the cascade frequency in... I am still writing the decimal. It is not a long one.");
+		mes("Someone with a board seat and no fear of consequences — Director Aldous Krenn. And someone who understands pre-industrial tech better than we do: my assistants found a gray robe in the maintenance shafts. Your 'magic' cult has discovered science, it seems. The two are not unrelated.");
 		break;
 	}
 	next();
 	mes("[Vahl]");
-	mes("Help me gather field evidence. Harpy weather logs from the sky migration, and Venatu components from the Juperos ruins. Then I can finish the report and we see what Krenn does with it.");
+	mes("Help me gather field evidence. Harpy weather logs from the sky migration, Venatu components from the Juperos ruins, and a heat index from the Norgroad vents. Then I can finish the report and we see what Krenn does with it.");
 	callfunc("DM_InstanceSetFlag", "dm_arc06_started", 1);
 	callfunc("DM_InstanceQuestStart", 20101);
 	callfunc("DM_InstanceQuestStart", 20103);
 	callfunc("DM_InstanceQuestStart", 20104);
+	callfunc("DM_InstanceQuestStart", 20105);
 	next();
 	mes("^3355FF[Quest started: The Heart That Holds the City]^000000");
 	mes("^3355FFHarpy Weather Log - gather migration data from 20 Harpy in the Yuno fields.^000000");
 	mes("^3355FFJuperos Parts Requisition - recover 20 Venatu components from the Juperos ruins.^000000");
+	mes("^3355FFNorgroad Heat Index - log the vent pulse from 20 Anacondaq in Norgroad.^000000");
 	close();
 
 S_TurnIns:
@@ -157,7 +162,38 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20103) == 2 && questprogress(20104) == 2 && questprogress(20102) == 0) {
+	if (questprogress(20105) == 1 && questprogress(20105, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20105);
+		callfunc("DM_PartyExp", 200000, 95000);
+		callfunc("DM_GivePartyZeny", 16000);
+		.@paid = 1;
+		mes("[Vahl]");
+		mes("The heat-glass vials. Look — the wax gradations melted into a clean sine wave. Norgroad isn't just hot. It's breathing. In time with the city's failing anchor.");
+		next();
+		switch (select("Stabilize the dangerous vents.", "Sell vent-taps to the foundries.", "Overcharge the readings for funding.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc06_norgroad_choice", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc06_vents_stabilized", 1);
+			mes("[Vahl]");
+			mes("Slower work. Safer dungeon. The facilities office will sign your names to the savings and forget them by next quarter.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc06_norgroad_choice", 2);
+			callfunc("DM_InstanceSetFlag", "dm_arc06_needle_degraded", 1);
+			mes("[Vahl]");
+			mes("Excellent zeny. Also a changed rhythm. Whatever clean reading I had from those vents, I no longer have.");
+			break;
+		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc06_norgroad_choice", 3);
+			callfunc("DM_InstanceSetFlag", "dm_arc06_audit_incoming", 1);
+			mes("[Vahl]");
+			mes("The money will arrive. So will an audit. Krenn's faction times those well.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20103) == 2 && questprogress(20104) == 2 && questprogress(20105) == 2 && questprogress(20102) == 0) {
 		mes("[Vahl]");
 		mes("Both datasets are in. The report is written: resonance divergence, migration anomaly, and a timeline the Republic will not enjoy.");
 		next();
@@ -212,15 +248,46 @@ S_TurnIns:
 	}
 
 	mes("[Vahl]");
-	if (questprogress(20103) == 1 && questprogress(20104) == 1)
-		mes("The Harpy logs and the Juperos parts are both still open. The shard readings do not improve while we wait.");
-	else if (questprogress(20103) == 1)
-		mes("The Harpy migration contract is still open. They are banking south from the outer fields.");
-	else if (questprogress(20104) == 1)
-		mes("The Juperos parts requisition is still open. The Venatu down there know what they are guarding.");
+	if (questprogress(20103) == 1 || questprogress(20104) == 1 || questprogress(20105) == 1)
+		mes("The Harpy logs, the Juperos parts, and the Norgroad index are all field evidence. The shard readings do not improve while we wait.");
 	else
-		mes("Finish both contracts and come back. The number is waiting.");
+		mes("Finish the contracts and come back. The number is waiting.");
 	close();
+}
+
+// ── "Gramps" — Eden Group Liaison, Juperos forward camp ────────────────────
+juperos_01,30,30,4	script	Gramps#dm06	4_M_TWOLDMAN,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (dm_arc06_gramps_met) {
+		mes("[Gramps]");
+		mes("Deeper you go, older the tech gets. Watch your footing.");
+		close();
+	}
+
+	mes("^3355FF*An elderly, battle-scarred man is setting up a forward camp amidst the hostile Venatu.*^000000");
+	next();
+	mes("[Gramps]");
+	mes("Well, look what the cat dragged in. Wynne said you kids were making a name for yourselves. Welcome to the big leagues. The monsters down here don't bleed—they tick.");
+	next();
+	switch (select("We have to stop the energy siphon before Yuno falls.", "Wynne sent you? Are we getting Guild rates for this?")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_gramps_path", 1);
+		mes("[Gramps]");
+		mes("Good luck. The deeper you go, the older the tech gets. The cultists bypassed the security, but left the automated defenses active for you. Clean up the Venatu while you're at it. I'll pay for the scrap.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_gramps_path", 2);
+		mes("[Gramps]");
+		mes("Guild rates, plus a hazard bonus. But don't get cocky. You're not fighting sewer rats anymore. Stay sharp.");
+		break;
+	}
+	callfunc("DM_InstanceSetFlag", "dm_arc06_gramps_met", 1);
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
 }
 
 // ── Director Aldous Krenn — The Republic's Money ───────────────────────
@@ -254,21 +321,21 @@ yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
 	next();
 	switch (select("Sign the document. This city deserves the truth.", "We will take the data to a buyer who is not Rekenber.", "What does staying quiet pay?")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
+		callfunc("DM_Decide", "arc06.krenn", "exposed");
 		mes("[Krenn]");
 		mes("You want me to sign my own career's end so Yuno can panic in an orderly fashion. No. But you do not need my signature.");
 		next();
 		mes("^3355FF*Krenn's refusal goes on record. The document moves to the Council over his objection.*^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
+		callfunc("DM_Decide", "arc06.krenn", "exposed");
 		mes("[Krenn]");
 		mes("The Schwarzwald naturalist journals will print anything. And I will find a reason to have you removed from the city before morning.");
 		next();
 		mes("^3355FF*The threat is hollow. Vahl's data leaves through the naturalist circuit.*^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_bribed", 1);
+		callfunc("DM_Decide", "arc06.krenn", "bribed");
 		callfunc("DM_GivePartyZeny", 25000);
 		mes("[Krenn]");
 		mes("Now you are speaking the Republic's language. Twenty-five thousand zeny. Consider it a retainer for services rendered in the public interest.");
@@ -276,8 +343,6 @@ yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
 		mes("^3355FF*25,000 zeny changes hands. Krenn files the report under 'acceptable variance.'*^000000");
 		break;
 	}
-	callfunc("DM_InstanceQuestComplete", 20102);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 605);
 	next();
 	mes("^3355FF[The Number Nobody Wants resolved. The Juperos set-piece is now accessible.]^000000");
 	close();
@@ -285,6 +350,87 @@ yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20102, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
+}
+
+// variance memo - Yuno's bureaucratic euphemism for the cascade
+yuno,158,183,3	script	Variance Memo#dm06	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc06_started) {
+		mes("^3355FF*A clipped bureau memo is posted here, but the useful page has already been removed.*^000000");
+		close();
+	}
+
+	mes("^3355FF*A Council memorandum is pinned to the post with two different seals on it: Research Bureau and Finance Oversight. The tone is careful in the way panic usually is when dressed for office.*^000000");
+	next();
+	mes("^0000AA[Managed Variance Memorandum]^000000");
+	mes("Subject: floating-anchor oscillation remains within acceptable variance provided public distribution of numerical findings is delayed pending investor review.");
+	next();
+	mes("^0000AA[Managed Variance Memorandum]^000000");
+	mes("Recommendation: refer to all dimensional instability as infrastructural drift until a more favorable term is approved.");
+	next();
+	mes("^0000AA[Managed Variance Memorandum]^000000");
+	mes("Handwritten note at the bottom: if the city is still in the air, no one will thank us for honesty. They will only notice if we choose it too early.");
+	close();
+}
+
+// ── Cultist Engineer — Juperos Core siphon, pre-Mistress set-piece ─────────
+juperos_01,145,145,4	script	Cultist Engineer#dm	1_M_SIZ,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (questprogress(20101) != 1 || !(dm_arc06_krenn_bribed || dm_arc06_krenn_exposed)) {
+		mes("^3355FF*The extraction rig hums somewhere ahead, past locked bulkheads.*^000000");
+		close();
+	}
+	if (dm_arc06_mistress_killed) {
+		mes("^3355FF*The rig lies in pieces. The engineer is long gone.*^000000");
+		close();
+	}
+	if (dm_arc06_engineer_confronted) {
+		mes("^3355FF*The containment field crackles, weaker than before.*^000000");
+		close();
+	}
+
+	mes("^3355FF*Director Krenn's extraction rig stands drilled into the vault above the city's anchor — corporate plates, Rekenber serials, a board-approved theft in progress. A Whisperer Engineer embedded in Krenn's crew has re-tuned the rig into a siphon, and Mistress, drawn by the leaking power, has nested in the shaft — penned behind a crackling containment field the engineer is bleeding as an improvised battery.*^000000");
+	next();
+	mes("[Cultist Engineer]");
+	mes("The frequency is too high! The Voice said the insect-queen would stabilize the draw, but she's tearing the conduit apart!");
+	next();
+	switch (select("Shut it down! You're going to bring Yuno crashing down on all of us!", "I'm not dismantling the machine. I'm dismantling you.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_engineer_path", 1);
+		mes("[Cultist Engineer]");
+		mes("That's the point! A falling city generates enough kinetic and magical force to crack the northern seals wide open!");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_engineer_path", 2);
+		mes("[Cultist Engineer]");
+		mes("Fools! If you kill me, the containment field drops! The Queen will slaughter you!");
+		break;
+	}
+	next();
+	mes("^3355FF*Somewhere behind the engineer, Director Krenn watches from a catwalk, already gauging the exits.*^000000");
+	next();
+	switch (select("Focus on stopping Mistress before the field fails.", "Chase Krenn before he grabs a sample and runs.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_escaped", 1);
+		mes("^3355FF*Krenn triggers his emergency extraction and vanishes up the shaft with a fragment sample and the rest of the cult's money-map.*^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_cornered", 1);
+		mes("^3355FF*You go for Krenn. The containment field drops unattended, and the Queen answers the sudden freedom furious.*^000000");
+		break;
+	}
+	callfunc("DM_InstanceSetFlag", "dm_arc06_engineer_confronted", 1);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 650);
+	next();
+	mes("^3355FF*The containment field drops. The buzzing grows from an irritating hum to a deafening roar.*^000000");
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
@@ -300,5 +446,39 @@ OnMistressDead:
 	instance_announce(instance_id(), "^3355FF[DM] Mistress falls. The Ymir fragment shudders, but the city above holds... for now.^000000", bc_all);
 	sleep(2000);
 	instance_announce(instance_id(), "^FF6600[DM] The cascade has a measured number. The Ash Vacuum thread opens. Act II continues north.^000000", bc_all);
+	end;
+}
+
+// ── Anchor-Shard — post-Mistress epilogue choice ────────────────────────────
+juperos_01,152,150,4	script	Anchor-Shard#dm	4_ENERGY_BLUE,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc06_mistress_killed) {
+		mes("^3355FF*The vault above the shaft still hums, unopened.*^000000");
+		close();
+	}
+	if (dm_arc06_anchor_reseated || dm_arc06_anchor_kept) {
+		mes("^3355FF*The fragment above is quiet now, whichever way you left it.*^000000");
+		close();
+	}
+
+	mes("^3355FF*The Mistress's hive has collapsed into embers. Beneath the wreckage, a thumb-sized chip of the Ymir-fragment pulses warm, like a living heartbeat.*^000000");
+	next();
+	switch (select("Re-seat the Anchor-Shard. Save the city.", "Keep the Anchor-Shard.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_anchor_reseated", 1);
+		mes("^3355FF*The shard slots back into the fragment. Far above, the floating city's groan settles into a steady hum.*^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc06_anchor_kept", 1);
+		if (dm_arc04_pilgrim_catechism)
+			callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
+		mes("^3355FF*You pocket a sliver of the world's own heart. The city stays aloft — barely, and visibly weakened.*^000000");
+		break;
+	}
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }

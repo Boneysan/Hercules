@@ -74,12 +74,15 @@ back to solo behavior when needed.
 
 ### DM Console
 
-The in-game DM layer is script-first and exposed through GM level 60 commands:
+The in-game DM layer is script-first and exposed through DM-group commands
+(group id 5, via `tools/promote-dm.sh`):
 
 - `@dm` / shortcut commands for mode, reward, flag, quest, beat, story, spawn,
   hazard, cleanup, warp, recall, and instance control
 - `@dmbeat` menus for all 19 arcs
 - `@dmflag arc01` through `@dmflag arc19` plus matching clear shortcuts
+- `@dmflag sync <player>` to copy registered story flags from a present party
+  member onto returning online members
 - `@roll`, `@roll hidden`, `@roll fudge`, and `@roll override`
 
 Use `planning/dm-tooling.md` for command syntax and examples.
@@ -138,7 +141,7 @@ paths:
 
 - Arc 8 Dark Lord adds react to Manfred outcomes.
 - Arc 11 Randgris court adds react to Bjorn outcomes.
-- Arc 13 supports both Beelzebub combat and Carrion coalition deal/no-fight.
+- Arc 13 Beelzebub support waves react to Carrion killed vs minutes bought.
 - Arc 15 Thanatos echo adds react to Pratt outcomes.
 - Arc 16 resolves Bijou/Maret based on Rina's outcome.
 - Arc 17 exposes Administrator purged, negotiated, and running outcomes.

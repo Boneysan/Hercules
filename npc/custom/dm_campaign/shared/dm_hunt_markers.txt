@@ -1,0 +1,593 @@
+//=============================================================================
+//= Seal Cascade campaign hunt quest map markers
+//= Invisible FAKE_NPC markers placed at monster spawn areas so players get
+//= yellow questinfo arrows pointing to the hunt zone while a hunt quest is
+//= in progress (state 1). One NPC per dungeon/field zone; quests sharing the
+//= same map are grouped into a single NPC.
+//=============================================================================
+
+// ── Arc 1 ─────────────────────────────────────────────────────────────────
+
+// Quest 20006: First Field Test (Fluff/Jellopy/Clover) → prt_fild08
+prt_fild08,200,200,0	script	Hunt Marker#dm_h_a01i	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20006, 1;
+	end;
+}
+
+// Quest 20002: Contract: Cellar Vermin (Tarou x10) → prt_sewb2 (60 Tarou)
+prt_sewb2,100,100,0	script	Hunt Marker#dm_h_arc01a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20002, 1;
+	end;
+}
+
+// Quest 20003: Field Contract: Rockers and Rumors
+// Turn in Grasshopper's Leg / Animal Skin / Mushroom Spore from prt_fild07 mobs
+prt_fild07,200,200,0	script	Hunt Marker#dm_h_arc01b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20003, 1;
+	end;
+}
+
+// Quest 20005: The Goat-Headed Sign (Deviruchi MVP) → prt_sewb4 (story map)
+// Deviruchi also spawns in gef_dun02 but prt_sewb4 is the campaign set-piece
+prt_sewb4,100,100,0	script	Hunt Marker#dm_h_arc01c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20005, 1;
+	end;
+}
+
+// ── Arc 2 ─────────────────────────────────────────────────────────────────
+
+// Quest 20008: Mushroom Ring Patrol (Spore x? → MobId 1014) → pay_fild08 (140 Spore)
+pay_fild08,200,200,0	script	Hunt Marker#dm_h_arc02a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20008, 1;
+	end;
+}
+
+// Quest 20009: Bone Tag Turn-In (Skeleton x? → MobId 1076) → pay_dun00 (35 Skeleton)
+pay_dun00,100,100,0	script	Hunt Marker#dm_h_arc02b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20009, 1;
+	end;
+}
+
+// Quest 20012: What the Ancestors Won't Say (Moonlight Flower MVP) → pay_dun04
+pay_dun04,120,115,0	script	Hunt Marker#dm_h_arc02c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20012, 1;
+	end;
+}
+
+// ── Arc 3 ─────────────────────────────────────────────────────────────────
+
+// Quest 20014: Caravan Water Debt (Muka x? → MobId 1055) → moc_fild02 (130 Muka)
+moc_fild02,200,200,0	script	Hunt Marker#dm_h_arc03a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20014, 1;
+	end;
+}
+
+// Quest 20015: Ant Hell Survey (Ant Egg x? → MobId 1097) → anthell01
+// Quest 20016: Sphinx Night Watch (Zerom x? → MobId 1178) → in_sphinx2 (50 Zerom)
+// Both mobs accessible from Morroc area; separate markers for clarity
+
+anthell01,100,200,0	script	Hunt Marker#dm_h_arc03b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20015, 1;
+	end;
+}
+
+in_sphinx2,100,100,0	script	Hunt Marker#dm_h_arc03c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20016, 1;
+	end;
+}
+
+// Quest 20017: What the Desert Spat Up (Osiris → MobId 1038) → moc_pryd04
+moc_pryd04,100,100,0	script	Hunt Marker#dm_h_arc03d	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20017, 1;
+	end;
+}
+
+// Quest 20018: The King Beneath (Amon Ra MVP → MobId 1511) → moc_pryd06
+moc_pryd06,102,85,0	script	Hunt Marker#dm_h_arc03e	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20018, 1;
+	end;
+}
+
+// ── Arc 4 ─────────────────────────────────────────────────────────────────
+
+// Quest 20020: Tower Apprentice Drills (Poison Spore x? → MobId 1077) → gef_dun00 (25)
+gef_dun00,100,100,0	script	Hunt Marker#dm_h_arc04a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20020, 1;
+	end;
+}
+
+// Quest 20021: Orc Village Bounty (Orc Warrior x? → MobId 1023) → gef_fild10 (130)
+gef_fild10,200,200,0	script	Hunt Marker#dm_h_arc04b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20021, 1;
+	end;
+}
+
+// Quest 20022: Argiope Silk Run (Argiope x? → MobId 1099) → mjolnir_05 (130)
+mjolnir_05,200,200,0	script	Hunt Marker#dm_h_arc04c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20022, 1;
+	end;
+}
+
+// Quest 20023: The Vault That Prays (Baphomet MVP → MobId 1039) → gef_dun02
+gef_dun02,100,100,0	script	Hunt Marker#dm_h_arc04d	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20023, 1;
+	end;
+}
+
+// ── Arc 5 ─────────────────────────────────────────────────────────────────
+
+// Quest 20027: Byalan Tide Contract (Marc x? → MobId 1045) → iz_dun03 (40 Marc)
+iz_dun03,100,100,0	script	Hunt Marker#dm_h_arc05a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20027, 1;
+	end;
+}
+
+// Quest 20028: Sunken Ship Manifest (Pirate Skeleton x? → MobId 1071) → treasure01 (43)
+treasure01,100,100,0	script	Hunt Marker#dm_h_arc05b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20028, 1;
+	end;
+}
+
+// Quest 20030: What Turned Over in the Deep (Tao Gunka MVP → MobId 1583) → beach_dun
+// (tur_dun04 is the campaign context; Tao Gunka actually spawns on beach_dun)
+beach_dun,100,100,0	script	Hunt Marker#dm_h_arc05c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20030, 1;
+	end;
+}
+
+// ── Arc 6 ─────────────────────────────────────────────────────────────────
+
+// Quest 20103: Harpy Weather Log (MobId 1377 → Elder/Harpy area) → yuno_fild03 (130 Harpy)
+yuno_fild03,200,200,0	script	Hunt Marker#dm_h_arc06a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20103, 1;
+	end;
+}
+
+// Quest 20104: Juperos Parts Requisition (Venatu x? → MobId 1676) → juperos_01 (70)
+juperos_01,100,100,0	script	Hunt Marker#dm_h_arc06b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20104, 1;
+	end;
+}
+
+// Quest 20105: Norgroad Heat Index (Zenorc x? → MobId 1177) → orcsdun02 (50 Zenorc)
+orcsdun02,100,100,0	script	Hunt Marker#dm_h_arc06c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20105, 1;
+	end;
+}
+
+// ── Arc 7 ─────────────────────────────────────────────────────────────────
+
+// Quest 20113: Factory Whistle Shift (Galion x? → MobId 1783) → ve_fild01 (35 Galion)
+ve_fild01,200,200,0	script	Hunt Marker#dm_h_arc07a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20113, 1;
+	end;
+}
+
+// Quest 20114: Metaling Scrap Drive (Mineral x? → MobId 1614) → ein_dun02 (50 Mineral)
+ein_dun02,100,100,0	script	Hunt Marker#dm_h_arc07b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20114, 1;
+	end;
+}
+
+// Quest 20115: Mine Dust Medicine (Pitman x15 → MobId 1616) → ein_fild03 (20 Pitman)
+ein_fild03,200,200,0	script	Hunt Marker#dm_h_arc07c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20115, 1;
+	end;
+}
+
+// ── Arc 8 ─────────────────────────────────────────────────────────────────
+
+// Quest 20123: Churchyard Candle Route (Dark Priest x15 → MobId 1198) → gl_chyard
+gl_chyard,100,100,0	script	Hunt Marker#dm_h_arc08a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20123, 1;
+	end;
+}
+
+// Quest 20124: Underprison Name List (Skel Prisoner x20 → MobId 1196) → gl_prison1
+gl_prison1,100,100,0	script	Hunt Marker#dm_h_arc08b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20124, 1;
+	end;
+}
+
+// Quest 20125: Chivalry Relic Watch (Raydric x20 → MobId 1163) → gl_knt01 (90 Raydric)
+gl_knt01,100,100,0	script	Hunt Marker#dm_h_arc08c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20125, 1;
+	end;
+}
+
+// ── Arc 9 ─────────────────────────────────────────────────────────────────
+
+// Quest 20133: Roween Pilgrim Road (Roween x20 → MobId 1782) → ra_fild12
+ra_fild12,100,100,0	script	Hunt Marker#dm_h_arc09a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20133, 1;
+	end;
+}
+
+// Quest 20134: Ice Core Collections (Nereid x20 → MobId 1255) → beach_dun (Karu ice)
+beach_dun,100,100,0	script	Hunt Marker#dm_h_arc09b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20134, 1;
+	end;
+}
+
+// Quest 20135: Sanctuary Confessionals (Vanberk x20 → MobId 1771) → ra_san01
+ra_san01,100,100,0	script	Hunt Marker#dm_h_arc09c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20135, 1;
+	end;
+}
+
+// ── Arc 10 ────────────────────────────────────────────────────────────────
+
+// Quest 20143: Slum Sample Run (Remover x20 → MobId 1682) → lhz_dun01
+// Quest 20144: Scaraba Chitin Order (Antler/Rake Scaraba x10 each → MobId 2085/2086) → dic_dun02
+// Quest 20145: Clone Name Registry (Bio Lab F2 clone-stock → MobId 1652-1657) → lhz_dun02
+lhz_dun01,100,100,0	script	Hunt Marker#dm_h_arc10a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20143, 1;
+	end;
+}
+
+dic_dun02,100,100,0	script	Hunt Marker#dm_h_arc10b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20144, 1;
+	end;
+}
+
+lhz_dun02,100,100,0	script	Hunt Marker#dm_h_arc10c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20145, 1;
+	end;
+}
+
+// ── Arc 11 ────────────────────────────────────────────────────────────────
+
+// Quest 20153: Hugel Airship Muster (Tatacho/Centipede/Hillslion → MobId 1986/1987/1989) → man_fild03
+man_fild03,200,200,0	script	Hunt Marker#dm_h_arc11a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20153, 1;
+	end;
+}
+
+// Quest 20154: Dragon Scale Turn-In (Ferus/Acidus → MobId 1714/1716/1717) → abyss_02/03
+abyss_02,100,100,0	script	Hunt Marker#dm_h_arc11b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20154, 1;
+	end;
+}
+
+// Quest 20155: Temple Edge Vigil (Dolomedes → MobId 2092) → dic_fild02
+dic_fild02,100,100,0	script	Hunt Marker#dm_h_arc11c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20155, 1;
+	end;
+}
+
+// ── Arc 12 ────────────────────────────────────────────────────────────────
+
+// Quest 20163: Manuk Supply Line (Tatacho/Centipede/Hillslion → MobId 1986/1987/1989) → man_fild03
+man_fild03,200,200,0	script	Hunt Marker#dm_h_arc12a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20163, 1;
+	end;
+}
+
+// Quest 20164: Cornus Mercy Run (Cornus/Dark Pinguicula → MobId 1992/2015) → spl_fild01
+spl_fild01,200,200,0	script	Hunt Marker#dm_h_arc12b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20164, 1;
+	end;
+}
+
+// Quest 20165: Dicastes Border Papers (Centipede/Dolomedes → MobId 1987/2092) → dic_fild02
+dic_fild02,100,100,0	script	Hunt Marker#dm_h_arc12c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20165, 1;
+	end;
+}
+
+// ── Arc 13 ────────────────────────────────────────────────────────────────
+
+// Quest 20173: Abbey Bell Rotation (Banshee / Zombie Slaughter / Ragged Zombie) -> abbey01
+// Quest 20174: Drowned Coin Tithe (Zombie Slaughter / Ragged Zombie) -> abbey02
+// Quest 20175: Lasagna Root Wardens uses verified Bifrost root-route stand-ins until Lasagna spawns exist.
+abbey01,100,100,0	script	Hunt Marker#dm_h_arc13a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20173, 1;
+	end;
+}
+
+abbey02,100,100,0	script	Hunt Marker#dm_h_arc13b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20174, 1;
+	end;
+}
+
+bif_fild01,100,100,0	script	Hunt Marker#dm_h_arc13c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20175, 1;
+	end;
+}
+
+// ── Arc 14 ────────────────────────────────────────────────────────────────
+
+// Quest 20183: Veins Evacuation Ledger (Magmaring / Muscipular / Drosera) -> ve_fild03
+// Quest 20184: Bifrost Ash Scouting (Antique Book / Lichterns) -> ecl_tdun02
+// Quest 20185: Magmaring Firebreak (Magmaring) -> ve_fild03
+ve_fild03,100,100,0	script	Hunt Marker#dm_h_arc14a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20183, 1;
+	end;
+}
+
+ecl_tdun02,60,90,0	script	Hunt Marker#dm_h_arc14b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20184, 1;
+	end;
+}
+
+ve_fild03,110,100,0	script	Hunt Marker#dm_h_arc14c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20185, 1;
+	end;
+}
+
+// ── Arc 15 ────────────────────────────────────────────────────────────────
+
+// Quest 20192: What the Tower Remembers (Heirozoist x15 -> MobId 1510) -> niflheim
+// Quest 20193: Aldebaran Last Letters (Lude x15 -> MobId 1509) -> niflheim
+// Quest 20194: Clock Tower Daily Wounds (Big Bell x20 -> MobId 2917) -> c_tower3_
+// Quest 20195: Fragment Relief Rotation (Thanatos fragments) -> tha_t09
+niflheim,100,100,0	script	Hunt Marker#dm_h_arc15a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20192, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20193, 1;
+	end;
+}
+
+c_tower3_,59,148,0	script	Hunt Marker#dm_h_arc15b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20194, 1;
+	end;
+}
+
+tha_t09,50,129,0	script	Hunt Marker#dm_h_arc15c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20195, 1;
+	end;
+}
+
+// ── Arc 16 ────────────────────────────────────────────────────────────────
+
+// Quest 20202: Underground Prison Cleanup (Disguise x20 → MobId 1506) → nif_fild01 (50 Disguise)
+// Quest 20203: Terra Gloria (Bloody Murderer x20 → MobId 1507) → nif_fild02 (11 Bloody Murderer)
+// Quest 20205: Invaded Prontera Relief uses DM-spawned corrupted relief waves in Prontera.
+nif_fild01,200,200,0	script	Hunt Marker#dm_h_arc16a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20202, 1;
+	end;
+}
+
+nif_fild02,200,200,0	script	Hunt Marker#dm_h_arc16b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20203, 1;
+	end;
+}
+
+prontera,150,150,0	script	Hunt Marker#dm_h_arc16c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20205, 1;
+	end;
+}
+
+// ── Arc 17 ────────────────────────────────────────────────────────────────
+
+// Quest 20212: Sage's Legacy Dailies (Aliza x20 -> MobId 1737) -> kh_dun01
+// Quest 20213: Tartaros Dive (Celia x15 → MobId 2223) → lhz_dun04 (81 Celia)
+// Quest 20215: Corridor of Phantom Map uses DM-spawned phantom-memory route mobs in ba_pw01.
+kh_dun01,100,100,0	script	Hunt Marker#dm_h_arc17a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20212, 1;
+	end;
+}
+
+lhz_dun04,100,100,0	script	Hunt Marker#dm_h_arc17b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20213, 1;
+	end;
+}
+
+ba_pw01,100,100,0	script	Hunt Marker#dm_h_arc17c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20215, 1;
+	end;
+}
+
+// ── Arc 18 ────────────────────────────────────────────────────────────────
+
+// Quest 20222: The Dead You Failed (Dullahan x15 → MobId 1504) → nif_fild01 (20 Dullahan)
+// Quest 20223: Banquet Hall Procession (Gibbet x15 → MobId 1503) → nif_fild02 (20 Gibbet)
+// Quest 20224: Illusion Grief Rotation (Quve/Lude/Hylozoist → 1508/1509/1510) → niflheim / fields
+// Quest 20225: Opera House Encore (Loli Ruri/Disguise/Bloody Murderer → 1505/1506/1507) → nif_fild02
+nif_fild01,150,150,0	script	Hunt Marker#dm_h_arc18a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20222, 1;
+	end;
+}
+
+nif_fild02,150,150,0	script	Hunt Marker#dm_h_arc18b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20223, 1;
+	end;
+}
+
+niflheim,190,185,0	script	Hunt Marker#dm_h_arc18c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20224, 1;
+	end;
+}
+
+nif_fild02,180,180,0	script	Hunt Marker#dm_h_arc18d	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20225, 1;
+	end;
+}
+
+// ── Arc 19 ────────────────────────────────────────────────────────────────
+
+// Quest 20232: Beyond the Veil (Khalitzburg x15 → MobId 1132) → gl_knt02 (40 Khalitzburg)
+gl_knt02,100,100,0	script	Hunt Marker#dm_h_arc19a	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20232, 1;
+	end;
+}

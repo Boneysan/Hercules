@@ -261,6 +261,84 @@ function	script	DM_PartyExp	{
 	return .@given;
 }
 
+// Grants base/job EXP to a single online player by name, regardless of party.
+// getcharid(CHAR_ID_ACCOUNT, name) resolves an online character's account id
+// (0 if offline/not found); mirrors DM_PartyExp's attach/getexp/detach pattern
+// but for exactly one recipient. Returns 1 if granted, 0 if the player isn't online.
+function	script	DM_TargetExp	{
+	.@name$ = getarg(0, "");
+	.@base = getarg(1, 0);
+	.@job = getarg(2, 0);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@base < 0)
+		.@base = 0;
+	if (.@job < 0)
+		.@job = 0;
+	if (.@name$ == "" || (.@base == 0 && .@job == 0))
+		return 0;
+
+	.@aid = getcharid(CHAR_ID_ACCOUNT, .@name$);
+	if (.@aid <= 0)
+		return 0;
+
+	.@given = 0;
+	if (attachrid(.@aid)) {
+		getexp(.@base, .@job);
+		detachrid();
+		.@given = 1;
+	}
+
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+
+	return .@given;
+}
+
+// Grants Cash Shop currency party-wide. #CASHPOINTS/#KAFRAPOINTS are
+// permanent account variables, so this must attach each recipient's RID the
+// same way DM_PartyExp does -- there is no engine command that targets
+// another account directly (@cash/@points are self-only).
+function	script	DM_PartyPoints	{
+	.@amount = getarg(0, 0);
+	.@cash = getarg(1, 0); // 0 = Kafra Points (spent first by the shop), 1 = Cash Points
+	.@party_id = getarg(2, getcharid(CHAR_ID_PARTY));
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@amount == 0)
+		return 0;
+
+	// Solo / no party: give to the attached character only.
+	if (.@party_id <= 0) {
+		if (.@cash)
+			#CASHPOINTS = cap_value(#CASHPOINTS + .@amount, 0, 1000000000);
+		else
+			#KAFRAPOINTS = cap_value(#KAFRAPOINTS + .@amount, 0, 1000000000);
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		if (.@cash)
+			#CASHPOINTS = cap_value(#CASHPOINTS + .@amount, 0, 1000000000);
+		else
+			#KAFRAPOINTS = cap_value(#KAFRAPOINTS + .@amount, 0, 1000000000);
+		detachrid();
+		++.@given;
+	}
+
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+
+	return .@given;
+}
+
 function	script	DM_GenerateLoot	{
 	.@arc = getarg(0, 1);
 	.@level = getarg(1, BaseLevel);

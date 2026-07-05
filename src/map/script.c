@@ -17608,6 +17608,12 @@ static BUILDIN(dispbottom)
 	if (script_hasdata(st,3)) {
 		int color = script_getnum(st,3);
 		clif->messagecolor_self(sd->fd, color, message);
+	} else if (message[0] == '[') {
+		// Bracket-tagged messages (the Seal Cascade DM campaign's "[DM]",
+		// "[Flags]", "[Session]", etc. convention) default to the DM
+		// announcement accent color instead of plain chat text, so they
+		// don't blend into normal chat scrollback.
+		clif->messagecolor_self(sd->fd, 0xFFAA33, message);
 	} else {
 		clif_disp_onlyself(sd, message);
 	}

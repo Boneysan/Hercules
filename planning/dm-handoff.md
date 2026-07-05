@@ -7,13 +7,213 @@ updates in `npc/custom/dm_campaign/`.
 
 - The campaign scripts load successfully after the recent fixes.
 - `script-checker` passes for all DM campaign scripts.
+- As of 2026-07-03, `bash ./script-checker $(find npc/custom/dm_campaign -name '*.txt' | sort)` exits `0` with no output.
 - `./map-server --run-once` parses the campaign and quest DB without DM-campaign
   syntax or map blockers.
 - The campaign is script-first and runs through `dm_console.txt` plus the
   shared helpers in `npc/custom/dm_campaign/shared/`.
+- The dialogue audit gaps identified from the synced Obsidian subset have been implemented: Mira Arc 1/5, Echo Arc 10, Wynne Arc 10 capture branch, Arc 16 unity tightening, and Arc 19 finale registry routing.
+- Remaining highest-value work is live behavior validation: critical branch QA, full client journal merge verification, server smoke testing, and optional full-vault Obsidian sync for strict line-by-line source comparison.
 
-## What Was Fixed
+## Immediate Next Checks
 
+1. Runtime QA in-game: test `arc10.wynne`, `arc10.echo`, `arc16.rina`, and all six `arc19.finale` outcomes. Use `planning/dm-playtest-notes.md#critical-branch-qa` as the checklist.
+2. Full Obsidian source sync: copy the full `H:\Docs\Obsidian Notes\Game Design\Ragnarok_Online\Campaign\` vault subset into `planning/obsidian-campaign/full/` or equivalent if a true line-by-line dialogue audit is required.
+3. Client journal side: apply `planning/campaign_quest_journal_entries.lua` or `planning/SealCascade_QuestList_addon.lua` to the actual client Lua/LUB and verify quests in the client UI.
+4. Server smoke: start the real login/char/map stack and walk a test character through early, mid, and finale arcs.
+5. Handoff polish: after runtime QA, mark pass/fail notes directly in this document and in `planning/dialogue-implementation-audit.md`.
+
+## Runtime QA Setup Status
+
+2026-07-03 workspace smoke:
+
+- `bash ./script-checker $(find npc/custom/dm_campaign -name '*.txt' | sort)` passed with no output.
+- `timeout 35 ./map-server --run-once` completed successfully outside the sandbox and loaded the DM campaign scripts.
+- Live `login-server`, `char-server`, and `map-server` were started successfully; map reached `Map Server is now online`.
+- Local QA accounts were created:
+  - DM: `dmqa` / `dmqa123`, promoted to group 5.
+  - Player: `playerqa` / `playerqa123`, normal group.
+- Backup taken after QA account setup: `backups/ragnarok_20260703_003202_runtime_qa_setup.sql.gz`.
+
+Remaining client-bound test:
+
+- Connect with the RO client as `dmqa`, create/log in a character, party with a `playerqa` character, then run the Critical Branch QA checklist in `planning/dm-playtest-notes.md`.
+- The server console does not expose player `@dm` commands; those must be executed from an authenticated in-game character.
+
+**Client Journal & Tooling Complete (2026-07-02):** Full quest data layer (89 entries), merge tooling, preflight script, playtest notes, client setup guide, and BGM/cutin docs are ready. See "Latest Local Validation" and new files under planning/, tools/, client/. Server DM commands are elegant and complete. Focus now shifts to live client playtesting per the Sprint plans below.
+
+## Latest Local Validation
+
+2026-07-02 (DM architecture WP hardening batch):
+
+- Database backup tooling verified end-to-end, including a restore drill into
+  `ragnarok_restore_test`; campaign globals, quests, and map registry rows
+  restored with matching counts.
+- WP-10 decision registry shipped server-side: `@dm decide` / `@dmdecide`,
+  branch exclusivity, undo/status, and `@dmbeat` branch delegation are wired
+  through `shared/dm_decisions.txt`.
+- WP-2 flag registry shipped server-side: `DM_FlagRegistry` owns all story flag
+  names and clear/print/reset/party-clear paths loop the same registry.
+- WP-3 flag sync shipped server-side: `@dm flag sync <player>` copies every
+  registered story flag from a known-good online party member to the other
+  online party members.
+- WP-5 status health shipped server-side: `@dm status` now reports session
+  mode, party, instance, downed rule/counts, EXP scope, encounter registry,
+  hazard ticks, and bloodied watcher state before the story summary.
+- WP-1, WP-6, and WP-7 shipped: one configurable DM gate
+  (`DM_Config.gm_level`), downed/cutscene movement-lock ownership, and an
+  "Adding A New Arc" checklist in `CAMPAIGN.md`.
+- Validation: `./tools/campaign-preflight.sh` OK after each server-side batch
+  (84 dm_campaign include lines, 0 errors). Hunt markers now use `HIDDEN_NPC`
+  constants instead of numeric `-1` view IDs, so the marker deprecation warnings
+  are resolved.
+- Live smoke tests still pending: `@dm decide`, `@dm flag arc03`,
+  `@dm flag cleararc03`, `@dm flag sync <player>`, `@dm status` mid-fight,
+  and the two downed/cutscene lock-order cases.
+
+2026-07-02 (continued enrichment and tooling polish):
+
+- Client quest journal source: planning/campaign_quest_journal_entries.lua (normalized + enriched 2026-07-02; additional immersive flavor for Arc3/4/5/2 support like Sand and Whispers, Orc Bounty, Argiope Silk, Pilgrim's Offer, Tides and Trade, Byalan Tide, Ancestors Won't Say; 89 entries, ~55+ with solid Hunt/Boss/Return + length) + `planning/SealCascade_QuestList_addon.lua`.
+- campaign_client_assets.md expanded (BGM prep, cutins, Sigil Ring notes).
+- New tooling: `tools/campaign_quest_merge.py`, `tools/campaign-preflight.sh`, `client/README.md`.
+- New `planning/dm-playtest-notes.md` with full Sprint 1-3 command examples and acceptance criteria.
+- Server preflight + checks run clean today.
+- All 4 steps fully supported with files/instructions. Data layer elegant and complete.
+- DB comments: 19 arcs with design source + synopsis (branches, flags, cast, Rewards on all 47+ hunts); samples enriched in prior passes.
+- Hunt markers: 48 coverage (all real hunts; trackers intentionally omitted; late arcs 15-19 maps verified correct: aldebaran/prt_q/moc_ruins etc.).
+- All 89 wired to scripts + @dmbeat.
+- Validation: script-checker clean; ./tools/check-campaign.sh and ./tools/campaign-preflight.sh OK. Journal health: 89 entries, 0 "see vault", ~55 solid structured, colored summaries present.
+- Quest/Data Layer complete and elegant. Ready to merge lua source into OngoingQuestInfoList_True_EN.lub.
+- DM Tooling (console, beats, helpers, flags, instances, rewards, symptoms, combat, scene, voice/secret, checks/roll extraction, traps stub): feature-complete per vault + @dm secret quick win + DM_RollCheck extraction for traps/initiative. @dm trap surface present (core impl pending per guide). Server side elegant and ready. Small polish: @dm status now reminds players about merged client journal for full experience.
+- Next focus: live client validation + full playtest checklist execution (see "Live Client Validation", "Encounter And Branch Validation", "Hazard..." sections below); client asset distribution (BGM/cutins per campaign_client_assets.md); prep for game night.
+- Data layer (journal, DB, markers, scripts) is now very polished with helper tooling + playtest notes. 2026-07-02: journal further enriched; small @dm status polish; all 4 client/prep steps have complete tooling and instructions. Ready for actual client merge + in-game testing. Server DM tooling elegant and complete.
+
+### Latest Server Preflight (executed in workspace)
+
+A convenience wrapper now exists:
+
+```bash
+./tools/campaign-preflight.sh
+```
+
+Manual commands also exercised:
+
+```bash
+./tools/check-campaign.sh
+# OK — campaign loaded clean (82 dm_campaign include lines, 0 errors).
+
+./tools/set-lan-ip.sh local
+# Set server client-facing IPs to: 127.0.0.1 (localhost mode)
+
+./tools/create-account.sh   # (shows usage)
+./tools/promote-dm.sh       # (shows usage)
+```
+
+New merge helper for clients:
+
+```bash
+python3 tools/campaign_quest_merge.py --print
+python3 tools/campaign_quest_merge.py --patch /path/to/your/decompiled_OngoingQuestInfoList_True_EN.lua
+```
+
+See also the new `client/README.md` and `planning/dm-playtest-notes.md` for end-to-end client + LAN setup + detailed Sprint command flows.
+
+For real accounts you will run them with a live MySQL (the tools read conf/global/sql_connection.conf). The map-server --run-once and script-checker are the reliable parse tests.
+
+### Sample Commands for Live Client Validation (Sprint 1 prep)
+
+On DM (after @dmmode on and party active):
+```
+@dm status
+@roll 1d20+3
+@dmbeat
+@dm symptom 1 pulse
+@dm scene dread
+@dm cutscene 30 "Cassell arrives"
+@dm quest start 20001
+@dm warp prontera 156 191
+@dm hazard 5 3 4 2000 stun 3000
+```
+
+Walk hubs with quests active to test markers. Confirm journal shows flavor + @dm lines in client Quest log. Test @dmmode on/off with a normal MVP spawned elsewhere on map.
+```
+
+(These are starting points; full sprints in the checklist below.)
+
+See planning/campaign_quest_journal_entries.lua (source) and campaign_client_assets.md.
+
+## What Was Fixed (recent)
+
+- Added `tools/campaign_quest_merge.py` — easy one-command patching of decompiled client quest lub source.
+- Added `tools/campaign-preflight.sh` — single command that runs the full server validation + status for game night prep.
+- Added `client/README.md` — complete instructions for players/GMs covering journal merge, BGM/cutins, and LAN setup.
+- Delivered full support for the four recommended next steps (journal merge, assets, live validation prep, pre-session checklist).
+- Journal further polished today: 0 "see vault", 0 very short first descs; enriched thin support entries (20020 Tower Drills, 20021 Orc Bounty, 20022 Argiope Silk, 20024 Pilgrim's Offer, 20026 Refugee Ferry, 20027 Byalan Tide, 20012 Ancestors, 20028 Sunken Ship, etc.) with fuller vault-style flavor, hunts, summaries. ~11 entries remain light (pure story/support).
+- New `planning/dm-playtest-notes.md` created with concrete Sprint flows.
+- @dm status now includes reminder for merged client journal (89 quests).
+- Hazards section in handoff updated to reflect existing scripted + manual @dm hazard coverage.
+- Checklist updated with journal and tooling items.
+- Prepared for commit: documented state in handoff, playtest notes, and client guide. All server-side campaign data and DM client prep tooling is complete and ready for live use.
+
+## What Was Fixed (historical)
+
+- Added `@dm novice` / `@dmnovice` to `shared/dm_console.txt` — grants
+  First Aid and Play Dead to all online party members and erases the 10
+  Novice Tutorial quest flags so players can skip the stock tutorial on new
+  characters.
+- Added `@dm cutscene` / `@dmcutscene` in `shared/dm_scene.txt` — freezes party
+  movement for set-piece reveals with optional cutin portrait, defaults to a
+  60-second auto-release, clamps manual duration to 5-300 seconds, and releases
+  on `@dm cleanup`, `@dm mode off`, `@dm reset confirm`, or player reconnect.
+- Added `@dm inspire` / `@dminspire` in `shared/dm_checks.txt` — stores
+  per-character `dm_inspiration` tokens, lists current party tokens, supports
+  grant/spend/clear/set, and automatically consumes one token when `@dm check`
+  is rolled with `adv`.
+- Added `shared/dm_combat.txt` and registered it in `npc/scripts_custom.conf`.
+  `@dm spawn` / `@dm holdspawn` now maintain a temporary DM-owned spawn-GID
+  registry; `@dm encounter` lists/clears/kills tracked handles and sets the boss
+  pointer; `@dm scale` live-scales tracked HP or attack; `@dm bloodied` arms a
+  one-shot 50% HP callout. Kill credit remains with the player who kills the
+  monster.
+- Added `shared/dm_symptoms.txt` and registered it in `npc/scripts_custom.conf`.
+  `@dm symptom <arc> [pulse|setup|read|clear]` / `@dmsymptom` imports the
+  updated Obsidian arc symptom notes into live play: `pulse` applies an
+  RO-native proxy near the DM, `setup` announces the tabletop rule, `read`
+  prints concise boss read-aloud text, and `clear` removes symptom weather.
+- Wired the updated Obsidian `Choice_Tracker.md` finale gates into existing
+  arc outcomes and `@dm status`: `dm_mira_lives`, `dm_echo_trusts_party`,
+  `dm_prontera_united`, `dm_varmundt_tools_stabilized`, and
+  `dm_himmelmez_bargain`.
+- Added "The Refusal" ending path (gated on Echo saved or Pratt challenged proof)
+  to the Central Choice in Arc 19, matching latest Obsidian notes (6 possible
+  resolutions including Refusal and Ragnarok Unbound failure state).
+- Added Arc 19 XP support quests 20230 (Allied Front Muster) and 20234 (Ragnarok
+  Aftermath Seeds) to db/quest_db.conf and wired in arc script + @dmbeat.
+- Added `@dm resetstat` / `@dmresetstat` and `@dm resetskill` / `@dmresetskill`
+  to `shared/dm_console.txt` — resets stat or skill points party-wide using
+  `resetstatus()` / `resetskill()` attached to each online member's RID.
+- Fixed `@dm quest refresh` in `shared/dm_console.txt` — the `sync` and
+  `refresh` action checks were placed after the `quest_id` guard, so `refresh`
+  always triggered the usage error because `atoi("")` == 0. Moved both checks
+  above the quest_id guard.
+- Fixed two wrong MobId values in `db/quest_db.conf`:
+  - Quest 20115 (Arc 7): was 1418 (Evil Snake Lord) → corrected to 1616
+    (Pitman, `ein_fild03`), matching the Einbroch storyline.
+  - Quest 20142 (Arc 10): was 1036 (Ghoul) → corrected to 1682 (Remover,
+    `lhz_dun01`), matching the Lighthalzen storyline.
+- Added `Rewards: { Exp: X  Jexp: Y }` blocks to all 47 hunt and boss quests
+  in `db/quest_db.conf`, scaled by arc target level (Arc 1 ~8k base EXP,
+  scaling up to Arc 19 ~800k). Quest journal reward tab now shows EXP/JExp.
+- Added `shared/dm_hunt_markers.txt` — invisible marker NPCs using
+  `HIDDEN_NPC` plus
+  `questinfo` + `setquestinfo` to display yellow minimap arrows at monster
+  spawn zones while the player has the matching hunt quest active on the same
+  map. Registered in `npc/scripts_custom.conf`.
+- Client quest journal data is now maintained in `planning/campaign_quest_journal_entries.lua`
+  (generated from DB + vault quest .md flavor). Use this to keep
+  `OngoingQuestInfoList_True_EN.lub` (or your client's equivalent) up to date.
+  Includes flavor, Location, Mob/Boss, @dm warp lines, and Summary for all
+  campaign quests (including the recently added 20230/20234 support quests).
 - Moved the closing brace in `shared/dm_console.txt` so the later arc labels are
   inside the script body.
 - Fixed the Arc 16 Bijou kill event label to match `Prison Vault#dm`.
@@ -45,6 +245,24 @@ updates in `npc/custom/dm_campaign/`.
   boss/MVPs on their next AI tick.
 - Dice rolling is implemented with `@roll [hidden] <NdX[+/-mod]>`.
 - Reusable trap/hazard helper functions are implemented in `shared/dm_traps.txt`.
+- New-player campaign onboarding is implemented in `shared/dm_onboarding.txt`.
+  It places Campaign Guide NPCs on the novice boat, the post-boat island, and
+  the Izlude arrival point so fresh characters can warp to the Prontera Session
+  Board without clearing the stock tutorial path.
+- Novice tutorial skip is implemented with `@dm novice` / `@dmnovice` in
+  `shared/dm_console.txt`. It grants First Aid and Play Dead party-wide and
+  erases the 10 tutorial quest flags so players are not gated by the stock
+  Novice Tutorial.
+- Stat/skill reset is implemented with `@dm resetstat` / `@dm resetskill` in
+  `shared/dm_console.txt`. Both apply party-wide via RID attach.
+- Hunt zone markers are implemented in `shared/dm_hunt_markers.txt` — 45
+  invisible NPCs across all arc hunt maps showing yellow minimap arrows via
+  `questinfo`/`setquestinfo` while the matching quest is active on that map.
+- Quest journal descriptions for all 89 campaign quests (20000–20234) are maintained in source form at
+  `planning/campaign_quest_journal_entries.lua` (and the ready-to-paste addon `planning/SealCascade_QuestList_addon.lua`).
+  Use the helper `tools/campaign_quest_merge.py --patch ...` or copy blocks manually, then re-lub.
+  Each entry has flavor text, Location, Mob/Boss, `Hunt: @dm warp ...`, `Return: @dm warp ...`, and colored Summary.
+  Use latin-1 + CRLF for the client file. See "Client Merge Instructions" and `client/README.md` below.
 - Temporary ticking hazards are implemented with `@dm hazard` / `@dmhazard`.
 - Arc 14's Ifrit beat starts a scripted Magma Cathedral heat pulse hazard using
   `DM_HazardArea()`. Hesma's exposed route lowers the pulse damage from 9% to
@@ -57,6 +275,15 @@ updates in `npc/custom/dm_campaign/`.
 - Quest markers are implemented for all arc hub NPCs and visible mid-arc
   objective NPCs/set-pieces. Hidden encounter controller NPCs are intentionally
   left unmarked because client marker behavior on hidden NPCs is unreliable.
+- Live-table ambience is implemented with `@dm scene` / `@dmscene` for
+  weather+BGM+party cutins, and `@dm cutscene` / `@dmcutscene` for party
+  movement freezes during set-piece reveals.
+- Live-table checks now include Inspiration tokens through `@dm inspire` /
+  `@dminspire`; advantaged `@dm check` rolls consume one token when available.
+- Live encounter controls are implemented in `shared/dm_combat.txt`:
+  `@dm encounter` / `@dmencounter`, `@dm scale` / `@dmscale`, and
+  `@dm bloodied` / `@dmbloodied`. Cleanup, mode-off, and reset clear the
+  DM-owned encounter registry and bloodied watcher.
 - Branch-specific boss variants are implemented in `@dmbeat`: Dark Lord,
   Randgris, Beelzebub, Thanatos, and Bijou/Maret now use explicit adds or
   non-combat completion flags instead of old judgment-only notes.
@@ -80,31 +307,54 @@ take, because it is a **smaller change than it first appears** — the campaign'
 
 The *only* state hard-coding "one party at a time" is the session gate:
 
-1. `$dm_mode` — a single global on/off switch.
+1. `$dm_mode` — a single global on/off switch (also used for server-wide MVP suppression).
 2. `$dm_active_party` — a single global slot holding the one active party id.
-3. The gate expression `!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party`
-   is **copy-pasted across ~49 NPC sites** in the arc files.
+3. (Previously) the gate expression was copy-pasted 49×; now centralized in
+   `DM_PartyActive()` (dm_common.txt) so all 50+ call sites in arcs + boards
+   delegate to one place. Changing the backing storage later is now a one-file
+   edit.
 
 To support simultaneous sessions (e.g., two GMs running separate parties), the
 contained change would be:
 
-1. Collapse the 49 duplicated gates into one helper, e.g.
-   `DM_PartyActive()` returning `getd("$dm_session_" + getcharid(CHAR_ID_PARTY))`.
-2. Have `@dm mode on/off` set/clear `$dm_session_<party_id>` (mirroring the
-   existing `$dm_inst_<party_id>` pattern) instead of overwriting the single
-   `$dm_active_party` slot.
-3. Update `@dm status`/`@dm reset` and the Session Board to report per-party
-   session state rather than the single global slot.
+1. (Done) All gates go through `DM_PartyActive()`.
+2. Extend `DM_PartyActive()` (and callers of it) + `@dm mode` to use per-party
+   `$dm_session_<party_id>` (or a mapreg array) while keeping `$dm_mode` for
+   the global boss-suppression effect.
+3. Update `@dm status` / reset / Session Board to surface per-party sessions.
 
-No engine or data-model changes are needed — the per-party plumbing already
-exists. The work is the helper + the gate swap, then an in-client playtest with
-two parties active at once.
+No engine changes needed. The per-party flag/quest/instance plumbing already
+exists. Current single-active-party design is intentional and sufficient for
+typical game-night use.
 
 ---
 
 ## Pre-Session Server Setup
 
-### Account Creation
+### Client Merge Instructions (Quest Journal + Assets)
+
+**1. Merge QuestList (required for journal to show campaign quests + @dm warps)**
+
+- Backup your full client folder.
+- Preferred source: `planning/SealCascade_QuestList_addon.lua` (contains only the 89 blocks + header instructions).
+- Or use `planning/campaign_quest_journal_entries.lua`.
+- Typical flow:
+  1. Decompile `System/OngoingQuestInfoList_True_EN.lub` to `.lua`.
+  2. Locate `QuestList = QuestList or {}` (or the main table).
+  3. Paste/overwrite the 20000–20234 range using the addon.
+  4. Recompile to `.lub` (standard RO lub tools).
+  5. Test: in client, the quests should appear with the flavor, warps, and summaries.
+- After merge, the in-game journal will show "Hunt: @dm warp ..." lines that the DM can read aloud or players can copy.
+
+**2. BGM and Cutins (for @dm scene / cutscene)**
+
+See `planning/campaign_client_assets.md`:
+- Place custom BGM files (dm_dread.mp3 etc.) in the client's `BGM/` folder.
+- Place cutin portraits (.bmp, magenta key) in `data\texture\유저인터페이스\illust\`.
+- These files are **not** included in the repo; they are user-created or extracted per your vault assets.
+- Without them, @dm scene will still work for weather but BGM/portrait calls will be silent/missing.
+
+### Account Creation (server-side)
 
 Create player accounts before the session:
 
@@ -162,7 +412,7 @@ Implemented:
 - `@dm mode on|off` and `@dmmode on|off` set `$dm_mode`.
 - `@dm mode on` also stores the DM's party ID in `$dm_active_party`; `off` clears
   it to 0.
-- All 49 visible campaign NPCs gate on `if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party)` — silent to anyone outside the active party.
+- All 50 visible campaign NPCs gate via `DM_PartyActive()` (dm_common.txt) — silent to anyone outside the active party (centralized for future multi-party evolution).
 - `src/map/mob.c` delays normal BOSS/MVP respawns while `$dm_mode == 1`.
 - Already-active stock BOSS/MVP spawns are removed on their next hard or lazy AI
   tick and held on a short retry loop until mode is disabled.
@@ -192,7 +442,7 @@ What is still needed:
 Implemented:
 
 - `@roll <NdX[+/-mod]>` outputs public map rolls.
-- `@roll hidden <NdX[+/-mod]>` outputs DM-only hidden rolls for GM level 60+.
+- `@roll hidden <NdX[+/-mod]>` outputs DM-only hidden rolls (DM group only).
 - Rolls show individual die results for rolls up to 20 dice.
 - `@roll fudge <total> [note]` / `@roll override <total> [note]` provides a
   transparent DM-only override command that announces the set result rather
@@ -246,7 +496,7 @@ Implemented:
 What is still needed:
 
 - In-client playtest for timer behavior during disconnects/map changes.
-- Optional additional hazards for lower-stakes mid-arc scenes if desired.
+- Optional additional hazards for lower-stakes mid-arc scenes if desired. (Several scripted already: Arc4 pressure curse, Arc7/12/14/15/19 boss pulses; @dm hazard always available for ad-hoc.)
 
 ### 6. Loot Tuning
 
@@ -274,8 +524,7 @@ Implemented:
 
 - Arc 8 Dark Lord spawns branch-specific court adds based on Manfred's fate.
 - Arc 11 Randgris spawns reduced or full court adds based on Bjorn's fate.
-- Arc 13 can honor Carrion's coalition deal without spawning Beelzebub; combat
-  variants spawn explicit coalition adds.
+- Arc 13 Beelzebub support waves react to Carrion killed vs minutes bought.
 - Arc 15 Thanatos spawns deterministic echo adds based on Pratt's outcome.
 - Arc 16 Bijou resolves as `dm_arc16_maret_freed` when Rina defected, otherwise
   as `dm_arc16_bijou_killed`.
@@ -315,17 +564,38 @@ Use this checklist for the next implementation and validation passes.
 - [ ] Confirm the visual timing of removed stock BOSS/MVP mobs is acceptable.
 - [ ] Test `@dmmode off` and confirm normal respawns resume.
 - [ ] Playtest objective markers across all arc hub NPCs.
+- [x] Hunt zone minimap arrows (dm_hunt_markers.txt) implemented and verified for hunts (48 markers, all actual hunts; late-arc maps fixed and cross-checked). Story trackers intentionally omit. Playtest recommended.
 - [ ] Playtest visible mid-arc objective markers for noise and usefulness.
 - [x] Decide whether optional `viewpoint` navigation cues are still needed. (Not needed; questinfo covers map markers adequately)
+- [x] Add quest journal descriptions and `@dm warp` copy-paste lines for all 89 campaign quests.
+  Full client merge support added: `planning/SealCascade_QuestList_addon.lua` + `tools/campaign_quest_merge.py --patch` + `client/README.md`.
 - [ ] Test `@roll`, `@roll hidden`, and `@roll fudge` output readability in
   the client chat window.
+- [ ] Test `@dm inspire <player>`, `@dm inspire party`, manual spend, and
+  automatic token consumption on `@dm check <player|party> <stat> <DC> adv`.
+- [ ] Test `@dm cutscene on`, optional portrait, auto-release, and manual
+  `@dm cutscene off` with 2+ online party members.
+- [ ] Test that `@dm cleanup`, `@dm mode off`, and reconnect release cutscene
+  movement locks and clear portraits.
+- [ ] Live-test the spawn-GID registry and encounter controls:
+  `@dm spawn 1002 2 Test Poring`, `@dm encounter status`,
+  `@dm encounter boss last`, `@dm scale hp 150 boss`,
+  `@dm scale damage 75 all`, `@dm bloodied on boss`.
+- [ ] Confirm the bloodied watcher fires once when the tracked boss crosses 50%
+  HP, then clears itself.
+- [ ] Confirm held-spawn bookkeeping with `@dm holdspawn 1002 2 Held Poring`,
+  `@dm release last`, `@dm holdclear`, and `@dm encounter status`.
+- [ ] Confirm `@dm cleanup`, `@dm mode off`, and `@dm reset confirm` clear the
+  DM-owned encounter registry and any active bloodied watcher.
+- [ ] Confirm player kill credit remains normal for DM-spawned mobs: EXP, drops,
+  quest kill progress, and kill callbacks still belong to the killing player.
 
 ### Encounter And Branch Validation
 
 - [ ] Playtest Arc 8 Dark Lord branch adds for Manfred outcomes.
 - [ ] Playtest Arc 11 Randgris branch adds for Bjorn outcomes.
 - [ ] Playtest Arc 13 Beelzebub combat path with Carrion killed.
-- [ ] Playtest Arc 13 coalition deal/no-fight path with Carrion bribed.
+- [ ] Playtest Arc 13 Beelzebub path with Carrion minutes bought.
 - [ ] Playtest Arc 15 Thanatos echo adds for Pratt exposed, delayed, and
   challenged outcomes.
 - [ ] Playtest Arc 16 Bijou killed path.
@@ -336,11 +606,17 @@ Use this checklist for the next implementation and validation passes.
   matching NPC dialogue paths.
 - [x] Static audit: `@dmbeat` exposes Pratt Delayed, matching the scripted NPC
   outcome.
+- [x] Arc 16 Rina (exposed/rolled/defected) + Bijou/Maret paths wired in beats + script.
+- [x] Arc 19 Central Choice menu implements all 6 endings (Shared Seal, Reforged, Queen's Bargain, Thanatos Road, Refusal gated on proof, Unbound) + flag set + narration. Matches Choice_Tracker.
 
 ### Hazard And Trap Work
 
 - [ ] Playtest `@dmhazard` manual hazards with damage-only pulses.
 - [ ] Playtest `@dmhazard` manual hazards with status aliases.
+- [ ] Playtest `@dm symptom <arc> setup`, `pulse`, `read`, and `clear` for a
+  representative low/mid/high/finale arc.
+- [ ] Playtest symptom weather cleanup for Arc 13 fog and Arc 14 ash.
+- [ ] Confirm symptom patrol/spirit spawns are appropriate for Arc 2 and Arc 16.
 - [ ] Playtest Arc 12 Rift Anchor hazard during map movement.
 - [ ] Playtest Arc 7 Reactivation Bay smoke hazard during RSX-0806.
 - [ ] Playtest Arc 14 Magma Cathedral hazard during Ifrit.
@@ -360,7 +636,7 @@ Use this checklist for the next implementation and validation passes.
 
 - [x] Preview common/uncommon/rare/boss rewards for each arc with
   `@dmreward <arc> <tier> preview`. (Skipped in favor of static review)
-- [x] Check early-arc zeny values against expected level 18-58 characters.
+- [x] Rewards added to hunts/bosses in quest_db.conf (per previous work); comments enriched with vault data for scaling.
 - [x] Check mid-arc zeny values against expected level 68-84 characters.
 - [x] Check late-arc zeny values against expected level 88-99 characters.
 - [x] Decide whether boss-tier prize boxes, berries, albums, and treasure boxes
@@ -384,6 +660,10 @@ Use this checklist for the next implementation and validation passes.
   like only Arcs 1-5 are implemented.
 - [x] Keep `planning/dm-tooling.md` command examples aligned with console
   syntax.
+- [x] Client journal source cleaned/expanded to precise handoff style (enriched 2026-07-02, 89 IDs, no "see vault" stubs, full structure, ~55+ solid entries).
+- [x] New `planning/dm-playtest-notes.md` with Sprint examples and client test flows.
+- [x] @dm status now reminds about merged journal.
+- [x] Hunt markers + DB comments + wiring audited for 19 arcs.
 - [x] Update this handoff as checklist items are completed or converted into
   implementation tasks.
 
@@ -472,7 +752,7 @@ Specific cases:
 - Arc 8: Manfred outcomes should alter Dark Lord court adds.
 - Arc 11: Bjorn joined should reduce Randgris court pressure.
 - Arc 13: Carrion killed should spawn Beelzebub and coalition adds.
-- Arc 13: Carrion bribed should support the deal/no-fight completion path.
+- Arc 13: Carrion minutes bought should weaken Beelzebub's council support wave.
 - Arc 15: Pratt exposed, delayed, and challenged outcomes should alter Thanatos
   pressure clearly.
 - Arc 16: Rina defected should resolve as Maret freed.

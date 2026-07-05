@@ -1,7 +1,12 @@
 // Seal Cascade Trap and Hazard Helpers
 //
 // These functions provide standard puzzle resets, area hazards,
-// and trigger tile abstractions for the DM campaign.
+// trigger tile abstractions, and the @dm trap live-table surface
+// for the DM campaign.
+//
+// See planning/dm-traps-puzzles-guide.md (archetypes, rules, primitives)
+// and planning/dm-architecture-review.md (WP-11) for design.
+// @dm trap command surface wired; full registry + watcher + spring pending.
 
 // DM_HazardArea("<map>", x, y, range, hp_percent_loss, status_type, status_duration{, party_id})
 // Inflicts damage and/or status effects to the caller's party in the area.
@@ -92,4 +97,285 @@ function	script	DM_CleanupEncounter	{
 		.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, .@label$;
 	return 1;
+}
+
+// DM_HazardStatus("<status_name>")
+// Returns the SC_* constant or -1 if invalid, 0 if none.
+function	script	DM_HazardStatus	{
+	.@status$ = strtolower(getarg(0, ""));
+	if (.@status$ == "" || .@status$ == "0" || .@status$ == "none") return 0;
+	if (.@status$ == "poison" || .@status$ == "sc_poison") return SC_POISON;
+	if (.@status$ == "freeze" || .@status$ == "frozen" || .@status$ == "sc_freeze") return SC_FREEZE;
+	if (.@status$ == "stun" || .@status$ == "stunned" || .@status$ == "sc_stun") return SC_STUN;
+	if (.@status$ == "sleep" || .@status$ == "sc_sleep") return SC_SLEEP;
+	if (.@status$ == "curse" || .@status$ == "cursed" || .@status$ == "sc_curse") return SC_CURSE;
+	if (.@status$ == "confusion" || .@status$ == "confused" || .@status$ == "sc_confusion") return SC_CONFUSION;
+	if (.@status$ == "blind" || .@status$ == "sc_blind") return SC_BLIND;
+	.@status = atoi(.@status$);
+	if (.@status > 0) return .@status;
+	return -1;
+}
+
+// DM_TrapCommand(...)
+// Full: registry + watcher + spring with DM_RollCheck saves.
+function	script	DM_TrapCommand	{
+	.@argc = getarg(0, 0);
+	.@cmd$ = strtolower(getarg(1, "help"));
+
+	if (.@cmd$ == "" || .@cmd$ == "help") {
+		dispbottom("[DM] @dm trap set <r> <dc> <dmg%> [status] [ms]  -- place at current pos");
+		dispbottom("[DM] @dm trap list|clear [n|all]|reveal [n]|disarm <player> [n]");
+		dispbottom("[DM] Traps are DM-char temp; cleared on cleanup/mode off/rel og.");
+		return 0;
+	}
+
+	if (.@cmd$ == "set") {
+		if (@dm_trap_count >= 8) {
+			dispbottom("[DM] Trap registry full (max 8). Clear some first.");
+			return 0;
+		}
+
+		.@radius = atoi(getarg(2, "3"));
+		.@dc = atoi(getarg(3, "12"));
+		.@dmg = atoi(getarg(4, "20"));
+		.@status_str$ = getarg(5, "none");
+		.@status = callfunc("DM_HazardStatus", .@status_str$);
+		.@status_ms = atoi(getarg(6, "10000"));
+
+		if (.@radius < 1) .@radius = 1;
+		if (.@radius > 20) .@radius = 20;
+		if (.@dmg < 0) .@dmg = 0;
+		if (.@dmg > 100) .@dmg = 100;
+
+		if (.@status < 0) {
+			dispbottom("[DM] Unknown hazard status: " + .@status_str$);
+			return 0;
+		}
+
+		.@idx = @dm_trap_count;
+		getmapxy(@dm_trap_map$[.@idx], @dm_trap_x[.@idx], @dm_trap_y[.@idx], UNITTYPE_PC);
+		@dm_trap_radius[.@idx] = .@radius;
+		@dm_trap_dc[.@idx] = .@dc;
+		@dm_trap_dmg[.@idx] = .@dmg;
+		@dm_trap_status[.@idx] = .@status;
+		@dm_trap_status_ms[.@idx] = .@status_ms;
+		@dm_trap_armed[.@idx] = 1;
+		@dm_trap_count++;
+
+		dispbottom("[DM] Trap " + .@idx + " armed at " + @dm_trap_map$[.@idx] + " " + @dm_trap_x[.@idx] + "," + @dm_trap_y[.@idx] + " (R=" + .@radius + ", DC" + .@dc + ").");
+
+		deltimer("DM_TrapConsole::OnTrapTick");
+		addtimer(1000, "DM_TrapConsole::OnTrapTick");
+		return 1;
+	}
+
+	if (.@cmd$ == "list") {
+		if (@dm_trap_count == 0) {
+			dispbottom("[DM] No active traps.");
+			return 1;
+		}
+		dispbottom("[DM] Latent traps:");
+		for (.@i = 0; .@i < @dm_trap_count; ++.@i) {
+			if (@dm_trap_armed[.@i]) {
+				dispbottom("  [" + .@i + "] " + @dm_trap_map$[.@i] + " " + @dm_trap_x[.@i] + "," + @dm_trap_y[.@i] + " (R=" + @dm_trap_radius[.@i] + " DC" + @dm_trap_dc[.@i] + ")");
+			}
+		}
+		return 1;
+	}
+
+	if (.@cmd$ == "clear") {
+		.@target$ = getarg(2, "all");
+		if (.@target$ == "all") {
+			deletearray @dm_trap_map$[0], 8;
+			deletearray @dm_trap_x[0], 8;
+			deletearray @dm_trap_y[0], 8;
+			deletearray @dm_trap_radius[0], 8;
+			deletearray @dm_trap_dc[0], 8;
+			deletearray @dm_trap_dmg[0], 8;
+			deletearray @dm_trap_status[0], 8;
+			deletearray @dm_trap_status_ms[0], 8;
+			deletearray @dm_trap_armed[0], 8;
+			@dm_trap_count = 0;
+			deltimer("DM_TrapConsole::OnTrapTick");
+			dispbottom("[DM] All traps cleared.");
+		} else {
+			.@idx = atoi(.@target$);
+			if (.@idx >= 0 && .@idx < @dm_trap_count) {
+				@dm_trap_armed[.@idx] = 0;
+				dispbottom("[DM] Trap " + .@idx + " cleared.");
+			} else {
+				dispbottom("[DM] Invalid trap index.");
+			}
+		}
+		return 1;
+	}
+
+	if (.@cmd$ == "reveal") {
+		.@idx = atoi(getarg(2, "0"));
+		if (.@idx < 0 || .@idx >= @dm_trap_count || !@dm_trap_armed[.@idx]) {
+			dispbottom("[DM] Trap " + .@idx + " not found or already sprung.");
+			return 0;
+		}
+		mapannounce(@dm_trap_map$[.@idx], "[DM] You spot a hidden mechanism near " + @dm_trap_x[.@idx] + "," + @dm_trap_y[.@idx] + "...", bc_map, 0xFFAA33);
+		specialeffect(EF_GLASSWALL, 0, @dm_trap_x[.@idx], @dm_trap_y[.@idx]);
+		return 1;
+	}
+
+	if (.@cmd$ == "disarm") {
+		.@player$ = getarg(2, "");
+		.@idx = atoi(getarg(3, "0"));
+		if (.@player$ == "") {
+			dispbottom("[DM] Usage: @dm trap disarm <player> [n]");
+			return 0;
+		}
+		if (.@idx < 0 || .@idx >= @dm_trap_count || !@dm_trap_armed[.@idx]) {
+			dispbottom("[DM] Trap " + .@idx + " not found or already sprung.");
+			return 0;
+		}
+
+		.@accid = getcharid(CHAR_ID_ACCOUNT, .@player$);
+		if (.@accid <= 0) {
+			dispbottom("[DM] Player '" + .@player$ + "' is not online.");
+			return 0;
+		}
+		
+		.@dc = @dm_trap_dc[.@idx] + 2; // Disarm is DC + 2
+		.@dm_map$ = strcharinfo(PC_MAP);
+
+		if (attachrid(.@accid)) {
+			.@pass = callfunc("DM_RollCheck", bDex, .@dc, "");
+			.@roll = @dm_check_roll;
+			.@total = @dm_check_total;
+			.@modstr$ = (@dm_check_mod >= 0 ? "+" : "") + @dm_check_mod;
+			
+			.@res$ = (.@pass ? "SUCCESS" : "FAILURE");
+			if (.@roll == 20) .@res$ = "CRIT SUCCESS";
+			if (.@roll == 1) .@res$ = "CRIT FAIL";
+
+			.@msg$ = "[Check] " + strcharinfo(PC_NAME) + " DEX vs DC" + .@dc + " (Disarm): d20=" + .@roll + " " + .@modstr$ + " = " + .@total + " -> " + .@res$;
+			mapannounce(.@dm_map$, .@msg$, bc_map, (.@pass ? 0x66FF66 : 0xFF6666));
+
+			if (.@pass) {
+				mapannounce(.@dm_map$, "[DM] Mechanism successfully disarmed.", bc_map, 0x66FF66);
+			}
+			
+			detachrid();
+
+			if (!.@pass && .@roll == 1) {
+				dispbottom("[DM] Critical failure! Trap springs on the disarmer!");
+				callfunc("DM_SpringTrap", .@idx);
+			} else if (.@pass) {
+				@dm_trap_armed[.@idx] = 0;
+			}
+		}
+		return 1;
+	}
+
+	dispbottom("[DM] trap: subcommand unknown.");
+	return 0;
+}
+
+function	script	DM_SpringTrap	{
+	.@t = getarg(0);
+
+	@dm_trap_armed[.@t] = 0;
+	.@map$ = @dm_trap_map$[.@t];
+	.@tx = @dm_trap_x[.@t];
+	.@ty = @dm_trap_y[.@t];
+	.@tr = @dm_trap_radius[.@t];
+	.@dc = @dm_trap_dc[.@t];
+	.@dmg = @dm_trap_dmg[.@t];
+	.@st = @dm_trap_status[.@t];
+	.@st_ms = @dm_trap_status_ms[.@t];
+
+	mapannounce(.@map$, "[DM] A hidden trap springs!", bc_map, 0xFF6666);
+	specialeffect(EF_SPRINGTRAP, 0, .@tx, .@ty);
+
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@party_count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@party_accid);
+	.@dm_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	for (.@i = 0; .@i < .@party_count; ++.@i) {
+		if (!isloggedin(.@party_accid[.@i], .@charid[.@i])) continue;
+		if (!attachrid(.@party_accid[.@i])) continue;
+
+		getmapxy(.@pc_map$, .@pc_x, .@pc_y, UNITTYPE_PC);
+		.@dx = .@pc_x - .@tx;
+		.@dy = .@pc_y - .@ty;
+		if (.@dx < 0) .@dx = -.@dx;
+		if (.@dy < 0) .@dy = -.@dy;
+		
+		if (.@pc_map$ == .@map$ && .@dx <= .@tr && .@dy <= .@tr) {
+			.@pass = callfunc("DM_RollCheck", bAgi, .@dc, "");
+			.@roll = @dm_check_roll;
+			.@total = @dm_check_total;
+			.@modstr$ = (@dm_check_mod >= 0 ? "+" : "") + @dm_check_mod;
+			
+			.@res$ = (.@pass ? "SUCCESS" : "FAILURE");
+			if (.@roll == 20) .@res$ = "CRIT SUCCESS";
+			if (.@roll == 1) .@res$ = "CRIT FAIL";
+
+			.@msg$ = "[Check] " + strcharinfo(PC_NAME) + " AGI vs DC" + .@dc + " (Save): d20=" + .@roll + " " + .@modstr$ + " = " + .@total + " -> " + .@res$;
+			mapannounce(.@map$, .@msg$, bc_map, (.@pass ? 0x66FF66 : 0xFF6666));
+
+			if (.@pass) {
+				if (.@dmg > 0) percentheal -(.@dmg / 2), 0;
+			} else {
+				if (.@dmg > 0) percentheal -(.@dmg), 0;
+				if (.@st > 0) sc_start .@st, .@st_ms, 1;
+			}
+		}
+		detachrid();
+	}
+	
+	if (.@dm_aid) attachrid(.@dm_aid);
+	return 1;
+}
+
+-	script	DM_TrapConsole	FAKE_NPC,{
+	end;
+
+OnTrapTick:
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	if (.@party_id <= 0 || @dm_trap_count == 0) {
+		end;
+	}
+
+	.@any_armed = 0;
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@party_count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@t = 0; .@t < @dm_trap_count; ++.@t) {
+		if (!@dm_trap_armed[.@t]) continue;
+		.@any_armed = 1;
+
+		.@map$ = @dm_trap_map$[.@t];
+		.@tx = @dm_trap_x[.@t];
+		.@ty = @dm_trap_y[.@t];
+		.@tr = @dm_trap_radius[.@t];
+
+		for (.@i = 0; .@i < .@party_count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i])) continue;
+			if (!attachrid(.@accid[.@i])) continue;
+			
+			getmapxy(.@pc_map$, .@pc_x, .@pc_y, UNITTYPE_PC);
+			.@dx = .@pc_x - .@tx;
+			.@dy = .@pc_y - .@ty;
+			if (.@dx < 0) .@dx = -.@dx;
+			if (.@dy < 0) .@dy = -.@dy;
+			
+			if (.@pc_map$ == .@map$ && .@dx <= .@tr && .@dy <= .@tr) {
+				detachrid();
+				callfunc("DM_SpringTrap", .@t);
+				break;
+			}
+			detachrid();
+		}
+	}
+
+	if (.@any_armed) {
+		addtimer(1000, strnpcinfo(NPC_NAME_UNIQUE) + "::OnTrapTick");
+	}
+	end;
 }

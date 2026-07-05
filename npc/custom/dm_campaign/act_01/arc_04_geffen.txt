@@ -3,13 +3,11 @@
 //===== By: ==================================================
 //= Seal Cascade DM tooling
 //===== Description: =========================================
-//= Geffen's brilliant tower-magic is overflow from Baphomet's
-//= prison. Apprentice Elsbeth, Archmagus Doran, and Brother
-//= Cassell expose the cost of keeping a city bright.
-//=
-//= Source notes:
-//= H:\Docs\Obsidian Notes\Game Design\Ragnarok_Online\Campaign\
-//=   Act_I_World_at_Peace\Arc_04_City_Above_the_Beast
+//= Geffen's crisis, adapted from the Obsidian Dialogue Script.
+//= Archmage Vella stonewalls at the Guild door. Apprentice
+//= Elsbeth is the inside source. Brother Cassell unmasks
+//= himself at the wards while Archmagus Doran sabotages them
+//= in silence. Baphomet and the Doppelganger close the arc.
 //=
 //= Quests (db/quest_db.conf):
 //=   20019 The City Above the Beast   (arc tracker)
@@ -19,6 +17,49 @@
 //=   20023 The Vault That Prays       (Baphomet)
 //=   20024 The Pilgrim's Offer        (story)
 //===========================================================
+
+// Archmage Vella - Mages' Guild gatekeeper, Scene 1 flavor
+geffen,127,100,4	script	Archmage Vella#dm	4_F_02,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (dm_arc04_vella_met) {
+		mes("[Archmage Vella]");
+		if (dm_arc04_vella_choice == 3)
+			mes("Only a handful of people have that clearance. Archmagus Doran holds one of them. Do not make me regret naming him.");
+		else
+			mes("The door is already open. That has not stopped being the problem.");
+		close();
+	}
+
+	mes("^3355FF*A robed woman paces frantically in front of the tower stair.*^000000");
+	next();
+	mes("[Archmage Vella]");
+	mes("This is an internal guild matter! The Adventurers' Guild has no jurisdiction in the Geffen Tower!");
+	next();
+	switch (select("We have proof the Whisperer cult is operating here. Let us help.", "Wynne sent us. We're getting paid to clear the dungeon. Are you going to open the door?", "Who disabled the wards?")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_vella_choice", 1);
+		mes("[Archmage Vella]");
+		mes("You have proof? ...Fine. My senior enchanters are missing. And the warding seals in the basement — the ones keeping the Geffen Dungeon locked — have been systematically disabled from the inside.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_vella_choice", 2);
+		mes("[Archmage Vella]");
+		mes("The door is already open. That's the problem. The magic holding back the horrors below has been unravelled by someone who knows our highest secrets.");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_vella_choice", 3);
+		mes("[Archmage Vella]");
+		mes("Only a handful of people have that clearance. Archmagus Doran holds one of them — and he has been 'studying' the lower vault for months with a visiting scholar he vouched for personally. A soft-spoken man. In gray robes.");
+		break;
+	}
+	callfunc("DM_InstanceSetFlag", "dm_arc04_vella_met", 1);
+	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
+}
 
 // Apprentice Elsbeth - Geffen ally and Arc 4 support handler
 geffen,120,100,4	script	Apprentice Elsbeth#dm	4_F_01,{
@@ -47,6 +88,14 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20019, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20019, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20020, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20021, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20022, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
@@ -62,23 +111,17 @@ S_StartArc:
 	next();
 	switch (select("Stay safe and give us the ward-key.", "Come with us and explain the vault.", "I do not trust Guild people.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 0);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 1);
+		callfunc("DM_Decide", "arc04.elsbeth", "protect");
 		mes("[Apprentice Elsbeth]");
 		mes("Then take this ward-key. If the lower door asks a question, answer with silence.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 0);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 1);
+		callfunc("DM_Decide", "arc04.elsbeth", "vault");
 		mes("[Apprentice Elsbeth]");
 		mes("I know the prayers they carved into the locks. I will come, and I will regret being useful.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 0);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 0);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 0);
+		callfunc("DM_Decide", "arc04.elsbeth", "distrust");
 		mes("[Apprentice Elsbeth]");
 		mes("Fair. Trust the key, then, if not the hand that offers it. No? Then you will force the old way.");
 		break;
@@ -218,7 +261,7 @@ S_TurnIns:
 	close();
 }
 
-// Archmagus Doran - human villain and lower-vault gate
+// Archmagus Doran - human villain and lower-vault gate (Cassell unmasks here first)
 gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20023) != 1) {
@@ -241,35 +284,57 @@ gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
 		close();
 	}
 
+	mes("^3355FF*Brother Cassell stands before a massive, glowing arcane lock, methodically dissolving it with counter-magic. Beside him, Archmagus Doran paints sabotage-glyphs onto the seal's anchor-stones with the absorbed calm of a man grading papers. Cassell turns as the party approaches, removing his hood fully for the first time.*^000000");
+	next();
+	if (dm_arc01_holt_spared) {
+		mes("^3355FF*Deacon Holt, come this far as the party's witness, goes pale.*^000000");
+		mes("[Deacon Holt]");
+		mes("That voice. That's him. That's the gray almsman.");
+		next();
+	}
+	mes("[Brother Cassell]");
+	mes("Ah. The heroes of Prontera. And Payon. And Morroc. You are remarkably persistent. And predictably late.");
+	next();
+	switch (select("It's over, Cassell. We know you're trying to break the seal.", "Why do this? What's the point of weakening every seal at once?", "Teach me how the seals work.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_path", 1);
+		mes("[Brother Cassell]");
+		mes("Break this seal? Heavens, no. Baphomet is a brute. If I break his seal completely, Geffen falls, and the other nations panic. I am merely... opening a window. A crack to let the pressure out.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_path", 2);
+		mes("[Brother Cassell]");
+		mes("Because if one seal breaks, humanity rallies and fixes it. If they all break at once... the slate is wiped clean. The Voice demands a new world, and the old one must be cleared away.");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_path", 3);
+		mes("[Brother Cassell]");
+		mes("(Smiles, genuinely pleased) A seeker of knowledge. How refreshing. Not here — not shouted over a dying ward. Survive what is below, and I will pour the tea.");
+		break;
+	}
+	next();
+	mes("^3355FF*Cassell bows and is gone. Doran does not look up from the anchor-stones.*^000000");
+	next();
 	mes("[Archmagus Doran]");
 	mes("I proved the tower runs on seal overflow. They buried the proof and promoted the cowards.");
 	next();
-	mes("[Archmagus Doran]");
-	mes("Cassell understood immediately. A prison is only a machine whose owner refuses to admit it has controls.");
-	next();
-	switch (select("You endangered the whole city.", "Publish the proof. Stand down.", "Teach us what Cassell taught you.")) {
+	switch (select("You'll drown the world to win an argument.", "Publish your proof. We'll make them listen — without the demon.", "Teach us what you found.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_fought", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 0);
+		callfunc("DM_Decide", "arc04.doran", "condemn");
 		mes("[Archmagus Doran]");
-		mes("Then learn from danger. Geffen certainly did.");
+		mes("I'll wake it.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_fought", 0);
+		callfunc("DM_Decide", "arc04.doran", "surrender");
 		mes("[Archmagus Doran]");
 		mes("If the city reads my proof with the lamps dimmed, perhaps truth will finally have a cost.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_taught", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_unmasked", 1);
+		callfunc("DM_Decide", "arc04.doran", "teaching");
 		mes("[Archmagus Doran]");
-		mes("Cassell calls it a catechism. Not worship. Engineering for abandoned locks.");
+		mes("The gray man explains it better than I ever could. Ask him, if you survive him.");
 		break;
 	}
-	callfunc("DM_InstanceSetFlag", "dm_arc04_doran_confronted", 1);
-	callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_unmasked", 1);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 430);
 	next();
 	mes("^3355FF*The vault door opens below him. The air smells like old candles and wet fur.*^000000");
 	close();
@@ -277,6 +342,8 @@ gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20023, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
@@ -378,6 +445,8 @@ OnBaphometDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20023, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
@@ -403,30 +472,22 @@ gef_dun02,218,210,4	script	Brother Cassell#dm04	4_M_MONK,{
 	next();
 	switch (select("Refuse in faith.", "Refuse, but listen for investigative signs.", "Accept the Pilgrim's Catechism.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_catechism_choice", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_pilgrim_catechism", 0);
+		callfunc("DM_Decide", "arc04.catechism", "refuse");
 		mes("[Brother Cassell]");
 		mes("Clean hands, then. Keep them clean enough to open doors by force.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_catechism_choice", 2);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_pilgrim_catechism", 0);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_tamper_sense", 1);
+		callfunc("DM_Decide", "arc04.catechism", "listen");
 		mes("[Brother Cassell]");
 		mes("A detective's heresy. Sensible. You will know when a seal has been touched.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc04_catechism_choice", 3);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_pilgrim_catechism", 1);
-		callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
+		callfunc("DM_Decide", "arc04.catechism", "accept");
 		mes("[Brother Cassell]");
 		mes("Then learn the grammar of locks. Later, your friends will ask why you needed the language.");
 		break;
 	}
-	callfunc("DM_InstanceQuestComplete", 20024);
-	callfunc("DM_InstanceQuestComplete", 20019);
 	callfunc("DM_PartyExp", 80000, 35000);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 499);
 	next();
 	mes("^3355FF[Arc 4 complete: The City Above the Beast]^000000");
 	close();
@@ -434,7 +495,38 @@ gef_dun02,218,210,4	script	Brother Cassell#dm04	4_M_MONK,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20024, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Cassell's Letter - readable handout from the Geffen vault
+gef_dun02,207,203,3	script	Silver Dagger Letter#dm	2_BOARD1,{
+	if (!callfunc("DM_PartyActive")) { close; }
+	if (!dm_arc04_cassell_unmasked) {
+		mes("^3355FF*The wall here is scored by fresh silver. Whatever was pinned to it is gone.*^000000");
+		close();
+	}
+
+	mes("^3355FF*A clean sheet of paper is pinned to the stone with a silver dagger. The handwriting is elegant and perfectly steady.*^000000");
+	next();
+	mes("^0000AA[My dear Adventurers,]^000000");
+	mes("If you are reading this, I am already gone, and the wards holding the great beast below you have begun to fray.");
+	mes("Please do not take my departure as an insult. I simply have other appointments to keep.");
+	next();
+	mes("^0000AA[Brother Cassell's Letter]^000000");
+	mes("You fight with passion for a world that is fundamentally broken. You look at the sky and see a roof; I look at it and see a cage.");
+	mes("Every city you love is a padlock on a prison door.");
+	next();
+	mes("^0000AA[Brother Cassell's Letter]^000000");
+	mes("I serve the Voice that promises a clean slate. I do not hate you.");
+	mes("In fact, I hope you survive the coming cascade. The new world will need strong foundations.");
+	next();
+	mes("^0000AA[Brother Cassell's Letter]^000000");
+	mes("Do not try to find me. The path I walk is going to get very, very cold.");
+	mes("With utmost respect,");
+	mes("^0000AA*Brother Cassell*^000000");
+	close();
 }
 
 // ── Vault Seal Pressure Set-piece ─────────────────────────────────────────────
@@ -486,14 +578,17 @@ gef_dun02,219,212,4	script	East Seal Glyph#dm	4_ENERGY_WHITE,{
 	next();
 	if (select("Channel magic", "Leave it") == 2) close();
 	
-	if (dm_arc04_puzzle_1 == 0 && dm_arc04_puzzle_2 == 0 && dm_arc04_puzzle_3 == 0) {
-		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_1", 1);
+	if (callfunc("DM_PuzzleStep", "dm_arc04_puzzle_", 1, 3, "Vault Seal Pressure#dm::OnPressureStart")) {
 		mes("The glyph lights up with a steady hum.");
 	} else {
 		mes("The glyph flares red and sparks. The sequence is broken.");
-		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
 }
 
 gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
@@ -508,14 +603,17 @@ gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
 	next();
 	if (select("Channel magic", "Leave it") == 2) close();
 	
-	if (dm_arc04_puzzle_1 == 1 && dm_arc04_puzzle_2 == 0 && dm_arc04_puzzle_3 == 0) {
-		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_2", 1);
+	if (callfunc("DM_PuzzleStep", "dm_arc04_puzzle_", 2, 3, "Vault Seal Pressure#dm::OnPressureStart")) {
 		mes("The glyph lights up with a steady hum.");
 	} else {
 		mes("The glyph flares red and sparks. The sequence is broken.");
-		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
 }
 
 gef_dun02,209,212,4	script	West Seal Glyph#dm	4_ENERGY_WHITE,{
@@ -530,13 +628,16 @@ gef_dun02,209,212,4	script	West Seal Glyph#dm	4_ENERGY_WHITE,{
 	next();
 	if (select("Channel magic", "Leave it") == 2) close();
 	
-	if (dm_arc04_puzzle_1 == 1 && dm_arc04_puzzle_2 == 1 && dm_arc04_puzzle_3 == 0) {
-		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_3", 1);
+	if (callfunc("DM_PuzzleStep", "dm_arc04_puzzle_", 3, 3, "Vault Seal Pressure#dm::OnPressureStart")) {
 		mes("The final glyph lights up. A heavy stone grinding noise comes from the center of the vault.");
 		mapannounce strnpcinfo(NPC_MAP), "The outer seal sequence is complete. The vault center is accessible.", bc_map, 0x3355FF;
 	} else {
 		mes("The glyph flares red and sparks. The sequence is broken.");
-		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
 }

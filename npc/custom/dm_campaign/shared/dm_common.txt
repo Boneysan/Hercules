@@ -1,11 +1,20 @@
 // Seal Cascade shared DM helpers.
 
+-	script	DM_Config	FAKE_NPC,{
+OnInit:
+	// Group 5 ("Dungeon Master") is created by tools/promote-dm.sh at level 1.
+	.gm_level = 1;
+	end;
+}
+
 function	script	DM_IsDM	{
-	return getgmlevel() >= getarg(0, 1);
+	.@required = (getargcount() > 0) ? getarg(0) : getvariableofnpc(.gm_level, "DM_Config");
+	return getgmlevel() >= .@required;
 }
 
 function	script	DM_RequireDM	{
-	if (callfunc("DM_IsDM", getarg(0, 1)))
+	.@required = (getargcount() > 0) ? getarg(0) : getvariableofnpc(.gm_level, "DM_Config");
+	if (callfunc("DM_IsDM", .@required))
 		return 1;
 
 	dispbottom("[DM] You do not have permission to use this tool.");
@@ -30,6 +39,54 @@ function	script	DM_PartyOnlineCount	{
 	}
 
 	return .@online;
+}
+
+// DM_PartyForEach("<FuncName>", party_id, arg2, arg3, ...)
+// Calls callfunc("<FuncName>", arg2, arg3, ...) attached to each online
+// member; restores the caller's attachment; returns members reached.
+// Convention: new party-wide features must use this; new @dm subcommands must be 
+// callfunc-style domain functions taking explicit args.
+function	script	DM_PartyForEach	{
+	.@func$ = getarg(0);
+	.@party_id = getarg(1);
+	.@caller_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@reached = 0;
+
+	// Solo / no party fallback
+	if (.@party_id <= 0) {
+		if (getargcount() == 2) callfunc(.@func$);
+		else if (getargcount() == 3) callfunc(.@func$, getarg(2));
+		else if (getargcount() == 4) callfunc(.@func$, getarg(2), getarg(3));
+		else if (getargcount() == 5) callfunc(.@func$, getarg(2), getarg(3), getarg(4));
+		else if (getargcount() == 6) callfunc(.@func$, getarg(2), getarg(3), getarg(4), getarg(5));
+		else if (getargcount() == 7) callfunc(.@func$, getarg(2), getarg(3), getarg(4), getarg(5), getarg(6));
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+
+		if (getargcount() == 2) callfunc(.@func$);
+		else if (getargcount() == 3) callfunc(.@func$, getarg(2));
+		else if (getargcount() == 4) callfunc(.@func$, getarg(2), getarg(3));
+		else if (getargcount() == 5) callfunc(.@func$, getarg(2), getarg(3), getarg(4));
+		else if (getargcount() == 6) callfunc(.@func$, getarg(2), getarg(3), getarg(4), getarg(5));
+		else if (getargcount() == 7) callfunc(.@func$, getarg(2), getarg(3), getarg(4), getarg(5), getarg(6));
+		
+		++.@reached;
+		detachrid();
+	}
+
+	if (.@caller_aid)
+		attachrid(.@caller_aid);
+	
+	return .@reached;
 }
 
 function	script	DM_CurrentMap	{
@@ -129,4 +186,17 @@ function	script	DM_TriggerEvent	{
 
 	donpcevent(.@npc$ + "::" + .@label$);
 	return;
+}
+
+// Returns true if the caller is in the active DM session party while $dm_mode is on.
+// All campaign NPCs should gate on this (silent close for outsiders).
+// This centralizes the gate so we can evolve the storage later (e.g. to $dm_session_<pid>)
+// without touching 50 call sites.
+function	script	DM_PartyActive	{
+	if ($dm_mode == 0)
+		return 0;
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	if (.@party_id <= 0)
+		return 0;
+	return (.@party_id == $dm_active_party);
 }

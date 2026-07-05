@@ -47,6 +47,14 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20111, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20111, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20113, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20114, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20115, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_Introduction:
@@ -271,7 +279,7 @@ einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
 		callfunc("DM_InstanceQuestComplete", 20112);
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc07_strike_broken", 1);
+		callfunc("DM_Decide", "arc07.strike", "broken");
 		mes("[Kessler]");
 		mes("Pragmatic. RSX is already handling most of it, but I can use additional muscle at the south gate.");
 		next();
@@ -279,15 +287,13 @@ einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
 		mes("Rekenber will compensate you. The machine was reactivated under standing protocol. I authorized it. That's for your ears only.");
 		next();
 		mes("^3355FF*Kessler volunteers the RSX authorization. The workers won't thank you for this.*^000000");
-		callfunc("DM_InstanceQuestComplete", 20112);
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", 1);
+		callfunc("DM_Decide", "arc07.strike", "supported");
 		mes("[Kessler]");
 		mes("Then you're enemies of progress. RSX will handle the south foundry. And you along with it.");
 		next();
 		mes("^3355FF*Kessler reveals nothing. The confrontation closes without an answer. Find RSX yourself.*^000000");
-		callfunc("DM_InstanceQuestComplete", 20112);
 		break;
 	}
 	next();
@@ -297,7 +303,30 @@ einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20112, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Strike board - worker-side institutional voice for the arc
+einbroch,148,228,3	script	Strike Board#dm07	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc07_started) {
+		mes("^3355FF*The notice board is layered with old pay disputes and safety complaints. Nothing on it is current enough to help.*^000000");
+		close();
+	}
+
+	mes("^3355FF*Fresh chalk marks cover the board in quick shifts, meal counts, and names of workers who have not checked back in since RSX reactivated.*^000000");
+	next();
+	mes("^0000AA[South Foundry Strike Board]^000000");
+	mes("Boiler crews hold until dusk. Medical tent receives first mine pelts before night shift. Nobody crosses the north line alone while the machine is active.");
+	next();
+	mes("^0000AA[South Foundry Strike Board]^000000");
+	mes("Supervisor response to safety complaint 88-C: denied. Worker response written underneath: then we'll write our own safety procedure and call it a strike.");
+	next();
+	mes("^0000AA[South Foundry Strike Board]^000000");
+	mes("Someone has added a final line in different chalk: if Rekenber wants obedience, it can build workers out of scrap too.");
+	close();
 }
 
 // ── Reactivation Bay Set-piece ─────────────────────────────────────────────

@@ -27,8 +27,11 @@ trap 'rm -f "$LOG"' EXIT
 echo "Loading all scripts via map-server --run-once ..."
 timeout 120 ./map-server --run-once 2>&1 | tr '\r' '\n' > "$LOG" || true
 
-# Real script/load errors. Exclude known-benign library chatter.
-ERRORS=$(grep -iE '\[Error\]' "$LOG" | grep -ivE 'MYSQL_OPT_RECONNECT' || true)
+# Real script/load errors. Exclude known-benign library/environment chatter.
+ERRORS=$(grep -iE '\[Error\]' "$LOG" \
+    | grep -ivE 'MYSQL_OPT_RECONNECT' \
+    | grep -ivF '[Error]: socket_getips: Unable to create a socket!' \
+    || true)
 
 LOADED=$(grep -c 'dm_campaign' "$LOG" || true)
 

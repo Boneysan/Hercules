@@ -18,7 +18,8 @@
 //=   dm_arc19_started, dm_arc19_surt_defeated,
 //=   dm_finale_shared_seal, dm_finale_reforged_seal,
 //=   dm_finale_queens_bargain, dm_finale_thanatos_road,
-//=   dm_finale_ragnarok_unbound, dm_campaign_complete
+//=   dm_finale_ragnarok_unbound, dm_finale_refusal,
+//=   dm_campaign_complete
 //===========================================================
 
 // ── Loki The Voice — The Observer ─────────────────────────────────────────
@@ -49,6 +50,10 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20231, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20231, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20232, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
@@ -156,6 +161,58 @@ S_FinalAudience:
 	close();
 }
 
+// ── Finale Witnesses ──────────────────────────────────────────────────────
+moc_ruins,146,148,4	script	Mira Ashkey#dm19	4_F_02,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_mira_lives) {
+		mes("^3355FF*Only wind answers at the old road. The place where she might have stood is empty.*^000000");
+		close();
+	}
+	if (!dm_campaign_complete) {
+		mes("[Mira]");
+		mes("I came because the ruins still smell like Morroc. I kept the key. I wasn't sure I should bring it, but I didn't want to leave it alone.");
+		close();
+	}
+
+	mes("[Mira]");
+	mes("You did not let the world end the same way my brother did. I can say that now without lying.");
+	next();
+	mes("[Mira]");
+	mes("The house-key is still wrapped in red thread. I am keeping it. Not because the house is whole, but because the key proves it was real.");
+	next();
+	mes("[Mira]");
+	mes("Thank you for giving people a future that had room in it.");
+	close();
+}
+
+moc_fild22,148,148,4	script	Echo#dm19	4_F_01,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc10_echo_freed) {
+		mes("^3355FF*No one is standing here. The ash is still warm from the battle, but the shape in it is gone.*^000000");
+		close();
+	}
+	if (!dm_campaign_complete) {
+		mes("[Echo]");
+		mes("I wasn't sure I should come. This place feels like every machine that ever told someone what they were for finally ran out of reasons.");
+		close();
+	}
+
+	mes("[Echo]");
+	mes("I heard what Loki said. About makers. About sacrifice. About what gets to count as necessary.");
+	next();
+	mes("[Echo]");
+	mes("He was wrong about one thing. Refusal is not a weakness in the system. It is the part that keeps the system from becoming a cage.");
+	next();
+	if (dm_finale_refusal) {
+		mes("[Echo]");
+		mes("You chose the path that had room for that. I will remember that better than any order they wrote into me.");
+	} else {
+		mes("[Echo]");
+		mes("You still made a choice that was yours. That matters. It matters more than the people who built us wanted it to.");
+	}
+	close();
+}
+
 // ── The Ash Vacuum Rift Set-piece ─────────────────────────────────────────
 moc_fild22,150,150,0	script	The Ash Vacuum Rift#dm	HIDDEN_NPC,{
 	end;
@@ -213,8 +270,10 @@ OnSurtDead:
 	end;
 }
 
-// ── The Central Choice — The Five Paths ───────────────────────────────────
+// ── The Central Choice — The Six Paths ────────────────────────────────────
 moc_fild22,155,150,5	script	The Central Choice#dm	4_M_05,{
+	.@can_refuse = dm_echo_trusts_party || dm_arc15_pratt_challenged;
+
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (dm_campaign_complete) {
 		mes("[The Central Choice]");
@@ -232,46 +291,65 @@ moc_fild22,155,150,5	script	The Central Choice#dm	4_M_05,{
 	mes("Here is what Thanatos never had: options.");
 	next();
 	mes("[Loki]");
-	mes("Five ways to close the cascade. Each one uses what you learned differently. Each one creates a different kind of seal. Choose what the next three centuries look like.");
+	if (.@can_refuse)
+		mes("Six ways to close the cascade. Each one uses what you learned differently. Each one creates a different kind of seal. Choose what the next three centuries look like.");
+	else
+		mes("Five ways to close the cascade. Each one uses what you learned differently. Each one creates a different kind of seal. Choose what the next three centuries look like.");
 	next();
-	switch (select("The Shared Seal — many carry what one could not hold alone.", "The Reforged Seal — Varmundt's counter-frequency rebuilds the lock.", "The Queen's Bargain — Himmelmez holds the seal from the other side.", "Thanatos's Road — one person chooses the seal, knowing the cost.", "Ragnarok Unbound — the seal is not rebuilt. Let what is beneath rise and be faced.")) {
+	if (.@can_refuse)
+		.@choice = select("The Shared Seal — many carry what one could not hold alone.", "The Reforged Seal — Varmundt's counter-frequency rebuilds the lock.", "The Queen's Bargain — Himmelmez holds the seal from the other side.", "Thanatos's Road — one person chooses the seal, knowing the cost.", "The Refusal — deny the seal's demand for a sacrifice at all.", "Ragnarok Unbound — the seal is not rebuilt. Let what is beneath rise and be faced.");
+	else
+		.@choice = select("The Shared Seal — many carry what one could not hold alone.", "The Reforged Seal — Varmundt's counter-frequency rebuilds the lock.", "The Queen's Bargain — Himmelmez holds the seal from the other side.", "Thanatos's Road — one person chooses the seal, knowing the cost.", "Ragnarok Unbound — the seal is not rebuilt. Let what is beneath rise and be faced.");
+	switch (.@choice) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_finale_shared_seal", 1);
+		callfunc("DM_Decide", "arc19.finale", "shared");
 		mes("^3355FF[The Shared Seal]^000000");
 		mes("The party distributes the resonance across a network of willing carriers. No single person becomes the lock. The seal holds through collective intention. It requires maintenance. It requires trust. It will last exactly as long as the trust does.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_finale_reforged_seal", 1);
+		callfunc("DM_Decide", "arc19.finale", "reforged");
 		mes("^3355FF[The Reforged Seal]^000000");
 		mes("Varmundt's inverse-frequency counter-broadcasts at the cascade's exact harmonic inverse. The seal closes mechanically. No living lock. No collective. A machine that cancels itself. It requires power and maintenance. It will last as long as someone keeps it running.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_finale_queens_bargain", 1);
+		callfunc("DM_Decide", "arc19.finale", "queen");
 		mes("^3355FF[The Queen's Bargain]^000000");
 		mes("Himmelmez holds the seal from Niflheim's side. The dead become the lock. This is what the cascade feared — that the dead and the living would cooperate on the seal rather than divide it between them. The seal is permanent while Himmelmez holds it. The cost is hers. She already knew that when she made the pact.");
 		break;
 	case 4:
-		callfunc("DM_InstanceSetFlag", "dm_finale_thanatos_road", 1);
+		callfunc("DM_Decide", "arc19.finale", "thanatos");
 		mes("^3355FF[Thanatos's Road]^000000");
 		mes("One person chooses the seal, knowing the full cost. Not ignorantly, the way Thanatos could not have known. With full knowledge of what three centuries in the lock means. The seal is perfect. The person is permanent. Scholar Pratt's volunteers are gone. The choice is for whoever is willing to make it knowing.");
 		break;
 	case 5:
-		callfunc("DM_InstanceSetFlag", "dm_finale_ragnarok_unbound", 1);
+		if (.@can_refuse) {
+			callfunc("DM_Decide", "arc19.finale", "refusal");
+			mes("^3355FF[The Refusal]^000000");
+			mes("Echo proved that made things can refuse their makers. Thanatos's last word proved the dark never had to be carried alone. The party turns both lessons against the seal itself and refuses the premise that Midgard must answer collapse with another sacrifice.");
+			next();
+			mes("^3355FF[The Refusal]^000000");
+			mes("Instead of feeding the old lock, you break its grammar: the living, the dead, and the machines that learned conscience all hold the line long enough to bleed the resonance into nothing without enthroning a martyr. The seal that remains is imperfect, negotiated, and human.");
+			break;
+		}
+		callfunc("DM_Decide", "arc19.finale", "unbound");
+		mes("^3355FF[Ragnarok Unbound]^000000");
+		mes("The seal is not rebuilt. What Thanatos sealed rises. It has been in there for three hundred years. The cascade's amplification has been feeding it. What rises is not what went in. It may be reasoned with. It may not. Midgard faces what it has been avoiding facing and finds out what that is.");
+		break;
+	case 6:
+		callfunc("DM_Decide", "arc19.finale", "unbound");
 		mes("^3355FF[Ragnarok Unbound]^000000");
 		mes("The seal is not rebuilt. What Thanatos sealed rises. It has been in there for three hundred years. The cascade's amplification has been feeding it. What rises is not what went in. It may be reasoned with. It may not. Midgard faces what it has been avoiding facing and finds out what that is.");
 		break;
 	}
 	next();
 	mes("^FF6600[DM] The Seal Cascade ends. The party has shaped the fate of Midgard.^000000");
-	callfunc("DM_InstanceQuestComplete", 20233);
-	callfunc("DM_InstanceSetFlag", "dm_campaign_complete", 1);
-	callfunc("DM_PartyExp", 1000000, 500000);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1999);
 	announce("[DM] The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", bc_all, 0xFF6600);
 	close();
 
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20233, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }

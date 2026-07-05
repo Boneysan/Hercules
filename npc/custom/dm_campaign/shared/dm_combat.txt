@@ -1,0 +1,544 @@
+// Seal Cascade DM live encounter controls.
+//
+// The encounter registry is temporary and DM-owned: @dm spawn / holdspawn store
+// monster GIDs on the DM character who issued the command. Kill credit and kill
+// callbacks remain attached to the player who kills the monster.
+//
+//   @dm encounter [status|clear|kill|boss <last|gid>]
+//   @dm scale <hp|damage> <percent> [all|boss|last|gid]
+//   @dm bloodied <on|off|status> [boss|last|gid]
+
+function	script	DM_EncounterRefreshPointers	{
+	if (@dm_enc_count <= 0) {
+		@dm_enc_count = 0;
+		@dm_enc_last_gid = 0;
+		@dm_enc_boss_gid = 0;
+		return 1;
+	}
+
+	.@last_ok = 0;
+	.@boss_ok = 0;
+	for (.@i = 0; .@i < @dm_enc_count; ++.@i) {
+		if (@dm_enc_gid[.@i] == @dm_enc_last_gid)
+			.@last_ok = 1;
+		if (@dm_enc_gid[.@i] == @dm_enc_boss_gid)
+			.@boss_ok = 1;
+	}
+
+	if (!.@last_ok)
+		@dm_enc_last_gid = @dm_enc_gid[@dm_enc_count - 1];
+	if (!.@boss_ok)
+		@dm_enc_boss_gid = @dm_enc_last_gid;
+	return 1;
+}
+
+function	script	DM_EncounterForgetIndex	{
+	.@idx = getarg(0, -1);
+	if (.@idx < 0 || .@idx >= @dm_enc_count)
+		return 0;
+
+	.@gid = @dm_enc_gid[.@idx];
+	deletearray @dm_enc_gid[.@idx], 1;
+	deletearray @dm_enc_mob_id[.@idx], 1;
+	deletearray @dm_enc_base_maxhp[.@idx], 1;
+	deletearray @dm_enc_base_atkmin[.@idx], 1;
+	deletearray @dm_enc_base_atkmax[.@idx], 1;
+	deletearray @dm_enc_base_flee[.@idx], 1;
+	deletearray @dm_enc_base_hit[.@idx], 1;
+	deletearray @dm_enc_base_def[.@idx], 1;
+	deletearray @dm_enc_base_mdef[.@idx], 1;
+	deletearray @dm_enc_held[.@idx], 1;
+	deletearray @dm_enc_name$[.@idx], 1;
+	--@dm_enc_count;
+
+	if (@dm_bloodied_gid == .@gid)
+		callfunc("DM_BloodiedOff");
+	callfunc("DM_EncounterRefreshPointers");
+	return 1;
+}
+
+function	script	DM_EncounterForgetGid	{
+	.@gid = getarg(0, 0);
+	if (.@gid <= 0)
+		return 0;
+
+	.@removed = 0;
+	for (.@i = @dm_enc_count - 1; .@i >= 0; --.@i) {
+		if (@dm_enc_gid[.@i] == .@gid) {
+			.@removed += callfunc("DM_EncounterForgetIndex", .@i);
+		}
+	}
+	return .@removed;
+}
+
+function	script	DM_EncounterMarkHeld	{
+	.@gid = getarg(0, 0);
+	.@held = getarg(1, 0);
+	if (.@gid <= 0)
+		return 0;
+
+	.@idx = callfunc("DM_EncounterFindGid", .@gid);
+	if (.@idx < 0)
+		return 0;
+
+	@dm_enc_held[.@idx] = .@held;
+	return 1;
+}
+
+function	script	DM_EncounterPrune	{
+	for (.@i = @dm_enc_count - 1; .@i >= 0; --.@i) {
+		.@gid = @dm_enc_gid[.@i];
+		if (.@gid <= 0) {
+			.@removed += callfunc("DM_EncounterForgetIndex", .@i);
+			continue;
+		}
+
+		.@hp = getunitdata(.@gid, UDT_HP);
+		if (.@hp <= 0)
+			.@removed += callfunc("DM_EncounterForgetIndex", .@i);
+	}
+	return .@removed;
+}
+
+function	script	DM_EncounterTrack	{
+	.@gid = getarg(0, 0);
+	.@name$ = getarg(1, "--ja--");
+	.@mob_id = getarg(2, 0);
+	.@held = getarg(3, 0);
+
+	if (.@gid <= 0)
+		return 0;
+
+	.@maxhp = getunitdata(.@gid, UDT_MAXHP);
+	if (.@maxhp <= 0)
+		return 0;
+
+	.@atkmin = getunitdata(.@gid, UDT_ATKMIN);
+	.@atkmax = getunitdata(.@gid, UDT_ATKMAX);
+	if (.@atkmin < 0)
+		.@atkmin = 0;
+	if (.@atkmax < 0)
+		.@atkmax = .@atkmin;
+	if (.@atkmax < .@atkmin)
+		.@atkmax = .@atkmin;
+
+	if (@dm_enc_count >= 100)
+		callfunc("DM_EncounterForgetIndex", 0);
+
+	.@slot = @dm_enc_count;
+	@dm_enc_gid[.@slot] = .@gid;
+	@dm_enc_mob_id[.@slot] = .@mob_id;
+	@dm_enc_base_maxhp[.@slot] = .@maxhp;
+	@dm_enc_base_atkmin[.@slot] = .@atkmin;
+	@dm_enc_base_atkmax[.@slot] = .@atkmax;
+	@dm_enc_base_flee[.@slot] = getunitdata(.@gid, UDT_FLEE);
+	@dm_enc_base_hit[.@slot] = getunitdata(.@gid, UDT_HIT);
+	@dm_enc_base_def[.@slot] = getunitdata(.@gid, UDT_DEF);
+	@dm_enc_base_mdef[.@slot] = getunitdata(.@gid, UDT_MDEF);
+	@dm_enc_held[.@slot] = .@held;
+	@dm_enc_name$[.@slot] = .@name$;
+	++@dm_enc_count;
+
+	@dm_enc_last_gid = .@gid;
+	if (@dm_enc_boss_gid <= 0)
+		@dm_enc_boss_gid = .@gid;
+	return 1;
+}
+
+function	script	DM_EncounterFindGid	{
+	.@gid = getarg(0, 0);
+	if (.@gid <= 0)
+		return -1;
+
+	for (.@i = 0; .@i < @dm_enc_count; ++.@i) {
+		if (@dm_enc_gid[.@i] == .@gid)
+			return .@i;
+	}
+	return -1;
+}
+
+function	script	DM_EncounterResolveIndex	{
+	.@target$ = strtolower(getarg(0, "last"));
+	if (.@target$ == "" || .@target$ == "boss") {
+		.@idx = callfunc("DM_EncounterFindGid", @dm_enc_boss_gid);
+		if (.@idx >= 0)
+			return .@idx;
+		.@target$ = "last";
+	}
+
+	if (.@target$ == "last") {
+		.@idx = callfunc("DM_EncounterFindGid", @dm_enc_last_gid);
+		if (.@idx >= 0)
+			return .@idx;
+		if (@dm_enc_count > 0)
+			return @dm_enc_count - 1;
+		return -1;
+	}
+
+	.@gid = atoi(.@target$);
+	if (.@gid > 0)
+		return callfunc("DM_EncounterFindGid", .@gid);
+
+	return -1;
+}
+
+function	script	DM_EncounterTargetMatches	{
+	.@idx = getarg(0, -1);
+	.@target$ = strtolower(getarg(1, "all"));
+
+	if (.@idx < 0 || .@idx >= @dm_enc_count)
+		return 0;
+	if (.@target$ == "" || .@target$ == "all")
+		return 1;
+	if (.@target$ == "boss")
+		return @dm_enc_gid[.@idx] == @dm_enc_boss_gid;
+	if (.@target$ == "last")
+		return @dm_enc_gid[.@idx] == @dm_enc_last_gid;
+
+	.@id = atoi(.@target$);
+	if (.@id <= 0)
+		return 0;
+	return (@dm_enc_gid[.@idx] == .@id || @dm_enc_mob_id[.@idx] == .@id);
+}
+
+function	script	DM_EncounterReset	{
+	callfunc("DM_BloodiedOff");
+	deletearray @dm_enc_gid[0], getarraysize(@dm_enc_gid);
+	deletearray @dm_enc_mob_id[0], getarraysize(@dm_enc_mob_id);
+	deletearray @dm_enc_base_maxhp[0], getarraysize(@dm_enc_base_maxhp);
+	deletearray @dm_enc_base_atkmin[0], getarraysize(@dm_enc_base_atkmin);
+	deletearray @dm_enc_base_atkmax[0], getarraysize(@dm_enc_base_atkmax);
+	deletearray @dm_enc_base_flee[0], getarraysize(@dm_enc_base_flee);
+	deletearray @dm_enc_base_hit[0], getarraysize(@dm_enc_base_hit);
+	deletearray @dm_enc_base_def[0], getarraysize(@dm_enc_base_def);
+	deletearray @dm_enc_base_mdef[0], getarraysize(@dm_enc_base_mdef);
+	deletearray @dm_enc_held[0], getarraysize(@dm_enc_held);
+	deletearray @dm_enc_name$[0], getarraysize(@dm_enc_name$);
+	@dm_enc_count = 0;
+	@dm_enc_last_gid = 0;
+	@dm_enc_boss_gid = 0;
+	return 1;
+}
+
+function	script	DM_EncounterStatus	{
+	.@removed = callfunc("DM_EncounterPrune");
+	if (@dm_enc_count <= 0) {
+		dispbottom("[DM] No live encounter GIDs tracked." + (.@removed ? " Pruned " + .@removed + " stale entr" + (.@removed == 1 ? "y" : "ies") + "." : ""));
+		return 0;
+	}
+
+	dispbottom("[DM] Encounter registry: " + @dm_enc_count + " live tracked mob(s). Last GID=" + @dm_enc_last_gid + " Boss GID=" + @dm_enc_boss_gid + ".");
+	for (.@i = 0; .@i < @dm_enc_count && .@i < 8; ++.@i) {
+		.@gid = @dm_enc_gid[.@i];
+		.@hp = getunitdata(.@gid, UDT_HP);
+		.@maxhp = getunitdata(.@gid, UDT_MAXHP);
+		dispbottom("[DM] #" + (.@i + 1) + " gid=" + .@gid + " mob=" + @dm_enc_mob_id[.@i] + " hp=" + .@hp + "/" + .@maxhp + " " + @dm_enc_name$[.@i] + (@dm_enc_held[.@i] ? " held" : "") + (.@gid == @dm_enc_boss_gid ? " boss" : ""));
+	}
+	if (@dm_enc_count > 8)
+		dispbottom("[DM] ...and " + (@dm_enc_count - 8) + " more.");
+	return @dm_enc_count;
+}
+
+function	script	DM_EncounterSetBoss	{
+	.@target$ = strtolower(getarg(0, "last"));
+	.@idx = callfunc("DM_EncounterResolveIndex", .@target$);
+	if (.@idx < 0) {
+		dispbottom("[DM] Could not find target '" + .@target$ + "' in the encounter registry.");
+		return 0;
+	}
+
+	@dm_enc_boss_gid = @dm_enc_gid[.@idx];
+	dispbottom("[DM] Boss target set to GID " + @dm_enc_boss_gid + " (" + @dm_enc_name$[.@idx] + ").");
+	return 1;
+}
+
+function	script	DM_EncounterCommand	{
+	.@action$ = strtolower(getarg(0, "status"));
+	.@a$ = getarg(1, "");
+
+	if (.@action$ == "" || .@action$ == "status" || .@action$ == "list")
+		return callfunc("DM_EncounterStatus");
+
+	if (.@action$ == "help") {
+		dispbottom("[DM] @dm encounter [status|clear|kill|boss <last|gid>]");
+		dispbottom("[DM] @dm scale <hp|damage|flee|hit|def|mdef> <percent> [all|boss|last|gid]");
+		dispbottom("[DM] @dm bloodied <on|off|status> [boss|last|gid]");
+		return 0;
+	}
+
+	if (.@action$ == "clear" || .@action$ == "reset") {
+		callfunc("DM_EncounterReset");
+		dispbottom("[DM] Encounter registry cleared.");
+		return 1;
+	}
+
+	if (.@action$ == "kill") {
+		for (.@i = 0; .@i < @dm_enc_count; ++.@i) {
+			if (@dm_enc_gid[.@i] > 0) {
+				unitkill(@dm_enc_gid[.@i]);
+				++.@killed;
+			}
+		}
+		callfunc("DM_EncounterReset");
+		dispbottom("[DM] Killed and cleared " + .@killed + " tracked encounter mob(s).");
+		return 1;
+	}
+
+	if (.@action$ == "boss")
+		return callfunc("DM_EncounterSetBoss", .@a$);
+
+	if (.@action$ == "prune") {
+		.@removed = callfunc("DM_EncounterPrune");
+		dispbottom("[DM] Pruned " + .@removed + " stale encounter entr" + (.@removed == 1 ? "y" : "ies") + ".");
+		return .@removed;
+	}
+
+	dispbottom("[DM] Unknown encounter action '" + .@action$ + "'. Use status, clear, kill, boss, or help.");
+	return 0;
+}
+
+function	script	DM_EncounterApplyScale	{
+	.@idx = getarg(0, -1);
+	.@kind$ = strtolower(getarg(1, "hp"));
+	.@pct = getarg(2, 100);
+
+	if (.@idx < 0 || .@idx >= @dm_enc_count)
+		return 0;
+
+	.@gid = @dm_enc_gid[.@idx];
+	if (.@gid <= 0)
+		return 0;
+
+	.@hp = getunitdata(.@gid, UDT_HP);
+	if (.@hp <= 0)
+		return 0;
+
+	if (.@kind$ == "hp") {
+		.@curmax = getunitdata(.@gid, UDT_MAXHP);
+		.@base = @dm_enc_base_maxhp[.@idx];
+		if (.@base <= 0)
+			.@base = .@curmax;
+		if (.@base <= 0 || .@curmax <= 0)
+			return 0;
+
+		.@newmax = max(1, .@base * .@pct / 100);
+		.@newhp = max(1, .@hp * .@newmax / .@curmax);
+		if (.@newhp > .@newmax)
+			.@newhp = .@newmax;
+
+		if (!setunitdata(.@gid, UDT_MAXHP, .@newmax))
+			return 0;
+		setunitdata(.@gid, UDT_HP, .@newhp);
+		return 1;
+	}
+
+	if (.@kind$ == "flee") {
+		.@base = @dm_enc_base_flee[.@idx];
+		if (.@base < 0) .@base = getunitdata(.@gid, UDT_FLEE);
+		if (.@base < 0) return 0;
+		setunitdata(.@gid, UDT_FLEE, cap_value(.@base * .@pct / 100, 0, 65000));
+		return 1;
+	}
+
+	if (.@kind$ == "hit") {
+		.@base = @dm_enc_base_hit[.@idx];
+		if (.@base < 0) .@base = getunitdata(.@gid, UDT_HIT);
+		if (.@base < 0) return 0;
+		setunitdata(.@gid, UDT_HIT, cap_value(.@base * .@pct / 100, 0, 65000));
+		return 1;
+	}
+
+	if (.@kind$ == "def") {
+		.@base = @dm_enc_base_def[.@idx];
+		if (.@base < 0) .@base = getunitdata(.@gid, UDT_DEF);
+		if (.@base < 0) return 0;
+		setunitdata(.@gid, UDT_DEF, cap_value(.@base * .@pct / 100, 0, 65000));
+		return 1;
+	}
+
+	if (.@kind$ == "mdef") {
+		.@base = @dm_enc_base_mdef[.@idx];
+		if (.@base < 0) .@base = getunitdata(.@gid, UDT_MDEF);
+		if (.@base < 0) return 0;
+		setunitdata(.@gid, UDT_MDEF, cap_value(.@base * .@pct / 100, 0, 65000));
+		return 1;
+	}
+
+	// Damage scaling
+
+	.@base_min = @dm_enc_base_atkmin[.@idx];
+	.@base_max = @dm_enc_base_atkmax[.@idx];
+	if (.@base_min < 0)
+		.@base_min = 0;
+	if (.@base_max < .@base_min)
+		.@base_max = .@base_min;
+
+	.@new_min = cap_value(.@base_min * .@pct / 100, 0, 65000);
+	.@new_max = cap_value(.@base_max * .@pct / 100, .@new_min, 65000);
+	setunitdata(.@gid, UDT_ATKMIN, .@new_min);
+	setunitdata(.@gid, UDT_ATKMAX, .@new_max);
+	return 1;
+}
+
+function	script	DM_Scale	{
+	.@kind$ = strtolower(getarg(0, ""));
+	.@percent$ = getarg(1, "");
+	.@target$ = strtolower(getarg(2, "all"));
+
+	if (.@kind$ == "" || .@kind$ == "help") {
+		dispbottom("[DM] @dm scale <hp|damage|flee|hit|def|mdef> <percent> [all|boss|last|gid]");
+		dispbottom("[DM] Example: @dm scale hp 150 boss   or   @dm scale flee 50 all");
+		return 0;
+	}
+
+	if (.@kind$ == "boss" || .@kind$ == "last" || .@kind$ == "all") {
+		.@target$ = .@kind$;
+		.@kind$ = "hp";
+	}
+
+	if (.@kind$ == "dmg" || .@kind$ == "damage" || .@kind$ == "atk" || .@kind$ == "attack")
+		.@kind$ = "damage";
+	if (.@kind$ != "hp" && .@kind$ != "damage" && .@kind$ != "flee" && .@kind$ != "hit" && .@kind$ != "def" && .@kind$ != "mdef") {
+		dispbottom("[DM] Scale type must be hp, damage, flee, hit, def, or mdef.");
+		return 0;
+	}
+
+	.@pct = atoi(.@percent$);
+	if (.@pct < 1 || .@pct > 1000) {
+		dispbottom("[DM] Scale percent must be 1-1000. 100 = normal, 150 = +50%, 75 = -25%.");
+		return 0;
+	}
+
+	callfunc("DM_EncounterPrune");
+	if (@dm_enc_count <= 0) {
+		dispbottom("[DM] No live encounter GIDs tracked. Use @dm spawn or @dm holdspawn first.");
+		return 0;
+	}
+
+	for (.@i = 0; .@i < @dm_enc_count; ++.@i) {
+		if (!callfunc("DM_EncounterTargetMatches", .@i, .@target$))
+			continue;
+		.@scaled += callfunc("DM_EncounterApplyScale", .@i, .@kind$, .@pct);
+	}
+
+	if (.@scaled <= 0) {
+		dispbottom("[DM] No tracked encounter mobs matched target '" + .@target$ + "'.");
+		return 0;
+	}
+
+	dispbottom("[DM] Scaled " + .@scaled + " tracked mob(s): " + .@kind$ + " = " + .@pct + "% for " + .@target$ + ".");
+	return .@scaled;
+}
+
+function	script	DM_BloodiedOff	{
+	deltimer("DM_CombatConsole::OnBloodiedTick");
+	@dm_bloodied_gid = 0;
+	@dm_bloodied_name$ = "";
+	@dm_bloodied_map$ = "";
+	@dm_bloodied_fired = 0;
+	return 1;
+}
+
+function	script	DM_Bloodied	{
+	.@action$ = strtolower(getarg(0, ""));
+	.@target$ = strtolower(getarg(1, "boss"));
+
+	if (.@action$ == "boss" || .@action$ == "last" || atoi(.@action$) > 0) {
+		.@target$ = .@action$;
+		.@action$ = "on";
+	}
+
+	if (.@action$ == "" || .@action$ == "help") {
+		dispbottom("[DM] @dm bloodied <on|off|status> [boss|last|gid]");
+		return 0;
+	}
+
+	if (.@action$ == "off" || .@action$ == "clear" || .@action$ == "stop") {
+		callfunc("DM_BloodiedOff");
+		dispbottom("[DM] Bloodied watcher cleared.");
+		return 1;
+	}
+
+	if (.@action$ == "status") {
+		if (@dm_bloodied_gid > 0)
+			dispbottom("[DM] Bloodied watcher: GID " + @dm_bloodied_gid + " (" + @dm_bloodied_name$ + "), fired=" + @dm_bloodied_fired + ".");
+		else
+			dispbottom("[DM] Bloodied watcher is off.");
+		return @dm_bloodied_gid > 0;
+	}
+
+	if (.@action$ != "on" && .@action$ != "watch" && .@action$ != "start") {
+		dispbottom("[DM] Bloodied action must be on, off, or status.");
+		return 0;
+	}
+
+	callfunc("DM_EncounterPrune");
+	.@idx = callfunc("DM_EncounterResolveIndex", .@target$);
+	if (.@idx < 0) {
+		dispbottom("[DM] Could not find bloodied target '" + .@target$ + "'. Use @dm encounter status.");
+		return 0;
+	}
+
+	@dm_bloodied_gid = @dm_enc_gid[.@idx];
+	@dm_bloodied_name$ = @dm_enc_name$[.@idx];
+	@dm_bloodied_map$ = strcharinfo(PC_MAP);
+	@dm_bloodied_fired = 0;
+	deltimer("DM_CombatConsole::OnBloodiedTick");
+	addtimer(2000, "DM_CombatConsole::OnBloodiedTick");
+	dispbottom("[DM] Bloodied watcher armed for GID " + @dm_bloodied_gid + " (" + @dm_bloodied_name$ + ").");
+	return 1;
+}
+
+function	script	DM_BloodiedTick	{
+	if (@dm_bloodied_gid <= 0)
+		return 0;
+
+	.@hp = getunitdata(@dm_bloodied_gid, UDT_HP);
+	.@maxhp = getunitdata(@dm_bloodied_gid, UDT_MAXHP);
+	if (.@hp <= 0 || .@maxhp <= 0) {
+		callfunc("DM_BloodiedOff");
+		return 0;
+	}
+
+	if (!@dm_bloodied_fired && .@hp * 2 <= .@maxhp) {
+		mapannounce(@dm_bloodied_map$, "[DM] " + @dm_bloodied_name$ + " is bloodied.", bc_map, 0xFFAA33);
+		@dm_bloodied_fired = 1;
+		callfunc("DM_BloodiedOff");
+		return 1;
+	}
+
+	addtimer(2000, "DM_CombatConsole::OnBloodiedTick");
+	return 1;
+}
+
+-	script	DM_CombatConsole	FAKE_NPC,{
+	end;
+
+OnInit:
+	bindatcmd("dmencounter", strnpcinfo(NPC_NAME_UNIQUE)+"::OnEncounter", 1, 99, 1);
+	bindatcmd("dmscale", strnpcinfo(NPC_NAME_UNIQUE)+"::OnScale", 1, 99, 1);
+	bindatcmd("dmbloodied", strnpcinfo(NPC_NAME_UNIQUE)+"::OnBloodied", 1, 99, 1);
+	end;
+
+OnEncounter:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callfunc("DM_EncounterCommand", .@atcmd_parameters$[0], .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+	end;
+
+OnScale:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callfunc("DM_Scale", .@atcmd_parameters$[0], .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+	end;
+
+OnBloodied:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callfunc("DM_Bloodied", .@atcmd_parameters$[0], .@atcmd_parameters$[1]);
+	end;
+
+OnBloodiedTick:
+	callfunc("DM_BloodiedTick");
+	end;
+}

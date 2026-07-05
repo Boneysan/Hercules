@@ -1,0 +1,306 @@
+// Seal Cascade DM ambience director.
+//
+// Sets mood on the DM's current map in one command: weather (map-wide mapflags),
+// background music (custom tracks in the client BGM/ folder), and an optional
+// illustration/portrait shown to the whole party.
+//
+//   @dm scene <preset> [portrait]
+//     presets: clear dread boss calm holy ruin snow fest
+//   @dm scene weather <fog|snow|sakura|leaves|clouds|clouds2|fireworks|none> [portrait]
+//   @dm cutscene <on|off> [portrait] [seconds]
+//
+// BGM note: this client (pre-20220504) cannot be told to STOP a BGM from script,
+// so `@dm scene clear` only clears weather + portrait; play a calm scene to
+// override the music. Preset BGM filenames (dm_dread, dm_boss, ...) are custom
+// mp3s the DM distributes to players -- see planning/dm-live-table.md.
+
+function	script	DM_SceneWeatherClear	{
+	.@map$ = getarg(0);
+	removemapflag(.@map$, MF_FOG);
+	removemapflag(.@map$, MF_SNOW);
+	removemapflag(.@map$, MF_SAKURA);
+	removemapflag(.@map$, MF_LEAVES);
+	removemapflag(.@map$, MF_CLOUDS);
+	removemapflag(.@map$, MF_CLOUDS2);
+	removemapflag(.@map$, MF_FIREWORKS);
+	return;
+}
+
+function	script	DM_SceneWeather	{
+	.@map$ = getarg(0);
+	.@w$ = strtolower(getarg(1, ""));
+
+	callfunc("DM_SceneWeatherClear", .@map$);
+
+	if (.@w$ == "" || .@w$ == "none" || .@w$ == "clear")
+		return 1;
+	if (.@w$ == "fog")       { setmapflag(.@map$, MF_FOG);       return 1; }
+	if (.@w$ == "snow")      { setmapflag(.@map$, MF_SNOW);      return 1; }
+	if (.@w$ == "sakura")    { setmapflag(.@map$, MF_SAKURA);    return 1; }
+	if (.@w$ == "leaves")    { setmapflag(.@map$, MF_LEAVES);    return 1; }
+	if (.@w$ == "clouds")    { setmapflag(.@map$, MF_CLOUDS);    return 1; }
+	if (.@w$ == "clouds2")   { setmapflag(.@map$, MF_CLOUDS2);   return 1; }
+	if (.@w$ == "fireworks") { setmapflag(.@map$, MF_FIREWORKS); return 1; }
+
+	dispbottom("[DM] Unknown weather '" + .@w$ + "'. Use: fog snow sakura leaves clouds clouds2 fireworks none.");
+	return 0;
+}
+
+// Show (or clear, with empty filename) a cutin portrait for every online party
+// member -- cutin is per-client, so it must be looped over the party.
+function	script	DM_ScenePortraitItem	{
+	cutin(getarg(0), (getarg(0) == "" ? 255 : 2));
+	return;
+}
+
+function	script	DM_ScenePortrait	{
+	return callfunc("DM_PartyForEach", "DM_ScenePortraitItem", getcharid(CHAR_ID_PARTY), getarg(0, ""));
+}
+
+function	script	DM_Scene	{
+	.@sub$ = strtolower(getarg(0, ""));
+	.@a$ = getarg(1, "");
+	.@b$ = getarg(2, "");
+
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	if (.@map$ == "") {
+		dispbottom("[DM] Could not resolve your current map.");
+		return 0;
+	}
+
+	if (.@sub$ == "" || .@sub$ == "help") {
+		dispbottom("[DM] @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]");
+		dispbottom("[DM] @dm scene weather <fog|snow|sakura|leaves|clouds|clouds2|fireworks|none> [portrait]");
+		return 0;
+	}
+
+	if (.@sub$ == "clear" || .@sub$ == "off") {
+		callfunc("DM_SceneWeatherClear", .@map$);
+		callfunc("DM_ScenePortrait", "");
+		dispbottom("[DM] Scene cleared on " + .@map$ + ". (BGM cannot be stopped on this client; use a calm scene to override.)");
+		return 1;
+	}
+
+	if (.@sub$ == "weather") {
+		if (!callfunc("DM_SceneWeather", .@map$, .@a$))
+			return 0;
+		if (.@b$ != "")
+			callfunc("DM_ScenePortrait", .@b$);
+		dispbottom("[DM] Weather '" + .@a$ + "' set on " + .@map$ + ".");
+		return 1;
+	}
+
+	// Named presets: weather + custom BGM (+ optional portrait in slot .@a$).
+	.@weather$ = "";
+	.@bgm$ = "";
+	if (.@sub$ == "dread")      { .@weather$ = "fog";       .@bgm$ = "dm_dread"; }
+	else if (.@sub$ == "boss")  { .@weather$ = "clouds2";   .@bgm$ = "dm_boss";  }
+	else if (.@sub$ == "calm")  { .@weather$ = "none";      .@bgm$ = "dm_calm";  }
+	else if (.@sub$ == "holy")  { .@weather$ = "sakura";    .@bgm$ = "dm_holy";  }
+	else if (.@sub$ == "ruin")  { .@weather$ = "fog";       .@bgm$ = "dm_ruin";  }
+	else if (.@sub$ == "snow")  { .@weather$ = "snow";      .@bgm$ = "dm_snow";  }
+	else if (.@sub$ == "fest")  { .@weather$ = "fireworks"; .@bgm$ = "dm_fest";  }
+	else {
+		dispbottom("[DM] Unknown scene '" + .@sub$ + "'. Try: clear dread boss calm holy ruin snow fest, or 'weather <type>'.");
+		return 0;
+	}
+
+	callfunc("DM_SceneWeather", .@map$, .@weather$);
+	if (.@bgm$ != "")
+		playbgmall(.@bgm$, .@map$);
+	if (.@a$ != "")
+		callfunc("DM_ScenePortrait", .@a$);
+
+	dispbottom("[DM] Scene '" + .@sub$ + "' on " + .@map$ + "  (weather=" + .@weather$ + ", bgm=" + .@bgm$ + (.@a$ != "" ? ", portrait=" + .@a$ : "") + ").");
+	return 1;
+}
+
+function	script	DM_CutsceneSelf	{
+	.@block = getarg(0, 0);
+	.@portrait$ = getarg(1, "");
+	.@duration_ms = getarg(2, 60000);
+
+	deltimer("DM_SceneConsole::OnCutsceneTimeout");
+
+	if (.@block) {
+		setpcblock(PCBLOCK_MOVE, 1);
+		dm_cutscene_blocked = 1;
+		if (.@portrait$ != "")
+			cutin(.@portrait$, 2);
+		if (.@duration_ms > 0)
+			addtimer(.@duration_ms, "DM_SceneConsole::OnCutsceneTimeout");
+	} else {
+		dm_cutscene_blocked = 0;
+		if (!@dm_downed)
+			setpcblock(PCBLOCK_MOVE, 0);
+		cutin("", 255);
+	}
+
+	return 1;
+}
+
+function	script	DM_CutsceneParty	{
+	.@block = getarg(0, 0);
+	.@portrait$ = getarg(1, "");
+	.@duration_ms = getarg(2, 60000);
+	.@party_id = getarg(3, getcharid(CHAR_ID_PARTY));
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@party_id <= 0) {
+		callfunc("DM_CutsceneSelf", .@block, .@portrait$, .@duration_ms);
+		return 1;
+	}
+
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		callfunc("DM_CutsceneSelf", .@block, .@portrait$, .@duration_ms);
+		detachrid();
+		++.@done;
+	}
+
+	if (.@origin)
+		attachrid(.@origin);
+	return .@done;
+}
+
+function	script	DM_Cutscene	{
+	.@sub$ = strtolower(getarg(0, ""));
+	.@a$ = getarg(1, "");
+	.@b$ = getarg(2, "");
+
+	if (.@sub$ == "" || .@sub$ == "help") {
+		dispbottom("[DM] @dm cutscene on [portrait] [seconds]");
+		dispbottom("[DM] @dm cutscene off");
+		return 0;
+	}
+
+	if (.@sub$ == "off" || .@sub$ == "clear" || .@sub$ == "release") {
+		.@done = callfunc("DM_CutsceneParty", 0, "", 0);
+		dispbottom("[DM] Cutscene released for " + .@done + " member(s).");
+		return 1;
+	}
+
+	if (.@sub$ != "on" && .@sub$ != "start" && .@sub$ != "freeze") {
+		dispbottom("[DM] Unknown cutscene action '" + .@sub$ + "'. Use on/off.");
+		return 0;
+	}
+
+	.@portrait$ = .@a$;
+	.@seconds = atoi(.@b$);
+	if (.@seconds <= 0 && atoi(.@a$) > 0) {
+		.@seconds = atoi(.@a$);
+		.@portrait$ = "";
+	}
+	if (.@seconds <= 0)
+		.@seconds = 60;
+	if (.@seconds < 5)
+		.@seconds = 5;
+	if (.@seconds > 300)
+		.@seconds = 300;
+
+	.@done = callfunc("DM_CutsceneParty", 1, .@portrait$, .@seconds * 1000);
+	dispbottom("[DM] Cutscene lock enabled for " + .@done + " member(s), auto-release in " + .@seconds + "s" + (.@portrait$ != "" ? ", portrait=" + .@portrait$ : "") + ".");
+	return 1;
+}
+function	script	DM_SpotlightItem	{
+	.@on = getarg(0);
+	.@target$ = getarg(1);
+	
+	if (.@on) {
+		if (strcharinfo(PC_NAME) == .@target$)
+			return; // exclude target
+		
+		@dm_spotlight_blocked = 1;
+		setpcblock(PCBLOCK_MOVE|PCBLOCK_ATTACK|PCBLOCK_SKILL|PCBLOCK_USEITEM|PCBLOCK_SITSTAND|PCBLOCK_IMMUNE, 1);
+		deltimer "DM_SceneConsole::OnSpotlightTimeout";
+		addtimer 60000, "DM_SceneConsole::OnSpotlightTimeout";
+	} else {
+		if (@dm_spotlight_blocked) {
+			@dm_spotlight_blocked = 0;
+			if (!@dm_downed && !dm_cutscene_blocked)
+				setpcblock(PCBLOCK_MOVE|PCBLOCK_ATTACK|PCBLOCK_SKILL|PCBLOCK_USEITEM|PCBLOCK_SITSTAND|PCBLOCK_IMMUNE, 0);
+			deltimer "DM_SceneConsole::OnSpotlightTimeout";
+		}
+	}
+	return;
+}
+
+function	script	DM_Spotlight	{
+	.@target$ = getarg(0, "");
+
+	if (.@target$ == "off" || .@target$ == "clear") {
+		.@done = callfunc("DM_PartyForEach", "DM_SpotlightItem", $dm_active_party, 0, "");
+		dispbottom("[DM] Spotlight released for " + .@done + " member(s).");
+		return 1;
+	}
+
+	if (.@target$ == "") {
+		dispbottom("[DM] Usage: @dm spotlight <player|off>");
+		return 0;
+	}
+
+	.@done = callfunc("DM_PartyForEach", "DM_SpotlightItem", $dm_active_party, 1, .@target$);
+	dispbottom("[DM] Spotlight on " + .@target$ + ". " + .@done + " other member(s) frozen for 60s.");
+	return 1;
+}
+
+-	script	DM_SceneConsole	FAKE_NPC,{
+	end;
+
+OnInit:
+	bindatcmd("dmscene", strnpcinfo(NPC_NAME_UNIQUE)+"::OnScene", 1, 99, 1);
+	bindatcmd("dmcutscene", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCutscene", 1, 99, 1);
+	bindatcmd("dmspotlight", strnpcinfo(NPC_NAME_UNIQUE)+"::OnSpotlight", 1, 99, 1);
+	end;
+
+OnScene:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	callfunc("DM_Scene", .@atcmd_parameters$[0], .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+	end;
+
+OnCutscene:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	callfunc("DM_Cutscene", .@atcmd_parameters$[0], .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+	end;
+
+OnSpotlight:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	callfunc("DM_Spotlight", .@atcmd_parameters$[0]);
+	end;
+
+OnCutsceneTimeout:
+	if (dm_cutscene_blocked) {
+		callfunc("DM_CutsceneSelf", 0, "", 0);
+		dispbottom("[DM] Cutscene auto-released.");
+	}
+	end;
+
+OnSpotlightTimeout:
+	if (@dm_spotlight_blocked) {
+		callfunc("DM_SpotlightItem", 0, "");
+		dispbottom("[DM] Spotlight auto-released.");
+	}
+	end;
+
+OnPCLoginEvent:
+	if (dm_cutscene_blocked) {
+		callfunc("DM_CutsceneSelf", 0, "", 0);
+		dispbottom("[DM] Previous cutscene lock cleared on login.");
+	}
+	if (@dm_spotlight_blocked) {
+		callfunc("DM_SpotlightItem", 0, "");
+	}
+	end;
+}

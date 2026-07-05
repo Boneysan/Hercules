@@ -12,9 +12,12 @@
 //=   20221 The Queen the Drowned Chose  (arc tracker / Himmelmez)
 //=   20222 The Dead You Failed          (Dullahan x15)
 //=   20223 Banquet Hall Procession      (Gibbet x15)
+//=   20224 Illusion Grief Rotation      (Niflheim grief-loop stand-ins)
+//=   20225 Opera House Encore           (Niflheim opera-route stand-ins)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc18_started, dm_arc18_himmelmez_killed,
+//=   dm_arc18_started, dm_arc18_grief_resilience,
+//=   dm_arc18_bargain_leverage, dm_arc18_himmelmez_killed,
 //=   dm_arc18_himmelmez_bargained
 //===========================================================
 
@@ -43,6 +46,16 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20221, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20221, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20222, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20223, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20224, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20225, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
@@ -88,10 +101,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20221);
 	callfunc("DM_InstanceQuestStart", 20222);
 	callfunc("DM_InstanceQuestStart", 20223);
+	callfunc("DM_InstanceQuestStart", 20224);
+	callfunc("DM_InstanceQuestStart", 20225);
 	next();
 	mes("^3355FF[Quest started: The Queen the Drowned Chose]^000000");
 	mes("^3355FFThe Dead You Failed - quiet 15 Dullahan caught in the overflow at Niflheim's border.^000000");
 	mes("^3355FFBanquet Hall Procession - still 15 Gibbet unsettled from the Banquet Hall's structure.^000000");
+	mes("^3355FFIllusion Grief Rotation - clear Quve, Lude, and Hylozoist memory bleed at the border.^000000");
+	mes("^3355FFOpera House Encore - clear the Niflheim stand-ins performing Himmelmez's old ascent.^000000");
 	close();
 
 S_TurnIns:
@@ -146,10 +163,82 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20222) == 2 && questprogress(20223) == 2 && questprogress(20221) == 1 && !dm_arc18_himmelmez_killed && !dm_arc18_himmelmez_bargained) {
+	if (questprogress(20224) == 1 && questprogress(20224, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20224);
+		callfunc("DM_PartyExp", 520000, 260000);
+		callfunc("DM_GivePartyZeny", 41000);
+		.@paid = 1;
+		mes("[The Familiar Dead]");
+		mes("The illusion bleed is quiet. Quve, Lude, and Hylozoist are small shapes for an enormous pressure: Niflheim's overflow finding old doors and replaying whatever grief opens fastest.");
+		next();
+		switch (select("Stop for every personal memory that surfaces.", "Answer what cannot be avoided and keep moving.", "Use the grief as a weapon while it is sharp.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc18_grief_honest", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc18_grief_resilience", 1);
+			mes("[The Familiar Dead]");
+			mes("That is the harder pace. It is also the one that leaves you least afraid of what Himmelmez can name.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc18_grief_pragmatic", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc18_grief_resilience", 1);
+			mes("[The Familiar Dead]");
+			mes("A living pace. You do not owe every wound a shrine, but you do owe the truth enough room to breathe.");
+			break;
+		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc18_grief_weaponized", 1);
+			callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
+			mes("[The Familiar Dead]");
+			mes("Power can be made from grief. Himmelmez knows that road very well. She will recognize the sound of your footsteps on it.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20225) == 1 && questprogress(20225, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20225);
+		callfunc("DM_PartyExp", 560000, 280000);
+		callfunc("DM_GivePartyZeny", 43000);
+		.@paid = 1;
+		mes("[The Familiar Dead]");
+		mes("The encore ends. Loli Ruri, Disguise, and Bloody Murderer were only stand-ins, but Niflheim made them perform the shape of Himmelmez's rise anyway: stronger, stronger, then crowned.");
+		next();
+		switch (select("Silence the performance before it becomes worship.", "Let the performance finish and learn from it.", "Step into a role and sing the story back.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc18_opera_silenced", 1);
+			mes("[The Familiar Dead]");
+			mes("Merciful. You will face Himmelmez with less of her history, but without letting the dead applaud cruelty as art.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc18_opera_witnessed", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc18_bargain_leverage", 1);
+			mes("[The Familiar Dead]");
+			mes("Then you heard the whole ascent. If you bargain, you can speak to the person who climbed, not only the queen at the top.");
+			break;
+		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc18_opera_joined", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc18_bargain_leverage", 1);
+			callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
+			mes("[The Familiar Dead]");
+			mes("Bold. Intimate. Dangerous. Himmelmez will remember being answered in her own language.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20222) == 2 && questprogress(20223) == 2 && questprogress(20224) == 2 && questprogress(20225) == 2 && questprogress(20221) == 1 && !dm_arc18_himmelmez_killed && !dm_arc18_himmelmez_bargained) {
 		mes("[The Familiar Dead]");
 		mes("The overflow is reduced. Himmelmez will feel that — the structure is less stressed now. She is in the inner hall. nif_in.");
 		next();
+		if (dm_arc18_grief_resilience) {
+			mes("[The Familiar Dead]");
+			mes("You have already practiced looking at grief without flinching. That will matter when she names what you lost.");
+			next();
+		}
+		if (dm_arc18_bargain_leverage) {
+			mes("[The Familiar Dead]");
+			mes("And you know the opera now. If you bargain, speak to the mortal who kept climbing until power was the only language she had left.");
+			next();
+		}
 		mes("[The Familiar Dead]");
 		mes("Whether you fight her or talk to her: understand that she has been alone on that throne for three years waiting for a conversation to happen. This is it.");
 		close();
@@ -162,14 +251,53 @@ S_TurnIns:
 	}
 
 	mes("[The Familiar Dead]");
-	if (questprogress(20222) == 1 && questprogress(20223) == 1)
-		mes("The Dullahan quieting and the Gibbet stilling are both still active.");
+	if (questprogress(20222) == 1 && questprogress(20223) == 1 && questprogress(20224) == 1 && questprogress(20225) == 1)
+		mes("The Dullahan quieting, Gibbet stilling, grief rotation, and opera encore are all still active.");
 	else if (questprogress(20222) == 1)
 		mes("The Dead You Failed is still open. Dullahan at Niflheim's outer reaches.");
 	else if (questprogress(20223) == 1)
 		mes("Banquet Hall Procession is still open. Gibbet in the Banquet Hall.");
+	else if (questprogress(20224) == 1)
+		mes("Illusion Grief Rotation is still open. Quve, Lude, and Hylozoist are carrying the memory bleed.");
+	else if (questprogress(20225) == 1)
+		mes("Opera House Encore is still open. The Niflheim performers are still repeating Himmelmez's ascent.");
 	else
-		mes("Both done. Himmelmez is in the inner hall. nif_in.");
+		mes("All routes are quiet. Himmelmez is in the inner hall. nif_in.");
+	close();
+}
+
+// Echo - living contradiction at Niflheim's edge
+niflheim,104,96,4	script	Echo#dm18	4_F_01,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc10_echo_freed) {
+		mes("^3355FF*Someone was here recently. The frost is broken in a pattern like bootsteps, then lost among the dead.*^000000");
+		close();
+	}
+	if (!dm_arc18_started) {
+		mes("[Echo]");
+		mes("I came to see if the dead sounded different from the living. They do. Less confused. More patient.");
+		close();
+	}
+
+	mes("[Echo]");
+	mes("Himmelmez's dead keep looking at me like I should not exist. They are not wrong. I was made in a place that mistook manufacture for permission.");
+	next();
+	if (questprogress(20221) == 2) {
+		if (dm_arc18_himmelmez_bargained) {
+			mes("[Echo]");
+			mes("You found someone on the far side willing to hold the line. That matters. It means the living are not the only ones refusing what Loki called inevitable.");
+		} else {
+			mes("[Echo]");
+			mes("Then the throne is empty. I understand empty systems. They keep running long after the person inside them is gone.");
+		}
+		close();
+	}
+
+	mes("[Echo]");
+	mes("If you speak to her, do not talk to her like a throne. Talk to her like someone who has been carrying a function alone for too long.");
+	next();
+	mes("[Echo]");
+	mes("That is how they talked to me in the lab. It is how they stopped hearing me. Do not make the same mistake with the queen of the dead.");
 	close();
 }
 
@@ -191,15 +319,28 @@ nif_in,150,150,5	script	Himmelmez#dm	4_F_02,{
 		close();
 	}
 
-	if (questprogress(20222) < 2 || questprogress(20223) < 2) {
+	if (questprogress(20222) < 2 || questprogress(20223) < 2 || questprogress(20224) < 2 || questprogress(20225) < 2) {
 		mes("[Himmelmez]");
-		mes("The structure is still unstable. Come back when the overflow is reduced. I can hear it from here.");
+		mes("The structure is still unstable. Come back when the overflow, the grief bleed, and the performance are reduced. I can hear all of it from here.");
 		close();
 	}
 
 	mes("[Himmelmez]");
 	mes("I was like you, once. That is not a thing queens of the dead usually say. But the throne was Loki's gift and I accepted it knowing what accepting it meant.");
 	next();
+	if (dm_arc18_grief_resilience) {
+		mes("[Himmelmez]");
+		mes("You have been practicing with grief before speaking to me. Good. The dead prefer honest hands.");
+		next();
+	}
+	if (dm_arc18_bargain_leverage) {
+		mes("[Himmelmez]");
+		if (dm_arc18_opera_joined)
+			mes("You answered the opera. I heard that. Most people watch power from the seats. Fewer understand what it costs to step onto the stage.");
+		else
+			mes("You let the opera finish. Then you know enough of my road not to mistake the crown for the first step.");
+		next();
+	}
 	mes("[Himmelmez]");
 	mes("The seal decays and Niflheim overflows. I have been keeping the dead from walking north by sheer attention. That is not a sustainable strategy. I have known it for three years. I have been waiting for someone who understands the weight of that.");
 	next();
@@ -208,19 +349,13 @@ nif_in,150,150,5	script	Himmelmez#dm	4_F_02,{
 	next();
 	switch (select("You are part of what has gone wrong. This ends here.", "We need your hand to seal the cascade from the inside.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20221);
-		callfunc("DM_PartyExp", 2500000, 1500000);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1899);
+		callfunc("DM_Decide", "arc18.himmelmez", "killed");
 		instance_announce(instance_id(), "^3355FF[DM] Himmelmez falls. Niflheim has no queen. The dead pour north without her hand — and into a world that will have to decide what to do with them as part of the seal.^000000", bc_all);
 		sleep(2000);
 		instance_announce(instance_id(), "^FF6600[DM] One more piece removed. One less hand available for the finale. The seal's shape will have to account for an empty throne.^000000", bc_all);
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_bargained", 1);
-		callfunc("DM_InstanceQuestComplete", 20221);
-		callfunc("DM_PartyExp", 2000000, 1200000);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1899);
+		callfunc("DM_Decide", "arc18.himmelmez", "bargained");
 		instance_announce(instance_id(), "^3355FF[DM] A dark pact is sealed. Himmelmez will hold the dead while the living face Loki. She says: 'I have been holding them already. I am glad to have a reason now.'^000000", bc_all);
 		sleep(2000);
 		instance_announce(instance_id(), "^FF6600[DM] You leave Niflheim with a queen at your back and a debt that has no price yet. The ruins of Morroc are the last thread before the choice.^000000", bc_all);
@@ -231,6 +366,8 @@ nif_in,150,150,5	script	Himmelmez#dm	4_F_02,{
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20221, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 

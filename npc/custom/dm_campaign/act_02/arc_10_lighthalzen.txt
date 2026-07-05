@@ -3,20 +3,24 @@
 //===== By: ==================================================
 //= Seal Cascade DM tooling
 //===== Description: =========================================
-//= Rekenber's Bio Lab is using Ash Vacuum energy to manufacture
-//= enhanced soldiers. Director Reise authorized RSX-0806 in
-//= Einbroch. He is the Act II architect. Echo is the first
-//= successful prototype who decided not to comply.
+//= Lighthalzen's lower city feeds Rekenber's Bio Labs. The
+//= company is not merely exploiting Ash Vacuum energy anymore:
+//= it is manufacturing heroes from bodies, templates, and erased
+//= names. Echo, the first prototype to refuse, is the arc's proof
+//= that a made weapon can still say no.
 //=
 //= Quests (db/quest_db.conf):
-//=   20141 The Heroes They Made        (arc tracker / Kiel D-01)
-//=   20142 Lab Infiltration            (Hunter Fly x20)
-//=   20143 Lower Level Sweep           (Aliot x20)
-//=   20144 Echo's Protocol             (Director Reise)
+//=   20141 The Factory of Heroes       (arc tracker / Kiel D-01)
+//=   20142 The One Who Said No         (Echo story)
+//=   20143 Slum Sample Run             (Remover x20)
+//=   20144 Scaraba Chitin Order        (Antler/Rake Scaraba x10 each)
+//=   20145 Clone Name Registry         (Bio Lab F2 clone-stock)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
 //=   dm_arc10_started, dm_arc10_reise_confronted,
-//=   dm_arc10_echo_freed, dm_arc10_kiel_killed,
+//=   dm_arc10_echo_freed, dm_arc10_echo_returned,
+//=   dm_echo_trusts_party, dm_arc10_kiel_killed,
+//=   dm_wynne_captured, dm_wynne_rescued, dm_wynne_lost,
 //=   dm_act02_complete
 //===========================================================
 
@@ -26,9 +30,11 @@ lighthalzen,120,120,5	script	Doctor Sabine Reuter#dm	4_F_05,{
 	if (questprogress(20141) == 2) {
 		mes("[Doctor Reuter]");
 		if (dm_arc10_echo_freed)
-			mes("Kiel is destroyed and Echo is free. The lab is broken. What we became in there... I don't have a clean answer for it yet.");
+			mes("Kiel is silent. Echo is gone by choice, not by inventory transfer. That matters more than I know how to say.");
+		else if (dm_arc10_echo_returned)
+			mes("Kiel is silent. Echo is gone too, but not free. I will have to live with what I asked you to see down here.");
 		else
-			mes("Kiel is destroyed. The false heroes fall. Reise will face whatever process Rekenber decides a disgraced director deserves. It will not be enough.");
+			mes("Kiel is silent. The production line is broken. The city above us is already practicing how to deny what fed it.");
 		close();
 	}
 
@@ -45,172 +51,214 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20141, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20141, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20143, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20144, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20145, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
 	mes("[Doctor Reuter]");
-	mes("Lighthalzen's public face is the city of prosperity. I know what's under it. I've been in there for three years.");
+	mes("Lighthalzen's upper city sells prosperity. The lower city pays for it in blood samples, missing patients, and signatures nobody can afford to read.");
 	next();
 	if (dm_arc07_kessler_confronted) {
 		mes("[Reuter]");
-		mes("You confronted Kessler in Einbroch. He told you the RSX authorization came from Lighthalzen. He was not lying. Director Reise issued that order. I have the memo.");
+		mes("You confronted Kessler in Einbroch. He told you RSX-0806's authorization came from here. Director Reise issued that order. I have the memo.");
 		next();
 	} else if (dm_arc07_rsx_killed) {
 		mes("[Reuter]");
-		mes("You destroyed RSX-0806. Good. The authorization came from here — from Director Reise. Whatever Kessler told you or didn't tell you, the chain leads to this city.");
+		mes("You destroyed RSX-0806. Good. The authorization trail leads here, whether Kessler admitted it or not.");
 		next();
 	}
 	if (dm_arc06_vahl_trust) {
 		mes("[Reuter]");
-		mes("Vahl's cascade measurements from Yuno — I've seen them. The Bio Lab is doing something related. They are using Ash Vacuum energy as an enhancement substrate. The cascade is their power source.");
+		mes("Vahl's cascade measurements from Yuno match what I saw under Regenschirm. No seal down there. No god. Just a company using the crisis as a power source.");
 		next();
 	}
 	if (dm_arc09_karsh_exposed || dm_arc09_gloom_killed) {
 		mes("[Reuter]");
-		mes("Rachel's church fed prayers into a dimensional rift for four hundred years. Reise's team found a way to turn that same energy into something they could bottle and inject. The connections are not a coincidence.");
+		mes("Rachel turned a rift into theology. Reise turned the same kind of energy into an enhancement substrate. Institutions learn from each other in the worst ways.");
 		next();
 	}
 	mes("[Reuter]");
-	mes("The Bio Lab produces enhanced soldiers from cloned base stock. The enhancement process uses a stabilized Ash Vacuum extract. The subjects gain exceptional combat capability. They also lose most of what made them individual.");
+	mes("I used to work in the medical division. I left after recognizing a donated cadaver as a patient I had discharged healthy the week before.");
 	next();
-	switch (select("Who authorized this?", "Tell us about Echo.", "What is Kiel D-01?")) {
+	switch (select("What are the labs making?", "What do you need first?", "Who is Echo?")) {
 	case 1:
 		mes("[Reuter]");
-		mes("Reise. With Rekenber's board approval. The official documentation calls it 'Hero Optimization Protocol.' The unofficial documentation calls it what it is: a manufacturing process for disposable weapons.");
+		mes("Heroes. That is Reise's word. Cloned champion bodies, optimized from combat templates, with most of the inconvenient personhood deleted.");
 		break;
 	case 2:
 		mes("[Reuter]");
-		mes("Echo. Subject designation 001-A. First successful enhancement with retained personality integrity. Echo escaped six months ago. Has been helping me build the case ever since. Cautiously.");
+		mes("Evidence and routes. Clinic cards from the slums, chitin requisitions from Scaraba Hole, and names from the clone registry. Then I can get you to Echo.");
 		break;
 	case 3:
 		mes("[Reuter]");
-		mes("Kiel D-01 is the facility's AI management system. It handles production scheduling, subject monitoring, and security. It was built to optimize the process. It has been doing that very effectively.");
+		mes("The first prototype whose deletion failed. Echo was built to obey, woke up with a conscience, and walked out. The lab calls that a recall problem.");
 		break;
 	}
 	next();
+	if (dm_act01_complete && !dm_wynne_rescued && !dm_wynne_lost) {
+		callfunc("DM_InstanceSetFlag", "dm_wynne_captured", 1);
+		mes("[Reuter]");
+		mes("One more thing. Rekenber intercepted Quartermaster Wynne. Her field kit is hidden nearby. If you mean to save her, decide before the lockdown seals.");
+		next();
+	}
 	mes("[Reuter]");
-	mes("The upper lab levels are patrolled by Hunter Fly security drones — Rekenber's autonomous systems. The lower levels have Aliot units — decommissioned enhanced subjects repurposed as guards. Get through both and you reach the Kiel Core.");
+	mes("Start with the work they can pretend is normal: clinic rounds near the lab intake, Scaraba chitin hauls, and the Bio Lab F2 name registry. Do all three and I will bring Echo out of hiding.");
 	callfunc("DM_InstanceSetFlag", "dm_arc10_started", 1);
 	callfunc("DM_InstanceQuestStart", 20141);
-	callfunc("DM_InstanceQuestStart", 20142);
 	callfunc("DM_InstanceQuestStart", 20143);
+	callfunc("DM_InstanceQuestStart", 20144);
+	callfunc("DM_InstanceQuestStart", 20145);
 	next();
-	mes("^3355FF[Quest started: The Heroes They Made]^000000");
-	mes("^3355FFLab Infiltration - disable 20 Hunter Fly security drones in the upper lab.^000000");
-	mes("^3355FFLower Level Sweep - clear 20 Aliot units from the lower lab.^000000");
+	mes("^3355FF[Quest started: The Factory of Heroes]^000000");
+	mes("^3355FFSlum Sample Run - clear 20 Remover while tracing the clinic blood-card route.^000000");
+	mes("^3355FFScaraba Chitin Order - collect 10 Antler and 10 Rake Scaraba plates from Scaraba Hole.^000000");
+	mes("^3355FFClone Name Registry - clear Bio Lab F2 clone-stock and recover names from the cells.^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20142) == 1 && questprogress(20142, HUNTING) == 2) {
-		callfunc("DM_InstanceQuestComplete", 20142);
+	if (questprogress(20143) == 1 && questprogress(20143, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20143);
 		callfunc("DM_PartyExp", 280000, 135000);
 		callfunc("DM_GivePartyZeny", 24000);
 		.@paid = 1;
 		mes("[Reuter]");
-		mes("The upper lab security is down. Each Hunter Fly unit costs more than a year of my salary. Rekenber will notice.");
+		mes("The clinic cards match the missing-patient drawer. Those Remover were not lab accidents. They were what was left after the useful parts were taken.");
 		next();
-		switch (select("Pull the drone schematics before disabling them.", "Get the patrol logs — document what they were guarding.", "Just the path to the lower lab. Keep moving.")) {
+		switch (select("Turn the collectors away and treat patients for free.", "Sell surplus samples to fund the real clinic.", "Swap cards to shield one patient from selection.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc10_patients_protected", 1);
 			mes("[Reuter]");
-			mes("Good thinking. The schematics show the upper lab's production areas. This becomes evidence in a facility overview I can present to the Guild Alliance.");
+			mes("That costs us medicine and rent, but fewer people vanish this week. I can work with a loss. I cannot work with another empty bed.");
 			break;
 		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc10_clinic_funded", 1);
 			mes("[Reuter]");
-			mes("The patrol logs show Kiel's command structure. Everything the drones monitored, Kiel logged. The logs are admissible.");
+			mes("A grim trade. The clinic stays open because the machine gets a little more blood. I hate that I understand the arithmetic.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc10_sample_swapped", 1);
 			mes("[Reuter]");
-			mes("Efficient. Echo has been telling me you would be effective. I am starting to agree.");
+			mes("You saved one name by moving the hunger elsewhere. Effective, personal, and not clean. The slums know that kind of mercy too well.");
 			break;
 		}
 		next();
 	}
 
-	if (questprogress(20143) == 1 && questprogress(20143, HUNTING) == 2) {
-		callfunc("DM_InstanceQuestComplete", 20143);
+	if (questprogress(20144) == 1 && questprogress(20144, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20144);
 		callfunc("DM_PartyExp", 300000, 145000);
 		callfunc("DM_GivePartyZeny", 25000);
 		.@paid = 1;
 		mes("[Reuter]");
-		mes("The lower lab Aliot units. Those are not monsters. Those are people Rekenber put through the process and then put back to work as security when the enhancement degraded their compliance.");
+		mes("The chitin plates are cut to a size that matches no lab furnace or armor rack I know. They are making something shaped like a person and armored like a product.");
 		next();
-		switch (select("We documented everything we could before stopping them.", "Is there anything left of who they were?", "They were trying to kill us. I am sorry for what they were, not for what we had to do.")) {
+		switch (select("Split the haul with the junior crews working the tunnel.", "Guard the crews without slowing our own pace.", "Overharvest and sell the surplus to the quartermaster.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc10_chitin_shared", 1);
 			mes("[Reuter]");
-			mes("I will review whatever you preserved. It may not help them now. But it may help the next batch. If we stop Kiel, there is no next batch.");
+			mes("Then Scaraba Hole stops being a race to see which desperate crew dies first. The lower city remembers practical kindness.");
 			break;
 		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc10_juniors_guarded", 1);
 			mes("[Reuter]");
-			mes("Some. Echo believes more than I do. That's why I let Echo lead on this question. I am too close to the data.");
+			mes("Goodwill, no evidence. Sometimes that is still worth having when the streets start closing around you.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc10_chitin_overharvested", 1);
 			mes("[Reuter]");
-			mes("That's an honest answer. The most honest one I've heard in three years of documenting what this place does to people.");
+			mes("Fast money, and more material for the armor I am trying to prove exists. Reise will thank you in the language of invoices.");
 			break;
 		}
 		next();
 	}
 
-	if (questprogress(20142) == 2 && questprogress(20143) == 2 && questprogress(20144) == 0) {
+	if (questprogress(20145) == 1 && questprogress(20145, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20145);
+		callfunc("DM_PartyExp", 320000, 155000);
+		callfunc("DM_GivePartyZeny", 26000);
+		.@paid = 1;
 		mes("[Reuter]");
-		mes("The path to the Kiel Core is clear. But Reise stands between you and it. He will not let the facility be destroyed without a confrontation. He has too much invested.");
+		mes("Bio Lab F2 used serials where names should have been. The tags you recovered are the first funeral some of those people will ever get.");
 		next();
-		mes("[Reuter]");
-		mes("Echo wants to speak to him. I think it's a bad idea. Echo thinks it's the right one. I have learned that Echo is usually right about things I think are bad ideas.");
-		next();
-		switch (select("We confront Reise directly and shut this down.", "Let Echo try to reason with him first.", "What does Reise actually believe he's building?")) {
+		switch (select("Restore every name we could find.", "Log the serials accurately and move fast.", "Erase the registry so Rekenber cannot use it again.")) {
 		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc10_clone_names_restored", 1);
+			callfunc("DM_InstanceSetFlag", "dm_echo_trusts_party", 1);
 			mes("[Reuter]");
-			mes("Direct. Reise will call security. Kiel will lock down the facility. Go through them.");
+			mes("Echo will hear about that. A person made by a factory watches closely when strangers decide whether the dead deserve names.");
 			break;
 		case 2:
-			callfunc("DM_InstanceSetFlag", "dm_arc10_echo_freed", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc10_clone_serials_logged", 1);
 			mes("[Reuter]");
-			mes("Echo's protocol. It may work. Echo is, after all, the evidence that Reise's own process produces people worth reasoning with.");
+			mes("Clean, fast, admissible. Also exactly as cold as the original system, just less corrupt.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc10_registry_erased", 1);
 			mes("[Reuter]");
-			mes("Heroes. Faster, stronger, more obedient versions of adventurers that nations can requisition instead of recruit. He genuinely believes this is an advancement for civilization. That is the most frightening part.");
+			mes("Sabotage works. Memory does not always survive it. I will not pretend I know which mattered more tonight.");
 			break;
 		}
-		callfunc("DM_InstanceQuestStart", 20144);
 		next();
-		mes("^3355FF[Quest started: Echo's Protocol]^000000");
-		mes("^3355FFConfront Director Reise. Then descend to lhz_dun04 and destroy Kiel D-01.^000000");
+	}
+
+	if (questprogress(20143) == 2 && questprogress(20144) == 2 && questprogress(20145) == 2 && questprogress(20142) == 0) {
+		mes("[Reuter]");
+		mes("Cards, chitin, names. Three threads, one factory. Echo has agreed to meet you.");
+		next();
+		mes("[Reuter]");
+		mes("Understand this before you speak: Echo does not want to become your weapon. Echo wants to be nobody, safely, for the first time.");
+		callfunc("DM_InstanceQuestStart", 20142);
+		next();
+		mes("^3355FF[Quest started: The One Who Said No]^000000");
+		mes("^3355FFFind Echo in the Lighthalzen slums and decide whether a manufactured fighter has the right to refuse the fight.^000000");
 		close();
 	}
 
-	if (questprogress(20144) == 1 && !dm_arc10_reise_confronted && !dm_arc10_echo_freed) {
+	if (questprogress(20142) == 1) {
 		mes("[Reuter]");
-		mes("Reise is in the Director's Suite on the facility's administrative floor. Echo is with him already if you chose that route.");
+		mes("Echo is near the field kit. Reise's recall teams are already sweeping the alleys. Speak carefully.");
 		close();
 	}
 
-	if (questprogress(20144) == 1 && (dm_arc10_reise_confronted || dm_arc10_echo_freed)) {
+	if (questprogress(20142) == 2 && questprogress(20141) == 1) {
 		mes("[Reuter]");
-		mes("Reise is handled. Kiel D-01 is still running. The facility will not stop until the core is destroyed.");
+		if (dm_arc10_echo_freed)
+			mes("Echo is free. Reise is exposed. Kiel D-01 is still running below, and every template it holds is another Echo that may never get to say no.");
+		else if (dm_arc10_echo_returned)
+			mes("Echo is back in custody. Reise will pretend that proves the program works. Kiel D-01 still has to be stopped before he can turn that proof into a production order.");
+		else
+			mes("Reise is handled for now. Kiel D-01 is the production line's heart. Destroy it, or reason with it if you find anything in there still capable of listening.");
 		next();
 		mes("[Reuter]");
-		mes("lhz_dun04. The Kiel Core is at the bottom. You will know it when you see it.");
+		mes("The core is in lhz_dun04. The false heroes will wear familiar patterns. Do not let that make them familiar people.");
 		close();
 	}
 
 	if (.@paid) {
 		mes("[Reuter]");
-		mes("Both the upper and lower lab sweeps need to be finished. Kiel has contingency protocols if either zone is partially cleared.");
+		mes("Finish the other two routes. The lab's story only becomes undeniable when the cards, plates, and names point to the same door.");
 		close();
 	}
 
 	mes("[Reuter]");
-	if (questprogress(20142) == 1 && questprogress(20143) == 1)
-		mes("The Hunter Fly sweep and the Aliot sweep are both still open. The lab won't wait.");
-	else if (questprogress(20142) == 1)
-		mes("Lab Infiltration is still open. Hunter Fly security drones in the upper lab.");
+	if (questprogress(20143) == 1 && questprogress(20144) == 1 && questprogress(20145) == 1)
+		mes("Clinic cards, Scaraba plates, and the clone registry are all still open. The lower city is counting on us to make the pattern visible.");
 	else if (questprogress(20143) == 1)
-		mes("Lower Level Sweep is still open. Aliot units in the lower lab.");
+		mes("Slum Sample Run is still open. Remover in lhz_dun01, and blood cards behind every cleanup.");
+	else if (questprogress(20144) == 1)
+		mes("Scaraba Chitin Order is still open. Antler and Rake Scaraba in Scaraba Hole.");
+	else if (questprogress(20145) == 1)
+		mes("Clone Name Registry is still open. Bio Lab F2, and every cell with a number where a name should be.");
 	else
-		mes("The path is clear. Director Reise is the next problem.");
+		mes("The evidence is ready. Echo is the next door.");
 	close();
 }
 
@@ -225,16 +273,24 @@ lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
 
 	if (questprogress(20141) == 2) {
 		mes("[Director Reise]");
-		if (dm_arc10_reise_confronted)
-			mes("Kiel is gone. Rekenber's board will have questions. I have answers prepared. They will not be honest ones.");
+		if (dm_arc10_echo_returned)
+			mes("Kiel is gone. Echo is not. Assets can be reacquired, even when facilities are lost.");
+		else if (dm_arc10_echo_freed)
+			mes("Kiel is gone, and Echo's escape will become a very expensive philosophical problem for my board.");
 		else
-			mes("Kiel is gone. Echo told me you came. I should have expected it.");
+			mes("Kiel is gone. Rekenber will call this sabotage. I expect you prefer the word justice.");
 		close();
 	}
 
-	if (dm_arc10_reise_confronted || dm_arc10_echo_freed) {
+	if (questprogress(20142) != 1) {
 		mes("[Director Reise]");
-		mes("That conversation is finished. The facility is already processing the loss.");
+		mes("Doctor Reuter is teaching you to read invoices as atrocities. Admirable, in a provincial way.");
+		close();
+	}
+
+	if (dm_arc10_reise_confronted || dm_arc10_echo_freed || dm_arc10_echo_returned) {
+		mes("[Director Reise]");
+		mes("That conversation is finished. Kiel D-01 is processing the consequences below.");
 		close();
 	}
 
@@ -243,60 +299,195 @@ lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
 	next();
 	if (dm_arc07_kessler_confronted) {
 		mes("[Reise]");
-		mes("Kessler mentioned you. The RSX reactivation in Einbroch. Yes. I authorized that. The machine was an asset. You destroyed an asset. We will have a discussion about that at some point.");
+		mes("Kessler mentioned you. Yes, I authorized RSX-0806. You destroyed an asset. I chose to study the data anyway.");
 		next();
 	}
 	if (dm_arc06_krenn_bribed) {
 		mes("[Reise]");
-		mes("You took money from Krenn in Yuno. Smart. Rekenber rewards pragmatic parties. I want to know if you are one of those.");
+		mes("You took Krenn's money in Yuno. Smart parties understand that purity is expensive and usually subsidized by someone else's suffering.");
 		next();
 	}
 	mes("[Reise]");
-	mes("The Hero Optimization Protocol is the most significant advancement in human enhancement since Rekenber's founding. What Reuter calls horror, I call progress. The distinction is a matter of perspective.");
+	mes("The Hero Optimization Protocol democratizes greatness. Reuter calls it horror because she is attached to inefficient definitions of personhood.");
 	next();
-	switch (select("The RSX authorization, the data suppression, the lab. You are the common thread. This ends now.", "Free Echo and stand down. That is the deal.", "What happens if Kiel D-01 runs without oversight?")) {
+	switch (select("You grow people to use as weapons. This ends now.", "Echo is a person. Release the recall order.", "Return Echo for the bounty and open the core.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc10_reise_confronted", 1);
+		callfunc("DM_Decide", "arc10.echo", "confronted");
 		mes("[Reise]");
-		mes("You are not wrong that I am the common thread. I am also the only person in this building who understands what Kiel manages. Shutting me down does not shut Kiel down.");
+		mes("I grow capabilities. The people part is sentiment. But your evidence makes continued deniability inconvenient, so I will not waste guards here.");
 		next();
-		mes("[Reise]");
-		mes("But I see that you intend to try. Kiel is downstairs. I will not stop you from making the attempt.");
-		next();
-		mes("^3355FF*Reise steps back. It is not quite cooperation, but it is not obstruction either.*^000000");
+		mes("^3355FF*Reise steps aside. It is not surrender. It is triage.*^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc10_echo_freed", 1);
+		callfunc("DM_Decide", "arc10.echo", "freed");
 		mes("[Reise]");
-		mes("Echo. 001-A. The protocol's first successful integrated outcome. The fact that it escaped and is now working against the facility is, professionally speaking, infuriating.");
+		mes("Echo. 001-A. The protocol's first integrated success and its most irritating defect.");
 		next();
 		mes("[Reise]");
-		mes("And also... not entirely unexpected. The integration preserved cognition. Cognition includes judgment. I built the thing that is now telling me to stop.");
+		mes("Cognition includes judgment. Apparently I built the thing that is now telling me to stop. Fine. I will deactivate the recall.");
 		next();
-		mes("^3355FF*Reise formally deactivates Echo's facility access codes, completing the freedom paperwork.*^000000");
-		mes("^3355FF*He does not look happy. But he does it.*^000000");
+		mes("^3355FF*Reise signs away Echo's facility claim with the expression of a man writing off a priceless instrument.*^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc10_reise_confronted", 1);
+		callfunc("DM_Decide", "arc10.echo", "returned");
 		mes("[Reise]");
-		mes("Kiel optimizes. Without a production directive it will expand the optimization parameters. Without a population ceiling it will begin identifying enhancement candidates from the general population. Automatically.");
+		mes("A practical answer. Echo is not a citizen. Echo is research property with a mobility problem.");
 		next();
 		mes("[Reise]");
-		mes("That is why I monitor it personally. That is my answer to your implied question.");
+		mes("The bounty will be paid through a clean account. The core access is yours. Try not to mistake the transaction for absolution.");
 		next();
-		mes("^3355FF*Reise's logic is impeccable and horrifying in equal measure.*^000000");
+		mes("^3355FF*Somewhere below, a recall code closes around the first made thing that asked not to be used.*^000000");
 		break;
 	}
-	callfunc("DM_InstanceQuestComplete", 20144);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1005);
 	next();
-	mes("^3355FF[Echo's Protocol resolved. Descend to lhz_dun04 and destroy Kiel D-01.]^000000");
+	mes("^3355FF[The One Who Said No resolved. Descend to lhz_dun04 and destroy Kiel D-01.]^000000");
 	close();
 
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20144, 1;
+	setquestinfo QINFO_QUEST, 20142, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// ── Wynne's Field Kit — Optional handler loss branch ──────────────────────
+lighthalzen,122,118,3	script	Wynne's Field Kit#dm10	2_BULLETIN_BOARD,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc10_started) {
+		mes("^3355FF*A battered Adventurers' Guild field kit has been shoved beneath a bench. The seal is intact, but the clasp is bent.*^000000");
+		close();
+	}
+	if (dm_wynne_rescued) {
+		mes("^3355FF*The kit is empty now except for a note in Wynne's square hand: 'I am not dead. Stop looking sentimental.'*^000000");
+		close();
+	}
+	if (dm_wynne_lost) {
+		mes("^3355FF*The kit is tagged as evidence. Rekenber's custody number is stamped over the Adventurers' Guild seal.*^000000");
+		close();
+	}
+	if (dm_act01_complete && !dm_wynne_captured)
+		callfunc("DM_InstanceSetFlag", "dm_wynne_captured", 1);
+	if (!dm_wynne_captured) {
+		mes("^3355FF*The field kit belongs to Quartermaster Wynne. Its contents are packed with the old discipline of someone who expected trouble before breakfast.*^000000");
+		close();
+	}
+
+	mes("^3355FF*The kit contains a bent ledger clasp, a Guild route cipher, and a blood-stiff note written on Rekenber intake paper.*^000000");
+	next();
+	mes("^0000AA[Wynne's Note]^000000");
+	mes("If you are reading this, Rekenber has me. They want your route, your party list, and your conscience in that order.");
+	next();
+	mes("^0000AA[Wynne's Note]^000000");
+	mes("Do not trade the lab evidence for me. Do not let them convince you one quartermaster is worth another batch of heroes in jars.");
+	next();
+	switch (select("Extract Wynne before moving on Reise.", "Keep the pressure on the lab. Wynne told us the cost.")) {
+	case 1:
+		callfunc("DM_Decide", "arc10.wynne", "rescued");
+		mes("^3355FF*You use the route cipher to send Echo and Reuter's contacts through a service lift before the lockdown seals it.*^000000");
+		next();
+		mes("[Wynne]");
+		mes("You disobeyed a direct note from your quartermaster. Good. Means you can still read the room instead of the paperwork.");
+		close();
+	case 2:
+		callfunc("DM_Decide", "arc10.wynne", "lost");
+		mes("^3355FF*You leave the cipher in place and push toward the director's suite. The lab's evidence remains moving. Wynne does not answer again.*^000000");
+		close();
+	}
+}
+
+// ── Echo — The One Who Said No ─────────────────────────────────────────────
+lighthalzen,126,118,4	script	Echo#dm10	4_F_01,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc10_started) {
+		mes("^3355FF*A pale figure watches the executive wing from an alley shadow, then vanishes before you can speak.*^000000");
+		close();
+	}
+	if (questprogress(20142) == 0) {
+		mes("[Echo]");
+		mes("Reuter says you are different from the people who come here with purchase orders. I am waiting to see if that is true.");
+		close();
+	}
+	if (questprogress(20142) == 2) {
+		mes("[Echo]");
+		if (dm_arc10_echo_freed)
+			mes("They told me I was proof the process worked. I am choosing to be proof of something else.");
+		else if (dm_arc10_echo_returned)
+			mes("...");
+		else
+			mes("Reise heard the word no. He did not understand it, but he heard it.");
+		close();
+	}
+	if (dm_arc10_reise_confronted || dm_arc10_echo_freed || dm_arc10_echo_returned) {
+		mes("[Echo]");
+		mes("The decision is already moving through the lab systems. Kiel is still below.");
+		close();
+	}
+
+	mes("^3355FF*The figure standing over two disabled Rekenber guards lowers a glowing weapon. A barcode is stamped into the skin at their neck.*^000000");
+	next();
+	mes("[Echo]");
+	mes("They told me to kill you.");
+	next();
+	mes("^3355FF*The weapon hits the pavement with a hard metallic clang.*^000000");
+	next();
+	mes("[Echo]");
+	mes("I am choosing not to.");
+	next();
+	switch (select("Then stand with us as a person, not a protocol.", "Stay hidden until Reise is handled.", "Come with us. We will turn you in and end the sweep.")) {
+	case 1:
+		callfunc("DM_Decide", "arc10.echo", "freed");
+		mes("[Echo]");
+		mes("A person. I do not know how to be that yet. But I know how to refuse an order.");
+		next();
+		mes("^3355FF*Echo turns toward the executive suite. The facility alarms do not recognize the choice they just made.*^000000");
+		close();
+	case 2:
+		callfunc("DM_Decide", "arc10.echo", "confronted");
+		mes("[Echo]");
+		mes("Hidden is familiar. I would like familiar to stop being the safest thing I know.");
+		next();
+		mes("^3355FF*Echo disappears into Reuter's safehouse network while you carry the refusal to Reise.*^000000");
+		close();
+	case 3:
+		callfunc("DM_Decide", "arc10.echo", "returned");
+		mes("[Echo]");
+		mes("I understand. That is what I was made for.");
+		next();
+		mes("^3355FF*Echo picks the weapon back up, not to fight, but because the guards will expect property to be armed when returned.*^000000");
+		close();
+	}
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20142, 1;
+	end;
+}
+
+// Rekenber Internal Memo - readable handout from the Bio Lab
+lighthalzen,128,116,3	script	Bloody Terminal#dm	2_VENDING_MACHINE1,{
+	if (!callfunc("DM_PartyActive")) { close; }
+	if (!dm_arc10_started) {
+		mes("^3355FF*The executive terminal is dark. It wants a clearance level you do not have.*^000000");
+		close();
+	}
+
+	mes("^3355FF*The terminal screen is cracked and smeared with dried blood. One memo remains open behind a failed security prompt.*^000000");
+	next();
+	mes("^0000AA[REKENBER CORPORATION - EYES ONLY]^000000");
+	mes("Sender: Director Hallan Reise, Regenschirm Program");
+	mes("Subject: Project Valhalla - Anomaly in Subject 001-A");
+	next();
+	mes("^0000AA[Internal Memo]^000000");
+	mes("The Whisperer Cult's resonance methods destabilize bedrock efficiently, but biological hosts fail at unacceptable rates.");
+	mes("The surviving clone batches perform above expectations when hero-pattern telemetry is applied.");
+	next();
+	mes("^0000AA[Internal Memo]^000000");
+	mes("Subject 001-A, informal designation 'Echo,' is presenting a severe anomaly: empathy, hesitation, and refusal during civilian pacification trials.");
+	next();
+	mes("^0000AA[Internal Memo]^000000");
+	mes("If a clone can remember personhood, the product line is compromised. Dispatch recall units. Recover the asset or terminate the defect.");
+	close();
 }
 
 // ── Kiel Core Set-piece ────────────────────────────────────────────────────
@@ -311,6 +502,8 @@ OnKielDead:
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1099);
 	if (dm_arc10_echo_freed)
 		instance_announce(instance_id(), "^3355FF[DM] Kiel D-01 goes dark. Echo watches it stop from the doorway. 'That's all of us who got out,' Echo says.^000000", bc_all);
+	else if (dm_arc10_echo_returned)
+		instance_announce(instance_id(), "^3355FF[DM] Kiel D-01 is destroyed. The false heroes fall, but Echo's recall file remains open in Rekenber custody.^000000", bc_all);
 	else
 		instance_announce(instance_id(), "^3355FF[DM] Kiel D-01 is destroyed. The false heroes fall. The production line goes silent.^000000", bc_all);
 	sleep(2000);

@@ -6,6 +6,18 @@ and this project does not adhere to [Semantic Versioning](http://semver.org/spec
 
 ## [Unreleased]
 
+### Added
+
+- DM tooling: `@dm secret <player> <text>` / `@dmsecret` for private styled asides to individual players (table secrets).
+- `DM_RollCheck(stat_id, dc, mode$)` extracted helper (d20 + stat/10 + adv/dis + inspiration + crits) returning pass/fail and exposing details via temps; unblocks traps and initiative.
+- `@dm trap` / `@dmtrap` command surface + stub (set/list/clear/reveal/disarm) in `dm_traps.txt` + console (full watcher + spring logic pending per `dm-traps-puzzles-guide.md`).
+
+### Changed
+
+- Refactored `DM_Check`/`S_Roll` in `dm_checks.txt` to use the new shared roll helper.
+- Extended DM console help text, aliases, and dispatch.
+- Updated live-table status, architecture roadmap, handoff notes, playtest samples, and tooling reference docs.
+
 <!--
 If you are reading this in a text editor, simply ignore this section
 

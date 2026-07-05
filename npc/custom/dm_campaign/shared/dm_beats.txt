@@ -97,6 +97,7 @@ function	script	DM_BeatArc01	{
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc01_started", 1);
 		callfunc("DM_InstanceQuestStart", 20001);
+		callfunc("DM_InstanceQuestStart", 20006);
 		callfunc("DM_InstanceQuestStart", 20002);
 		callfunc("DM_InstanceQuestStart", 20003);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 101);
@@ -241,19 +242,12 @@ function	script	DM_BeatArc03	{
 		mes("Choose the branch to track.");
 		next();
 		.@choice = select("Expose the dig", "Take the compassion deal", "Hear the cascade truth");
-		if (.@choice == 1) {
-			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_exposed", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_deal", 0);
-		} else if (.@choice == 2) {
-			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_deal", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc03_refugees_protected", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_exposed", 0);
-		} else {
-			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_marked_party", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_revealed_cascade", 1);
-		}
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 320 + .@choice);
-		callfunc("DM_MapStory", "Mother Sabra turns mercy into a knife and asks who the party becomes holding it.");
+		if (.@choice == 1)
+			callfunc("DM_Decide", "arc03.sabra", "exposed");
+		else if (.@choice == 2)
+			callfunc("DM_Decide", "arc03.sabra", "deal");
+		else
+			callfunc("DM_Decide", "arc03.sabra", "truth");
 		mes("Sabra branch tracked for the current party.");
 		break;
 	case 5:
@@ -316,21 +310,12 @@ function	script	DM_BeatArc04	{
 		mes("Choose the branch to track.");
 		next();
 		.@choice = select("Protect Elsbeth and take ward-key", "Bring Elsbeth into the vault", "Distrust the Guild");
-		if (.@choice == 1) {
-			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 0);
-			callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 1);
-		} else if (.@choice == 2) {
-			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 0);
-			callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 1);
-		} else {
-			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 0);
-			callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 0);
-			callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 0);
-		}
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 410 + .@choice);
-		callfunc("DM_MapStory", "Elsbeth decides how close she will stand to the vault door.");
+		if (.@choice == 1)
+			callfunc("DM_Decide", "arc04.elsbeth", "protect");
+		else if (.@choice == 2)
+			callfunc("DM_Decide", "arc04.elsbeth", "vault");
+		else
+			callfunc("DM_Decide", "arc04.elsbeth", "distrust");
 		mes("Elsbeth branch tracked for the current party.");
 		break;
 	case 4:
@@ -342,19 +327,12 @@ function	script	DM_BeatArc04	{
 		mes("Choose the branch to track.");
 		next();
 		.@choice = select("Condemn Doran", "Offer publication and surrender", "Ask for Cassell's teaching");
-		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_confronted", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_unmasked", 1);
-		if (.@choice == 1) {
-			callfunc("DM_InstanceSetFlag", "dm_arc04_doran_fought", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 0);
-		} else if (.@choice == 2) {
-			callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc04_doran_fought", 0);
-		} else {
-			callfunc("DM_InstanceSetFlag", "dm_arc04_doran_taught", 1);
-		}
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 430 + .@choice);
-		callfunc("DM_MapStory", "Archmagus Doran reveals Cassell's hand in Geffen's lower vault.");
+		if (.@choice == 1)
+			callfunc("DM_Decide", "arc04.doran", "condemn");
+		else if (.@choice == 2)
+			callfunc("DM_Decide", "arc04.doran", "surrender");
+		else
+			callfunc("DM_Decide", "arc04.doran", "teaching");
 		mes("Doran branch tracked for the current party.");
 		break;
 	case 6:
@@ -384,17 +362,12 @@ function	script	DM_BeatArc04	{
 		mes("Choose the catechism branch to track.");
 		next();
 		.@choice = select("Refuse in faith", "Refuse but listen", "Accept the teaching");
-		callfunc("DM_InstanceSetFlag", "dm_arc04_catechism_choice", .@choice);
-		if (.@choice == 2)
-			callfunc("DM_InstanceSetFlag", "dm_arc04_tamper_sense", 1);
-		if (.@choice == 3) {
-			callfunc("DM_InstanceSetFlag", "dm_arc04_pilgrim_catechism", 1);
-			callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
-		}
-		callfunc("DM_InstanceQuestComplete", 20024);
-		callfunc("DM_InstanceQuestComplete", 20019);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 499);
-		callfunc("DM_MapStory", "Cassell offers the Pilgrim's Catechism. The party chooses what kind of key knowledge becomes.");
+		if (.@choice == 1)
+			callfunc("DM_Decide", "arc04.catechism", "refuse");
+		else if (.@choice == 2)
+			callfunc("DM_Decide", "arc04.catechism", "listen");
+		else
+			callfunc("DM_Decide", "arc04.catechism", "accept");
 		mes("Arc 4 marked complete for the current party.");
 		break;
 	case 11:
@@ -438,16 +411,12 @@ function	script	DM_BeatArc05	{
 		mes("Choose the branch to track.");
 		next();
 		.@choice = select("Trust Mara and protect refugees", "Use Mara pragmatically", "Insult Mara");
-		if (.@choice == 1) {
-			callfunc("DM_InstanceSetFlag", "dm_arc05_mara_trust", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc05_mara_network", 1);
-		} else if (.@choice == 2) {
-			callfunc("DM_InstanceSetFlag", "dm_arc05_mara_pragmatic", 1);
-		} else {
-			callfunc("DM_InstanceSetFlag", "dm_arc05_mara_insulted", 1);
-		}
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 510 + .@choice);
-		callfunc("DM_MapStory", "Captain Mara decides whether the Saltmother becomes a safe harbor or just another route.");
+		if (.@choice == 1)
+			callfunc("DM_Decide", "arc05.mara", "trust");
+		else if (.@choice == 2)
+			callfunc("DM_Decide", "arc05.mara", "pragmatic");
+		else
+			callfunc("DM_Decide", "arc05.mara", "insult");
 		mes("Mara branch tracked for the current party.");
 		break;
 	case 4:
@@ -459,21 +428,12 @@ function	script	DM_BeatArc05	{
 		mes("Choose the manifest branch to track.");
 		next();
 		.@choice = select("Expose and ruin Brode", "Buy the manifest", "Threaten Brode");
-		callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_taken", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc05_cassell_courier_drop", 1);
-		if (.@choice == 1) {
-			callfunc("DM_InstanceSetFlag", "dm_arc05_brode_ruined", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc05_brode_enemy", 1);
-		} else if (.@choice == 2) {
-			callfunc("DM_InstanceSetFlag", "dm_arc05_brode_sold_manifest", 1);
-		} else {
-			callfunc("DM_InstanceSetFlag", "dm_arc05_brode_threatened", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc05_brode_enemy", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc05_northern_account", 1);
-		}
-		callfunc("DM_InstanceQuestStart", 20029);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 525 + .@choice);
-		callfunc("DM_MapStory", "Brode's Manifest reframes the cascade as freight: ports, dates, and a northern account.");
+		if (.@choice == 1)
+			callfunc("DM_Decide", "arc05.brode", "expose");
+		else if (.@choice == 2)
+			callfunc("DM_Decide", "arc05.brode", "buy");
+		else
+			callfunc("DM_Decide", "arc05.brode", "threaten");
 		mes("Brode branch tracked and Cargo of Souls started for the current party.");
 		break;
 	case 6:
@@ -528,6 +488,7 @@ function	script	DM_BeatArc06	{
 		callfunc("DM_InstanceQuestStart", 20101);
 		callfunc("DM_InstanceQuestStart", 20103);
 		callfunc("DM_InstanceQuestStart", 20104);
+		callfunc("DM_InstanceQuestStart", 20105);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 601);
 		callfunc("DM_MapStory", "Doctor Vahl presents the impossible readings. The cascade has a number.");
 		mes("Arc 6 started for the current party.");
@@ -537,17 +498,11 @@ function	script	DM_BeatArc06	{
 		mes("Party warped to Director Krenn.");
 		break;
 	case 4:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_bribed", 1);
-		callfunc("DM_InstanceQuestComplete", 20102);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 602);
-		callfunc("DM_MapStory", "Pragmatism pays. The party accepts the investor's silence money.");
+		callfunc("DM_Decide", "arc06.krenn", "bribed");
 		mes("Krenn bribed flag set.");
 		break;
 	case 5:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
-		callfunc("DM_InstanceQuestComplete", 20102);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 603);
-		callfunc("DM_MapStory", "The data goes to the Council. Krenn's suppression is on the record.");
+		callfunc("DM_Decide", "arc06.krenn", "exposed");
 		mes("Krenn exposed flag set.");
 		break;
 	case 6:
@@ -600,17 +555,11 @@ function	script	DM_BeatArc07	{
 		mes("Party warped to Supervisor Kessler.");
 		break;
 	case 4:
-		callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", 1);
-		callfunc("DM_InstanceQuestComplete", 20112);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 702);
-		callfunc("DM_MapStory", "The party stands with the workers. Rekenber has noticed.");
+		callfunc("DM_Decide", "arc07.strike", "supported");
 		mes("Strike supported flag set.");
 		break;
 	case 5:
-		callfunc("DM_InstanceSetFlag", "dm_arc07_strike_broken", 1);
-		callfunc("DM_InstanceQuestComplete", 20112);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 703);
-		callfunc("DM_MapStory", "The party breaks the strike. Rekenber rewards pragmatism.");
+		callfunc("DM_Decide", "arc07.strike", "broken");
 		mes("Strike broken flag set.");
 		break;
 	case 6:
@@ -649,7 +598,7 @@ function	script	DM_BeatArc08	{
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 8 - Glast Heim (The Cursed Kingdom)");
 	next();
-	switch (select("Warp: Sir Aldric", "Beat: Start Arc 8", "Beat: Manfred Spared", "Beat: Manfred Killed", "Warp: Brother Manfred", "Warp: GH Abbey", "Beat: Spawn Dark Lord", "Beat: Dark Lord slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Sir Aldric", "Beat: Start Arc 8", "Beat: Martyrs' Crypt (start trial)", "Beat: Manfred Spared", "Beat: Manfred Killed", "Warp: Brother Manfred", "Warp: Martyrs' Crypt", "Warp: GH Abbey", "Beat: Spawn Dark Lord", "Beat: Dark Lord slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "geffen", 120, 120);
 		mes("Party warped to Sir Aldric.");
@@ -657,53 +606,53 @@ function	script	DM_BeatArc08	{
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc08_started", 1);
 		callfunc("DM_InstanceQuestStart", 20121);
-		callfunc("DM_InstanceQuestStart", 20122);
 		callfunc("DM_InstanceQuestStart", 20123);
+		callfunc("DM_InstanceQuestStart", 20124);
+		callfunc("DM_InstanceQuestStart", 20125);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 801);
 		callfunc("DM_MapStory", "The cascade rings the old bells in Glast Heim. The Dark Lord wakes.");
 		mes("Arc 8 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_killed");
-		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
-		callfunc("DM_InstanceQuestComplete", 20124);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 802);
-		callfunc("DM_MapStory", "Manfred is spared. His faith restrains the court's unrest.");
-		mes("Manfred spared. Weight of Faith complete.");
+		callfunc("DM_InstanceQuestStart", 20122);
+		callfunc("DM_MapStory", "Beneath the Chivalry, the executed saints stir. They have a question.");
+		mes("Martyrs' Crypt trial started (quest 20122).");
 		break;
 	case 4:
-		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_spared");
-		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20124);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 803);
-		callfunc("DM_MapStory", "Manfred falls. His despair joins the Dark Lord's court.");
-		mes("Manfred killed. Weight of Faith complete.");
+		callfunc("DM_Decide", "arc08.manfred", "spared");
+		mes("Manfred spared. The cathedral is open.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc08.manfred", "killed");
+		mes("Manfred killed. The cathedral is open.");
+		break;
+	case 6:
 		callfunc("DM_WarpParty", "gl_in01", 120, 120);
 		mes("Party warped to Brother Manfred.");
 		break;
-	case 6:
+	case 7:
+		callfunc("DM_WarpParty", "gl_knt01", 150, 150);
+		mes("Party warped to the Martyrs' Crypt.");
+		break;
+	case 8:
 		callfunc("DM_WarpParty", "gl_church", 150, 150);
 		mes("Party warped to GH Abbey.");
 		break;
-	case 7:
+	case 9:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Dark Lord", 1272, 1, "Glast Heim Abbey#dm::OnDarkLordDead";
-		if (dm_arc08_manfred_spared) {
-			areamonster .@dm_map$, 145, 145, 155, 155, "Restrained Court", 1291, 2, "Glast Heim Abbey#dm::OnAddDead";
-			dispbottom("[DM] Dark Lord spawned with 2 restrained court adds.");
-		} else if (dm_arc08_manfred_killed) {
-			areamonster .@dm_map$, 145, 145, 155, 155, "Despairing Court", 1291, 5, "Glast Heim Abbey#dm::OnAddDead";
-			areamonster .@dm_map$, 145, 145, 155, 155, "Oathbound Knight", 1132, 3, "Glast Heim Abbey#dm::OnAddDead";
-			dispbottom("[DM] Dark Lord spawned with 8 court adds; Manfred's despair empowers them.");
-		} else {
-			areamonster .@dm_map$, 145, 145, 155, 155, "Restless Court", 1291, 3, "Glast Heim Abbey#dm::OnAddDead";
-			dispbottom("[DM] Dark Lord spawned with default court adds.");
-		}
+		.@court = 3; .@knights = 0; .@note$ = "default court";
+		if (dm_arc08_manfred_spared) { .@court = 2; .@note$ = "restrained court (Manfred's faith)"; }
+		else if (dm_arc08_manfred_killed) { .@court = 5; .@knights = 3; .@note$ = "despairing court (Manfred's despair)"; }
+		if (dm_arc08_martyrs_cursed) { .@court += 3; .@note$ += " + martyrs' curse"; }
+		else if (dm_arc08_martyrs_aid && .@court > 1) { .@court -= 1; .@note$ += " - martyrs' aid"; }
+		areamonster .@dm_map$, 145, 145, 155, 155, "Restless Court", 1291, .@court, "Glast Heim Abbey#dm::OnAddDead";
+		if (.@knights > 0)
+			areamonster .@dm_map$, 145, 145, 155, 155, "Oathbound Knight", 1132, .@knights, "Glast Heim Abbey#dm::OnAddDead";
+		dispbottom("[DM] Dark Lord spawned with " + (.@court + .@knights) + " adds: " + .@note$ + ".");
 		mes("Dark Lord spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 10:
 		callfunc("DM_InstanceQuestComplete", 20121);
 		callfunc("DM_InstanceSetFlag", "dm_arc08_darklord_killed", 1);
 		callfunc("DM_PartyExp", 700000, 400000);
@@ -711,7 +660,7 @@ function	script	DM_BeatArc08	{
 		callfunc("DM_MapStory", "The Dark Lord is banished. The cursed kingdom finally falls silent.");
 		mes("Arc 8 marked complete for the current party.");
 		break;
-	case 9:
+	case 11:
 		callfunc("DM_BeatMenu");
 		break;
 	}
@@ -723,7 +672,7 @@ function	script	DM_BeatArc09	{
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 9 - Rachel (Frozen Faith)");
 	next();
-	switch (select("Warp: Acolyte Naima", "Beat: Start Arc 9", "Beat: Karsh Exposed", "Beat: Karsh Deal", "Warp: High Prelate Karsh", "Warp: Ice Bleed Site", "Beat: Spawn Gloom Under Night", "Beat: Gloom slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Acolyte Naima", "Beat: Start Arc 9", "Beat: Workshop (start reveal)", "Beat: Karsh Exposed", "Beat: Karsh Deal", "Warp: High Prelate Karsh", "Warp: Vesper Workshop", "Warp: Ice Bleed Site", "Beat: Spawn Gloom Under Night", "Beat: Gloom slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "rachel", 120, 120);
 		mes("Party warped to Acolyte Naima.");
@@ -731,41 +680,52 @@ function	script	DM_BeatArc09	{
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc09_started", 1);
 		callfunc("DM_InstanceQuestStart", 20131);
-		callfunc("DM_InstanceQuestStart", 20132);
 		callfunc("DM_InstanceQuestStart", 20133);
+		callfunc("DM_InstanceQuestStart", 20134);
+		callfunc("DM_InstanceQuestStart", 20135);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 901);
 		callfunc("DM_MapStory", "The Blessing of the Twelve is a dimensional rift. The church has known for twenty years.");
 		mes("Arc 9 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_exposed", 1);
-		callfunc("DM_InstanceQuestComplete", 20134);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 902);
-		callfunc("DM_MapStory", "Karsh signs the public confession. The truth is out.");
-		mes("Karsh exposed. Prelate's Record complete.");
+		callfunc("DM_InstanceQuestStart", 20132);
+		callfunc("DM_MapStory", "A warded door in the Sanctuary's service tunnels. Behind it, the miracle has a maintenance schedule.");
+		mes("Angel in the Workshop started (quest 20132).");
 		break;
 	case 4:
-		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_deal", 1);
-		callfunc("DM_InstanceQuestComplete", 20134);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 903);
-		callfunc("DM_MapStory", "A deal is struck. The truth moves at the church's pace.");
-		mes("Karsh deal made. Prelate's Record complete.");
+		callfunc("DM_Decide", "arc09.karsh", "exposed");
+		mes("Karsh exposed. The ice dungeon is open.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc09.karsh", "deal");
+		mes("Karsh deal made. The ice dungeon is open.");
+		break;
+	case 6:
 		callfunc("DM_WarpParty", "rachel", 130, 120);
 		mes("Party warped to High Prelate Karsh.");
 		break;
-	case 6:
+	case 7:
+		callfunc("DM_WarpParty", "ra_san04", 150, 150);
+		mes("Party warped to the Vesper Workshop.");
+		break;
+	case 8:
 		callfunc("DM_WarpParty", "ice_dun03", 150, 150);
 		mes("Party warped to Ice Bleed Site.");
 		break;
-	case 7:
+	case 9:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Gloom Under Night", 1768, 1, "Ice Bleed Site#dm::OnGloomDead";
-		dispbottom("[DM] Gloom Under Night spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
+		if (dm_arc09_vesper_disable) {
+			dispbottom("[DM] Gloom Under Night spawned. Vesper's disable is pre-armed: the angel falls at the switch (run it as a weakened opener).");
+		} else if (dm_arc09_workshop_smashed) {
+			monster .@dm_map$, 147, 147, "Vesper", 1685, 1;
+			dispbottom("[DM] Gloom Under Night spawned WITH Vesper at full strength - the workshop was smashed; the angel defends the lie.");
+		} else {
+			dispbottom("[DM] Gloom Under Night spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
+		}
 		mes("Gloom Under Night spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 10:
 		callfunc("DM_InstanceQuestComplete", 20131);
 		callfunc("DM_InstanceSetFlag", "dm_arc09_gloom_killed", 1);
 		callfunc("DM_PartyExp", 800000, 450000);
@@ -773,7 +733,7 @@ function	script	DM_BeatArc09	{
 		callfunc("DM_MapStory", "Gloom Under Night disperses. The dimensional bleed is exposed.");
 		mes("Arc 9 marked complete for the current party.");
 		break;
-	case 9:
+	case 11:
 		callfunc("DM_BeatMenu");
 		break;
 	}
@@ -785,7 +745,7 @@ function	script	DM_BeatArc10	{
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 10 - Lighthalzen (The Lab Beneath)");
 	next();
-	switch (select("Warp: Doctor Reuter", "Beat: Start Arc 10", "Beat: Reise Confronted", "Beat: Echo Freed", "Warp: Director Reise", "Warp: Kiel Core", "Beat: Spawn Kiel D-01", "Beat: Kiel slain (Act II Complete)", "Beat: Lab containment pressure", "Back")) {
+	switch (select("Warp: Doctor Reuter", "Beat: Start Arc 10", "Beat: Start Echo Quest", "Beat: Reise Confronted", "Beat: Echo Freed", "Beat: Echo Returned", "Warp: Director Reise", "Warp: Kiel Core", "Beat: Spawn Kiel D-01", "Beat: Kiel slain (Act II Complete)", "Beat: Lab containment pressure", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "lighthalzen", 120, 120);
 		mes("Party warped to Doctor Reuter.");
@@ -793,44 +753,57 @@ function	script	DM_BeatArc10	{
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc10_started", 1);
 		callfunc("DM_InstanceQuestStart", 20141);
-		callfunc("DM_InstanceQuestStart", 20142);
 		callfunc("DM_InstanceQuestStart", 20143);
+		callfunc("DM_InstanceQuestStart", 20144);
+		callfunc("DM_InstanceQuestStart", 20145);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1001);
 		callfunc("DM_MapStory", "Rekenber is manufacturing heroes from Ash Vacuum energy. Echo was the first to say no.");
 		mes("Arc 10 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc10_reise_confronted", 1);
-		callfunc("DM_InstanceQuestComplete", 20144);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1002);
-		callfunc("DM_MapStory", "Reise is confronted. He does not stop the process. But he does not stop the party either.");
-		mes("Reise confronted. Echo's Protocol complete.");
+		callfunc("DM_InstanceQuestStart", 20142);
+		mes("The One Who Said No started for the current party.");
 		break;
 	case 4:
-		callfunc("DM_InstanceSetFlag", "dm_arc10_echo_freed", 1);
-		callfunc("DM_InstanceQuestComplete", 20144);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1003);
-		callfunc("DM_MapStory", "Echo is free. The first prototype walks out of the lab that made it.");
-		mes("Echo freed. Echo's Protocol complete.");
+		callfunc("DM_Decide", "arc10.echo", "confronted");
+		mes("Reise confronted. The One Who Said No complete.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc10.echo", "freed");
+		mes("Echo freed. The One Who Said No complete.");
+		break;
+	case 6:
+		callfunc("DM_Decide", "arc10.echo", "returned");
+		mes("Echo returned. The One Who Said No complete.");
+		break;
+	case 7:
 		callfunc("DM_WarpParty", "lighthalzen", 130, 120);
 		mes("Party warped to Director Reise.");
 		break;
-	case 6:
+	case 8:
 		callfunc("DM_WarpParty", "lhz_dun04", 150, 150);
 		mes("Party warped to Kiel Core.");
 		break;
-	case 7:
+	case 9:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Kiel D-01", 1734, 1, "Kiel Core#dm::OnKielDead";
-		if (dm_arc10_echo_freed)
-			dispbottom("[DM] Kiel D-01 spawned. Echo is free — consider Kiel targeting Echo first as its last directive.");
-		else
-			dispbottom("[DM] Kiel D-01 spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to Act II complete.");
-		mes("Kiel D-01 spawned. Kill to trigger Act II complete.");
+		if (dm_arc10_echo_returned || dm_arc10_registry_erased || dm_arc10_chitin_overharvested) {
+			monster .@dm_map$, 146, 150, "False Hero Seyren", 1634, 1;
+			monster .@dm_map$, 154, 150, "False Hero Eremes", 1635, 1;
+			monster .@dm_map$, 150, 146, "False Hero Howard", 1636, 1;
+			monster .@dm_map$, 150, 154, "False Hero Kathryne", 1639, 1;
+			dispbottom("[DM] Kiel D-01 spawned with a full false-hero mirror; dark Arc 10 flags strengthened the program.");
+		} else if (dm_arc10_echo_freed && dm_arc10_clone_names_restored) {
+			monster .@dm_map$, 146, 150, "False Hero Seyren", 1634, 1;
+			dispbottom("[DM] Kiel D-01 spawned with one unstable false hero; Echo and the restored names weaken the program's hold.");
+		} else {
+			monster .@dm_map$, 146, 150, "False Hero Seyren", 1634, 1;
+			monster .@dm_map$, 154, 150, "False Hero Eremes", 1635, 1;
+			dispbottom("[DM] Kiel D-01 spawned with false heroes at 150,150 on " + .@dm_map$ + ".");
+		}
+		mes("Kiel D-01 spawned. Kill Kiel to trigger Act II complete.");
 		break;
-	case 8:
+	case 10:
 		callfunc("DM_InstanceQuestComplete", 20141);
 		callfunc("DM_InstanceSetFlag", "dm_arc10_kiel_killed", 1);
 		callfunc("DM_InstanceSetFlag", "dm_act02_complete", 1);
@@ -839,7 +812,7 @@ function	script	DM_BeatArc10	{
 		callfunc("DM_MapStory", "Kiel D-01 is destroyed. Act II is complete. The cascade has been manufactured. Now it must be sealed.");
 		mes("Act II marked complete for the current party.");
 		break;
-	case 9:
+	case 11:
 		$@dm_arc10_pressure_party_id = getcharid(CHAR_ID_PARTY);
 		$@dm_arc10_pressure_damage = 5;
 		callfunc("DM_TriggerEvent", "Kiel Core Pressure#dm", "OnPressureStart");
@@ -848,7 +821,7 @@ function	script	DM_BeatArc10	{
 		dispbottom("[DM] Lab containment pressure started.");
 		mes("Lab containment pressure started.");
 		break;
-	case 10:
+	case 12:
 		callfunc("DM_BeatMenu");
 		break;
 	}
@@ -860,7 +833,7 @@ function	script	DM_BeatArc11	{
 	mes("[DM Beat Director]");
 	mes("Act III / Arc 11 - Hugel (Wrath of Heaven)");
 	next();
-	switch (select("Warp: Priest Eadric", "Beat: Start Arc 11", "Beat: Bjorn Subdued", "Beat: Bjorn Joined", "Warp: Zealot Bjorn", "Warp: Valkyrie Hall", "Beat: Spawn Randgris", "Beat: Randgris slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Priest Eadric", "Beat: Start Arc 11", "Beat: Start Sigrun Quest", "Beat: Sigrun Voice", "Beat: Sigrun Comforted", "Beat: Bjorn Talked Down", "Beat: Bjorn Forced", "Beat: Bjorn Exploited", "Warp: Zealot Bjorn", "Warp: Sigrun Chapel", "Warp: Valkyrie Hall", "Beat: Spawn Randgris", "Beat: Randgris slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "hugel", 100, 100);
 		mes("Party warped to Priest Eadric.");
@@ -870,59 +843,77 @@ function	script	DM_BeatArc11	{
 		callfunc("DM_InstanceQuestStart", 20151);
 		callfunc("DM_InstanceQuestStart", 20153);
 		callfunc("DM_InstanceQuestStart", 20154);
+		callfunc("DM_InstanceQuestStart", 20155);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1101);
 		callfunc("DM_MapStory", "The Valkyries of Odin's temple have turned their blades on the faithful.");
 		mes("Arc 11 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_joined");
-		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_subdued", 1);
-		callfunc("DM_InstanceQuestComplete", 20155);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1102);
-		callfunc("DM_MapStory", "Zealot Bjorn is subdued. The Valkyrie Hall faces the full court.");
-		mes("Bjorn subdued. Zealot's Testimony complete.");
+		callfunc("DM_InstanceQuestStart", 20152);
+		mes("The Dying Valkyrie's Word started for the current party.");
 		break;
 	case 4:
-		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_subdued");
-		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_joined", 1);
-		callfunc("DM_InstanceQuestComplete", 20155);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1103);
-		callfunc("DM_MapStory", "Zealot Bjorn joins the cause. His faith restrains Randgris's court.");
-		mes("Bjorn joined. Zealot's Testimony complete.");
+		callfunc("DM_Decide", "arc11.sigrun", "voice");
+		mes("Sigrun's warning recorded. The Dying Valkyrie's Word complete.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc11.sigrun", "comfort");
+		mes("Sigrun comforted. The Dying Valkyrie's Word complete.");
+		break;
+	case 6:
+		callfunc("DM_Decide", "arc11.bjorn", "subdued");
+		mes("Bjorn talked down. The temple steps are clear.");
+		break;
+	case 7:
+		callfunc("DM_Decide", "arc11.bjorn", "forced");
+		mes("Bjorn forced aside. The temple steps are clear.");
+		break;
+	case 8:
+		callfunc("DM_Decide", "arc11.bjorn", "exploited");
+		mes("Bjorn exploited. The temple steps are clear.");
+		break;
+	case 9:
 		callfunc("DM_WarpParty", "hugel", 110, 100);
 		mes("Party warped to Zealot Bjorn.");
 		break;
-	case 6:
+	case 10:
+		callfunc("DM_WarpParty", "hugel", 104, 96);
+		mes("Party warped to Sigrun's chapel.");
+		break;
+	case 11:
 		callfunc("DM_WarpParty", "abyss_03", 150, 150);
 		mes("Party warped to Valkyrie Hall.");
 		break;
-	case 7:
+	case 12:
 		.@dm_map$ = strcharinfo(3);
+		if (dm_arc11_bjorn_exploited)
+			monster .@dm_map$, 148, 150, "Detardeurus", 1719, 1, "Valkyrie Hall#dm::OnAddDead";
 		monster .@dm_map$, 150, 150, "Valkyrie Randgris", 1751, 1, "Valkyrie Hall#dm::OnRandgrisDead";
 		if (dm_arc11_bjorn_joined) {
-			areamonster .@dm_map$, 145, 145, 155, 155, "Restrained Skeggiold", 1754, 2, "Valkyrie Hall#dm::OnAddDead";
-			dispbottom("[DM] Randgris spawned with 2 restrained court adds.");
-		} else if (dm_arc11_bjorn_subdued) {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Restrained Skeggiold", 1754, 1, "Valkyrie Hall#dm::OnAddDead";
+			dispbottom("[DM] Randgris spawned with one restrained court add; Bjorn's faith holds part of the hall back.");
+		} else if (dm_arc11_bjorn_subdued || dm_arc11_sigrun_comforted) {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Valkyrie Court", 1754, 2, "Valkyrie Hall#dm::OnAddDead";
+			dispbottom("[DM] Randgris spawned with softened court pressure.");
+		} else if (dm_arc11_bjorn_forced || dm_arc11_bjorn_exploited || dm_arc11_vigil_baited || dm_arc11_scale_wards) {
 			areamonster .@dm_map$, 145, 145, 155, 155, "Valkyrie Court", 1754, 4, "Valkyrie Hall#dm::OnAddDead";
 			areamonster .@dm_map$, 145, 145, 155, 155, "Valkyrie Herald", 1765, 1, "Valkyrie Hall#dm::OnAddDead";
-			dispbottom("[DM] Randgris spawned with her full court.");
+			dispbottom("[DM] Randgris spawned with full court pressure.");
 		} else {
 			areamonster .@dm_map$, 145, 145, 155, 155, "Valkyrie Court", 1754, 3, "Valkyrie Hall#dm::OnAddDead";
 			dispbottom("[DM] Randgris spawned with default court adds.");
 		}
 		mes("Randgris spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 13:
 		callfunc("DM_InstanceQuestComplete", 20151);
 		callfunc("DM_InstanceSetFlag", "dm_arc11_randgris_killed", 1);
 		callfunc("DM_PartyExp", 1200000, 700000);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1199);
-		callfunc("DM_MapStory", "Valkyrie Randgris falls. A dying Valkyrie hears Loki laugh.");
+		callfunc("DM_MapStory", "Valkyrie Randgris falls. The Voice Sigrun warned about laughs once through the hall.");
 		mes("Arc 11 marked complete for the current party.");
 		break;
-	case 9:
+	case 14:
 		callfunc("DM_BeatMenu");
 		break;
 	}
@@ -934,7 +925,7 @@ function	script	DM_BeatArc12	{
 	mes("[DM Beat Director]");
 	mes("Act III / Arc 12 - New World (Beyond the Horizon)");
 	next();
-	switch (select("Warp: Envoy Aelith", "Beat: Start Arc 12", "Beat: Vance Exposed", "Beat: Vance Helped", "Warp: Captain Vance", "Warp: Rift Anchor", "Beat: Spawn Naght Sieger", "Beat: Naght Sieger slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Envoy Aelith", "Beat: Start Arc 12", "Beat: Start First Contact", "Beat: First Contact Truth", "Beat: First Contact Peace", "Beat: First Contact Order", "Beat: Vance Exposed", "Beat: Vance Turned", "Beat: Vance Occupation", "Warp: Captain Vance", "Warp: Rift Anchor", "Beat: Spawn Nidhoggr's Shadow", "Beat: Nidhoggr slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "mid_camp", 100, 100);
 		mes("Party warped to Envoy Aelith.");
@@ -944,55 +935,71 @@ function	script	DM_BeatArc12	{
 		callfunc("DM_InstanceQuestStart", 20161);
 		callfunc("DM_InstanceQuestStart", 20163);
 		callfunc("DM_InstanceQuestStart", 20164);
+		callfunc("DM_InstanceQuestStart", 20165);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1201);
 		callfunc("DM_MapStory", "The dimensional walls are dissolving. The New World bleeds into Midgard.");
 		mes("Arc 12 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc12_vance_exposed", 1);
-		callfunc("DM_InstanceQuestComplete", 20165);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1202);
-		callfunc("DM_MapStory", "Vance pulls his team back. The survey becomes a warning, not a claim.");
-		mes("Vance exposed. Vance Proposal complete.");
+		callfunc("DM_InstanceQuestStart", 20162);
+		mes("First Contact Done Wrong started for the current party.");
 		break;
 	case 4:
-		callfunc("DM_InstanceSetFlag", "dm_arc12_vance_helped", 1);
-		callfunc("DM_InstanceQuestComplete", 20165);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1203);
-		callfunc("DM_MapStory", "Vance redirects his mission. The New World gains an unlikely ally.");
-		mes("Vance helped. Vance Proposal complete.");
+		callfunc("DM_Decide", "arc12.first_contact", "truth");
+		mes("First contact truth recorded.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc12.first_contact", "peace");
+		mes("First contact peace recorded.");
+		break;
+	case 6:
+		callfunc("DM_Decide", "arc12.first_contact", "order");
+		mes("First contact cover-up recorded.");
+		break;
+	case 7:
+		callfunc("DM_Decide", "arc12.vance", "exposed");
+		mes("Vance exposed. The anchor perimeter is open.");
+		break;
+	case 8:
+		callfunc("DM_Decide", "arc12.vance", "helped");
+		mes("Vance turned. The anchor perimeter is open.");
+		break;
+	case 9:
+		callfunc("DM_Decide", "arc12.vance", "occupation");
+		mes("Vance occupation backed. The anchor perimeter is open.");
+		break;
+	case 10:
 		callfunc("DM_WarpParty", "mid_camp", 110, 100);
 		mes("Party warped to Captain Vance.");
 		break;
-	case 6:
+	case 11:
 		callfunc("DM_WarpParty", "spl_fild01", 150, 150);
 		mes("Party warped to Rift Anchor.");
 		break;
-	case 7:
+	case 12:
 		.@dm_map$ = strcharinfo(3);
-		monster .@dm_map$, 150, 150, "Naght Sieger", 1956, 1, "Rift Anchor#dm::OnNaghtDead";
+		monster .@dm_map$, 150, 150, "Nidhoggr's Shadow", 2022, 1, "Rift Anchor#dm::OnNidhoggrDead";
 		$@dm_arc12_rift_party_id = getcharid(CHAR_ID_PARTY);
-		$@dm_arc12_rift_damage = (dm_arc12_vance_helped ? 4 : 7);
+		$@dm_arc12_rift_damage = ((dm_arc12_vance_helped || dm_new_world_alliance) ? 4 : (dm_arc12_vance_occupation ? 9 : 7));
 		$@dm_arc12_rift_status = SC_CONFUSION;
 		$@dm_arc12_rift_status_ms = 5000;
 		callfunc("DM_TriggerEvent", "Rift Anchor#dm", "OnRiftStart");
 		if ($@dm_arc12_rift_party_id <= 0)
 			dispbottom("[DM] No party detected; Rift Anchor pulses did not start.");
-		dispbottom("[DM] Naght Sieger spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
-		mes("Naght Sieger spawned. Kill to trigger arc complete.");
+		dispbottom("[DM] Nidhoggr's Shadow spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
+		mes("Nidhoggr's Shadow spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 13:
 		callfunc("DM_TriggerEvent", "Rift Anchor#dm", "OnRiftStop");
 		callfunc("DM_InstanceQuestComplete", 20161);
+		callfunc("DM_InstanceSetFlag", "dm_arc12_nidhoggr_killed", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc12_naght_killed", 1);
 		callfunc("DM_PartyExp", 1400000, 800000);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1299);
-		callfunc("DM_MapStory", "Naght Sieger falls. The rift anchor shudders. The Ash Vacuum holds — for now.");
+		callfunc("DM_MapStory", "Nidhoggr's Shadow falls. The rift anchor shudders. The wall is stitched, not restored.");
 		mes("Arc 12 marked complete for the current party.");
 		break;
-	case 9:
+	case 14:
 		callfunc("DM_BeatMenu");
 		break;
 	}
@@ -1004,7 +1011,7 @@ function	script	DM_BeatArc13	{
 	mes("[DM Beat Director]");
 	mes("Act III / Arc 13 - Nameless Island (Island of the Damned)");
 	next();
-	switch (select("Warp: Father Quill", "Beat: Start Arc 13", "Beat: Carrion Killed", "Beat: Carrion Bribed", "Warp: Broker Carrion", "Warp: Beelzebub Sanctum", "Beat: Spawn Beelzebub", "Beat: Complete Arc 13", "Back")) {
+	switch (select("Warp: Father Quill", "Beat: Start Arc 13", "Beat: Known Dead Reckoned", "Beat: Known Dead Refused", "Beat: Carrion Killed", "Beat: Carrion Minutes", "Warp: Familiar Dead", "Warp: Broker Carrion", "Warp: Beelzebub Sanctum", "Beat: Spawn Beelzebub", "Beat: Complete Arc 13", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "nameless_i", 100, 100);
 		mes("Party warped to Father Quill.");
@@ -1014,71 +1021,86 @@ function	script	DM_BeatArc13	{
 		callfunc("DM_InstanceQuestStart", 20171);
 		callfunc("DM_InstanceQuestStart", 20173);
 		callfunc("DM_InstanceQuestStart", 20174);
+		callfunc("DM_InstanceQuestStart", 20175);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1301);
-		callfunc("DM_MapStory", "The demon lords have stopped leaking. They are coordinating.");
+		callfunc("DM_MapStory", "Father Quill opens the bell route, the drowned tithe, and the living-root wardens. Beelzebub is hosting a council in the Abbey.");
 		mes("Arc 13 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_bribed");
-		callfunc("DM_InstanceClearFlag", "dm_arc13_coalition_deal_honored");
-		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20175);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1302);
-		callfunc("DM_MapStory", "Carrion is cut down. Beelzebub faces the party with no broker.");
-		mes("Carrion killed. Broker's Terms complete.");
+		callfunc("DM_InstanceQuestStart", 20172);
+		callfunc("DM_Decide", "arc13.known_dead", "reckoned");
+		mes("Known dead reckoned. A Name You Knew complete.");
 		break;
 	case 4:
-		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_killed");
-		callfunc("DM_InstanceClearFlag", "dm_arc13_beelzebub_killed");
-		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_bribed", 1);
-		callfunc("DM_InstanceQuestComplete", 20175);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1303);
-		callfunc("DM_MapStory", "A deal is struck. The coalition enforces its own containment.");
-		mes("Carrion bribed. Broker's Terms complete. Complete Arc 13 will honor the no-combat deal.");
+		callfunc("DM_InstanceQuestStart", 20172);
+		callfunc("DM_Decide", "arc13.known_dead", "refused");
+		mes("Known dead refused. A Name You Knew complete.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc13.carrion", "killed");
+		mes("Carrion killed. The Beelzebub gate is open.");
+		break;
+	case 6:
+		callfunc("DM_Decide", "arc13.carrion", "bribed");
+		mes("Carrion's minutes obtained. The Beelzebub gate is open.");
+		break;
+	case 7:
+		callfunc("DM_WarpParty", "nameless_i", 105, 96);
+		mes("Party warped to the Familiar Dead.");
+		break;
+	case 8:
 		callfunc("DM_WarpParty", "nameless_i", 110, 100);
 		mes("Party warped to Broker Carrion.");
 		break;
-	case 6:
+	case 9:
 		callfunc("DM_WarpParty", "abbey03", 150, 150);
 		mes("Party warped to Beelzebub Sanctum.");
 		break;
-	case 7:
+	case 10:
 		.@dm_map$ = strcharinfo(3);
-		if (dm_arc13_carrion_bribed) {
-			dispbottom("[DM] Coalition deal is active; Beelzebub withdraws if the deal is honored. Use Complete Arc 13 to resolve without combat.");
-			mes("Coalition deal active. Beelzebub not spawned.");
-			break;
-		}
+		.@dead = 5;
+		.@nec = 2;
+		if (dm_arc13_known_dead_reckoned)
+			.@dead -= 1;
+		if (dm_arc13_bell_full)
+			.@dead -= 1;
+		if (dm_arc13_coins_returned)
+			.@dead -= 1;
+		if (dm_arc13_boundary_stable)
+			.@nec -= 1;
+		if (dm_arc13_carrion_killed)
+			.@nec += 1;
+		if (dm_arc13_carrion_bribed)
+			.@dead -= 1;
+		if (.@dead < 1)
+			.@dead = 1;
+		if (.@nec < 0)
+			.@nec = 0;
 		monster .@dm_map$, 150, 150, "Beelzebub", 1874, 1, "Beelzebub Sanctum#dm::OnBeelzebubDead";
-		if (dm_arc13_carrion_killed) {
-			areamonster .@dm_map$, 145, 145, 155, 155, "Coalition Banshee", 1867, 4, "Beelzebub Sanctum#dm::OnAddDead";
-			areamonster .@dm_map$, 145, 145, 155, 155, "Coalition Necromancer", 1870, 2, "Beelzebub Sanctum#dm::OnAddDead";
-			dispbottom("[DM] Beelzebub spawned with full coalition support.");
-		} else {
-			areamonster .@dm_map$, 145, 145, 155, 155, "Demon Coalition", 1867, 3, "Beelzebub Sanctum#dm::OnAddDead";
-			dispbottom("[DM] Beelzebub spawned with default coalition adds.");
-		}
+		areamonster .@dm_map$, 145, 145, 155, 155, "Council Dead", 1867, .@dead, "Beelzebub Sanctum#dm::OnAddDead";
+		if (.@nec > 0)
+			areamonster .@dm_map$, 145, 145, 155, 155, "Coalition Necromancer", 1870, .@nec, "Beelzebub Sanctum#dm::OnAddDead";
+		if (dm_arc13_carrion_bribed)
+			callfunc("DM_MapStory", "Carrion's minutes expose the seating plan. Beelzebub still hosts the council, but the room is less orderly.");
+		else if (dm_arc13_carrion_killed)
+			callfunc("DM_MapStory", "Carrion is gone. Beelzebub fills the room with harsher coalition discipline.");
+		dispbottom("[DM] Beelzebub spawned with " + .@dead + " council dead and " + .@nec + " necromancer support.");
 		mes("Beelzebub spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 11:
 		callfunc("DM_InstanceQuestComplete", 20171);
-		if (dm_arc13_carrion_bribed)
-			callfunc("DM_InstanceSetFlag", "dm_arc13_coalition_deal_honored", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc13_beelzebub_killed", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc13_coalition_deal_honored", 0);
+		if (dm_arc13_quill_revered && dm_arc13_known_dead_reckoned)
+			callfunc("DM_InstanceSetFlag", "dm_arc13_dead_freed", 1);
 		else
-			callfunc("DM_InstanceSetFlag", "dm_arc13_beelzebub_killed", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc13_dead_burned", 1);
 		callfunc("DM_PartyExp", 1600000, 900000);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1399);
-		if (dm_arc13_carrion_bribed) {
-			callfunc("DM_MapStory", "The coalition honors the bargain and withdraws Beelzebub. Surt's herald stirs in the volcano.");
-			mes("Arc 13 marked complete via coalition deal.");
-		} else {
-			callfunc("DM_MapStory", "Beelzebub falls. The coalition's coordination shatters. Surt's herald stirs in the volcano.");
-			mes("Arc 13 marked complete for the current party.");
-		}
+		callfunc("DM_MapStory", "Beelzebub falls. The council's coordination shatters, and Surt's herald stirs in the volcano.");
+		mes("Arc 13 marked complete for the current party.");
 		break;
-	case 9:
+	case 12:
 		callfunc("DM_BeatMenu");
 		break;
 	}
@@ -1090,7 +1112,7 @@ function	script	DM_BeatArc14	{
 	mes("[DM Beat Director]");
 	mes("Act III / Arc 14 - Veins (The Fire That Ends the World)");
 	next();
-	switch (select("Warp: Foreman Dunmar", "Beat: Start Arc 14", "Beat: Hesma Exposed", "Beat: Hesma Bribed", "Warp: Prelate Hesma", "Warp: Magma Cathedral", "Beat: Spawn Ifrit", "Beat: Ifrit slain (Act III Complete)", "Back")) {
+	switch (select("Warp: Foreman Dunmar", "Beat: Start Arc 14", "Beat: Deep Shift Exposed", "Beat: Deep Shift Silenced", "Warp: Prelate Hesma", "Warp: Magma Cathedral", "Beat: Spawn Ifrit", "Beat: Ifrit slain (Act III Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "veins", 100, 100);
 		mes("Party warped to Foreman Dunmar.");
@@ -1100,23 +1122,20 @@ function	script	DM_BeatArc14	{
 		callfunc("DM_InstanceQuestStart", 20181);
 		callfunc("DM_InstanceQuestStart", 20183);
 		callfunc("DM_InstanceQuestStart", 20184);
+		callfunc("DM_InstanceQuestStart", 20185);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1401);
-		callfunc("DM_MapStory", "The rock is alive and the clergy lie. Surt's herald wakes in the volcano.");
+		callfunc("DM_MapStory", "The rock is alive and the clergy lie. Dunmar opens the ledger, ash route, and Magmaring firebreak before the deep shift is lost.");
 		mes("Arc 14 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc14_hesma_exposed", 1);
-		callfunc("DM_InstanceQuestComplete", 20185);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1402);
-		callfunc("DM_MapStory", "Hesma signs the confession. The evacuation order is public.");
-		mes("Hesma exposed. Prelate's Silence complete.");
+		callfunc("DM_InstanceQuestStart", 20182);
+		callfunc("DM_Decide", "arc14.hesma", "exposed");
+		mes("Hesma exposed. The Deep Shift complete.");
 		break;
 	case 4:
-		callfunc("DM_InstanceSetFlag", "dm_arc14_hesma_bribed", 1);
-		callfunc("DM_InstanceQuestComplete", 20185);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1403);
-		callfunc("DM_MapStory", "The seal is exchanged for silence. Hesma manages the cover.");
-		mes("Hesma bribed. Prelate's Silence complete.");
+		callfunc("DM_InstanceQuestStart", 20182);
+		callfunc("DM_Decide", "arc14.hesma", "bribed");
+		mes("Hesma silenced. The Deep Shift complete.");
 		break;
 	case 5:
 		callfunc("DM_WarpParty", "veins", 110, 100);
@@ -1130,14 +1149,25 @@ function	script	DM_BeatArc14	{
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Ifrit", 1832, 1, "Magma Cathedral#dm::OnIfritDead";
 		$@dm_arc14_magma_party_id = getcharid(CHAR_ID_PARTY);
-		$@dm_arc14_magma_damage = (dm_arc14_hesma_exposed ? 6 : 9);
+		.@damage = (dm_arc14_hesma_exposed ? 6 : 9);
+		if (dm_arc14_ledger_families)
+			.@damage -= 1;
+		if (dm_arc14_ash_routes)
+			.@damage -= 1;
+		if (dm_arc14_firebreak_full)
+			.@damage -= 1;
+		if (dm_arc14_firebreak_reagents)
+			.@damage += 1;
+		if (.@damage < 4)
+			.@damage = 4;
+		$@dm_arc14_magma_damage = .@damage;
 		callfunc("DM_TriggerEvent", "Magma Cathedral#dm", "OnMagmaStart");
 		if ($@dm_arc14_magma_party_id <= 0)
 			dispbottom("[DM] No party detected; Magma Cathedral heat pulses did not start.");
 		if (dm_arc14_hesma_exposed)
-			dispbottom("[DM] Ifrit spawned. Hesma confessed — evacuation is underway. Race the clock.");
+			dispbottom("[DM] Ifrit spawned. Hesma confessed; evacuation is underway. Heat pulse damage: " + .@damage + "%.");
 		else if (dm_arc14_hesma_bribed)
-			dispbottom("[DM] Ifrit spawned. Hesma bribed — the cover is in place. City may not know to flee.");
+			dispbottom("[DM] Ifrit spawned. Hesma's cover is intact. Heat pulse damage: " + .@damage + "%.");
 		else
 			dispbottom("[DM] Ifrit spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to Act III complete.");
 		mes("Ifrit spawned. Kill to trigger Act III complete.");
@@ -1174,36 +1204,23 @@ function	script	DM_BeatArc15	{
 		callfunc("DM_InstanceQuestStart", 20191);
 		callfunc("DM_InstanceQuestStart", 20192);
 		callfunc("DM_InstanceQuestStart", 20193);
+		callfunc("DM_InstanceQuestStart", 20194);
+		callfunc("DM_InstanceQuestStart", 20195);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1501);
 		callfunc("DM_MapStory", "The Tower remembers what Thanatos paid. The cost is not what the legend says.");
 		mes("Arc 15 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
-		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_exposed", 1);
-		callfunc("DM_InstanceQuestComplete", 20194);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1502);
-		callfunc("DM_MapStory", "Pratt's volunteers are released. He will brief the council honestly.");
-		mes("Pratt exposed. The Method's Price complete.");
+		callfunc("DM_Decide", "arc15.pratt", "exposed");
+		mes("Pratt exposed. Volunteers released.");
 		break;
 	case 4:
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
-		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_delayed", 1);
-		callfunc("DM_InstanceQuestComplete", 20194);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1504);
-		callfunc("DM_MapStory", "Pratt delays the procedure for council review. The method survives, unstable and waiting.");
-		mes("Pratt delayed. The Method's Price complete.");
+		callfunc("DM_Decide", "arc15.pratt", "delayed");
+		mes("Pratt delayed. Council review filed.");
 		break;
 	case 5:
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
-		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_challenged", 1);
-		callfunc("DM_InstanceQuestComplete", 20194);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1503);
-		callfunc("DM_MapStory", "The full cost is known. Thanatos is still in the seal. Pratt does not open his notes again.");
-		mes("Pratt challenged. The Method's Price complete.");
+		callfunc("DM_Decide", "arc15.pratt", "challenged");
+		mes("Pratt challenged. Living-lock cost recorded.");
 		break;
 	case 6:
 		callfunc("DM_WarpParty", "aldebaran", 110, 100);
@@ -1223,6 +1240,12 @@ function	script	DM_BeatArc15	{
 			$@dm_arc15_resonance_damage = 6;
 		else
 			$@dm_arc15_resonance_damage = 8;
+		if (dm_arc15_memory_readiness)
+			$@dm_arc15_resonance_damage -= 1;
+		if (dm_arc15_mirror_shard_strength)
+			$@dm_arc15_resonance_damage -= 1;
+		if ($@dm_arc15_resonance_damage < 3)
+			$@dm_arc15_resonance_damage = 3;
 		$@dm_arc15_resonance_status = SC_CURSE;
 		$@dm_arc15_resonance_status_ms = 5000;
 		callfunc("DM_TriggerEvent", "Memory of Thanatos#dm", "OnResonanceStart");
@@ -1265,7 +1288,7 @@ function	script	DM_BeatArc16	{
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 16 - Prontera (The Royal Banquet)");
 	next();
-	switch (select("Warp: Kronecker G Heine", "Beat: Start Arc 16", "Beat: Rina Exposed", "Beat: Rina Rolled", "Beat: Rina Defected", "Warp: Matron Rina", "Warp: Prison Vault", "Beat: Spawn Bijou", "Beat: Resolve Bijou (Arc Complete)", "Back")) {
+	switch (select("Warp: Kronecker G Heine", "Beat: Start Arc 16", "Beat: Spawn Relief Wave", "Beat: Rina Exposed", "Beat: Rina Rolled", "Beat: Rina Defected", "Warp: Matron Rina", "Warp: Prison Vault", "Beat: Spawn Bijou", "Beat: Resolve Bijou (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "prontera", 150, 150);
 		mes("Party warped to Kronecker G Heine.");
@@ -1275,46 +1298,40 @@ function	script	DM_BeatArc16	{
 		callfunc("DM_InstanceQuestStart", 20201);
 		callfunc("DM_InstanceQuestStart", 20202);
 		callfunc("DM_InstanceQuestStart", 20203);
+		callfunc("DM_InstanceQuestStart", 20205);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1601);
 		callfunc("DM_MapStory", "The Whisperers have been inside the royal court for eighteen months. Their oracle runs the network from below.");
 		mes("Arc 16 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_rolled");
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_defected");
-		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_exposed", 1);
-		callfunc("DM_InstanceQuestComplete", 20204);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1602);
-		callfunc("DM_MapStory", "Rina is exposed. The public trial will show the court how deep the cascade went.");
-		mes("Rina exposed. Royal House Audience Rounds complete.");
+		.@dm_map$ = strcharinfo(3);
+		areamonster .@dm_map$, 145, 145, 155, 155, "Corrupted Steward", 2464, 8;
+		areamonster .@dm_map$, 145, 145, 155, 155, "Corrupted Monk", 2465, 6;
+		areamonster .@dm_map$, 145, 145, 155, 155, "Corrupted Palace Guard", 2468, 6;
+		dispbottom("[DM] Invaded Prontera relief wave spawned for quest 20205.");
+		mes("Relief wave spawned on the current map.");
 		break;
 	case 4:
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_exposed");
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_defected");
-		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_rolled", 1);
-		callfunc("DM_InstanceQuestComplete", 20204);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1604);
-		callfunc("DM_MapStory", "Rina dismantles the court network quietly. The royal house stays functional, but compromised names are in hand.");
-		mes("Rina rolled the network. Royal House Audience Rounds complete.");
+		callfunc("DM_Decide", "arc16.rina", "exposed");
+		mes("Rina exposed. Royal House Audience Rounds complete.");
 		break;
 	case 5:
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_exposed");
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_rolled");
-		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_defected", 1);
-		callfunc("DM_InstanceQuestComplete", 20204);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1603);
-		callfunc("DM_MapStory", "Rina defected. The party knows Bijou is Maret — a person, not an oracle.");
-		mes("Rina defected. Royal House Audience Rounds complete.");
+		callfunc("DM_Decide", "arc16.rina", "rolled");
+		mes("Rina rolled the network. Royal House Audience Rounds complete.");
 		break;
 	case 6:
+		callfunc("DM_Decide", "arc16.rina", "defected");
+		mes("Rina defected. Royal House Audience Rounds complete.");
+		break;
+	case 7:
 		callfunc("DM_WarpParty", "prt_q", 100, 100);
 		mes("Party warped to Matron Rina.");
 		break;
-	case 7:
+	case 8:
 		callfunc("DM_WarpParty", "prt_q", 150, 150);
 		mes("Party warped to Prison Vault.");
 		break;
-	case 8:
+	case 9:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Bijou", 1046, 1, "Prison Vault#dm::OnBijouDead";
 		if (dm_arc16_rina_defected)
@@ -1325,7 +1342,7 @@ function	script	DM_BeatArc16	{
 			dispbottom("[DM] Bijou spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
 		mes("Bijou spawned. Kill to trigger arc complete.");
 		break;
-	case 9:
+	case 10:
 		callfunc("DM_InstanceQuestComplete", 20201);
 		if (dm_arc16_rina_defected)
 			callfunc("DM_InstanceSetFlag", "dm_arc16_maret_freed", 1);
@@ -1341,7 +1358,7 @@ function	script	DM_BeatArc16	{
 			mes("Arc 16 marked complete for the current party.");
 		}
 		break;
-	case 10:
+	case 11:
 		callfunc("DM_BeatMenu");
 		break;
 	}
@@ -1353,7 +1370,7 @@ function	script	DM_BeatArc17	{
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 17 - Varmundt Biolabs (The Sage's Legacy)");
 	next();
-	switch (select("Warp: Doctor Tressa", "Beat: Start Arc 17", "Beat: Admin Purged", "Beat: Admin Negotiated", "Beat: Admin Running", "Warp: The Administrator", "Warp: Biosphere Core", "Beat: Spawn Amdarais", "Beat: Biosphere Core slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Doctor Tressa", "Beat: Start Arc 17", "Beat: Spawn Corridor Wave", "Beat: Admin Purged", "Beat: Admin Negotiated", "Beat: Admin Running", "Warp: The Administrator", "Warp: Biosphere Core", "Beat: Spawn Amdarais", "Beat: Biosphere Core slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "ba_in01", 100, 100);
 		mes("Party warped to Doctor Mira Tressa.");
@@ -1363,55 +1380,51 @@ function	script	DM_BeatArc17	{
 		callfunc("DM_InstanceQuestStart", 20211);
 		callfunc("DM_InstanceQuestStart", 20212);
 		callfunc("DM_InstanceQuestStart", 20213);
+		callfunc("DM_InstanceQuestStart", 20215);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1701);
 		callfunc("DM_MapStory", "Varmundt's Biolabs are still running. Three centuries of cascade research. The Administrator protects it.");
 		mes("Arc 17 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
-		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_purged", 1);
-		callfunc("DM_InstanceQuestComplete", 20214);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1702);
-		callfunc("DM_MapStory", "The Administrator shuts down. Data transferred. Mission fulfilled after three centuries.");
-		mes("Admin purged. Biosphere Sample Rotation complete.");
+		.@dm_map$ = strcharinfo(3);
+		areamonster .@dm_map$, 100, 100, 170, 170, "Shadow of Illusion", 2077, 6;
+		areamonster .@dm_map$, 100, 100, 170, 170, "Runaway Book", 2414, 6;
+		areamonster .@dm_map$, 100, 100, 170, 170, "Dark Illusion", 1302, 2;
+		dispbottom("[DM] Corridor of Phantom wave spawned for quest 20215 on " + .@dm_map$ + ".");
+		mes("Corridor of Phantom wave spawned for quest 20215.");
 		break;
 	case 4:
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
-		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_negotiated", 1);
-		callfunc("DM_InstanceQuestComplete", 20214);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1704);
-		callfunc("DM_MapStory", "The Administrator remains active to organize the archive. The party gains a cleaner Varmundt data yield.");
-		mes("Admin negotiated. Biosphere Sample Rotation complete.");
+		callfunc("DM_Decide", "arc17.admin", "purged");
+		mes("Admin purged. Biosphere Sample Rotation complete.");
 		break;
 	case 5:
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
-		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_running", 1);
-		callfunc("DM_InstanceQuestComplete", 20214);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1703);
-		callfunc("DM_MapStory", "The Administrator continues running. Real-time cascade analysis transmitting. 847 percent above baseline.");
-		mes("Admin running. Biosphere Sample Rotation complete.");
+		callfunc("DM_Decide", "arc17.admin", "negotiated");
+		mes("Admin negotiated. Biosphere Sample Rotation complete.");
 		break;
 	case 6:
+		callfunc("DM_Decide", "arc17.admin", "running");
+		mes("Admin running. Biosphere Sample Rotation complete.");
+		break;
+	case 7:
 		callfunc("DM_WarpParty", "ba_in01", 110, 100);
 		mes("Party warped to The Administrator.");
 		break;
-	case 7:
+	case 8:
 		callfunc("DM_WarpParty", "ba_pw03", 150, 150);
 		mes("Party warped to Biosphere Core.");
 		break;
-	case 8:
+	case 9:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Biosphere Core", 2476, 1, "Biosphere Core#dm::OnBetaDead";
 		if (dm_arc17_admin_running)
 			dispbottom("[DM] Amdarais spawned. Admin running — the Administrator is tracking the fight in real-time and noted it as a 'legacy hardware constraint.'");
+		else if (dm_arc17_tartaros_safe)
+			dispbottom("[DM] Biosphere Core spawned. Corridor routes are mapped, so the party has a cleaner approach.");
 		else
 			dispbottom("[DM] Biosphere Core (Amdarais) spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
 		mes("Biosphere Core spawned. Kill to trigger arc complete.");
 		break;
-	case 9:
+	case 10:
 		callfunc("DM_InstanceQuestComplete", 20211);
 		callfunc("DM_InstanceSetFlag", "dm_arc17_beta_killed", 1);
 		callfunc("DM_PartyExp", 2000000, 1000000);
@@ -1419,7 +1432,7 @@ function	script	DM_BeatArc17	{
 		callfunc("DM_MapStory", "The Biosphere Core is shut down. Varmundt's legacy is secured. Niflheim is next.");
 		mes("Arc 17 marked complete for the current party.");
 		break;
-	case 10:
+	case 11:
 		callfunc("DM_BeatMenu");
 		break;
 	}
@@ -1431,7 +1444,7 @@ function	script	DM_BeatArc18	{
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 18 - Niflheim (The Witch of Death)");
 	next();
-	switch (select("Warp: The Familiar Dead", "Beat: Start Arc 18", "Beat: Himmelmez Killed", "Beat: Himmelmez Bargained", "Warp: Himmelmez", "Beat: Arc 18 Complete", "Beat: Himmelmez curse pressure", "Back")) {
+	switch (select("Warp: The Familiar Dead", "Beat: Start Arc 18", "Beat: Spawn Grief Wave", "Beat: Spawn Opera Wave", "Beat: Himmelmez Killed", "Beat: Himmelmez Bargained", "Warp: Himmelmez", "Beat: Arc 18 Complete", "Beat: Himmelmez curse pressure", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "niflheim", 100, 100);
 		mes("Party warped to The Familiar Dead.");
@@ -1441,38 +1454,48 @@ function	script	DM_BeatArc18	{
 		callfunc("DM_InstanceQuestStart", 20221);
 		callfunc("DM_InstanceQuestStart", 20222);
 		callfunc("DM_InstanceQuestStart", 20223);
+		callfunc("DM_InstanceQuestStart", 20224);
+		callfunc("DM_InstanceQuestStart", 20225);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1801);
 		callfunc("DM_MapStory", "Niflheim overflows. The dead do not push through maliciously. The suggestion is simply insufficient to stop them.");
 		mes("Arc 18 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20221);
-		callfunc("DM_PartyExp", 2500000, 1500000);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1802);
-		callfunc("DM_MapStory", "Himmelmez falls. Niflheim has no queen. The dead pour north. The seal's shape must account for an empty throne.");
-		mes("Himmelmez killed. Arc 18 complete for the current party.");
+		.@dm_map$ = strcharinfo(3);
+		areamonster .@dm_map$, 120, 120, 180, 180, "Quve", 1508, 10;
+		areamonster .@dm_map$, 120, 120, 180, 180, "Lude", 1509, 10;
+		areamonster .@dm_map$, 120, 120, 180, 180, "Hylozoist", 1510, 10;
+		dispbottom("[DM] Illusion Grief Rotation wave spawned for quest 20224 on " + .@dm_map$ + ".");
+		mes("Illusion Grief Rotation wave spawned for quest 20224.");
 		break;
 	case 4:
-		callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_bargained", 1);
-		callfunc("DM_InstanceQuestComplete", 20221);
-		callfunc("DM_PartyExp", 2000000, 1200000);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1803);
-		callfunc("DM_MapStory", "A dark pact. Himmelmez holds the dead while the living face Loki. She has been holding them already.");
-		mes("Himmelmez bargained. Arc 18 complete for the current party.");
+		.@dm_map$ = strcharinfo(3);
+		areamonster .@dm_map$, 120, 120, 180, 180, "Loli Ruri", 1505, 8;
+		areamonster .@dm_map$, 120, 120, 180, 180, "Disguise", 1506, 10;
+		areamonster .@dm_map$, 120, 120, 180, 180, "Bloody Murderer", 1507, 8;
+		dispbottom("[DM] Opera House Encore wave spawned for quest 20225 on " + .@dm_map$ + ".");
+		mes("Opera House Encore wave spawned for quest 20225.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc18.himmelmez", "killed");
+		mes("Himmelmez killed. Arc 18 complete for the current party.");
+		break;
+	case 6:
+		callfunc("DM_Decide", "arc18.himmelmez", "bargained");
+		mes("Himmelmez bargained. Arc 18 complete for the current party.");
+		break;
+	case 7:
 		callfunc("DM_WarpParty", "nif_in", 150, 150);
 		mes("Party warped to Himmelmez.");
 		break;
-	case 6:
+	case 8:
 		callfunc("DM_InstanceQuestComplete", 20221);
 		callfunc("DM_PartyExp", 2000000, 1000000);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1899);
 		callfunc("DM_MapStory", "Niflheim's gate holds. The party steps into the final dark.");
 		mes("Arc 18 marked complete for the current party.");
 		break;
-	case 7:
+	case 9:
 		$@dm_arc18_pressure_party_id = getcharid(CHAR_ID_PARTY);
 		$@dm_arc18_pressure_damage = 3;
 		callfunc("DM_TriggerEvent", "Himmelmez Pressure#dm", "OnPressureStart");
@@ -1481,7 +1504,7 @@ function	script	DM_BeatArc18	{
 		dispbottom("[DM] Himmelmez curse pressure started.");
 		mes("Himmelmez curse pressure started.");
 		break;
-	case 8:
+	case 10:
 		callfunc("DM_BeatMenu");
 		break;
 	}
@@ -1500,11 +1523,13 @@ function	script	DM_BeatArc19	{
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc19_started", 1);
+		callfunc("DM_InstanceQuestStart", 20230);
 		callfunc("DM_InstanceQuestStart", 20231);
 		callfunc("DM_InstanceQuestStart", 20232);
+		callfunc("DM_InstanceQuestStart", 20234);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1901);
 		callfunc("DM_MapStory", "The cascade is the seal. Three centuries of harmonic decay. Loki's voice fills the ruins of Morroc.");
-		mes("Arc 19 started for the current party.");
+		mes("Arc 19 started (with support quests) for the current party.");
 		break;
 	case 3:
 		callfunc("DM_InstanceQuestComplete", 20232);
@@ -1515,8 +1540,8 @@ function	script	DM_BeatArc19	{
 	case 4:
 		callfunc("DM_InstanceQuestStart", 20233);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1901);
-		callfunc("DM_MapStory", "Loki reveals the full picture. Five ways to close the cascade. The choice is available after Surt.");
-		mes("Loki final audience triggered. 20233 started.");
+		callfunc("DM_MapStory", "Loki reveals the full picture. The Central Choice (six endings including Refusal) is available after Surt.");
+		mes("Loki final audience triggered. 20233 started. Refusal path available if Echo or Pratt evidence exists.");
 		break;
 	case 5:
 		callfunc("DM_WarpParty", "moc_fild22", 150, 150);

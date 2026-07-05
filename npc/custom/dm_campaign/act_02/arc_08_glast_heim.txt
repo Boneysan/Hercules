@@ -9,14 +9,17 @@
 //= on the faith still burning in the ruins.
 //=
 //= Quests (db/quest_db.conf):
-//=   20121 A Kingdom Unmade           (arc tracker / Dark Lord)
-//=   20122 Outer Garrison             (Raydric x20)
-//=   20123 Fallen Choir               (Wraith x20)
-//=   20124 The Weight of Faith        (Brother Manfred)
+//=   20121 The Kingdom That Was Sure   (arc tracker / Dark Lord)
+//=   20122 The Martyrs' Crypt          (moral trial; aid/curse)
+//=   20123 Churchyard Candle Route     (Dark Priest x15)
+//=   20124 Underprison Name List       (Skel Prisoner x20)
+//=   20125 Chivalry Relic Watch        (Raydric x20)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
 //=   dm_arc08_started, dm_arc08_manfred_spared,
-//=   dm_arc08_manfred_killed, dm_arc08_darklord_killed
+//=   dm_arc08_manfred_killed, dm_arc08_darklord_killed,
+//=   dm_arc08_martyrs_aid, dm_arc08_martyrs_cursed,
+//=   dm_arc08_wax_traced, dm_arc08_oath_cache
 //===========================================================
 
 // ── Sir Aldric the Unfrocked — Survivor of the Holy Kingdom ────────────────
@@ -41,6 +44,14 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20121, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20121, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20123, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20124, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20125, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
@@ -70,115 +81,228 @@ S_StartArc:
 		break;
 	case 3:
 		mes("[Sir Aldric]");
-		mes("Clear the outer garrison. The undead patrol routes have moved closer to the cathedral walls — they are being drawn inward. Then clear the abbey itself.");
+		mes("Three routes, three kinds of work. The Churchyard, the Underprison, the Chivalry. Walk them all and you will understand this kingdom better than its own history does.");
 		break;
 	}
 	next();
 	mes("[Sir Aldric]");
-	mes("And there is Brother Manfred. The last bishop of the Holy Kingdom. He lives in the ruins and believes this is all a holy test. He is wrong, and he is dangerous, and you will have to decide what to do with him.");
+	mes("The Churchyard dead stay down for candlelight now, not holy water — I will teach you the rite. The Underprison cages still carry the names of the caged; I want them copied before rust takes them. And the Chivalry's relics need guarding — looters and worse are working those halls.");
+	next();
+	mes("[Sir Aldric]");
+	mes("And there is Brother Manfred. The last bishop of the Holy Kingdom. He lives in the ruins and believes this is all a holy test. He is wrong, and he is dangerous, and you will have to decide what to do with him. But not yet. The dead come first.");
 	callfunc("DM_InstanceSetFlag", "dm_arc08_started", 1);
 	callfunc("DM_InstanceQuestStart", 20121);
-	callfunc("DM_InstanceQuestStart", 20122);
 	callfunc("DM_InstanceQuestStart", 20123);
+	callfunc("DM_InstanceQuestStart", 20124);
+	callfunc("DM_InstanceQuestStart", 20125);
 	next();
-	mes("^3355FF[Quest started: A Kingdom Unmade]^000000");
-	mes("^3355FFOuter Garrison - clear 20 Raydric from the outer walls.^000000");
-	mes("^3355FFFallen Choir - silence 20 Wraith in the abbey passages.^000000");
+	mes("^3355FF[Quest started: The Kingdom That Was Sure]^000000");
+	mes("^3355FFChurchyard Candle Route - put down 15 Dark Priests among the graves and relight the rows.^000000");
+	mes("^3355FFUnderprison Name List - clear 20 Skel Prisoners and copy the cage names.^000000");
+	mes("^3355FFChivalry Relic Watch - fell 20 Raydric in the knights' halls and secure what they carry.^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20122) == 1 && questprogress(20122, HUNTING) == 2) {
-		callfunc("DM_InstanceQuestComplete", 20122);
+	if (questprogress(20123) == 1 && questprogress(20123, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20123);
 		callfunc("DM_PartyExp", 240000, 115000);
 		callfunc("DM_GivePartyZeny", 20000);
 		.@paid = 1;
 		mes("[Sir Aldric]");
-		mes("The outer patrol routes are clear. The Raydric were not random undead — they were marching in formation. Something is still giving orders out there.");
+		mes("The Dark Priests are down and the rows are lit. Look at your candles — the wax pools in the shape of kneeling figures. The kingdom's dead only accept a light from someone who doubts they deserve to rest easy.");
 		next();
-		switch (select("Consecrate the cleared ground.", "Document the patrol patterns.", "Leave them. We have bigger problems inside.")) {
+		mes("[Sir Aldric]");
+		mes("And here is the uncomfortable part: half the graves were already lit when you got there, weren't they. Someone else walks the candle route by night.");
+		next();
+		switch (select("We lit every grave properly, however long it took.", "We harvested the holy wax for wards instead.", "We left candles as bait and watched for the other lighter.")) {
 		case 1:
 			mes("[Sir Aldric]");
-			mes("The words don't work the way they used to in a place like this. But the gesture matters. You'll understand why when you're inside.");
+			mes("Then the rows will hold. You understand the rite, not just the fight. That is rarer than you think in people who carry swords.");
 			break;
 		case 2:
 			mes("[Sir Aldric]");
-			mes("The formations match the old garrison maps. The Dark Lord is using institutional memory to command the dead. That is remarkably specific evil.");
+			mes("Practical. The wax wards will serve you against the Underprison's shadow-dead. Fewer graves actually rest, but I will not pretend wards are worthless where you are going.");
 			break;
 		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc08_wax_traced", 1);
 			mes("[Sir Aldric]");
-			mes("Efficient. The garrison was bought time, not resolved. But you're not wrong.");
+			mes("And you saw one. Hooded, unhurried, lighting graves with the same rite I taught you — for the opposite reason. Manfred's converts pray this route. Now we know his cell is close.");
 			break;
 		}
 		next();
 	}
 
-	if (questprogress(20123) == 1 && questprogress(20123, HUNTING) == 2) {
-		callfunc("DM_InstanceQuestComplete", 20123);
-		callfunc("DM_PartyExp", 260000, 125000);
-		callfunc("DM_GivePartyZeny", 22000);
+	if (questprogress(20124) == 1 && questprogress(20124, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20124);
+		callfunc("DM_PartyExp", 240000, 115000);
+		callfunc("DM_GivePartyZeny", 20000);
 		.@paid = 1;
 		mes("[Sir Aldric]");
-		mes("The Wraith were clergy. You can tell by the habits on what's left. They're still singing. A hymn with no words.");
+		mes("The name list. Let me see it.");
 		next();
-		switch (select("Give them last rites.", "This is what the cascade amplifies — a kingdom's dying echo.", "The only mercy here is silence.")) {
+		mes("^3355FF*Aldric reads the rust-stained parchment in silence. Twice he stops at a name and closes his eyes.*^000000");
+		next();
+		mes("[Sir Aldric]");
+		mes("Several of these names are on the Chivalry's monument to its 'loyal fallen.' Different spellings. Same people. The kingdom buried its prisoners and its heroes in the same soil and only bothered to relabel one grave.");
+		next();
+		switch (select("Publish the truth. Cross out the euphemisms.", "Use the names as a roll call — the dead can be commanded against Manfred's cell.", "The list is yours, Aldric. You decide what it becomes.")) {
 		case 1:
 			mes("[Sir Aldric]");
-			mes("I am not a priest. But I remember the words. Somewhere in there I think something hears them.");
+			mes("It will make you enemies of whatever remains of this kingdom's reputation. Good. A reputation built on relabeled graves deserves enemies.");
 			break;
 		case 2:
 			mes("[Sir Aldric]");
-			mes("Exactly that. The cascade does not create these things. It magnifies what was already dying. Glast Heim was dying for a century before the Dead Sea Project.");
+			mes("Effective. And it treats the names as a tool one more time before anyone treats them as people. I will do it — but I will read each name properly afterward. Someone has to.");
 			break;
 		case 3:
 			mes("[Sir Aldric]");
-			mes("It is. And you gave it to them. I'll mark this in my record.");
+			mes("...You hand me thirty years of other people's grief and call it a kindness. Perhaps it is. I will carry it. It was always going to be me.");
 			break;
 		}
 		next();
 	}
 
-	if (questprogress(20122) == 2 && questprogress(20123) == 2 && questprogress(20124) == 0) {
+	if (questprogress(20125) == 1 && questprogress(20125, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20125);
+		callfunc("DM_PartyExp", 240000, 115000);
+		callfunc("DM_GivePartyZeny", 20000);
+		.@paid = 1;
 		mes("[Sir Aldric]");
-		mes("The garrison and choir are done. Manfred remains. He holds the cathedral approach and he will not let you pass to the Dark Lord without a confrontation.");
+		mes("The Raydric were the order's rank and file. Armor fused to bone, still at parade rest until you came close. And still holding their relics — blessed spurs, oath-blades. This one is a Broken Knight Spur. Feel it. Warm, after centuries.");
 		next();
 		mes("[Sir Aldric]");
-		mes("He is not beyond reason. He was a good bishop once. But the cascade is giving his faith a frequency it was never meant to carry. Approach with open hands.");
-		callfunc("DM_InstanceQuestStart", 20124);
+		mes("The knights were not the rot. Whatever the kingdom became, the order kept its oaths. The question is what happens to what they are still holding.");
 		next();
-		mes("^3355FF[Quest started: The Weight of Faith]^000000");
-		mes("^3355FFFind Brother Manfred inside Glast Heim. Decide what his faith is worth.^000000");
+		switch (select("The relics stay with you. Guard the cache.", "Melt them down. We need gear more than a museum.", "Return the relics to the knights who bore them. Seal the halls.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc08_oath_cache", 1);
+			mes("[Sir Aldric]");
+			mes("A working cache of oath-magic. Small, but it holds. When you stand in front of Manfred, you will be glad of every oath in it.");
+			break;
+		case 2:
+			mes("[Sir Aldric]");
+			mes("Fast and practical. One more piece of the old order's memory gone to make you stronger. They would have understood, I think. That is the worst part.");
+			break;
+		case 3:
+			mes("[Sir Aldric]");
+			mes("No reward for that. Except that the halls are sealed, the dead keep what is theirs, and I will remember you did it. Some doors are better closed than cleared.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20123) == 2 && questprogress(20124) == 2 && questprogress(20125) == 2 && questprogress(20122) == 0) {
+		mes("[Sir Aldric]");
+		mes("The routes are walked. Now the part I have been putting off. Beneath the Chivalry is a crypt the official record erased — men and women this kingdom executed for doubting, then declared holy once they were safely dead.");
+		next();
+		mes("[Sir Aldric]");
+		mes("Their bones will not rest. And they have a question for anyone who comes down with a sword and a clear conscience. Answer with your record, not your words — they can tell the difference.");
+		callfunc("DM_InstanceQuestStart", 20122);
+		next();
+		mes("^3355FF[Quest started: The Martyrs' Crypt]^000000");
+		mes("^3355FFDescend beneath the Chivalry and face the judgment of the executed saints.^000000");
 		close();
 	}
 
-	if (questprogress(20124) == 1 && !dm_arc08_manfred_spared && !dm_arc08_manfred_killed) {
+	if (questprogress(20122) == 1) {
 		mes("[Sir Aldric]");
-		mes("Manfred is at the cathedral steps. He is the last obstacle before the Dark Lord.");
+		mes("The martyrs' tombs are beneath the Chivalry halls. Take my Recanted Page — if one of them wakes hostile, read it aloud. Reliving my complicity is a small price for your lives.");
 		close();
 	}
 
-	if (questprogress(20124) == 1 && (dm_arc08_manfred_spared || dm_arc08_manfred_killed)) {
+	if (questprogress(20122) == 2 && !dm_arc08_manfred_spared && !dm_arc08_manfred_killed) {
 		mes("[Sir Aldric]");
-		mes("Manfred is resolved. The cathedral is open. The Dark Lord awaits in the deepest chamber. When it dies, this arc of history finally closes.");
+		if (dm_arc08_martyrs_aid)
+			mes("The martyrs stand with you. Now Manfred. He holds the cathedral approach and he will not let you pass to the Dark Lord without a confrontation. He was a good bishop once. Approach with open hands.");
+		else
+			mes("The crypt is quiet, however you left it. Manfred remains — he holds the cathedral approach. The cascade is giving his faith a frequency it was never meant to carry.");
+		close();
+	}
+
+	if ((dm_arc08_manfred_spared || dm_arc08_manfred_killed) && questprogress(20121) == 1) {
+		mes("[Sir Aldric]");
+		mes("Manfred is resolved. The cathedral is open. The Dark Lord waits in the deepest chamber — and the seal-site breathes beneath its throne. When it dies, this arc of history finally closes.");
 		close();
 	}
 
 	if (.@paid) {
 		mes("[Sir Aldric]");
-		mes("Both the garrison and the choir need to be cleared before you face Manfred. The Dark Lord has to come last.");
+		mes("The other routes still need walking. The crypt and the cathedral come after the dead are counted.");
 		close();
 	}
 
 	mes("[Sir Aldric]");
-	if (questprogress(20122) == 1 && questprogress(20123) == 1)
-		mes("The outer garrison and the fallen choir are both still active. The ruins between here and the cathedral are not safe.");
-	else if (questprogress(20122) == 1)
-		mes("The outer garrison is still open. Raydric on the outer walls.");
+	if (questprogress(20123) == 1 && questprogress(20124) == 1 && questprogress(20125) == 1)
+		mes("Three routes: candles in the Churchyard, names in the Underprison, relics in the Chivalry halls. The ruins between here and the cathedral are not safe.");
 	else if (questprogress(20123) == 1)
-		mes("The fallen choir is still open. Wraith in the abbey passages.");
+		mes("The candle route is still open. Dark Priests among the Churchyard graves.");
+	else if (questprogress(20124) == 1)
+		mes("The name list is unfinished. Skel Prisoners in the Underprison cages.");
+	else if (questprogress(20125) == 1)
+		mes("The relic watch is still open. Raydric in the Chivalry halls.");
 	else
-		mes("The contracts are done. Manfred waits at the cathedral steps.");
+		mes("The contracts are done. The crypt waits beneath the Chivalry.");
 	close();
+}
+
+// ── The Martyrs' Crypt — trial of the executed saints ──────────────────────
+gl_knt01,150,150,3	script	Martyrs' Tombs#dm08	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (questprogress(20122) != 1) {
+		if (questprogress(20122) == 2) {
+			mes("^3355FF*The crypt is still. The tombs of the executed saints keep whatever answer you gave them.*^000000");
+			close();
+		}
+		mes("^3355FF*A sealed stair descends beneath the Chivalry. The stones over it are newer than the walls around them — someone wanted this forgotten.*^000000");
+		close();
+	}
+
+	mes("^3355FF*The crypt is lined with tombs whose epitaphs have been rewritten. Beneath each hymn of sainthood, older letters show through: heresy, sedition, doubt. The air asks a question before anyone speaks it.*^000000");
+	next();
+	mes("^0000AA[The Martyred Dead]^000000");
+	mes("You come armed and certain. The kingdom that killed us came the same way. It asked: are we not righteous? We ask you the only question that matters:");
+	next();
+	mes("^0000AA[The Martyred Dead]^000000");
+	if (dm_catechism_tally >= 2)
+		mes("Did you kill because it was necessary — or because it was easy, and you were sure? We have read your record. It is heavier than you pretend.");
+	else
+		mes("Did you kill because it was necessary — or because it was easy, and you were sure? We have read your record. There is restraint in it. That is rarer than sainthood.");
+	next();
+	switch (select("Hear their confession and carry it up into the light.", "Silence the tombs and take the relics.")) {
+	case 1:
+		callfunc("DM_InstanceQuestComplete", 20122);
+		callfunc("DM_InstanceSetFlag", "dm_arc08_martyrs_aid", 1);
+		callfunc("DM_PartyExp", 300000, 150000);
+		mes("^3355FF*One by one the tombs speak: names, crimes that were not crimes, the day the kingdom called each of them holy to bury what it had done. The party carries every word.*^000000");
+		next();
+		mes("^0000AA[The Martyred Dead]^000000");
+		mes("Then you know the founding crime of the holy orders. That knowledge makes you dangerous to powerful people. Carry it anyway. When you face what our certainty built, we will stand with you.");
+		next();
+		mes("^3355FF*A brass plate comes loose in the party's hands: a Saint's Rewritten Epitaph — the confession beneath the hymn, the lie literally stamped over the truth.*^000000");
+		mes("^3355FF[The Martyrs' Crypt resolved. The martyrs will aid you against the Dark Lord's court.]^000000");
+		close();
+	case 2:
+		callfunc("DM_InstanceQuestComplete", 20122);
+		callfunc("DM_InstanceSetFlag", "dm_arc08_martyrs_cursed", 1);
+		dm_catechism_tally += 1;
+		callfunc("DM_PartyExp", 300000, 150000);
+		callfunc("DM_GivePartyZeny", 40000);
+		mes("^3355FF*The wraiths rise and are ground down. The relics come free of dead hands. The lie on every epitaph stands unchallenged — easy power, and exactly the sin the crypt was testing for.*^000000");
+		next();
+		mes("^0000AA[The Martyred Dead]^000000");
+		mes("So the kingdom sends us its own again. Sure of yourselves, paid in relics. Our curse is patient. It will find you in front of the throne.");
+		next();
+		mes("^3355FF[The Martyrs' Crypt resolved. The saints' curse will swell the Dark Lord's court.]^000000");
+		close();
+	}
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20122, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
 }
 
 // ── Brother Manfred — The Last Bishop ──────────────────────────────────────
@@ -199,17 +323,26 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 		close();
 	}
 
+	if (questprogress(20122) != 2) {
+		mes("[Brother Manfred]");
+		mes("You have not been down to see them yet, have you. The ones the kingdom made holy with an axe. Go and hear their question. Then come and ask me yours.");
+		close();
+	}
+
 	mes("[Brother Manfred]");
 	mes("The kingdom endures. It endures in the stones, in the silence, in the faith that outlasted every sword. Do you understand what faith means when it has nothing left to lose?");
 	next();
+	if (dm_arc08_wax_traced) {
+		mes("[Manfred]");
+		mes("You watched my converts light the graves. Yes — the same rite, the same candles. Aldric teaches it as doubt. I teach it as devotion. The dead accept both. Ask yourself what that means.");
+		next();
+	}
 	mes("[Manfred]");
 	mes("The Dark Lord is not evil. It is the test. Midgard turned away from the Twelve. The cascade is their answer. I will not let heretics unmake what the Twelve have sent.");
 	next();
 	switch (select("The kingdom is gone, Manfred. The faith killed it.", "What would the Twelve actually want here?", "Stand with us. Help us put this to rest.")) {
 	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_spared");
-		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20124);
+		callfunc("DM_Decide", "arc08.manfred", "killed");
 		mes("[Manfred]");
 		mes("Then I am already dead. Take your heresy into the cathedral. The Twelve will judge you there.");
 		next();
@@ -217,9 +350,7 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 		mes("^3355FF[Encounter: the Dark Lord will summon a larger undead court.]^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_killed");
-		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
-		callfunc("DM_InstanceQuestComplete", 20124);
+		callfunc("DM_Decide", "arc08.manfred", "spared");
 		mes("[Manfred]");
 		mes("...");
 		next();
@@ -230,9 +361,7 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 		mes("^3355FF[Encounter: Manfred's faith will suppress part of the Dark Lord's court.]^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_killed");
-		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
-		callfunc("DM_InstanceQuestComplete", 20124);
+		callfunc("DM_Decide", "arc08.manfred", "spared");
 		mes("[Manfred]");
 		mes("No outsider has ever asked me that. Help you. The cathedral was mine. The kingdom was mine. The dead are mine.");
 		next();
@@ -244,13 +373,34 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 		break;
 	}
 	next();
-	mes("^3355FF[The Weight of Faith resolved. The cathedral is open.]^000000");
+	mes("^3355FF[Manfred is resolved. The cathedral is open.]^000000");
 	close();
 
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20124, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Manfred's Vigil Book - cathedral-side thematic readable
+gl_in01,116,118,3	script	Vigil Book#dm08	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc08_started) {
+		mes("^3355FF*The lectern is empty. Dust marks show where a book used to rest.*^000000");
+		close();
+	}
+
+	mes("^3355FF*A water-warped prayer ledger lies open on the lectern. The last entries are in a steady hand that grows harsher line by line.*^000000");
+	next();
+	mes("^0000AA[Brother Manfred's Vigil Book]^000000");
+	mes("The Kingdom says faith is obedience, but obedience did not hold the walls. Every man who prayed with perfect posture still bled the same.");
+	next();
+	mes("^0000AA[Brother Manfred's Vigil Book]^000000");
+	mes("If the Twelve are silent, either we are abandoned or we have mistaken silence for approval our entire lives.");
+	next();
+	mes("^0000AA[Brother Manfred's Vigil Book]^000000");
+	mes("Something in the cathedral now answers where heaven does not. I fear the answer is made from us.");
+	close();
 }
 
 // ── Glast Heim Abbey Set-piece ─────────────────────────────────────────────
@@ -263,7 +413,9 @@ OnDarkLordDead:
 	callfunc("DM_InstanceSetFlag", "dm_arc08_darklord_killed", 1);
 	callfunc("DM_PartyExp", 700000, 400000);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 899);
-	if (dm_arc08_manfred_spared)
+	if (dm_arc08_martyrs_aid)
+		instance_announce(instance_id(), "^3355FF[DM] The Dark Lord disperses. The martyred saints lower their hands, their confession finally carried into the light.^000000", bc_all);
+	else if (dm_arc08_manfred_spared)
 		instance_announce(instance_id(), "^3355FF[DM] The Dark Lord disperses. In the quiet after, Manfred's voice is the only sound.^000000", bc_all);
 	else
 		instance_announce(instance_id(), "^3355FF[DM] The Dark Lord is banished. The cursed kingdom finally falls silent.^000000", bc_all);

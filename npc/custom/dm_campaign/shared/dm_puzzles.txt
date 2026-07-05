@@ -1,0 +1,109 @@
+// Seal Cascade Puzzle Templates
+//
+// These functions provide standard resettable puzzle step logic and
+// riddle checking for campaign set-pieces.
+// See planning/dm-traps-puzzles-guide.md (WP-12).
+
+// DM_PuzzleStep("<flag_prefix>", step, total, "<wrong_event$>")
+// Use for sequences of levers/buttons that must be hit in order.
+// Sets prefix + step if all prior steps are set.
+// Otherwise resets all prefix flags (1..total) and optionally triggers the wrong_event label.
+// Returns 1 on success, 0 on failure.
+function	script	DM_PuzzleStep	{
+	.@prefix$ = getarg(0);
+	.@step = getarg(1);
+	.@total = getarg(2);
+	.@wrong_event$ = getarg(3, "");
+
+	.@ok = 1;
+	for (.@i = 1; .@i < .@step; ++.@i) {
+		if (callfunc("DM_GetFlag", .@prefix$ + .@i) == 0) {
+			.@ok = 0;
+			break;
+		}
+	}
+
+	if (.@ok) {
+		callfunc("DM_InstanceSetFlag", .@prefix$ + .@step, 1);
+		return 1;
+	} else {
+		callfunc("DM_ResetPuzzleFlag", .@prefix$, .@total);
+		if (.@wrong_event$ != "") {
+			donpcevent .@wrong_event$;
+		}
+		return 0;
+	}
+}
+
+// DM_PuzzleRiddle("<solved_flag>", "<attempts_flag>", max_attempts, "<fail_event$>", is_correct)
+// Tracks riddle attempts. If is_correct is 1, sets solved_flag and returns 1.
+// If 0, increments attempts_flag. If attempts >= max, fires fail_event$ and returns -1.
+// Otherwise returns 0.
+function	script	DM_PuzzleRiddle	{
+	.@flag$ = getarg(0);
+	.@attempts_flag$ = getarg(1);
+	.@max_attempts = getarg(2);
+	.@fail_event$ = getarg(3, "");
+	.@is_correct = getarg(4, 0);
+
+	if (callfunc("DM_GetFlag", .@flag$)) {
+		return 1;
+	}
+
+	if (.@is_correct) {
+		callfunc("DM_InstanceSetFlag", .@flag$, 1);
+		return 1;
+	}
+
+	.@attempts = callfunc("DM_GetFlag", .@attempts_flag$) + 1;
+	callfunc("DM_InstanceSetFlag", .@attempts_flag$, .@attempts);
+
+	if (.@attempts >= .@max_attempts) {
+		if (.@fail_event$ != "") donpcevent .@fail_event$;
+		return -1;
+	}
+
+	return 0;
+}
+
+/* 
+Copy-paste NPC Template for Riddles/Passwords:
+
+gef_dun02,220,210,4	script	Stone Warden#dm	4_BOARD3,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	
+	if (callfunc("DM_GetFlag", "dm_arcXX_warden_solved")) {
+		mes("[Stone Warden]");
+		mes("\"Pass.\"");
+		close();
+	}
+
+	mes("[Stone Warden]");
+	mes("\"Answer, or turn back.\"");
+	next();
+
+	// Option A: select() decoy riddle
+	.@opt = select("The sun", "A shadow", "A flame");
+	.@correct = (.@opt == 2);
+	
+	// Option B: input() password
+	// input(.@answer$);
+	// .@correct = (strtolower(callfunc("DM_Trim", .@answer$)) == "hlin");
+
+	.@res = callfunc("DM_PuzzleRiddle", "dm_arcXX_warden_solved", "dm_arcXX_warden_attempts", 3, "WardenDoor#aXX::OnFail", .@correct);
+
+	if (.@res == 1) {
+		mes("[Stone Warden]");
+		mes("\"The way is open.\"");
+		// callfunc("DM_TriggerEvent", "WardenDoor#aXX", "OnOpen");
+	} else if (.@res == -1) {
+		mes("[Stone Warden]");
+		mes("\"Intruders.\"");
+		// Event was already fired by DM_PuzzleRiddle
+	} else {
+		mes("[Stone Warden]");
+		mes("\"False.\"");
+	}
+	close();
+}
+*/

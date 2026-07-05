@@ -1,0 +1,49 @@
+//=============================================================================
+//= Seal Cascade campaign onboarding helpers
+//=============================================================================
+
+iz_int,23,28,5	script	Campaign Guide#dm_start	4_F_01,{
+	mes("[Campaign Guide]");
+	mes("If you are here for Seal Cascade, you do not need to clear the training route first.");
+	next();
+	mes("[Campaign Guide]");
+	mes("The campaign gathers at the Session Board near the Prontera fountain.");
+	next();
+	switch (select("Take me to the Session Board.", "Show me where it is.", "I'll stay here.")) {
+	case 1:
+		close2();
+		warp("prontera", 155, 185);
+		end;
+	case 2:
+		mes("[Campaign Guide]");
+		mesf("Look for %s.", mesnavigation("[Session Board]", "prontera", 155, 185));
+		close();
+	case 3:
+		mes("[Campaign Guide]");
+		mes("No trouble. The regular training route is still open.");
+		close();
+	}
+	end;
+
+OnInit:
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_JOB, Job_Novice;
+	end;
+}
+
+iz_int01,23,28,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_i01	4_F_01
+iz_int02,23,28,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_i02	4_F_01
+iz_int03,23,28,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_i03	4_F_01
+iz_int04,23,28,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_i04	4_F_01
+
+int_land,82,103,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_l00	4_F_01
+int_land01,82,103,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_l01	4_F_01
+int_land02,82,103,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_l02	4_F_01
+int_land03,82,103,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_l03	4_F_01
+int_land04,82,103,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_l04	4_F_01
+
+izlude,193,211,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_z00	4_F_01
+izlude_a,193,211,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_z01	4_F_01
+izlude_b,193,211,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_z02	4_F_01
+izlude_c,193,211,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_z03	4_F_01
+izlude_d,193,211,5	duplicate(Campaign Guide#dm_start)	Campaign Guide#dm_z04	4_F_01

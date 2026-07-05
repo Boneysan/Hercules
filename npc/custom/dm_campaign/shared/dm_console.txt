@@ -4,6 +4,7 @@
 	end;
 
 OnInit:
+	// The bindatcmd level 1 is an engine floor; DM_RequireDM reads DM_Config.gm_level.
 	bindatcmd("dm", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDM", 1, 99, 1);
 	bindatcmd("dmreward", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReward", 1, 99, 1);
 	bindatcmd("dmflag", strnpcinfo(NPC_NAME_UNIQUE)+"::OnFlag", 1, 99, 1);
@@ -17,9 +18,13 @@ OnInit:
 	bindatcmd("dmmode", strnpcinfo(NPC_NAME_UNIQUE)+"::OnMode", 1, 99, 1);
 	bindatcmd("dmhazard", strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazard", 1, 99, 1);
 	bindatcmd("dmexp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnExp", 1, 99, 1);
+	bindatcmd("dmexprate", strnpcinfo(NPC_NAME_UNIQUE)+"::OnExpRate", 1, 99, 1);
+	bindatcmd("dmpoints", strnpcinfo(NPC_NAME_UNIQUE)+"::OnPoints", 1, 99, 1);
+	bindatcmd("dmlevels", strnpcinfo(NPC_NAME_UNIQUE)+"::OnLevels", 1, 99, 1);
 	bindatcmd("dmreset", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReset", 1, 99, 1);
 	bindatcmd("dmstatus", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStatus", 1, 99, 1);
 	bindatcmd("roll", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRoll", 0, 99, 1);
+	bindatcmd("dmtrap", strnpcinfo(NPC_NAME_UNIQUE)+"::OnTrap", 1, 99, 1);
 	end;
 
 OnDM:
@@ -32,6 +37,8 @@ OnDM:
 	}
 
 	.@sub$ = .@atcmd_parameters$[0];
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
 
 	if (.@sub$ == "help") {
 		callsub(S_Help);
@@ -50,6 +57,11 @@ OnDM:
 
 	if (.@sub$ == "quest") {
 		callsub(S_Quest, 1);
+		end;
+	}
+
+	if (.@sub$ == "decide") {
+		callfunc("DM_DecideCommand", .@atcmd_numparameters - 1, .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
 		end;
 	}
 
@@ -79,7 +91,38 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "holdspawn") {
+		callsub(S_HoldSpawn, 1);
+		end;
+	}
+
+	if (.@sub$ == "release") {
+		callsub(S_Release, 1);
+		end;
+	}
+
+	if (.@sub$ == "encounter") {
+		callfunc("DM_EncounterCommand", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
+		end;
+	}
+
+	if (.@sub$ == "scale") {
+		callfunc("DM_Scale", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
+		end;
+	}
+
+	if (.@sub$ == "bloodied") {
+		callfunc("DM_Bloodied", .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+		end;
+	}
+
+	if (.@sub$ == "holdclear") {
+		callsub(S_HoldClear);
+		end;
+	}
+
 	if (.@sub$ == "cleanup") {
+		callsub(S_HoldClear);
 		callfunc("DM_CleanupMap");
 		end;
 	}
@@ -109,8 +152,28 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "symptom") {
+		callfunc("DM_Symptom", .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+		end;
+	}
+
 	if (.@sub$ == "exp") {
 		callsub(S_Exp, 1);
+		end;
+	}
+
+	if (.@sub$ == "exprate") {
+		callsub(S_ExpRate, 1);
+		end;
+	}
+
+	if (.@sub$ == "points") {
+		callsub(S_Points, 1);
+		end;
+	}
+
+	if (.@sub$ == "levels") {
+		callsub(S_Levels);
 		end;
 	}
 
@@ -124,6 +187,111 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "novice") {
+		callsub(S_Novice);
+		end;
+	}
+
+	if (.@sub$ == "resetstat") {
+		callsub(S_ResetStat);
+		end;
+	}
+
+	if (.@sub$ == "resetskill") {
+		callsub(S_ResetSkill);
+		end;
+	}
+
+	if (.@sub$ == "savepoint") {
+		callsub(S_SavePoint);
+		end;
+	}
+
+	if (.@sub$ == "say") {
+		.@text$ = "";
+		for (.@i = 1; .@i < .@atcmd_numparameters; ++.@i)
+			.@text$ += (.@i > 1 ? " " : "") + .@atcmd_parameters$[.@i];
+		callfunc("DM_Say", .@text$);
+		end;
+	}
+
+	if (.@sub$ == "secret") {
+		.@player$ = .@atcmd_parameters$[1];
+		.@text$ = "";
+		for (.@i = 2; .@i < .@atcmd_numparameters; ++.@i)
+			.@text$ += (.@i > 2 ? " " : "") + .@atcmd_parameters$[.@i];
+		callfunc("DM_Secret", .@player$, .@text$);
+		end;
+	}
+
+	if (.@sub$ == "check") {
+		callfunc("DM_Check", .@atcmd_parameters$[1], .@atcmd_parameters$[2], atoi(.@atcmd_parameters$[3]), .@atcmd_parameters$[4]);
+		end;
+	}
+
+	if (.@sub$ == "inspire") {
+		callfunc("DM_Inspire", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
+		end;
+	}
+
+	if (.@sub$ == "scene") {
+		callfunc("DM_Scene", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
+		end;
+	}
+
+	if (.@sub$ == "initiative") {
+		callfunc("DM_Initiative");
+		end;
+	}
+
+	if (.@sub$ == "log") {
+		.@text$ = "";
+		for (.@i = 1; .@i < .@atcmd_numparameters; ++.@i)
+			.@text$ += (.@i > 1 ? " " : "") + .@atcmd_parameters$[.@i];
+		callfunc("DM_Log", .@text$);
+		end;
+	}
+
+	if (.@sub$ == "recap") {
+		callfunc("DM_Recap");
+		end;
+	}
+
+	if (.@sub$ == "rest") {
+		callfunc("DM_Rest");
+		end;
+	}
+
+	if (.@sub$ == "spotlight") {
+		callfunc("DM_Spotlight", .@atcmd_parameters$[1]);
+		end;
+	}
+
+	if (.@sub$ == "cutscene") {
+		callfunc("DM_Cutscene", .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3]);
+		end;
+	}
+
+	if (.@sub$ == "downrule") {
+		callfunc("DM_DownRule", .@atcmd_parameters$[1]);
+		end;
+	}
+
+	if (.@sub$ == "down") {
+		callfunc("DM_Down", .@atcmd_parameters$[1]);
+		end;
+	}
+
+	if (.@sub$ == "revive") {
+		callfunc("DM_Revive", .@atcmd_parameters$[1]);
+		end;
+	}
+
+	if (.@sub$ == "trap") {
+		callfunc("DM_TrapCommand", .@atcmd_numparameters - 1, .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3], .@atcmd_parameters$[4], .@atcmd_parameters$[5]);
+		end;
+	}
+
 	dispbottom("[DM] Unknown subcommand: " + .@sub$);
 	callsub(S_Help);
 	end;
@@ -131,18 +299,24 @@ OnDM:
 OnReward:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
 	callsub(S_Reward, 0);
 	end;
 
 OnFlag:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
 	callsub(S_Flag, 0);
 	end;
 
 OnQuest:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
 	callsub(S_Quest, 0);
 	end;
 
@@ -164,12 +338,15 @@ OnStory:
 OnCleanup:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	callsub(S_HoldClear);
 	callfunc("DM_CleanupMap");
 	end;
 
 OnWarp:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
 	callsub(S_Warp, 0);
 	end;
 
@@ -182,30 +359,62 @@ OnRecall:
 OnInstance:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
 	callsub(S_Instance, 0);
 	end;
 
 OnMode:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
 	callsub(S_Mode, 0);
 	end;
 
 OnHazard:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
 	callsub(S_Hazard, 0);
 	end;
 
 OnExp:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
 	callsub(S_Exp, 0);
+	end;
+
+OnPoints:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
+	callsub(S_Points, 0);
+	end;
+
+OnExpRate:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
+	callsub(S_ExpRate, 0);
+	end;
+
+OnLevels:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Levels);
 	end;
 
 OnReset:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	.dm_numparams = .@atcmd_numparameters;
+	for (.@_i = 0; .@_i < .dm_numparams; ++.@_i) .dm_params$[.@_i] = .@atcmd_parameters$[.@_i];
 	callsub(S_Reset, 0);
 	end;
 
@@ -300,6 +509,12 @@ OnRoll:
 		mapannounce strcharinfo(PC_MAP), .@msg$, bc_map, 0xFFAA33;
 	end;
 
+OnTrap:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callfunc("DM_TrapCommand", .@atcmd_numparameters, .@atcmd_parameters$[0], .@atcmd_parameters$[1], .@atcmd_parameters$[2], .@atcmd_parameters$[3], .@atcmd_parameters$[4]);
+	end;
+
 OnDMKilled:
 	end;
 
@@ -327,25 +542,57 @@ S_Help:
 	dispbottom("[DM] @dm mode <on|off>");
 	dispbottom("[DM] @dm reward [arc] [tier] [preview|dryrun|1]");
 	dispbottom("[DM] @roll [hidden] <NdX[+/-mod]> | @roll fudge <total> [note]");
-	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
+	dispbottom("[DM] @dm flag <get|set|clear|sync> [name] [value]");
+	dispbottom("[DM] @dm flag <arc01..arc19|cleararc01..cleararc19>");
 	dispbottom("[DM] @dm quest <start|complete|erase> <quest_id>   (current party)");
+	dispbottom("[DM] @dm quest sync <forward|back>   (forward=catch up to furthest, back=reset to least)");
+	dispbottom("[DM] @dm quest refresh               (re-deliver all in-progress quests, fixes client hidden quests)");
+	dispbottom("[DM] @dm decide [arc] | <key> <outcome> | status [arc] | undo <key>");
 	dispbottom("[DM] @dm beat                 (menu: location/NPC/story tracking)");
 	dispbottom("[DM] @dm story <message> | @dm globalstory <message>");
 	dispbottom("[DM] @dm spawn <mob_id> [count] [name]");
+	dispbottom("[DM] @dm holdspawn <mob_id> [count] [name]  (passive staged mobs)");
+	dispbottom("[DM] @dm release [all|last] | @dm holdclear");
+	dispbottom("[DM] @dm encounter [status|clear|kill|boss <last|gid>]");
+	dispbottom("[DM] @dm scale <hp|damage> <percent> [all|boss|last|gid]");
+	dispbottom("[DM] @dm bloodied <on|off|status> [boss|last|gid]");
 	dispbottom("[DM] @dm hazard [range] [damage_pct] [ticks] [interval_ms] [status] [status_ms] | clear");
 	dispbottom("[DM] Status aliases: poison, freeze, stun, sleep, curse, confusion, blind.");
+	dispbottom("[DM] @dm symptom <arc> [pulse|setup|read|clear]  (updated arc symptom mechanics)");
 	dispbottom("[DM] @dm exp <base> [job]    (grants EXP to your whole party)");
+	dispbottom("[DM] @dm exprate <percent|off|status>  (monster EXP for your party)");
+	dispbottom("[DM] @dm points <amount> [cash]  (Cash Shop currency for your whole party; default Kafra Points)");
+	dispbottom("[DM] @dm levels              (target finish/reward level by arc)");
 	dispbottom("[DM] @dm warp <map> [x] [y]   (warps your whole party)");
 	dispbottom("[DM] @dm recall              (pulls party to you)");
 	dispbottom("[DM] @dm instance <start <map> [x] [y] [label] | end>");
 	dispbottom("[DM] @dm status              (arc progress + key flags at a glance)");
+	dispbottom("[DM] @dm novice              (grant First Aid + Play Dead to party; clear tutorial quest flags)");
+	dispbottom("[DM] @dm resetstat           (reset status points for all online party members)");
+	dispbottom("[DM] @dm resetskill          (reset skill points for all online party members)");
+	dispbottom("[DM] @dm savepoint           (set party save/home point to your current location)");
 	dispbottom("[DM] @dm reset confirm       (wipe all campaign flags for a fresh run)");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmstatus, @dmreset");
+	dispbottom("[DM] @dm say <speaker> | <text>   (voice a line; @<npc> <text> puppets an NPC)");
+	dispbottom("[DM] @dm secret <player> <text>   (private aside to one player only)");
+	dispbottom("[DM] @dm check <player|party> <str|agi|vit|int|dex|luk> <DC> [adv|dis]");
+	dispbottom("[DM] @dm inspire <player> [+n|spend|clear|set n] | party");
+	dispbottom("[DM] @dm scene <clear|dread|boss|calm|holy|ruin|snow|fest> [portrait]  (mood: weather+BGM+cutin)");
+	dispbottom("[DM] @dm cutscene <on|off> [portrait] [seconds]  (freeze/release party movement)");
+	dispbottom("[DM] @dm initiative   (roll d20+AGI for party, print order)");
+	dispbottom("[DM] @dm spotlight <player|off>   (freeze everyone else briefly)");
+	dispbottom("[DM] @dm log <text>   (append timestamped note to session log)");
+	dispbottom("[DM] @dm recap        (print recent session log notes)");
+	dispbottom("[DM] @dm rest         (full HP/SP heal, buffs, and savepoint update)");
+	dispbottom("[DM] @dm downrule <on|off|status>  (death saves instead of dying; arm per fight)");
+	dispbottom("[DM] @dm down <player> | @dm revive <player|party>");
+	dispbottom("[DM] @dm trap set <radius> <dc> <dmg%> [status] [status_ms]");
+	dispbottom("[DM] @dm trap list | clear [i|all] | reveal [i] | disarm <player> [i]   (latent trap MVP; full impl in progress)");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmsymptom, @dmreward, @dmflag, @dmquest, @dmdecide, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmexprate, @dmpoints, @dmlevels, @dmstatus, @dmreset, @dmsay, @dmsecret, @dmcheck, @dminspire, @dminitiative, @dmscene, @dmcutscene, @dmspotlight, @dmencounter, @dmscale, @dmbloodied, @dmdownrule, @dmdown, @dmrevive, @dmtrap, @dmlog, @dmrecap, @dmrest");
 	return;
 
 S_Reset:
 	.@offset = getarg(0, 0);
-	.@confirm$ = .@atcmd_parameters$[.@offset];
+	.@confirm$ = .dm_params$[.@offset];
 	if (.@confirm$ != "confirm") {
 		dispbottom("[DM] @dm reset confirm — wipes all campaign flags and quests for a fresh playthrough.");
 		dispbottom("[DM] Warning: clears all 19 arcs for every online party member. Cannot be undone.");
@@ -361,91 +608,182 @@ S_Reset:
 				continue;
 			if (!attachrid(.@accid[.@i]))
 				continue;
-			callfunc("DM_ClearArc01Flags"); callfunc("DM_ClearArc02Flags"); callfunc("DM_ClearArc03Flags");
-			callfunc("DM_ClearArc04Flags"); callfunc("DM_ClearArc05Flags"); callfunc("DM_ClearArc06Flags");
-			callfunc("DM_ClearArc07Flags"); callfunc("DM_ClearArc08Flags"); callfunc("DM_ClearArc09Flags");
-			callfunc("DM_ClearArc10Flags"); callfunc("DM_ClearArc11Flags"); callfunc("DM_ClearArc12Flags");
-			callfunc("DM_ClearArc13Flags"); callfunc("DM_ClearArc14Flags"); callfunc("DM_ClearArc15Flags");
-			callfunc("DM_ClearArc16Flags"); callfunc("DM_ClearArc17Flags"); callfunc("DM_ClearArc18Flags");
-			callfunc("DM_ClearArc19Flags");
+			callfunc("DM_ClearAllArcFlags");
 			detachrid();
 			++.@cleared;
 		}
 		if (.@origin_aid)
 			attachrid(.@origin_aid);
 	} else {
-		callfunc("DM_ClearArc01Flags"); callfunc("DM_ClearArc02Flags"); callfunc("DM_ClearArc03Flags");
-		callfunc("DM_ClearArc04Flags"); callfunc("DM_ClearArc05Flags"); callfunc("DM_ClearArc06Flags");
-		callfunc("DM_ClearArc07Flags"); callfunc("DM_ClearArc08Flags"); callfunc("DM_ClearArc09Flags");
-		callfunc("DM_ClearArc10Flags"); callfunc("DM_ClearArc11Flags"); callfunc("DM_ClearArc12Flags");
-		callfunc("DM_ClearArc13Flags"); callfunc("DM_ClearArc14Flags"); callfunc("DM_ClearArc15Flags");
-		callfunc("DM_ClearArc16Flags"); callfunc("DM_ClearArc17Flags"); callfunc("DM_ClearArc18Flags");
-		callfunc("DM_ClearArc19Flags");
+		callfunc("DM_ClearAllArcFlags");
 		.@cleared = 1;
 	}
-	for (.@q = 20001; .@q <= 20030; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20101; .@q <= 20105; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20111; .@q <= 20115; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20121; .@q <= 20124; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20131; .@q <= 20134; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20141; .@q <= 20144; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20151; .@q <= 20155; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20161; .@q <= 20165; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20171; .@q <= 20175; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20181; .@q <= 20185; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20191; .@q <= 20194; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20201; .@q <= 20204; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20211; .@q <= 20214; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20221; .@q <= 20223; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	for (.@q = 20231; .@q <= 20233; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
 	if (.@party_id > 0)
 		setd("$dm_inst_" + .@party_id, 0);
+	callfunc("DM_CutsceneParty", 0, "", 0, .@party_id);
+	callfunc("DM_EraseAllCampaignQuests");
 	$dm_mode = 0;
 	$dm_active_party = 0;
+	$@dm_exp_party = 0;
+	$@dm_exp_char = 0;
+	$@dm_exp_rate = 100;
+	callfunc("DM_EncounterReset");
 	dispbottom("[DM] Campaign reset complete for " + .@cleared + " member(s). All arcs cleared, mode off.");
 	return;
 
 S_Status:
 	.@party_id = getcharid(CHAR_ID_PARTY);
-	dispbottom("[DM] Mode=" + ($dm_mode ? "ON" : "OFF") + "  Session party=" + $dm_active_party + "  Your party=" + .@party_id);
-	setarray .@q[0], 20001, 20007, 20013, 20019, 20025, 20101, 20111, 20121, 20131, 20141, 20151, 20161, 20171, 20181, 20191, 20201, 20211, 20221, 20231;
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@pruned = callfunc("DM_EncounterPrune");
+	.@enc_count = @dm_enc_count;
+	.@enc_last_gid = @dm_enc_last_gid;
+	.@enc_boss_gid = @dm_enc_boss_gid;
+	.@hazard_ticks = @dm_hazard_ticks;
+	.@hazard_map$ = @dm_hazard_map$;
+	.@hazard_x = @dm_hazard_x;
+	.@hazard_y = @dm_hazard_y;
+	.@hazard_range = @dm_hazard_range;
+	.@hazard_damage = @dm_hazard_damage;
+	.@hazard_status = @dm_hazard_status;
+	.@hazard_party = @dm_hazard_party_id;
+	.@bloodied_gid = @dm_bloodied_gid;
+	.@bloodied_fired = @dm_bloodied_fired;
+	.@inst_party = (.@party_id > 0 ? .@party_id : $dm_active_party);
+	.@inst_id = (.@inst_party > 0 ? getd("$dm_inst_" + .@inst_party) : 0);
+	.@exp_rate = ($@dm_exp_rate > 0 ? $@dm_exp_rate : 100);
+	.@exp_scope$ = "normal";
+	if ($@dm_exp_party > 0 && $@dm_exp_rate > 0)
+		.@exp_scope$ = "party " + $@dm_exp_party;
+	else if ($@dm_exp_char > 0 && $@dm_exp_rate > 0)
+		.@exp_scope$ = "char " + $@dm_exp_char;
+	else if (.@exp_rate != 100)
+		.@exp_scope$ = "unscoped";
+
+	if (.@party_id > 0) {
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+				continue;
+			if (!attachrid(.@accid[.@i]))
+				continue;
+			if (@dm_downed) {
+				++.@downed;
+				if (@dm_downed == 2)
+					++.@stable;
+				else
+					++.@dying;
+			}
+			detachrid();
+		}
+		if (.@origin_aid)
+			attachrid(.@origin_aid);
+	} else if (@dm_downed) {
+		.@downed = 1;
+		if (@dm_downed == 2)
+			.@stable = 1;
+		else
+			.@dying = 1;
+	}
+
+	dispbottom("[Session] mode=" + ($dm_mode ? "ON" : "OFF") + " active_party=" + $dm_active_party + " your_party=" + .@party_id + " instance=" + .@inst_id);
+	dispbottom("[Session] downrule=" + ($@dm_downed_rule ? "ARMED" : "off") + " downed=" + .@downed + " (dying=" + .@dying + " stable=" + .@stable + ") exp=" + .@exp_rate + "% " + .@exp_scope$);
+	dispbottom("[Session] encounter=" + .@enc_count + " last_gid=" + .@enc_last_gid + " boss_gid=" + .@enc_boss_gid + (.@pruned ? " pruned=" + .@pruned : ""));
+	if (.@hazard_ticks > 0)
+		dispbottom("[Session] hazard=" + .@hazard_ticks + " tick(s) " + .@hazard_map$ + " " + .@hazard_x + "," + .@hazard_y + " r=" + .@hazard_range + " dmg=" + .@hazard_damage + "% status=" + .@hazard_status + " party=" + .@hazard_party);
+	else
+		dispbottom("[Session] hazard=off");
+	dispbottom("[Session] bloodied_gid=" + .@bloodied_gid + " fired=" + .@bloodied_fired);
+	if ($dm_mode && .@exp_rate == 100 && .@enc_count <= 0)
+		dispbottom("[Session] Hint: restart or DM relog? Temp EXP and registries reset; see CAMPAIGN.md lifetimes.");
+
 	.@line$ = "[Arcs 01-05] ";
-	for (.@i = 0; .@i < 5; ++.@i) {
-		.@n = .@i + 1;
-		.@line$ += (.@n < 10 ? "A0" : "A") + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	for (.@i = 1; .@i <= 5; ++.@i) {
+		.@line$ += (.@i < 10 ? "A0" : "A") + .@i + ":" + questprogress(callfunc("DM_ArcTrackerId", .@i)) + " ";
 	}
 	dispbottom(.@line$);
 	.@line$ = "[Arcs 06-10] ";
-	for (.@i = 5; .@i < 10; ++.@i) {
-		.@n = .@i + 1;
-		.@line$ += (.@n < 10 ? "A0" : "A") + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	for (.@i = 6; .@i <= 10; ++.@i) {
+		.@line$ += (.@i < 10 ? "A0" : "A") + .@i + ":" + questprogress(callfunc("DM_ArcTrackerId", .@i)) + " ";
 	}
 	dispbottom(.@line$);
 	.@line$ = "[Arcs 11-15] ";
-	for (.@i = 10; .@i < 15; ++.@i) {
-		.@n = .@i + 1;
-		.@line$ += "A" + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	for (.@i = 11; .@i <= 15; ++.@i) {
+		.@line$ += "A" + .@i + ":" + questprogress(callfunc("DM_ArcTrackerId", .@i)) + " ";
 	}
 	dispbottom(.@line$);
 	.@line$ = "[Arcs 16-19] ";
-	for (.@i = 15; .@i < 19; ++.@i) {
-		.@n = .@i + 1;
-		.@line$ += "A" + .@n + ":" + questprogress(.@q[.@i]) + " ";
+	for (.@i = 16; .@i <= 19; ++.@i) {
+		.@line$ += "A" + .@i + ":" + questprogress(callfunc("DM_ArcTrackerId", .@i)) + " ";
 	}
 	dispbottom(.@line$);
 	dispbottom("[DM] (quest: 0=not started  1=in progress  2=complete)");
 	dispbottom("[Flags] cassell=" + dm_arc04_cassell_unmasked + " bjorn_joined=" + dm_arc11_bjorn_joined + " carrion_bribed=" + dm_arc13_carrion_bribed);
+	dispbottom("[Gates] mira=" + dm_mira_lives + " echo=" + dm_echo_trusts_party + " prontera=" + dm_prontera_united + " varmundt=" + dm_varmundt_tools_stabilized + " himmelmez=" + dm_himmelmez_bargain);
+	dispbottom("[Finale] refusal_proof=" + (dm_arc10_echo_freed || dm_arc15_pratt_challenged) + " (echo or pratt for Refusal path)");
 	dispbottom("[Flags] himmelmez_bargained=" + dm_arc18_himmelmez_bargained + " campaign_complete=" + dm_campaign_complete);
+	dispbottom("[DM] Reminder: Ensure players have the merged client journal (89 campaign quests) for @dm warp lines and flavor.");
 	return;
 
 S_Exp:
 	.@offset = getarg(0, 0);
-	.@base = atoi(.@atcmd_parameters$[.@offset]);
-	.@job  = atoi(.@atcmd_parameters$[.@offset + 1]);
+	.@arg1$ = .dm_params$[.@offset];
+	
+	if (.@arg1$ == "challenge") {
+		.@scale$ = strtolower(.dm_params$[.@offset + 1]);
+		.@arc = callfunc("DM_CurrentArc");
+		if (atoi(.dm_params$[.@offset + 2]) > 0)
+			.@arc = atoi(.dm_params$[.@offset + 2]); // fallback arc
+
+		.@level = callfunc("DM_RewardArcLevel", .@arc);
+		.@bar = .@level * .@level * 25; // approximated "bar"
+		
+		if (.@scale$ == "minor") {
+			.@base = .@bar / 4;
+		} else if (.@scale$ == "major") {
+			.@base = .@bar;
+		} else { // standard
+			.@base = .@bar / 2;
+		}
+		.@job = .@base / 2;
+
+		.@given = callfunc("DM_PartyExp", .@base, .@job);
+		mapannounce strcharinfo(PC_MAP), "[DM] The party overcomes the challenge.", bc_map, 0xFFAA33;
+		dispbottom("[DM] Granted " + .@base + " base / " + .@job + " job EXP (Challenge: " + (.@scale$ == "" ? "standard" : .@scale$) + ", Arc " + .@arc + ") to " + .@given + " party member(s).");
+		return;
+	}
+
+	// Single-player target: @dm exp <player> <base> [job]  (arg1 present, non-numeric -> a name)
+	// Compare against its own round-tripped int: atoi() alone can't tell "0" apart
+	// from a non-numeric name (both atoi to 0), so "@dm exp 0 20000" (0 base EXP,
+	// party-wide) would otherwise be misread as a player named "0".
+	if (.@arg1$ != "" && .@arg1$ != ("" + atoi(.@arg1$))) {
+		.@base = atoi(.dm_params$[.@offset + 1]);
+		.@job  = atoi(.dm_params$[.@offset + 2]);
+
+		if (.@base <= 0 && .@job <= 0) {
+			dispbottom("[DM] Usage: @dm exp <player> <base> [job]");
+			dispbottom("[DM] Example: @dm exp Whitney 5000 2000");
+			return;
+		}
+
+		.@given = callfunc("DM_TargetExp", .@arg1$, .@base, .@job);
+		if (.@given)
+			dispbottom("[DM] Granted " + .@base + " base / " + .@job + " job EXP to " + .@arg1$ + ".");
+		else
+			dispbottom("[DM] " + .@arg1$ + " is not online.");
+		return;
+	}
+
+	.@base = atoi(.@arg1$);
+	.@job  = atoi(.dm_params$[.@offset + 1]);
 
 	if (.@base <= 0 && .@job <= 0) {
-		dispbottom("[DM] Usage: @dm exp <base> [job]");
+		dispbottom("[DM] Usage: @dm exp <base> [job]              (whole party)");
+		dispbottom("[DM]        @dm exp <player> <base> [job]      (one player)");
+		dispbottom("[DM]        @dm exp challenge <minor|standard|major> [arc]");
 		dispbottom("[DM] Example: @dm exp 50000 20000");
+		dispbottom("[DM] Example: @dm exp Whitney 5000 2000");
 		return;
 	}
 
@@ -453,53 +791,114 @@ S_Exp:
 	dispbottom("[DM] Granted " + .@base + " base / " + .@job + " job EXP to " + .@given + " party member(s).");
 	return;
 
+S_Points:
+	.@offset = getarg(0, 0);
+	.@amount = atoi(.dm_params$[.@offset]);
+	.@kind$ = strtolower(.dm_params$[.@offset + 1]);
+
+	if (.@amount == 0) {
+		dispbottom("[DM] Usage: @dm points <amount> [cash]   (default: Kafra Points, spent first by the Cash Shop)");
+		dispbottom("[DM] Example: @dm points 500          (500 Kafra Points to the party)");
+		dispbottom("[DM]          @dm points -200 cash     (remove 200 Cash Points from the party)");
+		return;
+	}
+
+	.@cash = (.@kind$ == "cash") ? 1 : 0;
+	.@given = callfunc("DM_PartyPoints", .@amount, .@cash);
+	dispbottom("[DM] Granted " + .@amount + " " + (.@cash ? "Cash" : "Kafra") + " Point(s) to " + .@given + " party member(s).");
+	return;
+
+S_ExpRate:
+	.@offset = getarg(0, 0);
+	.@action$ = strtolower(.dm_params$[.@offset]);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+
+	if (.@action$ == "" || .@action$ == "status") {
+		if ($@dm_exp_party > 0 && $@dm_exp_rate > 0)
+			dispbottom("[DM] Monster EXP rate is " + $@dm_exp_rate + "% for party " + $@dm_exp_party + ".");
+		else if ($@dm_exp_char > 0 && $@dm_exp_rate > 0)
+			dispbottom("[DM] Monster EXP rate is " + $@dm_exp_rate + "% for character " + $@dm_exp_char + ".");
+		else
+			dispbottom("[DM] Monster EXP rate is normal.");
+		dispbottom("[DM] Usage: @dm exprate <percent|off|status>  Example: @dm exprate 200");
+		return;
+	}
+
+	if (.@action$ == "off" || .@action$ == "clear" || .@action$ == "normal") {
+		$@dm_exp_party = 0;
+		$@dm_exp_char = 0;
+		$@dm_exp_rate = 100;
+		dispbottom("[DM] Monster EXP rate reset to normal.");
+		return;
+	}
+
+	.@rate = atoi(.@action$);
+	if (.@rate < 1 || .@rate > 1000) {
+		dispbottom("[DM] EXP rate must be 1-1000 percent, or off/status. 200 = 2x.");
+		return;
+	}
+
+	$@dm_exp_party = (.@party_id > 0) ? .@party_id : 0;
+	$@dm_exp_char = (.@party_id > 0) ? 0 : getcharid(CHAR_ID_CHAR);
+	$@dm_exp_rate = .@rate;
+	if (.@party_id > 0)
+		dispbottom("[DM] Monster EXP rate set to " + .@rate + "% for party " + .@party_id + ".");
+	else
+		dispbottom("[DM] Monster EXP rate set to " + .@rate + "% for you.");
+	dispbottom("[DM] This affects monster/MVP EXP only. Use @dm exprate off to reset.");
+	return;
+
+S_Levels:
+	dispbottom("[DM] Target finish / reward levels by arc:");
+	dispbottom("[DM] A01 18  A02 28  A03 38  A04 48  A05 58");
+	dispbottom("[DM] A06 68  A07 72  A08 76  A09 80  A10 84");
+	dispbottom("[DM] A11 88  A12 90  A13 92  A14 94  A15 95");
+	dispbottom("[DM] A16 96  A17 97  A18 98  A19 99");
+	dispbottom("[DM] These are not start requirements; they drive @dmreward scaling.");
+	return;
+
 S_Mode:
 	.@offset = getarg(0, 0);
-	.@action$ = .@atcmd_parameters$[.@offset];
+	.@action$ = .dm_params$[.@offset];
 	if (.@action$ == "on") {
+		if ($dm_active_party > 0 && $dm_active_party != getcharid(CHAR_ID_PARTY))
+			callfunc("DM_InstanceQuestErase", 20000, $dm_active_party);
 		$dm_mode = 1;
 		$dm_active_party = getcharid(CHAR_ID_PARTY);
+		callfunc("DM_InstanceQuestStart", 20000, $dm_active_party);
 		dispbottom("[DM] DnD mode enabled. MVP spawns will be suppressed.");
 		dispbottom("[DM] Campaign NPCs are active for party " + $dm_active_party + ".");
 		mapannounce "prontera", "A campaign session has begun. Check the Session Board near the fountain.", bc_map, 0xFFAA33;
 		return;
 	}
 	if (.@action$ == "off") {
+		callfunc("DM_InstanceQuestErase", 20000, $dm_active_party);
+		.@released = callfunc("DM_CutsceneParty", 0, "", 0, $dm_active_party);
+		.@undowned = callfunc("DM_DownedClearParty", $dm_active_party);
+		$@dm_downed_rule = 0;
 		$dm_mode = 0;
 		$dm_active_party = 0;
+		$@dm_exp_party = 0;
+		$@dm_exp_char = 0;
+		$@dm_exp_rate = 100;
+		callfunc("DM_EncounterReset");
+		callfunc("DM_TrapCommand", 2, "clear", "all");
 		dispbottom("[DM] DnD mode disabled. MVP spawns will resume naturally.");
+		if (.@released > 0)
+			dispbottom("[DM] Released cutscene lock for " + .@released + " member(s).");
+		if (.@undowned > 0)
+			dispbottom("[DM] Released " + .@undowned + " downed member(s).");
 		return;
 	}
 	dispbottom("[DM] Mode is currently " + ($dm_mode ? "ON" : "OFF") + ($dm_mode ? " (party " + $dm_active_party + ")" : ""));
 	dispbottom("[DM] Usage: @dm mode <on|off>");
 	return;
 
-S_HazardStatus:
-	.@status$ = strtolower(getarg(0, ""));
-	if (.@status$ == "" || .@status$ == "0" || .@status$ == "none")
-		return 0;
-	if (.@status$ == "poison" || .@status$ == "sc_poison")
-		return SC_POISON;
-	if (.@status$ == "freeze" || .@status$ == "frozen" || .@status$ == "sc_freeze")
-		return SC_FREEZE;
-	if (.@status$ == "stun" || .@status$ == "stunned" || .@status$ == "sc_stun")
-		return SC_STUN;
-	if (.@status$ == "sleep" || .@status$ == "sc_sleep")
-		return SC_SLEEP;
-	if (.@status$ == "curse" || .@status$ == "cursed" || .@status$ == "sc_curse")
-		return SC_CURSE;
-	if (.@status$ == "confusion" || .@status$ == "confused" || .@status$ == "sc_confusion")
-		return SC_CONFUSION;
-	if (.@status$ == "blind" || .@status$ == "sc_blind")
-		return SC_BLIND;
-	.@status = atoi(.@status$);
-	if (.@status > 0)
-		return .@status;
-	return -1;
+
 
 S_Hazard:
 	.@offset = getarg(0, 0);
-	.@action$ = .@atcmd_parameters$[.@offset];
+	.@action$ = .dm_params$[.@offset];
 
 	if (.@action$ == "clear" || .@action$ == "stop") {
 		deltimer(strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazardTick");
@@ -508,15 +907,15 @@ S_Hazard:
 		return;
 	}
 
-	.@range = atoi(.@atcmd_parameters$[.@offset]);
-	.@damage = atoi(.@atcmd_parameters$[.@offset + 1]);
-	.@ticks = atoi(.@atcmd_parameters$[.@offset + 2]);
-	.@interval = atoi(.@atcmd_parameters$[.@offset + 3]);
-	.@status = callsub(S_HazardStatus, .@atcmd_parameters$[.@offset + 4]);
-	.@status_ms = atoi(.@atcmd_parameters$[.@offset + 5]);
+	.@range = atoi(.dm_params$[.@offset]);
+	.@damage = atoi(.dm_params$[.@offset + 1]);
+	.@ticks = atoi(.dm_params$[.@offset + 2]);
+	.@interval = atoi(.dm_params$[.@offset + 3]);
+	.@status = callfunc("DM_HazardStatus", .dm_params$[.@offset + 4]);
+	.@status_ms = atoi(.dm_params$[.@offset + 5]);
 
 	if (.@status < 0) {
-		dispbottom("[DM] Unknown hazard status: " + .@atcmd_parameters$[.@offset + 4]);
+		dispbottom("[DM] Unknown hazard status: " + .dm_params$[.@offset + 4]);
 		dispbottom("[DM] Use a numeric SC id, or: poison, freeze, stun, sleep, curse, confusion, blind, none.");
 		return;
 	}
@@ -560,9 +959,15 @@ S_Hazard:
 
 S_Warp:
 	.@offset = getarg(0, 0);
-	.@map$ = .@atcmd_parameters$[.@offset];
-	.@x = atoi(.@atcmd_parameters$[.@offset + 1]);
-	.@y = atoi(.@atcmd_parameters$[.@offset + 2]);
+	.@map$ = .dm_params$[.@offset];
+	.@x = atoi(.dm_params$[.@offset + 1]);
+	.@y = atoi(.dm_params$[.@offset + 2]);
+
+	if (.@map$ == "tavern" || .@map$ == "hub") {
+		.@map$ = "prt_in";
+		.@x = 163;
+		.@y = 22;
+	}
 
 	if (.@map$ == "") {
 		dispbottom("[DM] Usage: @dm warp <map> [x] [y]");
@@ -581,7 +986,7 @@ S_Recall:
 
 S_Instance:
 	.@offset = getarg(0, 0);
-	.@action$ = .@atcmd_parameters$[.@offset];
+	.@action$ = .dm_params$[.@offset];
 
 	if (.@action$ == "end") {
 		callfunc("DM_InstanceEnd", getcharid(CHAR_ID_PARTY));
@@ -589,17 +994,17 @@ S_Instance:
 	}
 
 	if (.@action$ == "start") {
-		.@src$ = .@atcmd_parameters$[.@offset + 1];
+		.@src$ = .dm_params$[.@offset + 1];
 		if (.@src$ == "") {
 			dispbottom("[DM] Usage: @dm instance start <source_map> [x] [y] [label]");
 			return;
 		}
-		.@x = atoi(.@atcmd_parameters$[.@offset + 2]);
-		.@y = atoi(.@atcmd_parameters$[.@offset + 3]);
+		.@x = atoi(.dm_params$[.@offset + 2]);
+		.@y = atoi(.dm_params$[.@offset + 3]);
 
 		.@label$ = "";
-		for (.@i = .@offset + 4; .@i < .@atcmd_numparameters; ++.@i)
-			.@label$ += (.@i > .@offset + 4 ? " " : "") + .@atcmd_parameters$[.@i];
+		for (.@i = .@offset + 4; .@i < .dm_numparams; ++.@i)
+			.@label$ += (.@i > .@offset + 4 ? " " : "") + .dm_params$[.@i];
 		if (.@label$ == "")
 			.@label$ = "Seal Cascade - " + .@src$;
 
@@ -612,12 +1017,12 @@ S_Instance:
 
 S_Reward:
 	.@offset = getarg(0, 0);
-	.@arc = atoi(.@atcmd_parameters$[.@offset]);
+	.@arc = atoi(.dm_params$[.@offset]);
 	if (.@arc <= 0)
 		.@arc = 1;
 
-	.@tier = callfunc("DM_ParseTier", .@atcmd_parameters$[.@offset + 1]);
-	.@mode$ = strtolower(.@atcmd_parameters$[.@offset + 2]);
+	.@tier = callfunc("DM_ParseTier", .dm_params$[.@offset + 1]);
+	.@mode$ = strtolower(.dm_params$[.@offset + 2]);
 	.@dryrun = (.@mode$ == "preview" || .@mode$ == "dryrun" || .@mode$ == "roll" || atoi(.@mode$) > 0);
 	.@party_id = getcharid(CHAR_ID_PARTY);
 	.@reward_level = callfunc("DM_RewardArcLevel", .@arc);
@@ -627,7 +1032,12 @@ S_Reward:
 
 S_Flag:
 	.@offset = getarg(0, 0);
-	.@action$ = .@atcmd_parameters$[.@offset];
+	.@action$ = .dm_params$[.@offset];
+
+	if (.@action$ == "sync") {
+		callfunc("DM_FlagSyncFrom", .dm_params$[.@offset + 1]);
+		return;
+	}
 
 	if (.@action$ == "arc01") {
 		callfunc("DM_PrintArc01Flags");
@@ -635,8 +1045,8 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc01") {
-		callfunc("DM_ClearArc01Flags");
-		dispbottom("[DM] Arc 01 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 1);
+		dispbottom("[DM] Arc 01 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -646,8 +1056,8 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc02") {
-		callfunc("DM_ClearArc02Flags");
-		dispbottom("[DM] Arc 02 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 2);
+		dispbottom("[DM] Arc 02 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -657,8 +1067,8 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc03") {
-		callfunc("DM_ClearArc03Flags");
-		dispbottom("[DM] Arc 03 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 3);
+		dispbottom("[DM] Arc 03 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -668,8 +1078,8 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc04") {
-		callfunc("DM_ClearArc04Flags");
-		dispbottom("[DM] Arc 04 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 4);
+		dispbottom("[DM] Arc 04 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -679,8 +1089,8 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc05") {
-		callfunc("DM_ClearArc05Flags");
-		dispbottom("[DM] Arc 05 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 5);
+		dispbottom("[DM] Arc 05 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -690,8 +1100,8 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc06") {
-		callfunc("DM_ClearArc06Flags");
-		dispbottom("[DM] Arc 06 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 6);
+		dispbottom("[DM] Arc 06 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
@@ -701,42 +1111,43 @@ S_Flag:
 	}
 
 	if (.@action$ == "cleararc07") {
-		callfunc("DM_ClearArc07Flags");
-		dispbottom("[DM] Arc 07 flags cleared for this character.");
+		.@done = callfunc("DM_PartyClearArcFlags", 7);
+		dispbottom("[DM] Arc 07 flags cleared party-wide (" + .@done + " flag writes).");
 		return;
 	}
 
 	if (.@action$ == "arc08") { callfunc("DM_PrintArc08Flags"); return; }
-	if (.@action$ == "cleararc08") { callfunc("DM_ClearArc08Flags"); dispbottom("[DM] Arc 08 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc08") { .@done = callfunc("DM_PartyClearArcFlags", 8); dispbottom("[DM] Arc 08 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc09") { callfunc("DM_PrintArc09Flags"); return; }
-	if (.@action$ == "cleararc09") { callfunc("DM_ClearArc09Flags"); dispbottom("[DM] Arc 09 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc09") { .@done = callfunc("DM_PartyClearArcFlags", 9); dispbottom("[DM] Arc 09 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc10") { callfunc("DM_PrintArc10Flags"); return; }
-	if (.@action$ == "cleararc10") { callfunc("DM_ClearArc10Flags"); dispbottom("[DM] Arc 10 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc10") { .@done = callfunc("DM_PartyClearArcFlags", 10); dispbottom("[DM] Arc 10 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc11") { callfunc("DM_PrintArc11Flags"); return; }
-	if (.@action$ == "cleararc11") { callfunc("DM_ClearArc11Flags"); dispbottom("[DM] Arc 11 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc11") { .@done = callfunc("DM_PartyClearArcFlags", 11); dispbottom("[DM] Arc 11 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc12") { callfunc("DM_PrintArc12Flags"); return; }
-	if (.@action$ == "cleararc12") { callfunc("DM_ClearArc12Flags"); dispbottom("[DM] Arc 12 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc12") { .@done = callfunc("DM_PartyClearArcFlags", 12); dispbottom("[DM] Arc 12 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc13") { callfunc("DM_PrintArc13Flags"); return; }
-	if (.@action$ == "cleararc13") { callfunc("DM_ClearArc13Flags"); dispbottom("[DM] Arc 13 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc13") { .@done = callfunc("DM_PartyClearArcFlags", 13); dispbottom("[DM] Arc 13 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc14") { callfunc("DM_PrintArc14Flags"); return; }
-	if (.@action$ == "cleararc14") { callfunc("DM_ClearArc14Flags"); dispbottom("[DM] Arc 14 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc14") { .@done = callfunc("DM_PartyClearArcFlags", 14); dispbottom("[DM] Arc 14 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc15") { callfunc("DM_PrintArc15Flags"); return; }
-	if (.@action$ == "cleararc15") { callfunc("DM_ClearArc15Flags"); dispbottom("[DM] Arc 15 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc15") { .@done = callfunc("DM_PartyClearArcFlags", 15); dispbottom("[DM] Arc 15 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc16") { callfunc("DM_PrintArc16Flags"); return; }
-	if (.@action$ == "cleararc16") { callfunc("DM_ClearArc16Flags"); dispbottom("[DM] Arc 16 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc16") { .@done = callfunc("DM_PartyClearArcFlags", 16); dispbottom("[DM] Arc 16 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc17") { callfunc("DM_PrintArc17Flags"); return; }
-	if (.@action$ == "cleararc17") { callfunc("DM_ClearArc17Flags"); dispbottom("[DM] Arc 17 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc17") { .@done = callfunc("DM_PartyClearArcFlags", 17); dispbottom("[DM] Arc 17 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc18") { callfunc("DM_PrintArc18Flags"); return; }
-	if (.@action$ == "cleararc18") { callfunc("DM_ClearArc18Flags"); dispbottom("[DM] Arc 18 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc18") { .@done = callfunc("DM_PartyClearArcFlags", 18); dispbottom("[DM] Arc 18 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 	if (.@action$ == "arc19") { callfunc("DM_PrintArc19Flags"); return; }
-	if (.@action$ == "cleararc19") { callfunc("DM_ClearArc19Flags"); dispbottom("[DM] Arc 19 flags cleared for this character."); return; }
+	if (.@action$ == "cleararc19") { .@done = callfunc("DM_PartyClearArcFlags", 19); dispbottom("[DM] Arc 19 flags cleared party-wide (" + .@done + " flag writes)."); return; }
 
 
 
 
-	.@flag$ = .@atcmd_parameters$[.@offset + 1];
+	.@flag$ = .dm_params$[.@offset + 1];
 	if (.@flag$ == "") {
-		dispbottom("[DM] Usage: @dmflag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
+		dispbottom("[DM] Usage: @dmflag <get|set|clear|sync> [name] [value]");
+		dispbottom("[DM]        @dmflag <arc01..arc19|cleararc01..cleararc19>");
 		return;
 	}
 
@@ -746,7 +1157,7 @@ S_Flag:
 	}
 
 	if (.@action$ == "set") {
-		.@value = atoi(.@atcmd_parameters$[.@offset + 2]);
+		.@value = atoi(.dm_params$[.@offset + 2]);
 		.@done = callfunc("DM_InstanceSetFlag", .@flag$, .@value);
 		dispbottom("[DM] " + .@flag$ + " set to " + .@value + " for " + .@done + " party member(s).");
 		return;
@@ -763,23 +1174,79 @@ S_Flag:
 
 S_Quest:
 	.@offset = getarg(0, 0);
-	.@action$ = .@atcmd_parameters$[.@offset];
-	.@quest_id = atoi(.@atcmd_parameters$[.@offset + 1]);
+	.@action$ = .dm_params$[.@offset];
 
+	if (.@action$ == "sync") {
+		.@dir$ = .dm_params$[.@offset + 1];
+		if (.@dir$ != "back") .@dir$ = "forward";
+		callsub(S_QuestSync, .@dir$);
+		return;
+	}
+
+	if (.@action$ == "refresh") {
+		callsub(S_QuestRefresh);
+		return;
+	}
+
+	if (.@action$ == "list") {
+		.@arc = atoi(.dm_params$[.@offset + 1]);
+		if (.@arc <= 0) .@arc = callfunc("DM_CurrentArc");
+		if (.@arc < 1) .@arc = 1;
+		if (.@arc > 19) .@arc = 19;
+
+		dispbottom("[DM] Quest progress for Arc " + .@arc + ":");
+		.@count = callfunc("DM_ArcQuestCount", .@arc);
+		
+		.@party_id = $dm_active_party;
+		if (.@party_id == 0) .@party_id = getcharid(CHAR_ID_PARTY);
+		if (.@party_id > 0) {
+			getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+			.@pc_count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		} else {
+			.@pc_count = 0;
+		}
+
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			.@qid = callfunc("DM_ArcQuestId", .@arc, .@i);
+			.@qname$ = callfunc("DM_ArcQuestName", .@arc, .@i);
+			.@done = 0; .@inprog = 0; .@missing = 0;
+			
+			for (.@j = 0; .@j < .@pc_count; ++.@j) {
+				if (!isloggedin(.@accid[.@j], .@charid[.@j])) continue;
+				if (!attachrid(.@accid[.@j])) continue;
+				
+				.@p = questprogress(.@qid);
+				if (.@p == 1) ++.@inprog;
+				else if (.@p == 2) ++.@done;
+				else ++.@missing;
+				
+				detachrid();
+			}
+			dispbottom("[DM] " + .@qid + " (" + .@qname$ + "): " + .@done + " done, " + .@inprog + " in prog, " + .@missing + " missing.");
+		}
+		return;
+	}
+
+	.@quest_id = atoi(.dm_params$[.@offset + 1]);
 	if (.@quest_id <= 0) {
-		dispbottom("[DM] Usage: @dmquest <start|complete|erase> <quest_id>");
+		dispbottom("[DM] Usage: @dmquest <list> [arc]");
+		dispbottom("[DM]        @dmquest <start|complete|erase> <quest_id>");
+		dispbottom("[DM]        @dmquest sync <forward|back>");
+		dispbottom("[DM]        @dmquest refresh");
 		return;
 	}
 
 	if (.@action$ == "start" || .@action$ == "set") {
 		.@done = callfunc("DM_InstanceQuestStart", .@quest_id);
-		dispbottom("[DM] Quest " + .@quest_id + " started for " + .@done + " party member(s).");
+		.@qname$ = callfunc("DM_QuestNameById", .@quest_id);
+		dispbottom("[DM] Quest " + .@quest_id + " (" + .@qname$ + ") started for " + .@done + " party member(s).");
 		return;
 	}
 
 	if (.@action$ == "complete") {
 		.@done = callfunc("DM_InstanceQuestComplete", .@quest_id);
-		dispbottom("[DM] Quest " + .@quest_id + " completed for " + .@done + " party member(s).");
+		.@qname$ = callfunc("DM_QuestNameById", .@quest_id);
+		dispbottom("[DM] Quest " + .@quest_id + " (" + .@qname$ + ") completed for " + .@done + " party member(s).");
 		return;
 	}
 
@@ -790,13 +1257,245 @@ S_Quest:
 	}
 
 	dispbottom("[DM] Unknown quest action: " + .@action$);
+	dispbottom("[DM] Usage: @dmquest <start|complete|erase> <quest_id>");
+	dispbottom("[DM]        @dmquest sync <forward|back>");
+	dispbottom("[DM]        @dmquest refresh");
+	return;
+
+S_QuestRefresh:
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@party_id <= 0) {
+		dispbottom("[DM] Join or create a party first.");
+		return;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	.@nm = 0;
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		.@maccid[.@nm] = .@accid[.@i];
+		++.@nm;
+	}
+
+	// Build campaign quest ID list from the quest registry (single source of truth).
+	.@n = 0;
+	.@qids[.@n] = 20000; ++.@n;
+	for (.@arc = 1; .@arc <= 19; ++.@arc) {
+		.@qc = callfunc("DM_ArcQuestCount", .@arc);
+		for (.@qi = 0; .@qi < .@qc; ++.@qi) {
+			.@qids[.@n] = callfunc("DM_ArcQuestId", .@arc, .@qi);
+			++.@n;
+		}
+	}
+
+	.@refreshed = 0;
+	for (.@i = 0; .@i < .@nm; ++.@i) {
+		if (!attachrid(.@maccid[.@i])) continue;
+		for (.@qi = 0; .@qi < .@n; ++.@qi) {
+			if (questprogress(.@qids[.@qi]) == 1) {
+				erasequest(.@qids[.@qi]);
+				setquest(.@qids[.@qi]);
+				++.@refreshed;
+			}
+		}
+		detachrid();
+	}
+
+	if (.@origin_aid) attachrid(.@origin_aid);
+	dispbottom("[DM] Refreshed " + .@refreshed + " in-progress quest(s) across " + .@nm + " member(s).");
+	return;
+
+S_QuestSync:
+	.@dir$ = getarg(0, "forward");
+	.@forward = (.@dir$ != "back");
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@party_id <= 0) {
+		dispbottom("[DM] Join or create a party first.");
+		return;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	.@nm = 0;
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		.@maccid[.@nm] = .@accid[.@i];
+		++.@nm;
+	}
+
+	if (.@nm < 2) {
+		dispbottom("[DM] Need at least 2 online party members to sync.");
+		if (.@origin_aid) attachrid(.@origin_aid);
+		return;
+	}
+
+	// Build list of all campaign quest IDs from the quest registry (single source of truth).
+	.@n = 0;
+	.@qids[.@n] = 20000; ++.@n;
+	for (.@arc = 1; .@arc <= 19; ++.@arc) {
+		.@qc = callfunc("DM_ArcQuestCount", .@arc);
+		for (.@qj = 0; .@qj < .@qc; ++.@qj) {
+			.@qids[.@n] = callfunc("DM_ArcQuestId", .@arc, .@qj);
+			++.@n;
+		}
+	}
+
+	.@changed = 0;
+	for (.@qi = 0; .@qi < .@n; ++.@qi) {
+		.@qid = .@qids[.@qi];
+		.@best = (.@forward ? 0 : 2);
+
+		// Pass 1: find furthest (forward) or least (back) progress.
+		for (.@i = 0; .@i < .@nm; ++.@i) {
+			if (!attachrid(.@maccid[.@i])) continue;
+			.@prog = questprogress(.@qid);
+			detachrid();
+			if (.@forward && .@prog > .@best) .@best = .@prog;
+			else if (!.@forward && .@prog < .@best) .@best = .@prog;
+		}
+
+		// Pass 2: apply target progress to every member.
+		for (.@i = 0; .@i < .@nm; ++.@i) {
+			if (!attachrid(.@maccid[.@i])) continue;
+			.@cur = questprogress(.@qid);
+			if (.@cur != .@best) {
+				if (.@cur > 0) erasequest(.@qid);
+				if (.@best >= 1) setquest(.@qid);
+				if (.@best == 2) completequest(.@qid);
+				++.@changed;
+			}
+			detachrid();
+		}
+	}
+
+	if (.@origin_aid) attachrid(.@origin_aid);
+	dispbottom("[DM] Quest sync (" + .@dir$ + ") done — " + .@changed + " update(s) across " + .@nm + " member(s).");
+	return;
+
+S_ResetStat:
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@done = 0;
+	if (.@party_id > 0) {
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i])) continue;
+			if (!attachrid(.@accid[.@i])) continue;
+			resetstatus();
+			detachrid();
+			++.@done;
+		}
+		if (.@origin_aid) attachrid(.@origin_aid);
+	} else {
+		resetstatus();
+		.@done = 1;
+	}
+	dispbottom("[DM] Status points reset for " + .@done + " member(s).");
+	return;
+
+S_ResetSkill:
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@done = 0;
+	if (.@party_id > 0) {
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i])) continue;
+			if (!attachrid(.@accid[.@i])) continue;
+			resetskill();
+			detachrid();
+			++.@done;
+		}
+		if (.@origin_aid) attachrid(.@origin_aid);
+	} else {
+		resetskill();
+		.@done = 1;
+	}
+	dispbottom("[DM] Skill points reset for " + .@done + " member(s).");
+	return;
+
+S_SavePoint:
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	getmapxy(.@save_map$, .@save_x, .@save_y, UNITTYPE_PC);
+	.@done = 0;
+
+	if (.@party_id > 0) {
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+				continue;
+			if (!attachrid(.@accid[.@i]))
+				continue;
+			savepoint(.@save_map$, .@save_x, .@save_y);
+			detachrid();
+			++.@done;
+		}
+		if (.@origin_aid)
+			attachrid(.@origin_aid);
+	} else {
+		savepoint(.@save_map$, .@save_x, .@save_y);
+		.@done = 1;
+	}
+
+	dispbottom("[DM] Save point set to " + .@save_map$ + " " + .@save_x + "," + .@save_y + " for " + .@done + " member(s).");
+	return;
+
+S_Novice:
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@granted = 0;
+	// Tutorial quest IDs from the old novice training grounds (new_1-1 through new_1-3).
+	// Erasing them removes any gating in case a player landed there before skipping.
+	setarray .@tut_quests[0], 7117, 7118, 7119, 7120, 7121, 7122, 7123, 7124, 7126, 7127;
+	if (.@party_id > 0) {
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+				continue;
+			if (!attachrid(.@accid[.@i]))
+				continue;
+			skill "NV_FIRSTAID", 1, 0;
+			skill "NV_TRICKDEAD", 1, 0;
+			for (.@qi = 0; .@qi < getarraysize(.@tut_quests); ++.@qi) {
+				if (questprogress(.@tut_quests[.@qi]))
+					erasequest(.@tut_quests[.@qi]);
+			}
+			detachrid();
+			++.@granted;
+		}
+		if (.@origin_aid)
+			attachrid(.@origin_aid);
+	} else {
+		skill "NV_FIRSTAID", 1, 0;
+		skill "NV_TRICKDEAD", 1, 0;
+		for (.@qi = 0; .@qi < getarraysize(.@tut_quests); ++.@qi) {
+			if (questprogress(.@tut_quests[.@qi]))
+				erasequest(.@tut_quests[.@qi]);
+		}
+		.@granted = 1;
+	}
+	dispbottom("[DM] Granted First Aid + Play Dead and cleared tutorial flags for " + .@granted + " member(s).");
 	return;
 
 S_Spawn:
 	.@offset = getarg(0, 0);
-	.@mob_id = atoi(.@atcmd_parameters$[.@offset]);
-	.@count = atoi(.@atcmd_parameters$[.@offset + 1]);
-	.@name$ = .@atcmd_parameters$[.@offset + 2];
+	.@mob_id = atoi(.dm_params$[.@offset]);
+	.@count = atoi(.dm_params$[.@offset + 1]);
+	.@name$ = .dm_params$[.@offset + 2];
 
 	if (.@mob_id <= 0) {
 		dispbottom("[DM] Usage: @dm spawn <mob_id> [count] [name]");
@@ -809,8 +1508,117 @@ S_Spawn:
 		.@name$ = "--ja--";
 
 	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
-	areamonster(.@map$, .@x - 3, .@y - 3, .@x + 3, .@y + 3, .@name$, .@mob_id, .@count, "DM_Console::OnDMKilled");
-	dispbottom("[DM] Spawned " + .@count + " mob(s) near you on " + .@map$ + ".");
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		.@sx = .@x + rand(7) - 3;
+		.@sy = .@y + rand(7) - 3;
+		if (.@sx < 1)
+			.@sx = .@x;
+		if (.@sy < 1)
+			.@sy = .@y;
+
+		.@gid = monster(.@map$, .@sx, .@sy, .@name$, .@mob_id, 1, "DM_Console::OnDMKilled");
+		if (.@gid <= 0)
+			continue;
+		callfunc("DM_EncounterTrack", .@gid, .@name$, .@mob_id, 0);
+		++.@spawned;
+	}
+	dispbottom("[DM] Spawned " + .@spawned + " mob(s) near you on " + .@map$ + ". Use @dm encounter status for GIDs.");
+	return;
+
+S_HoldSpawn:
+	.@offset = getarg(0, 0);
+	.@mob_id = atoi(.dm_params$[.@offset]);
+	.@count = atoi(.dm_params$[.@offset + 1]);
+	.@name$ = .dm_params$[.@offset + 2];
+
+	if (.@mob_id <= 0) {
+		dispbottom("[DM] Usage: @dm holdspawn <mob_id> [count] [name]");
+		return;
+	}
+
+	if (.@count <= 0)
+		.@count = 1;
+	if (.@name$ == "")
+		.@name$ = "--ja--";
+
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		.@sx = .@x + rand(7) - 3;
+		.@sy = .@y + rand(7) - 3;
+		if (.@sx < 1)
+			.@sx = .@x;
+		if (.@sy < 1)
+			.@sy = .@y;
+
+		.@gid = monster(.@map$, .@sx, .@sy, .@name$, .@mob_id, 1, "DM_Console::OnDMKilled");
+		if (.@gid <= 0)
+			continue;
+
+		.@mode = getunitdata(.@gid, UDT_MODE);
+		@dm_hold_gid[@dm_hold_count] = .@gid;
+		@dm_hold_mode[@dm_hold_count] = .@mode;
+		++@dm_hold_count;
+		++.@held;
+
+		callfunc("DM_EncounterTrack", .@gid, .@name$, .@mob_id, 1);
+		setunitdata(.@gid, UDT_MODE, .@mode & ~(MD_AGGRESSIVE|MD_ANGRY|MD_CANATTACK));
+	}
+
+	dispbottom("[DM] Held " + .@held + " staged mob(s). Use @dm release when combat begins, or @dm encounter status for GIDs.");
+	return;
+
+S_Release:
+	.@offset = getarg(0, 0);
+	.@which$ = .dm_params$[.@offset];
+	if (.@which$ == "")
+		.@which$ = "all";
+
+	if (@dm_hold_count <= 0) {
+		dispbottom("[DM] No held mobs tracked for you.");
+		return;
+	}
+
+	if (.@which$ == "last") {
+		.@start = @dm_hold_count - 1;
+		.@end = @dm_hold_count;
+	} else {
+		.@start = 0;
+		.@end = @dm_hold_count;
+	}
+
+	for (.@i = .@start; .@i < .@end; ++.@i) {
+		if (@dm_hold_gid[.@i] <= 0)
+			continue;
+		setunitdata(@dm_hold_gid[.@i], UDT_MODE, @dm_hold_mode[.@i] | MD_AGGRESSIVE | MD_CANATTACK | MD_CANMOVE);
+		callfunc("DM_EncounterMarkHeld", @dm_hold_gid[.@i], 0);
+		++.@released;
+	}
+
+	if (.@which$ == "last") {
+		--@dm_hold_count;
+	} else {
+		deletearray @dm_hold_gid[0], getarraysize(@dm_hold_gid);
+		deletearray @dm_hold_mode[0], getarraysize(@dm_hold_mode);
+		@dm_hold_count = 0;
+	}
+
+	dispbottom("[DM] Released " + .@released + " held mob(s).");
+	return;
+
+S_HoldClear:
+	if (@dm_hold_count <= 0)
+		return;
+
+	for (.@i = 0; .@i < @dm_hold_count; ++.@i) {
+		if (@dm_hold_gid[.@i] > 0) {
+			unitkill(@dm_hold_gid[.@i]);
+			callfunc("DM_EncounterForgetGid", @dm_hold_gid[.@i]);
+		}
+	}
+	deletearray @dm_hold_gid[0], getarraysize(@dm_hold_gid);
+	deletearray @dm_hold_mode[0], getarraysize(@dm_hold_mode);
+	@dm_hold_count = 0;
+	dispbottom("[DM] Cleared held staged mobs.");
 	return;
 
 }

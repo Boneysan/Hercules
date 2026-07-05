@@ -3,14 +3,10 @@
 //===== By: ==================================================
 //= Seal Cascade DM tooling
 //===== Description: =========================================
-//= Morroc's relief mission hides a cult dig toward the oldest
-//= seal under the desert. Rashid guides the party through
-//= Sograt, Ant Hell, Sphinx, and Pyramid. Mother Sabra frames
-//= the moral cost. Osiris and Amon Ra stage the tomb-king beats.
-//=
-//= Source notes:
-//= H:\Docs\Obsidian Notes\Game Design\Ragnarok_Online\Campaign\
-//=   Act_I_World_at_Peace\Arc_03_Sand_and_Whispers
+//= Morroc's crisis, adapted from the Obsidian Dialogue Script.
+//= Mira Ashkey initiates the search for her brother.
+//= A Guild Assassin warns the party at the Pyramids.
+//= The High Priest summons Osiris, then Amon Ra.
 //=
 //= Quests (db/quest_db.conf):
 //=   20013 Sand and Whispers          (arc tracker)
@@ -21,18 +17,21 @@
 //=   20018 The King Beneath           (Amon Ra)
 //===========================================================
 
-// Rashid - tomb-guide and Arc 3 quest-giver
-morocc,159,97,4	script	Rashid the Guide#dm	4_M_ORIENT02,{
+// Mira Ashkey - Refugee Camp and Arc 3 quest-giver
+morocc,159,97,4	script	Mira Ashkey#dm	4_F_02,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20018) == 2) {
-		mes("[Rashid]");
-		if (dm_arc03_rashid_mocked)
-			mes("So. You heard it too. Old fool, was I?");
-		else
-			mes("You came back from below the kings. That means the thing I felt was not age or wine.");
-		next();
-		mes("[Rashid]");
-		mes("Keep the lid-stone rubbing. Someday someone will try to open what it covers.");
+		mes("[Mira]");
+		if (dm_arc03_mira_scarf_returned) {
+			mes("^3355FF*Mira wraps the torn blue scarf around her brass house-key without a word.*^000000");
+			next();
+			mes("[Mira]");
+			mes("He didn't suffer long. That's... that's something. Thank you. Thank you for not leaving him in the dark.");
+		} else {
+			mes("You returned. Did you find him? Did you find his scarf?");
+			next();
+			mes("^3355FF*You shake your head. She turns away, looking out over the endless desert.*^000000");
+		}
 		close();
 	}
 
@@ -49,55 +48,52 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20013, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20013, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20014, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20015, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20016, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
-	mes("[Rashid]");
-	mes("Morroc laughs at the demon under the sand because laughter is cheaper than moving.");
+	mes("^3355FF*Mira clutches a brass house-key wrapped in red thread.*^000000");
 	next();
-	if (countitem(50001) > 0 || dm_arc01_sigil_ring_obtained) {
-		mes("^3355FF*The Sigil Ring bites colder here than it did in Payon. It does not point north, east, or west. It points down.*^000000");
-		next();
-	}
-	mes("[Rashid]");
-	mes("I am Rashid. I robbed these tombs before your grandparents learned fear, and I put half of it back before fear learned my name.");
+	mes("[Mira]");
+	mes("You're Guild, aren't you? Please. My brother went into the desert to find water two days ago. He didn't come back. The sand... the sand is swallowing people.");
 	next();
-	switch (select("Tell it your way, grandfather.", "Just the fastest way down.", "There is no demon. You are an old fool.")) {
+	switch (select("We will find him, Mira. We'll search the desert.", "The ground is shaking here too? Like Prontera?", "We have bounties in the Sphinx. If we see him, we'll send him back.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_trust", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_route", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_ward_charm", 1);
-		mes("[Rashid]");
-		mes("Good ears. Good manners. Take the route, take the charm, and when the stone breathes, move before it screams.");
+		callfunc("DM_InstanceSetFlag", "dm_arc03_mira_promise", 1);
+		mes("[Mira]");
+		mes("Thank you! The guards won't even look. They say the desert takes what it wants when the ground shakes.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_route", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_ward_charm", 0);
-		mes("[Rashid]");
-		mes("Fastest route, then. You will get there. Whether you arrive whole is not included.");
+		callfunc("DM_InstanceSetFlag", "dm_arc03_mira_promise", 2);
+		mes("[Mira]");
+		mes("Worse. At night, it sounds like... breathing. Huge, heavy breaths coming from deep beneath the Pyramids. It's driving the monsters mad.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_mocked", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_route", 0);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_ward_charm", 0);
-		mes("[Rashid]");
-		mes("Coin buys a map. Respect buys the warnings. You have purchased only paper.");
+		callfunc("DM_InstanceSetFlag", "dm_arc03_mira_promise", 3);
+		mes("[Mira]");
+		mes("Just... look for a blue scarf. If... if you only find the scarf, please bring it back to me.");
 		break;
 	}
 	next();
-	mes("[Rashid]");
-	mes("Start at the last wells. The relief mission feeds refugees, and someone there is digging below kindness.");
+	mes("[Mira]");
+	mes("The Guild bounties are still active across the desert, but the Pyramids... that's where the breathing comes from. Please be careful.");
 	callfunc("DM_InstanceSetFlag", "dm_arc03_started", 1);
 	callfunc("DM_InstanceQuestStart", 20013);
-	callfunc("DM_InstanceQuestStart", 20014);
-	callfunc("DM_InstanceQuestStart", 20015);
-	callfunc("DM_InstanceQuestStart", 20016);
+	callfunc("DM_InstanceQuestStart", 20014); // Muka
+	callfunc("DM_InstanceQuestStart", 20015); // Ant Eggs
+	callfunc("DM_InstanceQuestStart", 20016); // Zerom
+	callfunc("DM_InstanceQuestStart", 20017); // Osiris
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 301);
 	next();
 	mes("^3355FF[Quest started: Sand and Whispers]^000000");
-	mes("^3355FFCaravan Water Debt - cull 20 Muka along Sograt's water routes.^000000");
-	mes("^3355FFAnt Hell Survey - break 15 Ant Eggs and bring back amber-sand samples.^000000");
-	mes("^3355FFSphinx Night Watch - cull 20 Zerom in the Sphinx.^000000");
+	mes("^3355FFInvestigate the Pyramids for Mira's brother.^000000");
 	close();
 
 S_TurnIns:
@@ -107,28 +103,8 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 16000, 7000);
 		callfunc("DM_GivePartyZeny", 3500);
 		.@paid = 1;
-		mes("[Rashid]");
-		mes("Cracked water seals. Proof that even thirst has a ledger.");
-		next();
-		switch (select("Save water for refugees.", "Sell it to caravans.", "Use it to expose cult maps.")) {
-		case 1:
-			callfunc("DM_InstanceSetFlag", "dm_arc03_water_choice", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc03_refugee_turnout", 1);
-			mes("[Rashid]");
-			mes("Mercy is slow, but people remember who brought water.");
-			break;
-		case 2:
-			callfunc("DM_InstanceSetFlag", "dm_arc03_water_choice", 2);
-			mes("[Rashid]");
-			mes("Coin is honest. It never pretends to be kind.");
-			break;
-		case 3:
-			callfunc("DM_InstanceSetFlag", "dm_arc03_water_choice", 3);
-			callfunc("DM_InstanceSetFlag", "dm_arc03_cult_maps_found", 1);
-			mes("[Rashid]");
-			mes("Good. Their routes follow water because lies still need mouths.");
-			break;
-		}
+		mes("[Mira]");
+		mes("Thank you for clearing the caravans. Every drop of water helps the camp.");
 		next();
 	}
 
@@ -137,27 +113,8 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 22000, 9000);
 		callfunc("DM_GivePartyZeny", 4500);
 		.@paid = 1;
-		mes("[Rashid]");
-		mes("Amber-sand from Ant Hell. The tunnels are feeling for something older than ants.");
-		next();
-		switch (select("Collapse the tunnels.", "Map them.", "Mark the forbidden route.")) {
-		case 1:
-			callfunc("DM_InstanceSetFlag", "dm_arc03_ant_choice", 1);
-			mes("[Rashid]");
-			mes("The desert will swallow them again. For now.");
-			break;
-		case 2:
-			callfunc("DM_InstanceSetFlag", "dm_arc03_ant_choice", 2);
-			mes("[Rashid]");
-			mes("A map is a promise to return. Be careful what you promise.");
-			break;
-		case 3:
-			callfunc("DM_InstanceSetFlag", "dm_arc03_ant_choice", 3);
-			callfunc("DM_InstanceSetFlag", "dm_arc03_forbidden_route_marked", 1);
-			mes("[Rashid]");
-			mes("Now you know where not to go. That is almost wisdom.");
-			break;
-		}
+		mes("[Mira]");
+		mes("The ant tunnels are safer. But it doesn't stop the breathing from the Pyramids.");
 		next();
 	}
 
@@ -166,273 +123,268 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 30000, 12000);
 		callfunc("DM_GivePartyZeny", 5500);
 		.@paid = 1;
-		mes("[Rashid]");
-		mes("Zerom eye beads. The Sphinx is not watching outward anymore.");
+		mes("[Mira]");
+		mes("The Sphinx is clear. But my brother isn't there... he must be in the Pyramids.");
 		next();
-		switch (select("Clear the watch.", "Listen to the whispers.", "Follow them toward the sealed door.")) {
-		case 1:
-			callfunc("DM_InstanceSetFlag", "dm_arc03_sphinx_choice", 1);
-			mes("[Rashid]");
-			mes("Clean work. But clean does not mean complete.");
-			break;
-		case 2:
-			callfunc("DM_InstanceSetFlag", "dm_arc03_sphinx_choice", 2);
-			mes("[Rashid]");
-			mes("Then you heard the corridor breathing before the quake. Remember that.");
-			break;
-		case 3:
-			callfunc("DM_InstanceSetFlag", "dm_arc03_sphinx_choice", 3);
-			callfunc("DM_InstanceSetFlag", "dm_arc03_shaft_heard", 1);
-			mes("[Rashid]");
-			mes("You followed the sound under the maps. That sound has been waiting longer than Morroc.");
-			break;
-		}
-		next();
-	}
-
-	if (questprogress(20014) == 2 && questprogress(20015) == 2 && questprogress(20017) == 0) {
-		mes("[Rashid]");
-		mes("A dead king has climbed out of the sand and started holding court. Put Osiris back before the Pyramid remembers him.");
-		next();
-		switch (select("We'll ride for the tomb-court.", "Later.")) {
-		case 1:
-			callfunc("DM_InstanceQuestStart", 20017);
-			callfunc("DM_PartyApplyFlag", "dm_story_beat", 317);
-			mes("^3355FF[Quest started: What the Desert Spat Up]^000000");
-			mes("^3355FFFind Osiris in Pyramid F4. Break the court before the king.^000000");
-			close();
-		case 2:
-			close();
-		}
-	}
-
-	if (questprogress(20016) == 2 && questprogress(20018) == 0) {
-		mes("[Rashid]");
-		mes("The route ends below Amon Ra. His chamber is not the bottom of the Pyramid. It is the lid.");
-		next();
-		if (dm_arc03_ward_charm)
-			mes("You still carry my ward-charm. Let it go cold before you trust the floor.");
-		else
-			mes("You did not take the charm. So when the room trembles, move before pride does.");
-		next();
-		switch (select("Start The King Beneath.", "Later.")) {
-		case 1:
-			callfunc("DM_InstanceQuestStart", 20018);
-			callfunc("DM_PartyApplyFlag", "dm_story_beat", 318);
-			mes("^3355FF[Quest started: The King Beneath]^000000");
-			mes("^3355FFGo to Pyramid B2. Amon Ra guards the shaft that must not open.^000000");
-			close();
-		case 2:
-			close();
-		}
 	}
 
 	if (.@paid) {
-		mes("[Rashid]");
-		mes("The support work is done. The old kings will not wait politely.");
+		mes("[Mira]");
+		mes("The Guild will transfer your bounty rewards. Please... find him.");
 		close();
 	}
 
-	mes("[Rashid]");
-	mes("Clear the water route, survey Ant Hell, and watch the Sphinx. The desert is trying to tell you what the tombs already know.");
+	mes("[Mira]");
+	mes("He was wearing a blue scarf. The Pyramids... please check the Pyramids.");
 	close();
 }
 
-// Mother Sabra - relief mission leader and human villain
-moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
+// Rashid - caravan guide and refugee route witness
+morocc,153,101,4	script	Water Seller Rashid#dm03	4_M_03,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc03_started) {
+		mes("[Rashid]");
+		mes("Water is double today, apology included. If you are Guild, the girl with the brass key needs you more than my stall does.");
+		close();
+	}
+	if (dm_arc03_rashid_trust) {
+		mes("[Rashid]");
+		if (dm_arc03_sabra_deal)
+			mes("Sabra's people are moving refugees through the old channel. It is mercy, yes, but mercy with a receipt.");
+		else if (dm_arc03_sabra_exposed)
+			mes("The relief mission is angry you looked under their blankets. Angry people hide less carefully.");
+		else if (dm_arc03_sabra_revealed_cascade)
+			mes("You heard the word she keeps behind her teeth. Cascade. Now watch who stops breathing when you say it.");
+		else if (dm_arc03_rashid_route == 2)
+			mes("The west wash is faster and cursed by every merchant with sense. Since we lack sense, it remains useful.");
+		else
+			mes("Use the old caravan wells. The cultists mark roads; they do not bother marking thirst.");
+		close();
+	}
+
+	mes("^3355FF*A thin water seller studies the tremors by watching ripples in a brass cup.*^000000");
+	next();
+	mes("[Rashid]");
+	mes("Mira asks for her brother. The city asks for calm. The desert asks for payment. You should decide which voice you are answering before you go below.");
+	next();
+	switch (select("Help us move safely through the refugee routes.", "We need the fastest path to the Pyramid.", "Sell us water and keep your warnings.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_trust", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_route", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc03_ward_charm", 1);
+		mes("[Rashid]");
+		mes("Then take this ward charm. Not holy, not clever, but it tells the scared families you did not come to rob them.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_trust", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_route", 2);
+		mes("[Rashid]");
+		mes("West wash, then the broken stairs. Fast path. Bad path. If the sand starts singing, do not answer.");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_mocked", 1);
+		mes("[Rashid]");
+		mes("Water is water. Warnings are free because nobody values them until the bill arrives.");
+		break;
+	}
+	next();
+	mes("[Rashid]");
+	mes("Mother Sabra's relief mission camps south of the road. She feeds people the guards do not count. That makes her useful. It also makes her dangerous.");
+	close();
+}
+
+// Mother Sabra - relief mission choice that drives later Arc 4/5 callbacks
+moc_fild01,84,45,4	script	Mother Sabra#dm03	4_F_01,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc03_started) {
 		mes("[Mother Sabra]");
-		mes("If you need water, take water. If you need a sermon, I have no strength left for one.");
+		mes("If Morroc sent you, tell them the mission is over capacity and under guard. If grief sent you, speak plainly.");
 		close();
 	}
-
-	if (questprogress(20018) == 2) {
+	if (dm_arc03_sabra_exposed || dm_arc03_sabra_deal || dm_arc03_sabra_revealed_cascade) {
 		mes("[Mother Sabra]");
-		if (dm_arc03_sabra_deal)
-			mes("The tents stand. The shaft is quiet. Debts are quieter still.");
-		else if (dm_arc03_sabra_exposed)
-			mes("The kingdom closed the dig. It also closed its eyes to the people who slept above it.");
+		if (dm_arc03_sabra_exposed)
+			mes("You exposed the dig. Good. Now every frightened family here must decide whether your truth feeds them tonight.");
+		else if (dm_arc03_sabra_deal)
+			mes("You chose the living first. That choice is not clean, but clean hands do not carry water far.");
 		else
-			mes("You saw the shaft and came back with fear. Good. Fear keeps hands from doors.");
+			mes("You heard the cascade named and lived. Remember that knowledge is also a wound.");
 		close();
 	}
 
-	mes("[Mother Sabra]");
-	mes("I bury the children who do not survive the road. Then I feed the parents. If that makes me a monster, Morroc should have made kinder monsters.");
+	mes("^3355FF*Mother Sabra's relief tent is too orderly for a refugee camp. Water jars, prayer cloths, and survey maps share the same table.*^000000");
 	next();
-	switch (select("Your dig will wake it.", "These people need you. Walk away from the dig.", "What is really down there?")) {
+	mes("[Mother Sabra]");
+	mes("The cult calls this a test. The palace calls it bandit panic. I call it a city deciding which poor people may be counted.");
+	next();
+	mes("[Mother Sabra]");
+	mes("There is a dig under the mission. Yes, I know. Yes, I have used it. The tunnel moves families away from the shaking faster than any official gate.");
+	next();
+	switch (select("Expose the dig and end the operation.", "Keep the tunnel open for refugees.", "Tell us what the cult is really testing.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_exposed", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_deal", 0);
+		callfunc("DM_Decide", "arc03.sabra", "exposed");
 		mes("[Mother Sabra]");
-		mes("Better awake and ended than this endless half-sleep, shaking us apart by inches.");
-		next();
-		mes("^3355FF*Exposing the dig will close the mission. The refugees will scatter, some toward worse hands.*^000000");
+		mes("Then take your truth to Morroc and hope it learns to carry water.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_deal", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_refugees_protected", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_exposed", 0);
+		callfunc("DM_Decide", "arc03.sabra", "deal");
 		mes("[Mother Sabra]");
-		mes("Guarantee their safety and I abandon the shaft. Not the cause. The shaft.");
-		next();
-		mes("^3355FF*The refugees keep the tents. Sabra keeps your debt for Arc 5.*^000000");
+		mes("I will move families until the last jar is empty. You will not ask who else used the tunnel before them.");
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_marked_party", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_revealed_cascade", 1);
+		callfunc("DM_Decide", "arc03.sabra", "truth");
 		mes("[Mother Sabra]");
-		mes("Not a demon. A wound. The gods bandaged it with seals and called the rot peace.");
-		next();
-		mes("[Mother Sabra]");
-		mes("We do not need to break one seal. We weaken all of them, and the world breathes.");
+		mes("Cascade. That is the word they whisper when they think mercy is asleep. One seal weakens, then the next begins to answer.");
 		break;
 	}
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 325);
+	next();
+	mes("[Mother Sabra]");
+	mes("If you go below the Pyramid, remember this: the sand is not swallowing people. Something beneath it is learning their weight.");
 	close();
 }
 
-// Osiris - side tomb-court set-piece
-moc_pryd04,100,92,4	script	Osiris's Court#dm	4_M_NFDEADMAN,{
+// Guild Assassin - Pyramids Entrance
+moc_ruins,75,165,4	script	Guild Assassin#dm	4_M_JOB_ASSASSIN,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
-	if (questprogress(20017) != 1) {
-		if (questprogress(20017) == 2) {
-			mes("^3355FF*The sand-drowned court is still. A gold mask lies warm only in memory.*^000000");
-			close();
-		}
-		mes("^3355FF*The court has not convened for you yet. Rashid must name the dead king first.*^000000");
+	if (!dm_arc03_started) {
+		mes("[Guild Assassin]");
+		mes("Move along. Nothing for you here.");
 		close();
 	}
-	if ('boss_up) {
-		mes("^3355FF*Osiris's court is already rising. Break the court before the king.*^000000");
+	if (dm_arc03_assassin_met) {
+		mes("[Guild Assassin]");
+		mes("I warned you. Don't come crying to me when the mummy tears you apart.");
 		close();
 	}
 
-	mes("^3355FF*Cold seal-light leaks through a sand-drowned tomb-court. Osiris sits where no throne should be.*^000000");
+	mes("^3355FF*A cloaked figure steps out of stealth, arms crossed.*^000000");
 	next();
-	switch (select("Lay Osiris and his court to rest.", "Loot the court and leave.")) {
+	mes("[Guild Assassin]");
+	mes("Turn around, Guild-rats. This ruin is claimed by the shadows today.");
+	next();
+	switch (select("People are dying in there. We have to stop it.", "We have a bounty on Osiris. You want to share the kill, or get out of our way?", "Move, or you're the first thing I kill today.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc03_osiris_restored", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_osiris_looted", 0);
-		mes("^3355FF*You speak the names Rashid taught you. The dead answer poorly, but they answer.*^000000");
+		callfunc("DM_InstanceSetFlag", "dm_arc03_assassin_path", 1);
+		mes("[Guild Assassin]");
+		mes("You're out of your depth. There are robed fanatics in there trying to wake up a pharaoh. They think it's a god. Idiots. It's just a corpse with a curse.");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc03_osiris_looted", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_osiris_restored", 0);
-		mes("^3355FF*Gold comes away easily. Rest does not.*^000000");
+		callfunc("DM_InstanceSetFlag", "dm_arc03_assassin_path", 2);
+		mes("[Guild Assassin]");
+		mes("(Chuckles) Confident. Fine. But the cultists inside are using some kind of harmonic frequency. Every time they chant, the whole city shudders. If you're going in, kill the chanters first.");
 		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc03_assassin_path", 3);
+		mes("[Guild Assassin]");
+		mes("Big words. Let's see if you can back them up when the mummy starts tearing you apart.");
+		next();
+		mes("^3355FF*The Assassin fades into stealth.*^000000");
+		mes("[Guild Assassin]");
+		mes("Don't say I didn't warn you.");
+		callfunc("DM_InstanceSetFlag", "dm_arc03_assassin_met", 1);
+		close();
 	}
 	next();
-
-	.@map$ = strnpcinfo(NPC_MAP);
-	getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
-	'boss_up = 1;
-	mapannounce .@map$, "[Osiris's Court] The dead king rises. His court shields him.", bc_map, 0xFFAA33;
-	areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Sand Court", 1165, 4, "Osiris's Court#dm::OnCourtDead";
-	areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Buried Knife", 1119, 2, "Osiris's Court#dm::OnCourtDead";
-	monster .@map$, .@x, .@y, "Osiris", 1038, 1, "Osiris's Court#dm::OnOsirisDead";
+	mes("[Guild Assassin]");
+	mes("I'm not getting paid to babysit. If you go in, you're on your own.");
+	callfunc("DM_InstanceSetFlag", "dm_arc03_assassin_met", 1);
 	close();
-
-OnCourtDead:
-	end;
-
-OnOsirisDead:
-	'boss_up = 0;
-	.@map$ = strnpcinfo(NPC_MAP);
-	killmonster .@map$, "Osiris's Court#dm::OnCourtDead";
-	callfunc("DM_InstanceQuestComplete", 20017);
-	callfunc("DM_InstanceSetFlag", "dm_arc03_funeral_mask", 1);
-	callfunc("DM_PartyExp", 90000, 38000);
-	callfunc("DM_GivePartyZeny", 9000);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 399);
-	mapannounce .@map$, "[Osiris's Court] The dead king falls. The Funeral Mask is warm with seal-light.", bc_map, 0x88CCFF;
-	end;
-
-OnInit:
-	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20017, 1;
-	end;
 }
 
-// Amon Ra - main Pyramid set-piece
-moc_pryd06,102,85,4	script	Amon Ra's Lid#dm	4_M_CRU_HEAD,{
+// High Priest - Pyramids Lowest Level (moc_pryd06)
+moc_pryd06,102,85,4	script	High Priest#dm	1_M_PASTOR,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
-	if (questprogress(20018) != 1) {
-		if (questprogress(20018) == 2) {
-			mes("^3355FF*Behind the throne, the cult-cut shaft remains sealed. It breathes cold air from far below.*^000000");
-			close();
-		}
-		mes("^3355FF*Amon Ra's chamber is not ready to reveal what it covers. Speak with Rashid first.*^000000");
+	if (questprogress(20018) == 2) {
+		mes("^3355FF*The cultists are gone. The shaft behind the throne breathes cold air from far below.*^000000");
 		close();
 	}
-	if ('boss_up) {
-		mes("^3355FF*The god-king is awake. The lid-stone groans behind him.*^000000");
+	if ('amon_up) {
+		mes("[High Priest]");
+		mes("The Great Despair awakens!");
+		close();
+	}
+	if ('osiris_up) {
+		mes("[High Priest]");
+		mes("The Pharaoh judges you!");
 		close();
 	}
 
-	mes("^3355FF*Amon Ra's chamber is not the bottom of the Pyramid. Behind the throne, a shaft has been cut around a capstone older than the tomb.*^000000");
+	mes("^3355FF*Cultists surround a massive sarcophagus. The ground is violently shaking. The High Priest holds a tuning fork that hums with dark magic.*^000000");
 	next();
-	if (dm_arc03_rashid_trust)
-		mes("^3355FF*Rashid's warning reaches you before the tremor. You have one breath to move.*^000000");
-	else
-		mes("^3355FF*The floor convulses without warning. Something below is not dreaming. It is waiting.*^000000");
+	mes("[High Priest]");
+	mes("The sleeping demon stirs! Its dreams corrupt the dead! Rise, Osiris! Show them the power of the great seal!");
 	next();
-
-	switch (select("Drive off Sabra's diggers first.", "Fight through king and cult together.")) {
+	switch (select("You don't know what you're messing with! Stop the ritual!", "What demon? What is beneath Morroc?", "We're shutting this down. Now.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc03_cult_diggers_cleared", 1);
-		mes("^3355FF*You scatter the diggers from the shaft. Amon Ra wakes with fewer voices feeding him.*^000000");
+		callfunc("DM_InstanceSetFlag", "dm_arc03_priest_path", 1);
+		mes("[High Priest]");
+		mes("We know exactly what we are doing! We are testing the locks on the cage!");
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc03_cult_diggers_cleared", 0);
-		mes("^3355FF*The cult keeps chanting as the god-king opens his eyes.*^000000");
+		callfunc("DM_InstanceSetFlag", "dm_arc03_priest_path", 2);
+		mes("[High Priest]");
+		mes("The Great Despair! The One Beneath! We do not speak its name - the sand speaks it for us, every time it shakes! The seal is cracking, and the pharaohs are only the first to feel its breath!");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc03_priest_path", 3);
+		mes("[High Priest]");
+		mes("You cannot shut down the inevitable! Rise, Osiris!");
 		break;
 	}
 	next();
-
-	if (!dm_arc03_sabra_deal && !dm_arc03_sabra_exposed) {
-		mes("^3355FF*Sabra's choice still waits above. The shaft will not stay quiet unless someone pays for quiet.*^000000");
-		next();
-	}
-
+	
 	.@map$ = strnpcinfo(NPC_MAP);
 	getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
-	.@adds = 5;
-	if (dm_arc03_cult_diggers_cleared)
-		.@adds -= 2;
-	if (dm_arc03_ward_charm)
-		.@adds -= 1;
-	if (dm_arc03_osiris_restored)
-		.@adds -= 1;
-	if (.@adds < 1)
-		.@adds = 1;
-
-	'boss_up = 1;
-	mapannounce .@map$, "[Amon Ra's Lid] The tomb is only a lid. The king beneath the king wakes.", bc_map, 0xFFAA33;
-	monster .@map$, .@x, .@y, "Amon Ra", 1511, 1, "Amon Ra's Lid#dm::OnAmonDead";
-	areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Seal Digger", 1041, .@adds, "Amon Ra's Lid#dm::OnAddDead";
+	
+	'osiris_up = 1;
+	mapannounce .@map$, "[High Priest] The Pharaoh rises! Defend the ritual!", bc_map, 0xFFAA33;
+	
+	// Summon Osiris and cultists
+	monster .@map$, .@x, .@y, "Osiris", 1038, 1, "High Priest#dm::OnOsirisDead";
+	areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Whisperer Cultist", 1041, 4, "High Priest#dm::OnAddDead";
 	close();
 
 OnAddDead:
 	end;
 
-OnAmonDead:
-	'boss_up = 0;
+OnOsirisDead:
+	'osiris_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
-	killmonster .@map$, "Amon Ra's Lid#dm::OnAddDead";
+	killmonster .@map$, "High Priest#dm::OnAddDead";
+	callfunc("DM_InstanceQuestComplete", 20017);
+	callfunc("DM_InstanceQuestStart", 20018); // Start Amon Ra phase
+	
+	mapannounce .@map$, "[High Priest] Osiris has fallen... but the deep doors are grinding open! The King Beneath rises!", bc_map, 0xFF0000;
+	sleep2 3000;
+	
+	// Summon Amon Ra directly after Osiris
+	'amon_up = 1;
+	mapannounce .@map$, "[The King Beneath] Amon Ra emerges from the deepest tomb!", bc_map, 0xFFAA33;
+	monster .@map$, .@x, .@y, "Amon Ra", 1511, 1, "High Priest#dm::OnAmonDead";
+	areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Whisperer Cultist", 1041, 4, "High Priest#dm::OnAddDead";
+	end;
+
+OnAmonDead:
+	'amon_up = 0;
+	.@map$ = strnpcinfo(NPC_MAP);
+	killmonster .@map$, "High Priest#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20018);
-	callfunc("DM_InstanceSetFlag", "dm_arc03_lidstone_obtained", 1);
-	callfunc("DM_InstanceSetFlag", "dm_arc03_shaft_seen", 1);
+	callfunc("DM_InstanceSetFlag", "dm_arc03_mira_scarf_returned", 1);
+	callfunc("DM_InstanceSetFlag", "dm_mira_lives", 1);
 	callfunc("DM_PartyExp", 150000, 65000);
 	callfunc("DM_GivePartyZeny", 14000);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 398);
-	mapannounce .@map$, "[Amon Ra's Lid] Amon Ra falls. The sealed shaft stays shut, and that is the most frightening thing about it.", bc_map, 0x88CCFF;
-	dispbottom "[Seal Cascade] Arc 3 complete. The rumor is true: something vast waits under Morroc.";
+	
+	mapannounce .@map$, "[Pyramids] The tremor stops, but a low, distant heartbeat can be felt through the floor.", bc_map, 0x88CCFF;
+	sleep2 3000;
+	mapannounce .@map$, "[Pyramids] Among the cult's 'offerings', you find a torn blue scarf.", bc_map, 0x88CCFF;
+	
+	dispbottom "[Seal Cascade] Arc 3 complete. You have recovered Mira's brother's scarf. Return to Morroc.";
 	end;
 
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20018, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }

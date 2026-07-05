@@ -30,331 +30,574 @@ function	script	DM_ClearFlag	{
 	return 1;
 }
 
-function	script	DM_ClearArc01Flags	{
-	callfunc("DM_ClearFlag", "dm_arc01_started");
-	callfunc("DM_ClearFlag", "dm_arc01_tibbets_befriended");
-	callfunc("DM_ClearFlag", "dm_arc01_refugees_helped");
-	callfunc("DM_ClearFlag", "dm_arc01_holt_spared");
-	callfunc("DM_ClearFlag", "dm_arc01_holt_killed");
-	callfunc("DM_ClearFlag", "dm_arc01_sigil_ring_obtained");
-	callfunc("DM_ClearFlag", "dm_mira_lives");
-	return 1;
+function	script	DM_ArcFlagCount	{
+	.@arc = getarg(0, 0);
+
+	if (.@arc < 1)
+		return 0;
+
+	return getelementofarray(getvariableofnpc(.arc_count, "DM_FlagRegistry"), .@arc);
 }
 
-function	script	DM_PrintArc01Flags	{
-	dispbottom("[DM] Arc 01 flags:");
-	dispbottom("  started=" + callfunc("DM_GetFlag", "dm_arc01_started")
-		+ " tibbets=" + callfunc("DM_GetFlag", "dm_arc01_tibbets_befriended")
-		+ " refugees=" + callfunc("DM_GetFlag", "dm_arc01_refugees_helped"));
-	dispbottom("  holt_spared=" + callfunc("DM_GetFlag", "dm_arc01_holt_spared")
-		+ " holt_killed=" + callfunc("DM_GetFlag", "dm_arc01_holt_killed")
-		+ " sigil_ring=" + callfunc("DM_GetFlag", "dm_arc01_sigil_ring_obtained"));
-	dispbottom("  mira_lives=" + callfunc("DM_GetFlag", "dm_mira_lives"));
-	return 1;
+function	script	DM_ArcFlagName	{
+	.@arc = getarg(0, 0);
+	.@i = getarg(1, 0);
+	.@count = callfunc("DM_ArcFlagCount", .@arc);
+
+	if (.@i < 0 || .@i >= .@count)
+		return "";
+
+	.@start = getelementofarray(getvariableofnpc(.arc_start, "DM_FlagRegistry"), .@arc);
+	return getelementofarray(getvariableofnpc(.flag_names$, "DM_FlagRegistry"), .@start + .@i);
 }
 
-function	script	DM_ClearArc02Flags	{
-	callfunc("DM_ClearFlag", "dm_arc02_started");
-	callfunc("DM_ClearFlag", "dm_arc02_rite_path");
-	callfunc("DM_ClearFlag", "dm_arc02_mushroom_choice");
-	callfunc("DM_ClearFlag", "dm_arc02_bone_tags_choice");
-	callfunc("DM_ClearFlag", "dm_arc02_lantern_choice");
-	callfunc("DM_ClearFlag", "dm_arc02_ancestor_helped");
-	callfunc("DM_ClearFlag", "dm_arc02_sunhwa_marked");
-	callfunc("DM_ClearFlag", "dm_arc02_voss_spared");
-	callfunc("DM_ClearFlag", "dm_arc02_voss_killed");
-	callfunc("DM_ClearFlag", "dm_arc02_conduits_severed");
-	callfunc("DM_ClearFlag", "dm_arc02_grove_restored");
-	callfunc("DM_ClearFlag", "dm_arc02_grove_burned");
-	callfunc("DM_ClearFlag", "dm_arc02_notebook_obtained");
-	return 1;
+function	script	DM_ArcFlagMax	{
+	return getvariableofnpc(.arc_max, "DM_FlagRegistry");
 }
 
-function	script	DM_PrintArc02Flags	{
-	dispbottom("[DM] Arc 02 flags:");
-	dispbottom("  started=" + callfunc("DM_GetFlag", "dm_arc02_started")
-		+ " rite_path=" + callfunc("DM_GetFlag", "dm_arc02_rite_path")
-		+ " ancestor=" + callfunc("DM_GetFlag", "dm_arc02_ancestor_helped"));
-	dispbottom("  mushroom=" + callfunc("DM_GetFlag", "dm_arc02_mushroom_choice")
-		+ " bone_tags=" + callfunc("DM_GetFlag", "dm_arc02_bone_tags_choice")
-		+ " lantern=" + callfunc("DM_GetFlag", "dm_arc02_lantern_choice"));
-	dispbottom("  sunhwa_marked=" + callfunc("DM_GetFlag", "dm_arc02_sunhwa_marked")
-		+ " voss_spared=" + callfunc("DM_GetFlag", "dm_arc02_voss_spared")
-		+ " voss_killed=" + callfunc("DM_GetFlag", "dm_arc02_voss_killed"));
-	dispbottom("  conduits=" + callfunc("DM_GetFlag", "dm_arc02_conduits_severed")
-		+ " restored=" + callfunc("DM_GetFlag", "dm_arc02_grove_restored")
-		+ " burned=" + callfunc("DM_GetFlag", "dm_arc02_grove_burned")
-		+ " notebook=" + callfunc("DM_GetFlag", "dm_arc02_notebook_obtained"));
-	return 1;
+function	script	DM_ClearArcFlags	{
+	.@arc = getarg(0, 0);
+	.@count = callfunc("DM_ArcFlagCount", .@arc);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		.@flag$ = callfunc("DM_ArcFlagName", .@arc, .@i);
+		if (.@flag$ != "")
+			.@done += callfunc("DM_ClearFlag", .@flag$);
+	}
+	return .@done;
 }
 
-function	script	DM_ClearArc03Flags	{
-	callfunc("DM_ClearFlag", "dm_arc03_started");
-	callfunc("DM_ClearFlag", "dm_arc03_rashid_trust");
-	callfunc("DM_ClearFlag", "dm_arc03_rashid_route");
-	callfunc("DM_ClearFlag", "dm_arc03_rashid_mocked");
-	callfunc("DM_ClearFlag", "dm_arc03_ward_charm");
-	callfunc("DM_ClearFlag", "dm_arc03_water_choice");
-	callfunc("DM_ClearFlag", "dm_arc03_refugee_turnout");
-	callfunc("DM_ClearFlag", "dm_arc03_cult_maps_found");
-	callfunc("DM_ClearFlag", "dm_arc03_ant_choice");
-	callfunc("DM_ClearFlag", "dm_arc03_forbidden_route_marked");
-	callfunc("DM_ClearFlag", "dm_arc03_sphinx_choice");
-	callfunc("DM_ClearFlag", "dm_arc03_shaft_heard");
-	callfunc("DM_ClearFlag", "dm_arc03_osiris_restored");
-	callfunc("DM_ClearFlag", "dm_arc03_osiris_looted");
-	callfunc("DM_ClearFlag", "dm_arc03_funeral_mask");
-	callfunc("DM_ClearFlag", "dm_arc03_sabra_exposed");
-	callfunc("DM_ClearFlag", "dm_arc03_sabra_deal");
-	callfunc("DM_ClearFlag", "dm_arc03_refugees_protected");
-	callfunc("DM_ClearFlag", "dm_arc03_sabra_marked_party");
-	callfunc("DM_ClearFlag", "dm_arc03_sabra_revealed_cascade");
-	callfunc("DM_ClearFlag", "dm_arc03_cult_diggers_cleared");
-	callfunc("DM_ClearFlag", "dm_arc03_lidstone_obtained");
-	callfunc("DM_ClearFlag", "dm_arc03_shaft_seen");
-	return 1;
+function	script	DM_PrintArcFlags	{
+	.@arc = getarg(0, 0);
+	.@count = callfunc("DM_ArcFlagCount", .@arc);
+	.@arc$ = (.@arc < 10 ? "0" : "") + .@arc;
+
+	if (.@count < 1) {
+		dispbottom("[DM] Arc " + .@arc$ + " has no registered flags.");
+		return 0;
+	}
+
+	dispbottom("[DM] Arc " + .@arc$ + " flags:");
+	.@line$ = "  ";
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		.@flag$ = callfunc("DM_ArcFlagName", .@arc, .@i);
+		if (.@flag$ == "")
+			continue;
+		.@entry$ = .@flag$ + "=" + callfunc("DM_GetFlag", .@flag$);
+		if (.@line$ == "  ")
+			.@line$ = "  " + .@entry$;
+		else
+			.@line$ = .@line$ + " " + .@entry$;
+		if ((.@i % 4) == 3) {
+			dispbottom(.@line$);
+			.@line$ = "  ";
+		}
+	}
+	if (.@line$ != "  ")
+		dispbottom(.@line$);
+	return .@count;
 }
 
-function	script	DM_PrintArc03Flags	{
-	dispbottom("[DM] Arc 03 flags:");
-	dispbottom("  started=" + callfunc("DM_GetFlag", "dm_arc03_started")
-		+ " trust=" + callfunc("DM_GetFlag", "dm_arc03_rashid_trust")
-		+ " route=" + callfunc("DM_GetFlag", "dm_arc03_rashid_route")
-		+ " charm=" + callfunc("DM_GetFlag", "dm_arc03_ward_charm"));
-	dispbottom("  water=" + callfunc("DM_GetFlag", "dm_arc03_water_choice")
-		+ " ant=" + callfunc("DM_GetFlag", "dm_arc03_ant_choice")
-		+ " sphinx=" + callfunc("DM_GetFlag", "dm_arc03_sphinx_choice"));
-	dispbottom("  osiris_restored=" + callfunc("DM_GetFlag", "dm_arc03_osiris_restored")
-		+ " osiris_looted=" + callfunc("DM_GetFlag", "dm_arc03_osiris_looted")
-		+ " mask=" + callfunc("DM_GetFlag", "dm_arc03_funeral_mask"));
-	dispbottom("  sabra_exposed=" + callfunc("DM_GetFlag", "dm_arc03_sabra_exposed")
-		+ " sabra_deal=" + callfunc("DM_GetFlag", "dm_arc03_sabra_deal")
-		+ " refugees=" + callfunc("DM_GetFlag", "dm_arc03_refugees_protected"));
-	dispbottom("  diggers=" + callfunc("DM_GetFlag", "dm_arc03_cult_diggers_cleared")
-		+ " lidstone=" + callfunc("DM_GetFlag", "dm_arc03_lidstone_obtained")
-		+ " shaft_seen=" + callfunc("DM_GetFlag", "dm_arc03_shaft_seen"));
-	return 1;
+function	script	DM_ClearAllArcFlags	{
+	.@max = callfunc("DM_ArcFlagMax");
+
+	for (.@arc = 1; .@arc <= .@max; ++.@arc)
+		.@done += callfunc("DM_ClearArcFlags", .@arc);
+	return .@done;
 }
 
-function	script	DM_ClearArc04Flags	{
-	callfunc("DM_ClearFlag", "dm_arc04_started");
-	callfunc("DM_ClearFlag", "dm_arc04_elsbeth_protected");
-	callfunc("DM_ClearFlag", "dm_arc04_elsbeth_with_party");
-	callfunc("DM_ClearFlag", "dm_arc04_ward_key");
-	callfunc("DM_ClearFlag", "dm_arc04_elsbeth_hurt");
-	callfunc("DM_ClearFlag", "dm_arc04_drills_choice");
-	callfunc("DM_ClearFlag", "dm_arc04_students_warned");
-	callfunc("DM_ClearFlag", "dm_arc04_forbidden_diagrams");
-	callfunc("DM_ClearFlag", "dm_arc04_orc_choice");
-	callfunc("DM_ClearFlag", "dm_arc04_villagers_armed");
-	callfunc("DM_ClearFlag", "dm_arc04_cult_bait_used");
-	callfunc("DM_ClearFlag", "dm_arc04_silk_choice");
-	callfunc("DM_ClearFlag", "dm_arc04_seal_pattern_evidence");
-	callfunc("DM_ClearFlag", "dm_arc04_ritual_thread_kept");
-	callfunc("DM_ClearFlag", "dm_arc04_doran_confronted");
-	callfunc("DM_ClearFlag", "dm_arc04_doran_fought");
-	callfunc("DM_ClearFlag", "dm_arc04_doran_stood_down");
-	callfunc("DM_ClearFlag", "dm_arc04_doran_taught");
-	callfunc("DM_ClearFlag", "dm_arc04_cassell_unmasked");
-	callfunc("DM_ClearFlag", "dm_arc04_seal_reinforced");
-	callfunc("DM_ClearFlag", "dm_arc04_city_dimmed");
-	callfunc("DM_ClearFlag", "dm_arc04_overflow_kept");
-	callfunc("DM_ClearFlag", "dm_arc04_keystone_shard");
-	callfunc("DM_ClearFlag", "dm_arc04_doppelganger_stronger");
-	callfunc("DM_ClearFlag", "dm_arc04_catechism_choice");
-	callfunc("DM_ClearFlag", "dm_arc04_pilgrim_catechism");
-	callfunc("DM_ClearFlag", "dm_arc04_tamper_sense");
-	return 1;
+function	script	DM_PartyClearArcFlags	{
+	.@arc = getarg(0, 0);
+	.@party_id = getarg(1, getcharid(CHAR_ID_PARTY));
+	.@count = callfunc("DM_ArcFlagCount", .@arc);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		.@flag$ = callfunc("DM_ArcFlagName", .@arc, .@i);
+		if (.@flag$ != "")
+			.@done += callfunc("DM_PartyClearFlag", .@flag$, .@party_id);
+	}
+	return .@done;
 }
 
-function	script	DM_PrintArc04Flags	{
-	dispbottom("[DM] Arc 04 flags:");
-	dispbottom("  started=" + callfunc("DM_GetFlag", "dm_arc04_started")
-		+ " protected=" + callfunc("DM_GetFlag", "dm_arc04_elsbeth_protected")
-		+ " with_party=" + callfunc("DM_GetFlag", "dm_arc04_elsbeth_with_party")
-		+ " ward_key=" + callfunc("DM_GetFlag", "dm_arc04_ward_key"));
-	dispbottom("  drills=" + callfunc("DM_GetFlag", "dm_arc04_drills_choice")
-		+ " orc=" + callfunc("DM_GetFlag", "dm_arc04_orc_choice")
-		+ " silk=" + callfunc("DM_GetFlag", "dm_arc04_silk_choice"));
-	dispbottom("  doran_fought=" + callfunc("DM_GetFlag", "dm_arc04_doran_fought")
-		+ " stood_down=" + callfunc("DM_GetFlag", "dm_arc04_doran_stood_down")
-		+ " taught=" + callfunc("DM_GetFlag", "dm_arc04_doran_taught")
-		+ " cassell=" + callfunc("DM_GetFlag", "dm_arc04_cassell_unmasked"));
-	dispbottom("  reinforced=" + callfunc("DM_GetFlag", "dm_arc04_seal_reinforced")
-		+ " dimmed=" + callfunc("DM_GetFlag", "dm_arc04_city_dimmed")
-		+ " overflow=" + callfunc("DM_GetFlag", "dm_arc04_overflow_kept")
-		+ " shard=" + callfunc("DM_GetFlag", "dm_arc04_keystone_shard"));
-	dispbottom("  doppel_stronger=" + callfunc("DM_GetFlag", "dm_arc04_doppelganger_stronger")
-		+ " elsbeth_hurt=" + callfunc("DM_GetFlag", "dm_arc04_elsbeth_hurt")
-		+ " catechism_choice=" + callfunc("DM_GetFlag", "dm_arc04_catechism_choice")
-		+ " catechism=" + callfunc("DM_GetFlag", "dm_arc04_pilgrim_catechism"));
-	return 1;
+function	script	DM_FlagSyncFrom	{
+	.@source$ = getarg(0, "");
+	.@party_id = getarg(1, getcharid(CHAR_ID_PARTY));
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@source$ == "") {
+		dispbottom("[DM] Usage: @dm flag sync <online_party_member>");
+		return 0;
+	}
+	if (.@party_id <= 0) {
+		dispbottom("[DM] Join or create a party first.");
+		return 0;
+	}
+
+	.@source_aid = getcharid(CHAR_ID_ACCOUNT, .@source$);
+	if (.@source_aid <= 0) {
+		dispbottom("[DM] Player '" + .@source$ + "' is not online.");
+		return 0;
+	}
+	if (!attachrid(.@source_aid)) {
+		if (.@origin_aid)
+			attachrid(.@origin_aid);
+		dispbottom("[DM] Could not attach to '" + .@source$ + "'.");
+		return 0;
+	}
+
+	.@source_cid = getcharid(CHAR_ID_CHAR);
+	.@source_name$ = strcharinfo(PC_NAME);
+	if (getcharid(CHAR_ID_PARTY) != .@party_id) {
+		detachrid();
+		if (.@origin_aid)
+			attachrid(.@origin_aid);
+		dispbottom("[DM] " + .@source_name$ + " is not in your current party.");
+		return 0;
+	}
+
+	.@n = 0;
+	.@max = callfunc("DM_ArcFlagMax");
+	for (.@arc = 1; .@arc <= .@max; ++.@arc) {
+		.@count = callfunc("DM_ArcFlagCount", .@arc);
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			.@flag$ = callfunc("DM_ArcFlagName", .@arc, .@i);
+			if (.@flag$ == "")
+				continue;
+			.@flags$[.@n] = .@flag$;
+			.@values[.@n] = getd(.@flag$);
+			++.@n;
+		}
+	}
+	detachrid();
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (.@charid[.@i] == .@source_cid)
+			continue;
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		for (.@f = 0; .@f < .@n; ++.@f) {
+			setd(.@flags$[.@f], .@values[.@f]);
+			++.@writes;
+		}
+		detachrid();
+		++.@members;
+	}
+
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+
+	dispbottom("[DM] Synced " + .@n + " flags from " + .@source_name$ + " to " + .@members + " member(s) (" + .@writes + " flag writes).");
+	return .@members;
 }
 
-function	script	DM_ClearArc05Flags	{
-	callfunc("DM_ClearFlag", "dm_arc05_started");
-	callfunc("DM_ClearFlag", "dm_arc05_mara_trust");
-	callfunc("DM_ClearFlag", "dm_arc05_mara_network");
-	callfunc("DM_ClearFlag", "dm_arc05_mara_pragmatic");
-	callfunc("DM_ClearFlag", "dm_arc05_mara_insulted");
-	callfunc("DM_ClearFlag", "dm_arc05_ferry_choice");
-	callfunc("DM_ClearFlag", "dm_arc05_refugees_moved");
-	callfunc("DM_ClearFlag", "dm_arc05_supplies_moved");
-	callfunc("DM_ClearFlag", "dm_arc05_spies_moved");
-	callfunc("DM_ClearFlag", "dm_arc05_byalan_choice");
-	callfunc("DM_ClearFlag", "dm_arc05_divers_rescued");
-	callfunc("DM_ClearFlag", "dm_arc05_sea_cult_evidence");
-	callfunc("DM_ClearFlag", "dm_arc05_manifest_choice");
-	callfunc("DM_ClearFlag", "dm_arc05_records_returned");
-	callfunc("DM_ClearFlag", "dm_arc05_brode_exposed_early");
-	callfunc("DM_ClearFlag", "dm_arc05_brode_ruined");
-	callfunc("DM_ClearFlag", "dm_arc05_brode_sold_manifest");
-	callfunc("DM_ClearFlag", "dm_arc05_brode_threatened");
-	callfunc("DM_ClearFlag", "dm_arc05_brode_enemy");
-	callfunc("DM_ClearFlag", "dm_arc05_manifest_taken");
-	callfunc("DM_ClearFlag", "dm_arc05_northern_account");
-	callfunc("DM_ClearFlag", "dm_arc05_cassell_courier_drop");
-	callfunc("DM_ClearFlag", "dm_arc05_hold_quiet");
-	callfunc("DM_ClearFlag", "dm_arc05_hold_loud");
-	callfunc("DM_ClearFlag", "dm_arc05_sabra_refugees_safe");
-	callfunc("DM_ClearFlag", "dm_arc05_sabra_refugees_starved");
-	callfunc("DM_ClearFlag", "dm_arc05_refugees_freed");
-	callfunc("DM_ClearFlag", "dm_arc05_relic_crates_recovered");
-	callfunc("DM_ClearFlag", "dm_arc05_relic_crates_ignored");
-	callfunc("DM_ClearFlag", "dm_arc05_relics_surrendered");
-	callfunc("DM_ClearFlag", "dm_arc05_relics_kept");
-	callfunc("DM_ClearFlag", "dm_arc05_sodden_crate_seal");
-	callfunc("DM_ClearFlag", "dm_act01_complete");
-	return 1;
+function	script	DM_ClearArc01Flags	{ return callfunc("DM_ClearArcFlags", 1); }
+function	script	DM_ClearArc02Flags	{ return callfunc("DM_ClearArcFlags", 2); }
+function	script	DM_ClearArc03Flags	{ return callfunc("DM_ClearArcFlags", 3); }
+function	script	DM_ClearArc04Flags	{ return callfunc("DM_ClearArcFlags", 4); }
+function	script	DM_ClearArc05Flags	{ return callfunc("DM_ClearArcFlags", 5); }
+function	script	DM_ClearArc06Flags	{ return callfunc("DM_ClearArcFlags", 6); }
+function	script	DM_ClearArc07Flags	{ return callfunc("DM_ClearArcFlags", 7); }
+function	script	DM_ClearArc08Flags	{ return callfunc("DM_ClearArcFlags", 8); }
+function	script	DM_ClearArc09Flags	{ return callfunc("DM_ClearArcFlags", 9); }
+function	script	DM_ClearArc10Flags	{ return callfunc("DM_ClearArcFlags", 10); }
+function	script	DM_ClearArc11Flags	{ return callfunc("DM_ClearArcFlags", 11); }
+function	script	DM_ClearArc12Flags	{ return callfunc("DM_ClearArcFlags", 12); }
+function	script	DM_ClearArc13Flags	{ return callfunc("DM_ClearArcFlags", 13); }
+function	script	DM_ClearArc14Flags	{ return callfunc("DM_ClearArcFlags", 14); }
+function	script	DM_ClearArc15Flags	{ return callfunc("DM_ClearArcFlags", 15); }
+function	script	DM_ClearArc16Flags	{ return callfunc("DM_ClearArcFlags", 16); }
+function	script	DM_ClearArc17Flags	{ return callfunc("DM_ClearArcFlags", 17); }
+function	script	DM_ClearArc18Flags	{ return callfunc("DM_ClearArcFlags", 18); }
+function	script	DM_ClearArc19Flags	{ return callfunc("DM_ClearArcFlags", 19); }
+
+function	script	DM_PrintArc01Flags	{ return callfunc("DM_PrintArcFlags", 1); }
+function	script	DM_PrintArc02Flags	{ return callfunc("DM_PrintArcFlags", 2); }
+function	script	DM_PrintArc03Flags	{ return callfunc("DM_PrintArcFlags", 3); }
+function	script	DM_PrintArc04Flags	{ return callfunc("DM_PrintArcFlags", 4); }
+function	script	DM_PrintArc05Flags	{ return callfunc("DM_PrintArcFlags", 5); }
+function	script	DM_PrintArc06Flags	{ return callfunc("DM_PrintArcFlags", 6); }
+function	script	DM_PrintArc07Flags	{ return callfunc("DM_PrintArcFlags", 7); }
+function	script	DM_PrintArc08Flags	{ return callfunc("DM_PrintArcFlags", 8); }
+function	script	DM_PrintArc09Flags	{ return callfunc("DM_PrintArcFlags", 9); }
+function	script	DM_PrintArc10Flags	{ return callfunc("DM_PrintArcFlags", 10); }
+function	script	DM_PrintArc11Flags	{ return callfunc("DM_PrintArcFlags", 11); }
+function	script	DM_PrintArc12Flags	{ return callfunc("DM_PrintArcFlags", 12); }
+function	script	DM_PrintArc13Flags	{ return callfunc("DM_PrintArcFlags", 13); }
+function	script	DM_PrintArc14Flags	{ return callfunc("DM_PrintArcFlags", 14); }
+function	script	DM_PrintArc15Flags	{ return callfunc("DM_PrintArcFlags", 15); }
+function	script	DM_PrintArc16Flags	{ return callfunc("DM_PrintArcFlags", 16); }
+function	script	DM_PrintArc17Flags	{ return callfunc("DM_PrintArcFlags", 17); }
+function	script	DM_PrintArc18Flags	{ return callfunc("DM_PrintArcFlags", 18); }
+function	script	DM_PrintArc19Flags	{ return callfunc("DM_PrintArcFlags", 19); }
+
+-	script	DM_FlagRegistry	FAKE_NPC,{
+OnInit:
+	deletearray .flag_names$[0], getarraysize(.flag_names$);
+	deletearray .arc_start[0], getarraysize(.arc_start);
+	deletearray .arc_count[0], getarraysize(.arc_count);
+	.arc_max = 19;
+
+	setarray .arc01$[0],
+		"dm_arc01_started",
+		"dm_arc01_tibbets_befriended",
+		"dm_arc01_refugees_helped",
+		"dm_arc01_holt_spared",
+		"dm_arc01_holt_killed",
+		"dm_arc01_sigil_ring_obtained",
+		"dm_mira_lives";
+	callsub S_RegisterArc, 1, .arc01$;
+
+	setarray .arc02$[0],
+		"dm_arc02_started",
+		"dm_arc02_rite_path",
+		"dm_arc02_mushroom_choice",
+		"dm_arc02_bone_tags_choice",
+		"dm_arc02_lantern_choice",
+		"dm_arc02_ancestor_helped",
+		"dm_arc02_sunhwa_marked",
+		"dm_arc02_voss_spared",
+		"dm_arc02_voss_killed",
+		"dm_arc02_conduits_severed",
+		"dm_arc02_grove_restored",
+		"dm_arc02_grove_burned",
+		"dm_arc02_notebook_obtained";
+	callsub S_RegisterArc, 2, .arc02$;
+
+	setarray .arc03$[0],
+		"dm_arc03_started",
+		"dm_arc03_rashid_trust",
+		"dm_arc03_rashid_route",
+		"dm_arc03_rashid_mocked",
+		"dm_arc03_ward_charm",
+		"dm_arc03_water_choice",
+		"dm_arc03_refugee_turnout",
+		"dm_arc03_cult_maps_found",
+		"dm_arc03_ant_choice",
+		"dm_arc03_forbidden_route_marked",
+		"dm_arc03_sphinx_choice",
+		"dm_arc03_shaft_heard",
+		"dm_arc03_osiris_restored",
+		"dm_arc03_osiris_looted",
+		"dm_arc03_funeral_mask",
+		"dm_arc03_sabra_exposed",
+		"dm_arc03_sabra_deal",
+		"dm_arc03_refugees_protected",
+		"dm_arc03_sabra_marked_party",
+		"dm_arc03_sabra_revealed_cascade",
+		"dm_arc03_cult_diggers_cleared",
+		"dm_arc03_lidstone_obtained",
+		"dm_arc03_shaft_seen";
+	callsub S_RegisterArc, 3, .arc03$;
+
+	setarray .arc04$[0],
+		"dm_arc04_started",
+		"dm_arc04_elsbeth_protected",
+		"dm_arc04_elsbeth_with_party",
+		"dm_arc04_elsbeth_distrusted",
+		"dm_arc04_ward_key",
+		"dm_arc04_elsbeth_hurt",
+		"dm_arc04_drills_choice",
+		"dm_arc04_students_warned",
+		"dm_arc04_forbidden_diagrams",
+		"dm_arc04_orc_choice",
+		"dm_arc04_villagers_armed",
+		"dm_arc04_cult_bait_used",
+		"dm_arc04_silk_choice",
+		"dm_arc04_seal_pattern_evidence",
+		"dm_arc04_ritual_thread_kept",
+		"dm_arc04_doran_confronted",
+		"dm_arc04_doran_fought",
+		"dm_arc04_doran_stood_down",
+		"dm_arc04_doran_taught",
+		"dm_arc04_cassell_unmasked",
+		"dm_arc04_seal_reinforced",
+		"dm_arc04_city_dimmed",
+		"dm_arc04_overflow_kept",
+		"dm_arc04_keystone_shard",
+		"dm_arc04_doppelganger_stronger",
+		"dm_arc04_catechism_choice",
+		"dm_arc04_pilgrim_catechism",
+		"dm_arc04_tamper_sense";
+	callsub S_RegisterArc, 4, .arc04$;
+
+	setarray .arc05$[0],
+		"dm_arc05_started",
+		"dm_arc05_mara_trust",
+		"dm_arc05_mara_network",
+		"dm_arc05_mara_pragmatic",
+		"dm_arc05_mara_insulted",
+		"dm_arc05_ferry_choice",
+		"dm_arc05_refugees_moved",
+		"dm_arc05_supplies_moved",
+		"dm_arc05_spies_moved",
+		"dm_arc05_byalan_choice",
+		"dm_arc05_divers_rescued",
+		"dm_arc05_sea_cult_evidence",
+		"dm_arc05_manifest_choice",
+		"dm_arc05_records_returned",
+		"dm_arc05_brode_exposed_early",
+		"dm_arc05_brode_ruined",
+		"dm_arc05_brode_sold_manifest",
+		"dm_arc05_brode_threatened",
+		"dm_arc05_brode_enemy",
+		"dm_arc05_manifest_taken",
+		"dm_arc05_northern_account",
+		"dm_arc05_cassell_courier_drop",
+		"dm_arc05_hold_quiet",
+		"dm_arc05_hold_loud",
+		"dm_arc05_sabra_refugees_safe",
+		"dm_arc05_sabra_refugees_starved",
+		"dm_arc05_refugees_freed",
+		"dm_arc05_relic_crates_recovered",
+		"dm_arc05_relic_crates_ignored",
+		"dm_arc05_relics_surrendered",
+		"dm_arc05_relics_kept",
+		"dm_arc05_sodden_crate_seal",
+		"dm_act01_complete";
+	callsub S_RegisterArc, 5, .arc05$;
+
+	setarray .arc06$[0],
+		"dm_arc06_started",
+		"dm_arc06_vahl_trust",
+		"dm_arc06_krenn_bribed",
+		"dm_arc06_krenn_exposed",
+		"dm_arc06_mistress_spared",
+		"dm_arc06_mistress_killed";
+	callsub S_RegisterArc, 6, .arc06$;
+
+	setarray .arc07$[0],
+		"dm_arc07_started",
+		"dm_arc07_strike_supported",
+		"dm_arc07_strike_broken",
+		"dm_arc07_kessler_confronted",
+		"dm_arc07_rsx_killed";
+	callsub S_RegisterArc, 7, .arc07$;
+
+	setarray .arc08$[0],
+		"dm_arc08_started",
+		"dm_arc08_manfred_killed",
+		"dm_arc08_manfred_spared",
+		"dm_arc08_darklord_killed",
+		"dm_arc08_martyrs_aid",
+		"dm_arc08_martyrs_cursed",
+		"dm_arc08_wax_traced",
+		"dm_arc08_oath_cache";
+	callsub S_RegisterArc, 8, .arc08$;
+
+	setarray .arc09$[0],
+		"dm_arc09_started",
+		"dm_arc09_karsh_exposed",
+		"dm_arc09_karsh_deal",
+		"dm_arc09_gloom_killed",
+		"dm_arc09_pilgrim_trust",
+		"dm_arc09_vesper_disable",
+		"dm_arc09_engineer_spared",
+		"dm_arc09_workshop_smashed",
+		"dm_arc09_confessors_protected";
+	callsub S_RegisterArc, 9, .arc09$;
+
+	setarray .arc10$[0],
+		"dm_arc10_started",
+		"dm_wynne_captured",
+		"dm_wynne_rescued",
+		"dm_wynne_lost",
+		"dm_arc10_reise_confronted",
+		"dm_arc10_echo_freed",
+		"dm_arc10_echo_returned",
+		"dm_echo_trusts_party",
+		"dm_arc10_patients_protected",
+		"dm_arc10_clinic_funded",
+		"dm_arc10_sample_swapped",
+		"dm_arc10_chitin_shared",
+		"dm_arc10_juniors_guarded",
+		"dm_arc10_chitin_overharvested",
+		"dm_arc10_clone_names_restored",
+		"dm_arc10_clone_serials_logged",
+		"dm_arc10_registry_erased",
+		"dm_arc10_kiel_killed",
+		"dm_act02_complete";
+	callsub S_RegisterArc, 10, .arc10$;
+
+	setarray .arc11$[0],
+		"dm_arc11_started",
+		"dm_arc11_bjorn_subdued",
+		"dm_arc11_bjorn_joined",
+		"dm_arc11_bjorn_forced",
+		"dm_arc11_bjorn_exploited",
+		"dm_arc11_airship_refugees",
+		"dm_arc11_airship_clergy",
+		"dm_arc11_airship_weapons",
+		"dm_arc11_scales_studied",
+		"dm_arc11_scales_split",
+		"dm_arc11_scale_wards",
+		"dm_arc11_vigil_prayed",
+		"dm_arc11_vigil_scouted",
+		"dm_arc11_vigil_baited",
+		"dm_arc11_sigrun_voice",
+		"dm_arc11_sigrun_comforted",
+		"dm_arc11_sword_shard",
+		"dm_arc11_randgris_killed";
+	callsub S_RegisterArc, 11, .arc11$;
+
+	setarray .arc12$[0],
+		"dm_arc12_started",
+		"dm_arc12_vance_exposed",
+		"dm_arc12_vance_helped",
+		"dm_arc12_vance_occupation",
+		"dm_arc12_supply_sapha",
+		"dm_arc12_supply_even",
+		"dm_arc12_supply_skimmed",
+		"dm_arc12_cornus_spared",
+		"dm_arc12_cornus_driven",
+		"dm_arc12_cornus_slaughtered",
+		"dm_arc12_border_honest",
+		"dm_arc12_border_forged",
+		"dm_arc12_border_expedition",
+		"dm_arc12_first_contact_truth",
+		"dm_arc12_first_contact_peace",
+		"dm_arc12_first_contact_order",
+		"dm_new_world_alliance",
+		"dm_arc12_nidhoggr_killed",
+		"dm_arc12_naght_killed";
+	callsub S_RegisterArc, 12, .arc12$;
+
+	setarray .arc13$[0],
+		"dm_arc13_started",
+		"dm_arc13_quill_revered",
+		"dm_arc13_quill_pragmatic",
+		"dm_arc13_quill_callous",
+		"dm_arc13_bell_full",
+		"dm_arc13_bell_patrol",
+		"dm_arc13_bell_named",
+		"dm_arc13_coins_returned",
+		"dm_arc13_coins_ferrymen",
+		"dm_arc13_coins_hoarded",
+		"dm_arc13_himmelmez_foreshadow",
+		"dm_arc13_roots_protected",
+		"dm_arc13_roots_harvested",
+		"dm_arc13_roots_grafted",
+		"dm_arc13_boundary_stable",
+		"dm_arc13_known_dead_reckoned",
+		"dm_arc13_known_dead_refused",
+		"dm_arc13_known_dead_blessing",
+		"dm_arc13_known_dead_host",
+		"dm_arc13_carrion_killed",
+		"dm_arc13_carrion_bribed",
+		"dm_arc13_carrion_minutes",
+		"dm_arc13_beelzebub_killed",
+		"dm_arc13_coalition_deal_honored",
+		"dm_arc13_dead_freed",
+		"dm_arc13_dead_burned";
+	callsub S_RegisterArc, 13, .arc13$;
+
+	setarray .arc14$[0],
+		"dm_arc14_started",
+		"dm_arc14_dunmar_solidarity",
+		"dm_arc14_dunmar_pragmatic",
+		"dm_arc14_dunmar_hardline",
+		"dm_arc14_ledger_families",
+		"dm_arc14_ledger_equipment",
+		"dm_arc14_ledger_fighters",
+		"dm_arc14_ash_routes",
+		"dm_arc14_ash_bounty",
+		"dm_arc14_ash_source",
+		"dm_arc14_firebreak_full",
+		"dm_arc14_firebreak_rescue",
+		"dm_arc14_firebreak_reagents",
+		"dm_arc14_hesma_exposed",
+		"dm_arc14_hesma_bribed",
+		"dm_arc14_evacuated",
+		"dm_arc14_miners_lost",
+		"dm_arc14_cinder_taken",
+		"dm_arc14_ifrit_killed",
+		"dm_act03_complete";
+	callsub S_RegisterArc, 14, .arc14$;
+
+	setarray .arc15$[0],
+		"dm_arc15_started",
+		"dm_arc15_clock_spirits",
+		"dm_arc15_clock_records",
+		"dm_arc15_clock_rushed",
+		"dm_arc15_fragment_honest",
+		"dm_arc15_fragment_efficient",
+		"dm_arc15_fragment_confession",
+		"dm_arc15_memory_readiness",
+		"dm_arc15_mirror_shard_strength",
+		"dm_arc15_pratt_exposed",
+		"dm_arc15_pratt_delayed",
+		"dm_arc15_pratt_challenged",
+		"dm_arc15_thanatos_killed";
+	callsub S_RegisterArc, 15, .arc15$;
+
+	setarray .arc16$[0],
+		"dm_arc16_started",
+		"dm_arc16_relief_civilians",
+		"dm_arc16_relief_armories",
+		"dm_arc16_relief_symbols",
+		"dm_arc16_army_quality",
+		"dm_arc16_rina_exposed",
+		"dm_arc16_rina_rolled",
+		"dm_arc16_rina_defected",
+		"dm_arc16_bijou_killed",
+		"dm_arc16_maret_freed",
+		"dm_prontera_united";
+	callsub S_RegisterArc, 16, .arc16$;
+
+	setarray .arc17$[0],
+		"dm_arc17_started",
+		"dm_arc17_sage_stabilized",
+		"dm_arc17_sage_components",
+		"dm_arc17_sage_forbidden",
+		"dm_arc17_corridor_observed",
+		"dm_arc17_corridor_baited",
+		"dm_arc17_corridor_sold",
+		"dm_arc17_tartaros_safe",
+		"dm_arc17_admin_purged",
+		"dm_arc17_admin_negotiated",
+		"dm_arc17_admin_running",
+		"dm_arc17_beta_killed",
+		"dm_varmundt_tools_stabilized";
+	callsub S_RegisterArc, 17, .arc17$;
+
+	setarray .arc18$[0],
+		"dm_arc18_started",
+		"dm_arc18_grief_honest",
+		"dm_arc18_grief_pragmatic",
+		"dm_arc18_grief_weaponized",
+		"dm_arc18_grief_resilience",
+		"dm_arc18_opera_silenced",
+		"dm_arc18_opera_witnessed",
+		"dm_arc18_opera_joined",
+		"dm_arc18_bargain_leverage",
+		"dm_arc18_himmelmez_killed",
+		"dm_arc18_himmelmez_bargained",
+		"dm_himmelmez_bargain";
+	callsub S_RegisterArc, 18, .arc18$;
+
+	setarray .arc19$[0],
+		"dm_arc19_started",
+		"dm_arc19_surt_defeated",
+		"dm_finale_shared_seal",
+		"dm_finale_reforged_seal",
+		"dm_finale_queens_bargain",
+		"dm_finale_thanatos_road",
+		"dm_finale_ragnarok_unbound",
+		"dm_finale_refusal",
+		"dm_campaign_complete";
+	callsub S_RegisterArc, 19, .arc19$;
+	end;
+
+S_RegisterArc:
+	.@arc = getarg(0);
+	.@count = getarraysize(getarg(1));
+	.arc_start[.@arc] = getarraysize(.flag_names$);
+	.arc_count[.@arc] = .@count;
+
+	for (.@i = 0; .@i < .@count; ++.@i)
+		.flag_names$[.arc_start[.@arc] + .@i] = getelementofarray(getarg(1), .@i);
+	return;
 }
-
-function	script	DM_PrintArc05Flags	{
-	dispbottom("[DM] Arc 05 flags:");
-	dispbottom("  started=" + callfunc("DM_GetFlag", "dm_arc05_started")
-		+ " mara_trust=" + callfunc("DM_GetFlag", "dm_arc05_mara_trust")
-		+ " network=" + callfunc("DM_GetFlag", "dm_arc05_mara_network")
-		+ " insulted=" + callfunc("DM_GetFlag", "dm_arc05_mara_insulted"));
-	dispbottom("  ferry=" + callfunc("DM_GetFlag", "dm_arc05_ferry_choice")
-		+ " byalan=" + callfunc("DM_GetFlag", "dm_arc05_byalan_choice")
-		+ " manifest=" + callfunc("DM_GetFlag", "dm_arc05_manifest_choice"));
-	dispbottom("  brode_ruined=" + callfunc("DM_GetFlag", "dm_arc05_brode_ruined")
-		+ " sold=" + callfunc("DM_GetFlag", "dm_arc05_brode_sold_manifest")
-		+ " threatened=" + callfunc("DM_GetFlag", "dm_arc05_brode_threatened")
-		+ " enemy=" + callfunc("DM_GetFlag", "dm_arc05_brode_enemy"));
-	dispbottom("  manifest_taken=" + callfunc("DM_GetFlag", "dm_arc05_manifest_taken")
-		+ " northern_account=" + callfunc("DM_GetFlag", "dm_arc05_northern_account")
-		+ " hold_quiet=" + callfunc("DM_GetFlag", "dm_arc05_hold_quiet")
-		+ " hold_loud=" + callfunc("DM_GetFlag", "dm_arc05_hold_loud"));
-	dispbottom("  crates=" + callfunc("DM_GetFlag", "dm_arc05_relic_crates_recovered")
-		+ " relics_kept=" + callfunc("DM_GetFlag", "dm_arc05_relics_kept")
-		+ " crate_seal=" + callfunc("DM_GetFlag", "dm_arc05_sodden_crate_seal")
-		+ " act01=" + callfunc("DM_GetFlag", "dm_act01_complete"));
-	return 1;
-}
-
-function	script	DM_ClearArc06Flags	{
-	callfunc("DM_ClearFlag", "dm_arc06_started");
-	callfunc("DM_ClearFlag", "dm_arc06_vahl_trust");
-	callfunc("DM_ClearFlag", "dm_arc06_krenn_bribed");
-	callfunc("DM_ClearFlag", "dm_arc06_krenn_exposed");
-	callfunc("DM_ClearFlag", "dm_arc06_mistress_spared");
-	callfunc("DM_ClearFlag", "dm_arc06_mistress_killed");
-	return 1;
-}
-
-function	script	DM_PrintArc06Flags	{
-	dispbottom("[DM] Arc 06 flags:");
-	dispbottom("  started=" + callfunc("DM_GetFlag", "dm_arc06_started")
-		+ " vahl_trust=" + callfunc("DM_GetFlag", "dm_arc06_vahl_trust"));
-	dispbottom("  krenn_bribed=" + callfunc("DM_GetFlag", "dm_arc06_krenn_bribed")
-		+ " krenn_exposed=" + callfunc("DM_GetFlag", "dm_arc06_krenn_exposed"));
-	dispbottom("  mistress_spared=" + callfunc("DM_GetFlag", "dm_arc06_mistress_spared")
-		+ " mistress_killed=" + callfunc("DM_GetFlag", "dm_arc06_mistress_killed"));
-	return 1;
-}
-
-function	script	DM_ClearArc07Flags	{
-	callfunc("DM_ClearFlag", "dm_arc07_started");
-	callfunc("DM_ClearFlag", "dm_arc07_strike_supported");
-	callfunc("DM_ClearFlag", "dm_arc07_strike_broken");
-	callfunc("DM_ClearFlag", "dm_arc07_kessler_confronted");
-	callfunc("DM_ClearFlag", "dm_arc07_rsx_killed");
-	return 1;
-}
-
-function	script	DM_PrintArc07Flags	{
-	dispbottom("[DM] Arc 07 flags:");
-	dispbottom("  started=" + callfunc("DM_GetFlag", "dm_arc07_started"));
-	dispbottom("  strike_supported=" + callfunc("DM_GetFlag", "dm_arc07_strike_supported")
-		+ " strike_broken=" + callfunc("DM_GetFlag", "dm_arc07_strike_broken"));
-	dispbottom("  kessler_confronted=" + callfunc("DM_GetFlag", "dm_arc07_kessler_confronted")
-		+ " rsx_killed=" + callfunc("DM_GetFlag", "dm_arc07_rsx_killed"));
-	return 1;
-}
-
-function	script	DM_ClearArc08Flags	{
-	callfunc("DM_ClearFlag", "dm_arc08_started");
-	callfunc("DM_ClearFlag", "dm_arc08_manfred_killed");
-	callfunc("DM_ClearFlag", "dm_arc08_manfred_spared");
-	callfunc("DM_ClearFlag", "dm_arc08_darklord_killed");
-	return 1;
-}
-
-function	script	DM_PrintArc08Flags	{
-	dispbottom("[DM] Arc 08 flags: started=" + callfunc("DM_GetFlag", "dm_arc08_started") + " manfred_spared=" + callfunc("DM_GetFlag", "dm_arc08_manfred_spared") + " manfred_killed=" + callfunc("DM_GetFlag", "dm_arc08_manfred_killed") + " darklord_killed=" + callfunc("DM_GetFlag", "dm_arc08_darklord_killed"));
-	return 1;
-}
-
-function	script	DM_ClearArc09Flags	{
-	callfunc("DM_ClearFlag", "dm_arc09_started");
-	callfunc("DM_ClearFlag", "dm_arc09_karsh_exposed");
-	callfunc("DM_ClearFlag", "dm_arc09_karsh_deal");
-	callfunc("DM_ClearFlag", "dm_arc09_gloom_killed");
-	return 1;
-}
-
-function	script	DM_PrintArc09Flags	{
-	dispbottom("[DM] Arc 09 flags: started=" + callfunc("DM_GetFlag", "dm_arc09_started") + " karsh_exposed=" + callfunc("DM_GetFlag", "dm_arc09_karsh_exposed") + " karsh_deal=" + callfunc("DM_GetFlag", "dm_arc09_karsh_deal") + " gloom_killed=" + callfunc("DM_GetFlag", "dm_arc09_gloom_killed"));
-	return 1;
-}
-
-function	script	DM_ClearArc10Flags	{
-	callfunc("DM_ClearFlag", "dm_arc10_started");
-	callfunc("DM_ClearFlag", "dm_arc10_reise_confronted");
-	callfunc("DM_ClearFlag", "dm_arc10_echo_freed");
-	callfunc("DM_ClearFlag", "dm_arc10_kiel_killed");
-	callfunc("DM_ClearFlag", "dm_act02_complete");
-	return 1;
-}
-
-function	script	DM_PrintArc10Flags	{
-	dispbottom("[DM] Arc 10 flags: started=" + callfunc("DM_GetFlag", "dm_arc10_started") + " reise_confronted=" + callfunc("DM_GetFlag", "dm_arc10_reise_confronted") + " echo_freed=" + callfunc("DM_GetFlag", "dm_arc10_echo_freed") + " kiel_killed=" + callfunc("DM_GetFlag", "dm_arc10_kiel_killed") + " act02_complete=" + callfunc("DM_GetFlag", "dm_act02_complete"));
-	return 1;
-}
-
-function	script	DM_ClearArc11Flags	{ callfunc("DM_ClearFlag", "dm_arc11_started"); callfunc("DM_ClearFlag", "dm_arc11_bjorn_subdued"); callfunc("DM_ClearFlag", "dm_arc11_bjorn_joined"); callfunc("DM_ClearFlag", "dm_arc11_randgris_killed"); return 1; }
-function	script	DM_PrintArc11Flags	{ dispbottom("[DM] Arc 11 flags: started=" + callfunc("DM_GetFlag", "dm_arc11_started") + " bjorn_subdued=" + callfunc("DM_GetFlag", "dm_arc11_bjorn_subdued") + " bjorn_joined=" + callfunc("DM_GetFlag", "dm_arc11_bjorn_joined") + " randgris_killed=" + callfunc("DM_GetFlag", "dm_arc11_randgris_killed")); return 1; }
-
-function	script	DM_ClearArc12Flags	{ callfunc("DM_ClearFlag", "dm_arc12_started"); callfunc("DM_ClearFlag", "dm_arc12_vance_exposed"); callfunc("DM_ClearFlag", "dm_arc12_vance_helped"); callfunc("DM_ClearFlag", "dm_arc12_naght_killed"); return 1; }
-function	script	DM_PrintArc12Flags	{ dispbottom("[DM] Arc 12 flags: started=" + callfunc("DM_GetFlag", "dm_arc12_started") + " vance_exposed=" + callfunc("DM_GetFlag", "dm_arc12_vance_exposed") + " naght_killed=" + callfunc("DM_GetFlag", "dm_arc12_naght_killed")); return 1; }
-
-function	script	DM_ClearArc13Flags	{ callfunc("DM_ClearFlag", "dm_arc13_started"); callfunc("DM_ClearFlag", "dm_arc13_carrion_killed"); callfunc("DM_ClearFlag", "dm_arc13_carrion_bribed"); callfunc("DM_ClearFlag", "dm_arc13_beelzebub_killed"); callfunc("DM_ClearFlag", "dm_arc13_coalition_deal_honored"); return 1; }
-function	script	DM_PrintArc13Flags	{ dispbottom("[DM] Arc 13 flags: started=" + callfunc("DM_GetFlag", "dm_arc13_started") + " carrion_killed=" + callfunc("DM_GetFlag", "dm_arc13_carrion_killed") + " carrion_bribed=" + callfunc("DM_GetFlag", "dm_arc13_carrion_bribed") + " beelzebub_killed=" + callfunc("DM_GetFlag", "dm_arc13_beelzebub_killed") + " deal_honored=" + callfunc("DM_GetFlag", "dm_arc13_coalition_deal_honored")); return 1; }
-
-function	script	DM_ClearArc14Flags	{ callfunc("DM_ClearFlag", "dm_arc14_started"); callfunc("DM_ClearFlag", "dm_arc14_hesma_exposed"); callfunc("DM_ClearFlag", "dm_arc14_hesma_bribed"); callfunc("DM_ClearFlag", "dm_arc14_ifrit_killed"); callfunc("DM_ClearFlag", "dm_act03_complete"); return 1; }
-function	script	DM_PrintArc14Flags	{ dispbottom("[DM] Arc 14 flags: started=" + callfunc("DM_GetFlag", "dm_arc14_started") + " hesma_exposed=" + callfunc("DM_GetFlag", "dm_arc14_hesma_exposed") + " hesma_bribed=" + callfunc("DM_GetFlag", "dm_arc14_hesma_bribed") + " ifrit_killed=" + callfunc("DM_GetFlag", "dm_arc14_ifrit_killed") + " act03_complete=" + callfunc("DM_GetFlag", "dm_act03_complete")); return 1; }
-
-function	script	DM_ClearArc15Flags	{ callfunc("DM_ClearFlag", "dm_arc15_started"); callfunc("DM_ClearFlag", "dm_arc15_pratt_exposed"); callfunc("DM_ClearFlag", "dm_arc15_pratt_delayed"); callfunc("DM_ClearFlag", "dm_arc15_pratt_challenged"); callfunc("DM_ClearFlag", "dm_arc15_thanatos_killed"); return 1; }
-function	script	DM_PrintArc15Flags	{ dispbottom("[DM] Arc 15 flags: started=" + callfunc("DM_GetFlag", "dm_arc15_started") + " pratt_exposed=" + callfunc("DM_GetFlag", "dm_arc15_pratt_exposed") + " pratt_delayed=" + callfunc("DM_GetFlag", "dm_arc15_pratt_delayed") + " pratt_challenged=" + callfunc("DM_GetFlag", "dm_arc15_pratt_challenged") + " thanatos_killed=" + callfunc("DM_GetFlag", "dm_arc15_thanatos_killed")); return 1; }
-
-function	script	DM_ClearArc16Flags	{ callfunc("DM_ClearFlag", "dm_arc16_started"); callfunc("DM_ClearFlag", "dm_arc16_rina_exposed"); callfunc("DM_ClearFlag", "dm_arc16_rina_rolled"); callfunc("DM_ClearFlag", "dm_arc16_rina_defected"); callfunc("DM_ClearFlag", "dm_arc16_bijou_killed"); callfunc("DM_ClearFlag", "dm_arc16_maret_freed"); return 1; }
-function	script	DM_PrintArc16Flags	{ dispbottom("[DM] Arc 16 flags: started=" + callfunc("DM_GetFlag", "dm_arc16_started") + " rina_exposed=" + callfunc("DM_GetFlag", "dm_arc16_rina_exposed") + " rina_rolled=" + callfunc("DM_GetFlag", "dm_arc16_rina_rolled") + " rina_defected=" + callfunc("DM_GetFlag", "dm_arc16_rina_defected") + " bijou_killed=" + callfunc("DM_GetFlag", "dm_arc16_bijou_killed") + " maret_freed=" + callfunc("DM_GetFlag", "dm_arc16_maret_freed")); return 1; }
-
-function	script	DM_ClearArc17Flags	{ callfunc("DM_ClearFlag", "dm_arc17_started"); callfunc("DM_ClearFlag", "dm_arc17_admin_purged"); callfunc("DM_ClearFlag", "dm_arc17_admin_negotiated"); callfunc("DM_ClearFlag", "dm_arc17_admin_running"); callfunc("DM_ClearFlag", "dm_arc17_beta_killed"); return 1; }
-function	script	DM_PrintArc17Flags	{ dispbottom("[DM] Arc 17 flags: started=" + callfunc("DM_GetFlag", "dm_arc17_started") + " admin_purged=" + callfunc("DM_GetFlag", "dm_arc17_admin_purged") + " admin_negotiated=" + callfunc("DM_GetFlag", "dm_arc17_admin_negotiated") + " admin_running=" + callfunc("DM_GetFlag", "dm_arc17_admin_running") + " beta_killed=" + callfunc("DM_GetFlag", "dm_arc17_beta_killed")); return 1; }
-
-function	script	DM_ClearArc18Flags	{ callfunc("DM_ClearFlag", "dm_arc18_started"); callfunc("DM_ClearFlag", "dm_arc18_himmelmez_killed"); callfunc("DM_ClearFlag", "dm_arc18_himmelmez_bargained"); return 1; }
-function	script	DM_PrintArc18Flags	{ dispbottom("[DM] Arc 18 flags: started=" + callfunc("DM_GetFlag", "dm_arc18_started") + " himmelmez_killed=" + callfunc("DM_GetFlag", "dm_arc18_himmelmez_killed") + " himmelmez_bargained=" + callfunc("DM_GetFlag", "dm_arc18_himmelmez_bargained")); return 1; }
-
-function	script	DM_ClearArc19Flags	{ callfunc("DM_ClearFlag", "dm_arc19_started"); callfunc("DM_ClearFlag", "dm_arc19_surt_defeated"); callfunc("DM_ClearFlag", "dm_finale_shared_seal"); callfunc("DM_ClearFlag", "dm_finale_reforged_seal"); callfunc("DM_ClearFlag", "dm_finale_queens_bargain"); callfunc("DM_ClearFlag", "dm_finale_thanatos_road"); callfunc("DM_ClearFlag", "dm_finale_ragnarok_unbound"); callfunc("DM_ClearFlag", "dm_campaign_complete"); return 1; }
-function	script	DM_PrintArc19Flags	{ dispbottom("[DM] Arc 19 flags: started=" + callfunc("DM_GetFlag", "dm_arc19_started") + " surt_defeated=" + callfunc("DM_GetFlag", "dm_arc19_surt_defeated") + " campaign_complete=" + callfunc("DM_GetFlag", "dm_campaign_complete")); return 1; }

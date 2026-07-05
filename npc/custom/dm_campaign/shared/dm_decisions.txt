@@ -1,0 +1,578 @@
+// Seal Cascade decision registry and @dm decide command.
+//
+// Registry shape:
+//   one row per outcome, keyed by decision key + outcome key.
+//   set/clear lists are comma-delimited flag entries. A set entry may be:
+//     flag          -> set flag to 1
+//     flag=value    -> set flag to value
+//     flag+=value   -> add value to flag
+//   Quest lists are comma-delimited IDs and use quest_action "start" or
+//   "complete". Clear lists always write 0. Keep this dumb and extraction-only.
+
+function	script	DM_DecisionInit	{
+	if ($@dm_decision_init)
+		return 1;
+
+	deletearray $@dm_dec_key$[0], getarraysize($@dm_dec_key$);
+	deletearray $@dm_dec_arc[0], getarraysize($@dm_dec_arc);
+	deletearray $@dm_dec_prompt$[0], getarraysize($@dm_dec_prompt$);
+	deletearray $@dm_dec_outcome$[0], getarraysize($@dm_dec_outcome$);
+	deletearray $@dm_dec_label$[0], getarraysize($@dm_dec_label$);
+	deletearray $@dm_dec_set$[0], getarraysize($@dm_dec_set$);
+	deletearray $@dm_dec_clear$[0], getarraysize($@dm_dec_clear$);
+	deletearray $@dm_dec_quest_action$[0], getarraysize($@dm_dec_quest_action$);
+	deletearray $@dm_dec_quests$[0], getarraysize($@dm_dec_quests$);
+	deletearray $@dm_dec_beat[0], getarraysize($@dm_dec_beat);
+	deletearray $@dm_dec_story$[0], getarraysize($@dm_dec_story$);
+	deletearray $@dm_dec_confirm$[0], getarraysize($@dm_dec_confirm$);
+	deletearray $@dm_dec_base_exp[0], getarraysize($@dm_dec_base_exp);
+	deletearray $@dm_dec_job_exp[0], getarraysize($@dm_dec_job_exp);
+
+	callsub(S_Add, 3, "arc03.sabra", "Mother Sabra's bargain", "exposed", "Expose the dig", "dm_arc03_sabra_exposed", "dm_arc03_sabra_deal,dm_arc03_refugees_protected,dm_arc03_sabra_marked_party,dm_arc03_sabra_revealed_cascade", "", "", 321, "Mother Sabra turns mercy into a knife and asks who the party becomes holding it.", "Sabra exposed.", 0, 0);
+	callsub(S_Add, 3, "arc03.sabra", "Mother Sabra's bargain", "deal", "Take the compassion deal", "dm_arc03_sabra_deal,dm_arc03_refugees_protected", "dm_arc03_sabra_exposed,dm_arc03_sabra_marked_party,dm_arc03_sabra_revealed_cascade", "", "", 322, "Mother Sabra turns mercy into a knife and asks who the party becomes holding it.", "Sabra deal tracked.", 0, 0);
+	callsub(S_Add, 3, "arc03.sabra", "Mother Sabra's bargain", "truth", "Hear the cascade truth", "dm_arc03_sabra_marked_party,dm_arc03_sabra_revealed_cascade", "dm_arc03_sabra_exposed,dm_arc03_sabra_deal,dm_arc03_refugees_protected", "", "", 323, "Mother Sabra turns mercy into a knife and asks who the party becomes holding it.", "Sabra truth tracked.", 0, 0);
+
+	callsub(S_Add, 4, "arc04.elsbeth", "Elsbeth's place in the vault", "protect", "Protect Elsbeth", "dm_arc04_elsbeth_protected,dm_arc04_ward_key", "dm_arc04_elsbeth_with_party,dm_arc04_elsbeth_distrusted", "", "", 411, "Elsbeth decides how close she will stand to the vault door.", "Elsbeth protected; ward-key secured.", 0, 0);
+	callsub(S_Add, 4, "arc04.elsbeth", "Elsbeth's place in the vault", "vault", "Bring Elsbeth into the vault", "dm_arc04_elsbeth_with_party,dm_arc04_ward_key", "dm_arc04_elsbeth_protected,dm_arc04_elsbeth_distrusted", "", "", 412, "Elsbeth decides how close she will stand to the vault door.", "Elsbeth travels with the party; ward-key secured.", 0, 0);
+	callsub(S_Add, 4, "arc04.elsbeth", "Elsbeth's place in the vault", "distrust", "Distrust the Guild", "dm_arc04_elsbeth_distrusted", "dm_arc04_elsbeth_protected,dm_arc04_elsbeth_with_party,dm_arc04_ward_key", "", "", 413, "Elsbeth decides how close she will stand to the vault door.", "Guild distrusted; Elsbeth/ward-key flags cleared.", 0, 0);
+
+	callsub(S_Add, 4, "arc04.doran", "Archmagus Doran's reckoning", "condemn", "Condemn Doran", "dm_arc04_doran_confronted,dm_arc04_cassell_unmasked,dm_arc04_doran_fought", "dm_arc04_doran_stood_down,dm_arc04_doran_taught", "", "", 431, "Archmagus Doran reveals Cassell's hand in Geffen's lower vault.", "Doran condemned.", 0, 0);
+	callsub(S_Add, 4, "arc04.doran", "Archmagus Doran's reckoning", "surrender", "Offer publication and surrender", "dm_arc04_doran_confronted,dm_arc04_cassell_unmasked,dm_arc04_doran_stood_down", "dm_arc04_doran_fought,dm_arc04_doran_taught", "", "", 432, "Archmagus Doran reveals Cassell's hand in Geffen's lower vault.", "Doran stood down.", 0, 0);
+	callsub(S_Add, 4, "arc04.doran", "Archmagus Doran's reckoning", "teaching", "Ask for Cassell's teaching", "dm_arc04_doran_confronted,dm_arc04_cassell_unmasked,dm_arc04_doran_taught", "dm_arc04_doran_fought,dm_arc04_doran_stood_down", "", "", 433, "Archmagus Doran reveals Cassell's hand in Geffen's lower vault.", "Doran's teaching recorded.", 0, 0);
+
+	callsub(S_Add, 4, "arc04.catechism", "Brother Cassell's catechism", "refuse", "Refuse in faith", "dm_arc04_catechism_choice=1", "dm_arc04_pilgrim_catechism,dm_arc04_tamper_sense", "complete", "20024,20019", 499, "Cassell offers the Pilgrim's Catechism. The party chooses what kind of key knowledge becomes.", "Catechism refused; Arc 4 marked complete.", 0, 0);
+	callsub(S_Add, 4, "arc04.catechism", "Brother Cassell's catechism", "listen", "Refuse but listen", "dm_arc04_catechism_choice=2,dm_arc04_tamper_sense", "dm_arc04_pilgrim_catechism", "complete", "20024,20019", 499, "Cassell offers the Pilgrim's Catechism. The party chooses what kind of key knowledge becomes.", "Catechism refused but studied; Arc 4 marked complete.", 0, 0);
+	callsub(S_Add, 4, "arc04.catechism", "Brother Cassell's catechism", "accept", "Accept the teaching", "dm_arc04_catechism_choice=3,dm_arc04_pilgrim_catechism,dm_catechism_tally+=1", "dm_arc04_tamper_sense", "complete", "20024,20019", 499, "Cassell offers the Pilgrim's Catechism. The party chooses what kind of key knowledge becomes.", "Catechism accepted; Arc 4 marked complete.", 0, 0);
+
+	callsub(S_Add, 5, "arc05.mara", "Captain Mara's harbor", "trust", "Trust Mara", "dm_arc05_mara_trust,dm_arc05_mara_network", "dm_arc05_mara_pragmatic,dm_arc05_mara_insulted", "", "", 511, "Captain Mara decides whether the Saltmother becomes a safe harbor or just another route.", "Mara trusted.", 0, 0);
+	callsub(S_Add, 5, "arc05.mara", "Captain Mara's harbor", "pragmatic", "Use Mara pragmatically", "dm_arc05_mara_pragmatic", "dm_arc05_mara_trust,dm_arc05_mara_network,dm_arc05_mara_insulted", "", "", 512, "Captain Mara decides whether the Saltmother becomes a safe harbor or just another route.", "Mara used pragmatically.", 0, 0);
+	callsub(S_Add, 5, "arc05.mara", "Captain Mara's harbor", "insult", "Insult Mara", "dm_arc05_mara_insulted", "dm_arc05_mara_trust,dm_arc05_mara_network,dm_arc05_mara_pragmatic", "", "", 513, "Captain Mara decides whether the Saltmother becomes a safe harbor or just another route.", "Mara insulted.", 0, 0);
+
+	callsub(S_Add, 5, "arc05.brode", "Brode's manifest", "expose", "Expose and ruin Brode", "dm_arc05_manifest_taken,dm_arc05_cassell_courier_drop,dm_arc05_brode_ruined,dm_arc05_brode_enemy", "dm_arc05_brode_sold_manifest,dm_arc05_brode_threatened,dm_arc05_northern_account", "start", "20029", 526, "Brode's Manifest reframes the cascade as freight: ports, dates, and a northern account.", "Brode ruined; Cargo of Souls started.", 0, 0);
+	callsub(S_Add, 5, "arc05.brode", "Brode's manifest", "buy", "Buy the manifest", "dm_arc05_manifest_taken,dm_arc05_cassell_courier_drop,dm_arc05_brode_sold_manifest", "dm_arc05_brode_ruined,dm_arc05_brode_enemy,dm_arc05_brode_threatened,dm_arc05_northern_account", "start", "20029", 527, "Brode's Manifest reframes the cascade as freight: ports, dates, and a northern account.", "Manifest bought; Cargo of Souls started.", 0, 0);
+	callsub(S_Add, 5, "arc05.brode", "Brode's manifest", "threaten", "Threaten Brode", "dm_arc05_manifest_taken,dm_arc05_cassell_courier_drop,dm_arc05_brode_threatened,dm_arc05_brode_enemy,dm_arc05_northern_account", "dm_arc05_brode_ruined,dm_arc05_brode_sold_manifest", "start", "20029", 528, "Brode's Manifest reframes the cascade as freight: ports, dates, and a northern account.", "Brode threatened; Cargo of Souls started.", 0, 0);
+
+	callsub(S_Add, 6, "arc06.krenn", "Director Krenn's suppression", "bribed", "Accept silence money", "dm_arc06_krenn_bribed", "dm_arc06_krenn_exposed", "complete", "20102", 602, "Pragmatism pays. The party accepts the investor's silence money.", "Krenn bribed.", 0, 0);
+	callsub(S_Add, 6, "arc06.krenn", "Director Krenn's suppression", "exposed", "Expose Krenn", "dm_arc06_krenn_exposed", "dm_arc06_krenn_bribed", "complete", "20102", 603, "The data goes to the Council. Krenn's suppression is on the record.", "Krenn exposed.", 0, 0);
+
+	callsub(S_Add, 7, "arc07.strike", "Einbroch strike", "supported", "Support the strike", "dm_arc07_strike_supported", "dm_arc07_strike_broken", "complete", "20112", 702, "The party stands with the workers. Rekenber has noticed.", "Strike supported.", 0, 0);
+	callsub(S_Add, 7, "arc07.strike", "Einbroch strike", "broken", "Break the strike", "dm_arc07_strike_broken", "dm_arc07_strike_supported", "complete", "20112", 703, "The party breaks the strike. Rekenber rewards pragmatism.", "Strike broken.", 0, 0);
+
+	callsub(S_Add, 8, "arc08.manfred", "Brother Manfred's fate", "spared", "Spare Manfred", "dm_arc08_manfred_spared", "dm_arc08_manfred_killed", "", "", 802, "Manfred is spared. His faith restrains the court's unrest.", "Manfred spared. The cathedral is open.", 0, 0);
+	callsub(S_Add, 8, "arc08.manfred", "Brother Manfred's fate", "killed", "Kill Manfred", "dm_arc08_manfred_killed", "dm_arc08_manfred_spared", "", "", 803, "Manfred falls. His despair joins the Dark Lord's court.", "Manfred killed. The cathedral is open.", 0, 0);
+
+	callsub(S_Add, 9, "arc09.karsh", "High Prelate Karsh's record", "exposed", "Public confession", "dm_arc09_karsh_exposed", "dm_arc09_karsh_deal", "", "", 902, "Karsh signs the public confession. The truth is out.", "Karsh exposed. The ice dungeon is open.", 0, 0);
+	callsub(S_Add, 9, "arc09.karsh", "High Prelate Karsh's record", "deal", "Private deal", "dm_arc09_karsh_deal", "dm_arc09_karsh_exposed", "", "", 903, "A deal is struck. The truth moves at the church's pace.", "Karsh deal made. The ice dungeon is open.", 0, 0);
+
+	callsub(S_Add, 10, "arc10.wynne", "Wynne's capture", "rescued", "Extract Wynne", "dm_wynne_rescued", "dm_wynne_captured,dm_wynne_lost", "", "", 1001, "Quartermaster Wynne is extracted from Rekenber custody. The Guild learns how personal the cascade has become.", "Wynne rescued.", 0, 0);
+	callsub(S_Add, 10, "arc10.wynne", "Wynne's capture", "lost", "Leave the handler behind", "dm_wynne_lost", "dm_wynne_captured,dm_wynne_rescued", "", "", 1004, "The lab evidence moves, but Quartermaster Wynne does not. Rekenber has learned how to hurt the party's support network.", "Wynne lost.", 0, 0);
+
+	callsub(S_Add, 10, "arc10.echo", "Echo's refusal", "confronted", "Confront Reise", "dm_arc10_reise_confronted", "dm_arc10_echo_freed,dm_arc10_echo_returned,dm_echo_trusts_party", "complete", "20142", 1002, "Reise is confronted. Echo's refusal is on the record, even if the director refuses to call it personhood.", "Reise confronted. The One Who Said No complete.", 0, 0);
+	callsub(S_Add, 10, "arc10.echo", "Echo's refusal", "freed", "Free Echo", "dm_arc10_echo_freed,dm_echo_trusts_party", "dm_arc10_reise_confronted,dm_arc10_echo_returned", "complete", "20142", 1003, "Echo is free. The first prototype walks out of the lab that made it.", "Echo freed. The One Who Said No complete.", 0, 0);
+	callsub(S_Add, 10, "arc10.echo", "Echo's refusal", "returned", "Return Echo", "dm_arc10_echo_returned,dm_catechism_tally+=1", "dm_arc10_reise_confronted,dm_arc10_echo_freed,dm_echo_trusts_party", "complete", "20142", 1005, "Echo is returned to Rekenber custody. A made thing asked not to be a weapon, and the party sold the answer back to the factory.", "Echo returned. The One Who Said No complete.", 0, 0);
+
+	callsub(S_Add, 11, "arc11.sigrun", "Sigrun's last word", "voice", "Ask about the Voice", "dm_arc11_sigrun_voice,dm_arc11_sword_shard", "dm_arc11_sigrun_comforted", "complete", "20152", 1101, "Sigrun spends her last lucidity naming the laughter inside heaven's order.", "Sigrun's warning recorded. Dying Valkyrie's Word complete.", 0, 0);
+	callsub(S_Add, 11, "arc11.sigrun", "Sigrun's last word", "comfort", "Comfort Sigrun", "dm_arc11_sigrun_comforted,dm_arc11_sword_shard", "dm_arc11_sigrun_voice", "complete", "20152", 1104, "Sigrun dies comforted rather than questioned. Her broken sword-shard remains.", "Sigrun comforted. Dying Valkyrie's Word complete.", 0, 0);
+	callsub(S_Add, 11, "arc11.bjorn", "Zealot Bjorn", "subdued", "Talk Bjorn down", "dm_arc11_bjorn_subdued,dm_arc11_bjorn_joined", "dm_arc11_bjorn_forced,dm_arc11_bjorn_exploited", "", "", 1102, "Bjorn's grief breaks before it becomes another death march. His flock leaves the temple steps alive.", "Bjorn talked down. The temple steps are clear.", 0, 0);
+	callsub(S_Add, 11, "arc11.bjorn", "forced", "Force the steps", "dm_arc11_bjorn_forced", "dm_arc11_bjorn_subdued,dm_arc11_bjorn_joined,dm_arc11_bjorn_exploited", "", "", 1105, "Bjorn is moved by force. His flock learns nothing except that heaven and heroes both strike hard.", "Bjorn forced aside. The temple steps are clear.", 0, 0);
+	callsub(S_Add, 11, "arc11.bjorn", "exploited", "Use the weak wards", "dm_arc11_bjorn_exploited,dm_catechism_tally+=1", "dm_arc11_bjorn_subdued,dm_arc11_bjorn_joined,dm_arc11_bjorn_forced", "", "", 1106, "Bjorn shows the weak wards because he thinks the party marches to be judged. The route is open, and the delusion is fed.", "Bjorn exploited. The temple steps are clear.", 0, 0);
+
+	callsub(S_Add, 12, "arc12.first_contact", "First contact aftermath", "truth", "Expose the cover-up", "dm_arc12_first_contact_truth,dm_new_world_alliance", "dm_arc12_first_contact_peace,dm_arc12_first_contact_order", "complete", "20162", 1201, "The scouts' panic and the command cover-up are exposed. Aelith has truth enough to trust the party.", "First contact truth recorded.", 0, 0);
+	callsub(S_Add, 12, "arc12.first_contact", "First contact aftermath", "peace", "Pay the blood-price", "dm_arc12_first_contact_peace,dm_new_world_alliance", "dm_arc12_first_contact_truth,dm_arc12_first_contact_order", "complete", "20162", 1204, "A blood-price is paid. The village receives justice that is not clean, but is real enough to mourn around.", "First contact peace recorded.", 0, 0);
+	callsub(S_Add, 12, "arc12.first_contact", "First contact aftermath", "order", "Back the cover-up", "dm_arc12_first_contact_order", "dm_arc12_first_contact_truth,dm_arc12_first_contact_peace,dm_new_world_alliance", "complete", "20162", 1205, "The expedition stays orderly. Aelith's people know what order cost them.", "First contact cover-up recorded.", 0, 0);
+	callsub(S_Add, 12, "arc12.vance", "Captain Vance's expedition", "exposed", "Force Vance back", "dm_arc12_vance_exposed", "dm_arc12_vance_helped,dm_arc12_vance_occupation", "", "", 1202, "Vance pulls his team back. The survey becomes a warning, not a claim.", "Vance exposed. The anchor perimeter is open.", 0, 0);
+	callsub(S_Add, 12, "arc12.vance", "Captain Vance's expedition", "helped", "Turn Vance", "dm_arc12_vance_helped", "dm_arc12_vance_exposed,dm_arc12_vance_occupation", "", "", 1203, "Vance redirects his patriotism toward closing the breach. The expedition becomes support instead of occupation.", "Vance turned. The anchor perimeter is open.", 0, 0);
+	callsub(S_Add, 12, "arc12.vance", "Captain Vance's expedition", "occupation", "Back the occupation", "dm_arc12_vance_occupation,dm_catechism_tally+=1", "dm_arc12_vance_exposed,dm_arc12_vance_helped,dm_new_world_alliance", "", "", 1206, "The party accepts Vance's claim on the rift. Rune-Midgard gains a foothold while the walls dissolve faster.", "Vance occupation backed. The anchor perimeter is open.", 0, 0);
+
+	callsub(S_Add, 13, "arc13.known_dead", "The familiar dead", "reckoned", "Reckon honestly", "dm_arc13_known_dead_reckoned,dm_arc13_known_dead_blessing", "dm_arc13_known_dead_refused,dm_arc13_known_dead_host", "complete", "20172", 1304, "The familiar dead is named and laid down. Quill's bell has a cleaner note.", "A Name You Knew complete.", 0, 0);
+	callsub(S_Add, 13, "arc13.known_dead", "The familiar dead", "refused", "Put them down", "dm_arc13_known_dead_refused,dm_arc13_known_dead_host,dm_arc13_himmelmez_foreshadow,dm_catechism_tally+=1", "dm_arc13_known_dead_reckoned,dm_arc13_known_dead_blessing", "complete", "20172", 1305, "The familiar dead is broken instead of answered. The face goes forward into the campaign's colder rooms.", "A Name You Knew complete.", 0, 0);
+	callsub(S_Add, 13, "arc13.carrion", "Broker Carrion's terms", "killed", "Kill Carrion", "dm_arc13_carrion_killed", "dm_arc13_carrion_bribed,dm_arc13_carrion_minutes,dm_arc13_coalition_deal_honored", "", "", 1302, "Carrion is cut down. The inner gate opens without the council's seating plan.", "Carrion killed. The gate is open.", 0, 0);
+	callsub(S_Add, 13, "arc13.carrion", "Broker Carrion's terms", "bribed", "Buy the minutes", "dm_arc13_carrion_bribed,dm_arc13_carrion_minutes", "dm_arc13_carrion_killed,dm_arc13_coalition_deal_honored", "", "", 1303, "Carrion sells the Coalition's Seating Plan and walks. Beelzebub's room is less orderly than he intended.", "Carrion's minutes obtained. The gate is open.", 0, 0);
+
+	callsub(S_Add, 14, "arc14.hesma", "The Deep Shift", "exposed", "Expose Hesma", "dm_arc14_hesma_exposed,dm_arc14_evacuated", "dm_arc14_hesma_bribed,dm_arc14_miners_lost", "complete", "20182", 1402, "Hesma releases the survey data and signs the evacuation order. The deep shift has a public route out.", "Hesma exposed. The Deep Shift complete.", 0, 0);
+	callsub(S_Add, 14, "arc14.hesma", "The Deep Shift", "bribed", "Take the seal for silence", "dm_arc14_hesma_bribed,dm_arc14_miners_lost,dm_catechism_tally+=1", "dm_arc14_hesma_exposed,dm_arc14_evacuated", "complete", "20182", 1403, "The seal is exchanged for silence. Veins stays calm while some miners are left inside the lie.", "Hesma's seal taken. The Deep Shift complete.", 0, 0);
+
+	callsub(S_Add, 15, "arc15.pratt", "Scholar Pratt's method", "exposed", "Expose Pratt", "dm_arc15_pratt_exposed", "dm_arc15_pratt_delayed,dm_arc15_pratt_challenged", "", "", 1502, "Pratt's volunteers are released. He will brief the council honestly.", "Pratt exposed. Volunteers released.", 0, 0);
+	callsub(S_Add, 15, "arc15.pratt", "Scholar Pratt's method", "delayed", "Delay the method", "dm_arc15_pratt_delayed", "dm_arc15_pratt_exposed,dm_arc15_pratt_challenged", "", "", 1504, "Pratt delays the procedure for council review. The method survives, unstable and waiting.", "Pratt delayed. Council review filed.", 0, 0);
+	callsub(S_Add, 15, "arc15.pratt", "Scholar Pratt's method", "challenged", "Challenge the method", "dm_arc15_pratt_challenged", "dm_arc15_pratt_exposed,dm_arc15_pratt_delayed", "", "", 1503, "The full cost is known. Thanatos is still in the seal. Pratt does not open his notes again.", "Pratt challenged. Living-lock cost recorded.", 0, 0);
+
+	callsub(S_Add, 16, "arc16.rina", "Matron Rina's network", "exposed", "Expose Rina", "dm_arc16_rina_exposed,dm_prontera_united", "dm_arc16_rina_rolled,dm_arc16_rina_defected", "complete", "20204", 1602, "Rina is exposed. The public trial will show the court how deep the cascade went.", "Rina exposed. Royal House Audience Rounds complete.", 0, 0);
+	callsub(S_Add, 16, "arc16.rina", "Matron Rina's network", "rolled", "Roll the network quietly", "dm_arc16_rina_rolled,dm_prontera_united", "dm_arc16_rina_exposed,dm_arc16_rina_defected", "complete", "20204", 1604, "Rina dismantles the court network quietly. The royal house stays functional, but compromised names are in hand.", "Rina rolled the network. Royal House Audience Rounds complete.", 0, 0);
+	callsub(S_Add, 16, "arc16.rina", "Matron Rina's network", "defected", "Bring Rina across", "dm_arc16_rina_defected", "dm_arc16_rina_exposed,dm_arc16_rina_rolled,dm_prontera_united", "complete", "20204", 1603, "Rina defected. The party knows Bijou is Maret - a person, not an oracle.", "Rina defected. Royal House Audience Rounds complete.", 0, 0);
+
+	callsub(S_Add, 17, "arc17.admin", "The Administrator", "purged", "Purge the Administrator", "dm_arc17_admin_purged", "dm_arc17_admin_negotiated,dm_arc17_admin_running,dm_varmundt_tools_stabilized", "complete", "20214", 1702, "The Administrator shuts down. Data transferred. Mission fulfilled after three centuries.", "Admin purged. Biosphere Sample Rotation complete.", 0, 0);
+	callsub(S_Add, 17, "arc17.admin", "The Administrator", "negotiated", "Negotiate archive support", "dm_arc17_admin_negotiated,dm_varmundt_tools_stabilized", "dm_arc17_admin_purged,dm_arc17_admin_running", "complete", "20214", 1704, "The Administrator remains active to organize the archive. The party gains a cleaner Varmundt data yield.", "Admin negotiated. Biosphere Sample Rotation complete.", 0, 0);
+	callsub(S_Add, 17, "arc17.admin", "The Administrator", "running", "Leave it running", "dm_arc17_admin_running", "dm_arc17_admin_purged,dm_arc17_admin_negotiated,dm_varmundt_tools_stabilized", "complete", "20214", 1703, "The Administrator continues running. Real-time cascade analysis transmitting. 847 percent above baseline.", "Admin running. Biosphere Sample Rotation complete.", 0, 0);
+
+	callsub(S_Add, 18, "arc18.himmelmez", "Himmelmez's bargain", "killed", "Kill Himmelmez", "dm_arc18_himmelmez_killed", "dm_arc18_himmelmez_bargained,dm_himmelmez_bargain", "complete", "20221", 1802, "Himmelmez falls. Niflheim has no queen. The dead pour north. The seal's shape must account for an empty throne.", "Himmelmez killed. Arc 18 complete.", 2500000, 1500000);
+	callsub(S_Add, 18, "arc18.himmelmez", "Himmelmez's bargain", "bargained", "Accept the bargain", "dm_arc18_himmelmez_bargained,dm_himmelmez_bargain", "dm_arc18_himmelmez_killed", "complete", "20221", 1803, "A dark pact. Himmelmez holds the dead while the living face Loki. She has been holding them already.", "Himmelmez bargained. Arc 18 complete.", 2000000, 1200000);
+
+	callsub(S_Add, 19, "arc19.finale", "The Central Choice", "shared", "The Shared Seal", "dm_finale_shared_seal,dm_campaign_complete", "dm_finale_reforged_seal,dm_finale_queens_bargain,dm_finale_thanatos_road,dm_finale_ragnarok_unbound,dm_finale_refusal", "complete", "20233", 1999, "The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", "Finale recorded: Shared Seal.", 1000000, 500000);
+	callsub(S_Add, 19, "arc19.finale", "The Central Choice", "reforged", "The Reforged Seal", "dm_finale_reforged_seal,dm_campaign_complete", "dm_finale_shared_seal,dm_finale_queens_bargain,dm_finale_thanatos_road,dm_finale_ragnarok_unbound,dm_finale_refusal", "complete", "20233", 1999, "The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", "Finale recorded: Reforged Seal.", 1000000, 500000);
+	callsub(S_Add, 19, "arc19.finale", "The Central Choice", "queen", "The Queen's Bargain", "dm_finale_queens_bargain,dm_campaign_complete", "dm_finale_shared_seal,dm_finale_reforged_seal,dm_finale_thanatos_road,dm_finale_ragnarok_unbound,dm_finale_refusal", "complete", "20233", 1999, "The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", "Finale recorded: Queen's Bargain.", 1000000, 500000);
+	callsub(S_Add, 19, "arc19.finale", "The Central Choice", "thanatos", "Thanatos's Road", "dm_finale_thanatos_road,dm_campaign_complete", "dm_finale_shared_seal,dm_finale_reforged_seal,dm_finale_queens_bargain,dm_finale_ragnarok_unbound,dm_finale_refusal", "complete", "20233", 1999, "The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", "Finale recorded: Thanatos's Road.", 1000000, 500000);
+	callsub(S_Add, 19, "arc19.finale", "The Central Choice", "refusal", "The Refusal", "dm_finale_refusal,dm_campaign_complete", "dm_finale_shared_seal,dm_finale_reforged_seal,dm_finale_queens_bargain,dm_finale_thanatos_road,dm_finale_ragnarok_unbound", "complete", "20233", 1999, "The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", "Finale recorded: The Refusal.", 1000000, 500000);
+	callsub(S_Add, 19, "arc19.finale", "The Central Choice", "unbound", "Ragnarok Unbound", "dm_finale_ragnarok_unbound,dm_campaign_complete", "dm_finale_shared_seal,dm_finale_reforged_seal,dm_finale_queens_bargain,dm_finale_thanatos_road,dm_finale_refusal", "complete", "20233", 1999, "The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", "Finale recorded: Ragnarok Unbound.", 1000000, 500000);
+
+	$@dm_decision_init = 1;
+	return 1;
+
+S_Add:
+	.@i = getarraysize($@dm_dec_key$);
+	$@dm_dec_arc[.@i] = getarg(0);
+	$@dm_dec_key$[.@i] = getarg(1);
+	$@dm_dec_prompt$[.@i] = getarg(2);
+	$@dm_dec_outcome$[.@i] = getarg(3);
+	$@dm_dec_label$[.@i] = getarg(4);
+	$@dm_dec_set$[.@i] = getarg(5);
+	$@dm_dec_clear$[.@i] = getarg(6);
+	$@dm_dec_quest_action$[.@i] = getarg(7);
+	$@dm_dec_quests$[.@i] = getarg(8);
+	$@dm_dec_beat[.@i] = getarg(9);
+	$@dm_dec_story$[.@i] = getarg(10);
+	$@dm_dec_confirm$[.@i] = getarg(11);
+	$@dm_dec_base_exp[.@i] = getarg(12, 0);
+	$@dm_dec_job_exp[.@i] = getarg(13, 0);
+	return;
+}
+
+function	script	DM_DecisionFind	{
+	callfunc("DM_DecisionInit");
+	.@key$ = strtolower(getarg(0, ""));
+	.@outcome$ = strtolower(getarg(1, ""));
+
+	for (.@i = 0; .@i < getarraysize($@dm_dec_key$); ++.@i) {
+		if ($@dm_dec_key$[.@i] == .@key$ && $@dm_dec_outcome$[.@i] == .@outcome$)
+			return .@i;
+	}
+	return -1;
+}
+
+function	script	DM_DecisionParseArc	{
+	.@s$ = strtolower(getarg(0, ""));
+	if (.@s$ == "")
+		return 0;
+	if (getstrlen(.@s$) >= 4 && substr(.@s$, 0, 2) == "arc")
+		return atoi(substr(.@s$, 3, getstrlen(.@s$) - 1));
+	return atoi(.@s$);
+}
+
+function	script	DM_CurrentArc	{
+	.@beat = callfunc("DM_GetFlag", "dm_story_beat");
+	if (.@beat >= 100) {
+		.@arc = .@beat / 100;
+		if (.@arc < 1) .@arc = 1;
+		if (.@arc > 19) .@arc = 19;
+		return .@arc;
+	}
+
+	.@last = 1;
+	for (.@i = 1; .@i <= 19; ++.@i) {
+		.@p = questprogress(callfunc("DM_ArcTrackerId", .@i));
+		if (.@p == 1)
+			return .@i;
+		if (.@p == 2)
+			.@last = .@i;
+	}
+	return .@last;
+}
+
+function	script	DM_PartyAddFlag	{
+	.@flag$ = getarg(0);
+	.@delta = getarg(1, 1);
+	.@party_id = getarg(2, getcharid(CHAR_ID_PARTY));
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@flag$ == "")
+		return 0;
+
+	if (.@party_id <= 0) {
+		setd(.@flag$, getd(.@flag$) + .@delta);
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		setd(.@flag$, getd(.@flag$) + .@delta);
+		detachrid();
+		++.@done;
+	}
+
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+
+	return .@done;
+}
+
+function	script	DM_DecisionFlagName	{
+	.@entry$ = getarg(0, "");
+	if (.@entry$ == "")
+		return "";
+
+	deletearray .@parts$[0], getarraysize(.@parts$);
+	explode(.@parts$, .@entry$, "+=");
+	if (getarraysize(.@parts$) > 1)
+		return "";
+
+	deletearray .@parts$[0], getarraysize(.@parts$);
+	explode(.@parts$, .@entry$, "=");
+	if (getarraysize(.@parts$) > 1)
+		return .@parts$[0];
+
+	return .@entry$;
+}
+
+function	script	DM_DecisionApplySetList	{
+	.@list$ = getarg(0, "");
+	.@party_id = getarg(1, getcharid(CHAR_ID_PARTY));
+	if (.@list$ == "")
+		return 0;
+
+	deletearray .@entries$[0], getarraysize(.@entries$);
+	explode(.@entries$, .@list$, ",");
+	for (.@i = 0; .@i < getarraysize(.@entries$); ++.@i) {
+		.@entry$ = .@entries$[.@i];
+		if (.@entry$ == "")
+			continue;
+
+		deletearray .@parts$[0], getarraysize(.@parts$);
+		explode(.@parts$, .@entry$, "+=");
+		if (getarraysize(.@parts$) > 1) {
+			.@done += callfunc("DM_PartyAddFlag", .@parts$[0], atoi(.@parts$[1]), .@party_id);
+			continue;
+		}
+
+		deletearray .@parts$[0], getarraysize(.@parts$);
+		explode(.@parts$, .@entry$, "=");
+		if (getarraysize(.@parts$) > 1)
+			.@done += callfunc("DM_PartySetFlag", .@parts$[0], atoi(.@parts$[1]), .@party_id);
+		else
+			.@done += callfunc("DM_PartySetFlag", .@entry$, 1, .@party_id);
+	}
+	return .@done;
+}
+
+function	script	DM_DecisionApplyClearList	{
+	.@list$ = getarg(0, "");
+	.@party_id = getarg(1, getcharid(CHAR_ID_PARTY));
+	if (.@list$ == "")
+		return 0;
+
+	deletearray .@entries$[0], getarraysize(.@entries$);
+	explode(.@entries$, .@list$, ",");
+	for (.@i = 0; .@i < getarraysize(.@entries$); ++.@i) {
+		.@flag$ = callfunc("DM_DecisionFlagName", .@entries$[.@i]);
+		if (.@flag$ != "")
+			.@done += callfunc("DM_PartyClearFlag", .@flag$, .@party_id);
+	}
+	return .@done;
+}
+
+function	script	DM_DecisionApplyQuestList	{
+	.@action$ = getarg(0, "");
+	.@list$ = getarg(1, "");
+	.@party_id = getarg(2, getcharid(CHAR_ID_PARTY));
+	if (.@action$ == "" || .@list$ == "")
+		return 0;
+
+	deletearray .@quests$[0], getarraysize(.@quests$);
+	explode(.@quests$, .@list$, ",");
+	for (.@i = 0; .@i < getarraysize(.@quests$); ++.@i) {
+		.@quest_id = atoi(.@quests$[.@i]);
+		if (.@quest_id <= 0)
+			continue;
+		if (.@action$ == "start" || .@action$ == "set")
+			.@done += callfunc("DM_PartyQuestSet", .@quest_id, .@party_id);
+		else if (.@action$ == "complete")
+			.@done += callfunc("DM_PartyQuestComplete", .@quest_id, .@party_id);
+		else if (.@action$ == "erase" || .@action$ == "clear")
+			.@done += callfunc("DM_PartyQuestErase", .@quest_id, .@party_id);
+	}
+	return .@done;
+}
+
+function	script	DM_DecisionSetListMatches	{
+	.@list$ = getarg(0, "");
+	if (.@list$ == "")
+		return 0;
+
+	deletearray .@entries$[0], getarraysize(.@entries$);
+	explode(.@entries$, .@list$, ",");
+	for (.@i = 0; .@i < getarraysize(.@entries$); ++.@i) {
+		.@entry$ = .@entries$[.@i];
+		if (.@entry$ == "")
+			continue;
+
+		deletearray .@parts$[0], getarraysize(.@parts$);
+		explode(.@parts$, .@entry$, "+=");
+		if (getarraysize(.@parts$) > 1)
+			continue;
+
+		deletearray .@parts$[0], getarraysize(.@parts$);
+		explode(.@parts$, .@entry$, "=");
+		if (getarraysize(.@parts$) > 1) {
+			if (callfunc("DM_GetFlag", .@parts$[0]) != atoi(.@parts$[1]))
+				return 0;
+		} else if (!callfunc("DM_GetFlag", .@entry$)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+function	script	DM_DecisionChosenOutcome	{
+	callfunc("DM_DecisionInit");
+	.@key$ = strtolower(getarg(0, ""));
+
+	for (.@i = 0; .@i < getarraysize($@dm_dec_key$); ++.@i) {
+		if ($@dm_dec_key$[.@i] == .@key$ && callfunc("DM_DecisionSetListMatches", $@dm_dec_set$[.@i]))
+			return $@dm_dec_outcome$[.@i];
+	}
+	return "";
+}
+
+function	script	DM_Decide	{
+	callfunc("DM_DecisionInit");
+	.@key$ = strtolower(getarg(0, ""));
+	.@outcome$ = strtolower(getarg(1, ""));
+	.@idx = callfunc("DM_DecisionFind", .@key$, .@outcome$);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+
+	if (.@idx < 0) {
+		dispbottom("[DM] Unknown decision/outcome: " + .@key$ + " " + .@outcome$);
+		callfunc("DM_DecideStatus", callfunc("DM_DecisionArcForKey", .@key$));
+		return 0;
+	}
+
+	callfunc("DM_DecisionUndo", .@key$, 0);
+	callfunc("DM_DecisionApplyClearList", $@dm_dec_clear$[.@idx], .@party_id);
+	.@flag_writes = callfunc("DM_DecisionApplySetList", $@dm_dec_set$[.@idx], .@party_id);
+	.@quest_writes = callfunc("DM_DecisionApplyQuestList", $@dm_dec_quest_action$[.@idx], $@dm_dec_quests$[.@idx], .@party_id);
+
+	if ($@dm_dec_base_exp[.@idx] > 0 || $@dm_dec_job_exp[.@idx] > 0)
+		callfunc("DM_PartyExp", $@dm_dec_base_exp[.@idx], $@dm_dec_job_exp[.@idx]);
+
+	if ($@dm_dec_beat[.@idx] > 0)
+		callfunc("DM_PartyApplyFlag", "dm_story_beat", $@dm_dec_beat[.@idx], .@party_id);
+
+	if ($@dm_dec_story$[.@idx] != "")
+		callfunc("DM_MapStory", $@dm_dec_story$[.@idx]);
+
+	dispbottom("[DM] Decision " + .@key$ + " -> " + .@outcome$ + " applied. Flags=" + .@flag_writes + " quest_ops=" + .@quest_writes + ".");
+	if ($@dm_dec_confirm$[.@idx] != "")
+		dispbottom("[DM] " + $@dm_dec_confirm$[.@idx]);
+	return 1;
+}
+
+function	script	DM_DecisionArcForKey	{
+	callfunc("DM_DecisionInit");
+	.@key$ = strtolower(getarg(0, ""));
+	for (.@i = 0; .@i < getarraysize($@dm_dec_key$); ++.@i) {
+		if ($@dm_dec_key$[.@i] == .@key$)
+			return $@dm_dec_arc[.@i];
+	}
+	return callfunc("DM_CurrentArc");
+}
+
+function	script	DM_DecisionUndo	{
+	callfunc("DM_DecisionInit");
+	.@key$ = strtolower(getarg(0, ""));
+	.@announce = getarg(1, 1);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+
+	if (.@key$ == "")
+		return 0;
+
+	for (.@i = 0; .@i < getarraysize($@dm_dec_key$); ++.@i) {
+		if ($@dm_dec_key$[.@i] != .@key$)
+			continue;
+		++.@matched;
+		.@done += callfunc("DM_DecisionApplyClearList", $@dm_dec_set$[.@i], .@party_id);
+		.@done += callfunc("DM_DecisionApplyClearList", $@dm_dec_clear$[.@i], .@party_id);
+	}
+
+	if (.@announce) {
+		if (.@matched)
+			dispbottom("[DM] Decision " + .@key$ + " reset to PENDING. Flag writes=" + .@done + ".");
+		else
+			dispbottom("[DM] Unknown decision key: " + .@key$);
+	}
+	return .@matched;
+}
+
+function	script	DM_DecideStatus	{
+	callfunc("DM_DecisionInit");
+	.@arc = getarg(0, callfunc("DM_CurrentArc"));
+	if (.@arc <= 0)
+		.@arc = callfunc("DM_CurrentArc");
+
+	dispbottom("[DM] Decisions for Arc " + .@arc + ":");
+	for (.@i = 0; .@i < getarraysize($@dm_dec_key$); ++.@i) {
+		if ($@dm_dec_arc[.@i] != .@arc)
+			continue;
+
+		.@seen = 0;
+		for (.@j = 0; .@j < .@i; ++.@j) {
+			if ($@dm_dec_key$[.@j] == $@dm_dec_key$[.@i]) {
+				.@seen = 1;
+				break;
+			}
+		}
+		if (.@seen)
+			continue;
+
+		.@chosen$ = callfunc("DM_DecisionChosenOutcome", $@dm_dec_key$[.@i]);
+		dispbottom("  " + $@dm_dec_key$[.@i] + " (" + $@dm_dec_prompt$[.@i] + ") -> " + (.@chosen$ == "" ? "PENDING" : .@chosen$));
+		++.@count;
+	}
+
+	if (!.@count)
+		dispbottom("  No registered decisions for this arc.");
+	return .@count;
+}
+
+function	script	DM_DecideMenu	{
+	callfunc("DM_DecisionInit");
+	.@arc = getarg(0, callfunc("DM_CurrentArc"));
+	if (.@arc <= 0)
+		.@arc = callfunc("DM_CurrentArc");
+
+	.@count = 0;
+	for (.@i = 0; .@i < getarraysize($@dm_dec_key$); ++.@i) {
+		if ($@dm_dec_arc[.@i] != .@arc)
+			continue;
+
+		.@seen = 0;
+		for (.@j = 0; .@j < .@count; ++.@j) {
+			if (.@keys$[.@j] == $@dm_dec_key$[.@i]) {
+				.@seen = 1;
+				break;
+			}
+		}
+		if (.@seen)
+			continue;
+
+		.@keys$[.@count] = $@dm_dec_key$[.@i];
+		.@chosen$ = callfunc("DM_DecisionChosenOutcome", $@dm_dec_key$[.@i]);
+		.@menu$[.@count] = $@dm_dec_prompt$[.@i] + " [" + (.@chosen$ == "" ? "PENDING" : .@chosen$) + "]";
+		++.@count;
+	}
+
+	if (!.@count) {
+		mes("[DM Decisions]");
+		mes("No registered decisions for Arc " + .@arc + ".");
+		close;
+	}
+
+	mes("[DM Decisions]");
+	mes("Arc " + .@arc + " decisions.");
+	next();
+	.@pick = select(implode(.@menu$, ":") + ":Status:Cancel");
+	if (.@pick == .@count + 1) {
+		callfunc("DM_DecideStatus", .@arc);
+		close;
+	}
+	if (.@pick == .@count + 2)
+		close;
+
+	callfunc("DM_DecideOutcomeMenu", .@keys$[.@pick - 1]);
+	close;
+}
+
+function	script	DM_DecideOutcomeMenu	{
+	callfunc("DM_DecisionInit");
+	.@key$ = strtolower(getarg(0, ""));
+	.@count = 0;
+
+	for (.@i = 0; .@i < getarraysize($@dm_dec_key$); ++.@i) {
+		if ($@dm_dec_key$[.@i] != .@key$)
+			continue;
+		if (.@prompt$ == "")
+			.@prompt$ = $@dm_dec_prompt$[.@i];
+		.@outcomes$[.@count] = $@dm_dec_outcome$[.@i];
+		.@menu$[.@count] = $@dm_dec_label$[.@i] + " (" + $@dm_dec_outcome$[.@i] + ")";
+		++.@count;
+	}
+
+	if (!.@count) {
+		mes("[DM Decisions]");
+		mes("Unknown decision: " + .@key$);
+		close;
+	}
+
+	mes("[DM Decisions]");
+	mes(.@prompt$);
+	mes("Current: " + (callfunc("DM_DecisionChosenOutcome", .@key$) == "" ? "PENDING" : callfunc("DM_DecisionChosenOutcome", .@key$)));
+	next();
+	.@pick = select(implode(.@menu$, ":") + ":Undo / set PENDING:Cancel");
+	if (.@pick <= .@count) {
+		callfunc("DM_Decide", .@key$, .@outcomes$[.@pick - 1]);
+		return 1;
+	}
+	if (.@pick == .@count + 1)
+		callfunc("DM_DecisionUndo", .@key$);
+	return 0;
+}
+
+function	script	DM_DecideCommand	{
+	.@num = getarg(0, 0);
+	.@a$ = strtolower(getarg(1, ""));
+	.@b$ = strtolower(getarg(2, ""));
+	.@c$ = strtolower(getarg(3, ""));
+
+	if (.@num <= 0 || .@a$ == "") {
+		callfunc("DM_DecideMenu", callfunc("DM_CurrentArc"));
+		return 1;
+	}
+
+	if (.@a$ == "status") {
+		.@arc = callfunc("DM_DecisionParseArc", .@b$);
+		if (.@arc <= 0)
+			.@arc = callfunc("DM_CurrentArc");
+		callfunc("DM_DecideStatus", .@arc);
+		return 1;
+	}
+
+	if (.@a$ == "undo") {
+		if (.@b$ == "") {
+			dispbottom("[DM] Usage: @dm decide undo <key>");
+			return 0;
+		}
+		callfunc("DM_DecisionUndo", .@b$);
+		return 1;
+	}
+
+	.@arc = callfunc("DM_DecisionParseArc", .@a$);
+	if (.@arc > 0 && .@b$ == "") {
+		callfunc("DM_DecideMenu", .@arc);
+		return 1;
+	}
+
+	if (.@b$ == "") {
+		callfunc("DM_DecideOutcomeMenu", .@a$);
+		return 1;
+	}
+
+	return callfunc("DM_Decide", .@a$, .@b$);
+}
+
+-	script	DM_Decisions	FAKE_NPC,{
+	end;
+
+OnInit:
+	callfunc("DM_DecisionInit");
+	bindatcmd("dmdecide", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDecide", 1, 99, 1);
+	end;
+
+OnDecide:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callfunc("DM_DecideCommand", .@atcmd_numparameters, .@atcmd_parameters$[0], .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+	end;
+}

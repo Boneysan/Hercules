@@ -15,10 +15,10 @@
 //= Quests (db/quest_db.conf):
 //=   20001 Omens at the Fountain        (arc tracker)
 //=   20002 Contract: Cellar Vermin      (Tarou x10)
-//=   20003 Field Contract: Rockers...   (Rocker x15)
+//=   20003 Field Contract: Rockers...   (prt_fild07 drop turn-in)
 //=   20004 The Trembling Ground         (story)
 //=   20005 The Goat-Headed Sign         (Deviruchi MVP)
-//=   20006 South Gate Soup Line         (reserved / story)
+//=   20006 First Field Test             (Fluff/Jellopy/Clover turn-in)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
 //=   dm_arc01_started, dm_arc01_hero_type,
@@ -30,17 +30,10 @@
 // ── Session Board — always-visible onboarding notice near the fountain ─────
 prontera,155,185,5	script	Session Board#dm	4_BOARD3,{
 	if ($dm_mode && getcharid(CHAR_ID_PARTY) == $dm_active_party) {
-		// Find which arc the party is on: first in-progress, else last complete.
-		setarray .@q[0], 20001, 20007, 20013, 20019, 20025, 20101, 20111, 20121, 20131, 20141, 20151, 20161, 20171, 20181, 20191, 20201, 20211, 20221, 20231;
-		.@current_arc = 0;
-		for (.@i = 0; .@i < 19; ++.@i) {
-			.@p = questprogress(.@q[.@i]);
-			if (.@p == 1) { .@current_arc = .@i + 1; break; }
-			if (.@p == 2)  .@current_arc = .@i + 1;
-		}
+		.@current_arc = callfunc("DM_CurrentArc");
 		mes("[Session Board]");
 		mes("A campaign session is underway.");
-		if (.@current_arc > 0)
+		if (.@current_arc > 1 || questprogress(20001))
 			mes("Your party is currently on Arc " + .@current_arc + " of 19.");
 		else
 			mes("No arc has been started yet. Await the Dungeon Master's signal.");
@@ -63,6 +56,11 @@ prontera,155,185,5	script	Session Board#dm	4_BOARD3,{
 	mes("[Session Board]");
 	mes("Speak to a GM to arrange a campaign session. Form a party before the session starts.");
 	close();
+
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
+	end;
 }
 
 // ── Quartermaster Wynne — Adventurers' Guild handler ───────────────────────
@@ -84,10 +82,18 @@ prontera,156,191,5	script	Quartermaster Wynne#dm	4_F_01,{
 	end;
 
 OnInit:
-	questinfo QTYPE_QUEST, 1; // Marker color 1 (yellow)
+	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20001, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20001, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20006, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20002, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20003, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_SwearIn:
@@ -116,24 +122,47 @@ S_SwearIn:
 	}
 	next();
 	mes("[Wynne]");
-	mes("Take these contracts. The city guard says the Culvert is just Plankton and Tarou, but the refugees from the south say the ground down there is... humming.");
-	next();
-	mes("[Wynne]");
-	mes("Be smart. It pays. It's also a bad idea. Both things are true. Sign here.");
+	mes("Take this contract. The Culvert. The city guard says it's just Plankton and Tarou, but the refugees from the south say the ground down there is... humming. Be smart. It pays. It's also a bad idea. Both things are true. Sign here.");
 	callfunc("DM_InstanceSetFlag", "dm_arc01_started", 1);
 	callfunc("DM_InstanceQuestStart", 20001);
+	callfunc("DM_InstanceQuestStart", 20006);
 	callfunc("DM_InstanceQuestStart", 20002);
 	callfunc("DM_InstanceQuestStart", 20003);
 	next();
 	mes("^3355FF[Quest started: Omens at the Fountain]^000000");
-	mes("^3355FFContract: Cellar Vermin - cull 10 Tarou in the Culvert.^000000");
-	mes("^3355FFField Contract: cull 15 Rockers in the Prontera fields.^000000");
-	mes("^3355FFOld Tibbets keeps the sluice-gates by the Culvert. Talk to him before you go down.^000000");
+	mes("^3355FFQuests added: First Field Test, Contract: Cellar Vermin, and Field Contract: Rockers and Rumors.^000000");
 	close();
 
 S_Contracts:
 	// Settle any completed hunting contracts.
 	.@paid = 0;
+	if (questprogress(20006) == 1) {
+		if (countitem(Jellopy) >= 10 && countitem(Fluff) >= 10 && countitem(Clover) >= 10) {
+			mes("[Wynne]");
+			mes("Good. Jellopy, Fluff, Clover - three things a field recruit should be able to find without dying creatively.");
+			next();
+			switch (select("Turn in the field test.", "Hold onto the supplies.")) {
+			case 1:
+				delitem Jellopy, 10;
+				delitem Fluff, 10;
+				delitem Clover, 10;
+				callfunc("DM_InstanceQuestComplete", 20006);
+				callfunc("DM_PartyExp", 2000, 1000);
+				callfunc("DM_GivePartyZeny", 500);
+				.@paid = 1;
+				mes("[Wynne]");
+				mes("You can follow instructions. That puts you above half the ledger. Here's the training pay.");
+				next();
+				break;
+			case 2:
+				break;
+			}
+		} else {
+			mes("[Wynne]");
+			mes("First Field Test is still open. Bring me 10 Jellopy, 10 Fluff, and 10 Clover. Porings, Fabres, and Lunatics will teach you the basics without eating your boots.");
+			next();
+		}
+	}
 	if (questprogress(20002) == 1 && questprogress(20002, HUNTING) == 2) {
 		callfunc("DM_InstanceQuestComplete", 20002);
 		callfunc("DM_PartyExp", 4000, 1500);
@@ -143,14 +172,32 @@ S_Contracts:
 		mes("Cellar's a little cleaner. 2,000 zeny, and the ledger likes you.");
 		next();
 	}
-	if (questprogress(20003) == 1 && questprogress(20003, HUNTING) == 2) {
-		callfunc("DM_InstanceQuestComplete", 20003);
-		callfunc("DM_PartyExp", 4500, 1800);
-		callfunc("DM_GivePartyZeny", 2000);
-		.@paid = 1;
-		mes("[Wynne]");
-		mes("Fields are quieter. Another 2,000. And you brought back rumors with the proof - good.");
-		next();
+	if (questprogress(20003) == 1) {
+		if (countitem(Grasshoppers_Leg) >= 15 && countitem(Animals_Skin) >= 10 && countitem(Mushroom_Spore) >= 5) {
+			mes("[Wynne]");
+			mes("Legs from Rockers, hides from the babes, spores from the black mushrooms. Good. That means you walked the field instead of counting bugs from the road.");
+			next();
+			switch (select("Turn in the field bundle.", "Hold onto the field bundle.")) {
+			case 1:
+				delitem Grasshoppers_Leg, 15;
+				delitem Animals_Skin, 10;
+				delitem Mushroom_Spore, 5;
+				callfunc("DM_InstanceQuestComplete", 20003);
+				callfunc("DM_PartyExp", 8000, 4000);
+				callfunc("DM_GivePartyZeny", 2000);
+				.@paid = 1;
+				mes("[Wynne]");
+				mes("Fields are quieter, and you brought back rumors with the proof - good.");
+				next();
+				break;
+			case 2:
+				break;
+			}
+		} else {
+			mes("[Wynne]");
+			mes("Field Contract is still open. Bring 15 Grasshopper's Legs from Rockers, 10 Animal Skins from Savage Babes, and 5 Mushroom Spores from the black mushrooms on the southwest field.");
+			next();
+		}
 	}
 
 	// Main quest gate: both contracts done -> hand the unofficial job.
@@ -250,7 +297,61 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20004, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20004, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
+}
+
+// Mira Ashkey - early refugee witness
+prontera,153,42,3	script	Mira Ashkey#dm01	4_F_02,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc01_started) {
+		mes("[Mira]");
+		mes("The guard keeps asking which street in Morroc I came from. I keep telling him the street is gone.");
+		close();
+	}
+	if (questprogress(20004) == 2) {
+		mes("[Mira]");
+		if (dm_arc01_refugees_helped)
+			mes("You brought that child back quietly. People noticed. The soup line is still frightening, but at least someone here knows we are people before we are paperwork.");
+		else
+			mes("The guard came through after you reported the soup line. I know why. I do. But frightened people run toward anyone who promises not to count them.");
+		next();
+		mes("[Mira]");
+		mes("My brother went south to look for water. When the roads open again, I am going after him.");
+		close();
+	}
+
+	mes("^3355FF*A young Morroc refugee sits near the south gate, clutching a brass house-key wrapped in red thread.*^000000");
+	next();
+	mes("[Mira]");
+	mes("The buildings in Morroc shook before they fell. Now Prontera shakes too, and everyone tells me that is normal because normal is easier than scared.");
+	next();
+	mes("[Mira]");
+	mes("If you go near the soup line, watch the gray-robed man. He speaks kindly, but the ground gets colder after he leaves.");
+	close();
+}
+
+// charity ledger - early paper trail for Holt's refugee outreach
+prontera,160,43,3	script	Charity Ledger#dm01	2_BOARD1,{
+	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!dm_arc01_started) {
+		mes("^3355FF*A municipal relief ledger is posted here for public reassurance. The neat totals feel more optimistic than the camp beyond the wall.*^000000");
+		close();
+	}
+
+	mes("^3355FF*Several pages have been pinned under the city seal. Most are grain tallies. One page tracks private soup deliveries to the south gate camp.*^000000");
+	next();
+	mes("^0000AA[Emergency Charity Ledger]^000000");
+	mes("Authorized supplemental kitchens:");
+	mes("- Adventurers' Guild fountain ward");
+	mes("- Cathedral alms route, Deacon Holt supervising");
+	mes("- South culvert overflow, after curfew");
+	next();
+	mes("Margin note: Refugees respond more calmly when fed below the grate rather than at the wall. Continue gray-robed volunteer rotation. Keep guard presence light to avoid panic.");
+	next();
+	mes("Unsigned addendum: The trembling is strongest during distribution. Record names separately.");
+	close();
 }
 
 // ── Tibbets the Sluice-Keeper — Culvert guide ──────────────────────────────
@@ -302,6 +403,8 @@ prontera,146,193,5	script	Tibbets the Keeper#dm	1_M_SIZ,{
 OnInit:
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20005, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
@@ -421,5 +524,7 @@ OnDeviruchiDead:
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20005, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }

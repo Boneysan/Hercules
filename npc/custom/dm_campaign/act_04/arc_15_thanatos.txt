@@ -12,10 +12,15 @@
 //=   20191 The Five Doors of a Dead Hero  (arc tracker / Thanatos)
 //=   20192 What the Tower Remembers       (Hylozoist x15)
 //=   20193 Aldebaran Last Letters         (Lude x15)
-//=   20194 The Method's Price             (Scholar Pratt)
+//=   20194 Clock Tower Daily Wounds       (Big Bell x20)
+//=   20195 Fragment Relief Rotation       (Thanatos fragment route)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc15_started, dm_arc15_pratt_exposed,
+//=   dm_arc15_started, dm_arc15_clock_spirits,
+//=   dm_arc15_clock_records, dm_arc15_clock_rushed,
+//=   dm_arc15_fragment_honest, dm_arc15_fragment_efficient,
+//=   dm_arc15_fragment_confession, dm_arc15_memory_readiness,
+//=   dm_arc15_mirror_shard_strength, dm_arc15_pratt_exposed,
 //=   dm_arc15_pratt_delayed, dm_arc15_pratt_challenged,
 //=   dm_arc15_thanatos_killed
 //===========================================================
@@ -45,6 +50,16 @@ OnInit:
 	setquestinfo QINFO_QUEST, 20191, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20191, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20192, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20193, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20194, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20195, 1;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 
 S_StartArc:
@@ -83,15 +98,19 @@ S_StartArc:
 	mes("There is a Schwarzwald researcher here. Scholar Pratt. He has been here for three months. He believes the Thanatos method can be replicated efficiently. I have been watching him recruit.");
 	next();
 	mes("[Lysandra]");
-	mes("The Tower's upper levels are saturated with cascade resonance. The spirits there — Hylozoist, Lude — are echoes of scholars who ascended before you and became part of the resonance. Clear them. You need to reach the memory directly.");
+	mes("The Clock Tower is rehearsing grief below, the Niflheim echoes still carry letters, and Thanatos Tower is shedding fragments of its broken hero. Clear the routes and read what they are telling you before you face Pratt.");
 	callfunc("DM_InstanceSetFlag", "dm_arc15_started", 1);
 	callfunc("DM_InstanceQuestStart", 20191);
 	callfunc("DM_InstanceQuestStart", 20192);
 	callfunc("DM_InstanceQuestStart", 20193);
+	callfunc("DM_InstanceQuestStart", 20194);
+	callfunc("DM_InstanceQuestStart", 20195);
 	next();
 	mes("^3355FF[Quest started: The Five Doors of a Dead Hero]^000000");
 	mes("^3355FFWhat the Tower Remembers - disperse 15 Hylozoist. They hold fragments of the original memory.^000000");
 	mes("^3355FFAldebaran Last Letters - silence 15 Lude. Ghosts of scholars who became trapped in the echo.^000000");
+	mes("^3355FFClock Tower Daily Wounds - clear 20 Big Bell from Nightmare Clock Tower 3F.^000000");
+	mes("^3355FFFragment Relief Rotation - work the Thanatos Tower fragment floors.^000000");
 	close();
 
 S_TurnIns:
@@ -146,26 +165,89 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20192) == 2 && questprogress(20193) == 2 && questprogress(20194) == 0) {
+	if (questprogress(20194) == 1 && questprogress(20194, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20194);
+		callfunc("DM_PartyExp", 520000, 260000);
+		callfunc("DM_GivePartyZeny", 42000);
+		.@paid = 1;
+		mes("[Lysandra]");
+		mes("The stopped hands are catalogued. Nightmare Clock Tower is not only losing time. It is practicing how grief repeats when no one stays to witness it.");
+		next();
+		switch (select("Help the trapped loops finish.", "Record the loops and keep moving.", "Clear the dailies for speed.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc15_clock_spirits", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_memory_readiness", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_clock_records", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_clock_rushed", 0);
+			mes("[Lysandra]");
+			mes("Witness is slow work. The Tower notices when someone finally lets an ending end.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc15_clock_records", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_clock_spirits", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_clock_rushed", 0);
+			mes("[Lysandra]");
+			mes("Useful context. The loops remain, but the record is better than it was yesterday.");
+			break;
+		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc15_clock_rushed", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_clock_spirits", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_clock_records", 0);
+			mes("[Lysandra]");
+			mes("Efficient. Also empty. Thanatos Tower punishes people who arrive with only efficiency.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20195) == 1 && questprogress(20195, HUNTING) == 2) {
+		callfunc("DM_InstanceQuestComplete", 20195);
+		callfunc("DM_PartyExp", 540000, 270000);
+		callfunc("DM_GivePartyZeny", 44000);
+		.@paid = 1;
+		mes("[Lysandra]");
+		mes("The fragment pouch is sorted. Cowardice, hatred, shelter, solace, grief. People think they farm fragments. Usually the fragments are farming admissions.");
+		next();
+		switch (select("Read every pouch honestly.", "Trade for the useful reward.", "Assign each fragment to a private confession.")) {
+		case 1:
+			callfunc("DM_InstanceSetFlag", "dm_arc15_fragment_honest", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_mirror_shard_strength", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_fragment_efficient", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_fragment_confession", 0);
+			mes("[Lysandra]");
+			mes("Honesty makes a better mirror than polish. The shard will remember this.");
+			break;
+		case 2:
+			callfunc("DM_InstanceSetFlag", "dm_arc15_fragment_efficient", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_fragment_honest", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_fragment_confession", 0);
+			mes("[Lysandra]");
+			mes("The reward is real. The shard remains only glass unless someone lets it mean something.");
+			break;
+		case 3:
+			callfunc("DM_InstanceSetFlag", "dm_arc15_fragment_confession", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_mirror_shard_strength", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_fragment_honest", 0);
+			callfunc("DM_InstanceSetFlag", "dm_arc15_fragment_efficient", 0);
+			mes("[Lysandra]");
+			mes("Personal, deliberate, and sharp enough to cut. That can help if you do not mistake pain for truth.");
+			break;
+		}
+		next();
+	}
+
+	if (questprogress(20192) == 2 && questprogress(20193) == 2 && questprogress(20194) == 2 && questprogress(20195) == 2 && !dm_arc15_pratt_exposed && !dm_arc15_pratt_delayed && !dm_arc15_pratt_challenged) {
 		mes("[Lysandra]");
 		mes("The upper levels are clear. Scholar Pratt is in the archive room at the Tower's seventh floor. He has a meeting scheduled with his volunteers this afternoon.");
 		next();
 		mes("[Lysandra]");
 		mes("I cannot stop him myself. I am an archivist. I preserve records. You are something else.");
-		callfunc("DM_InstanceQuestStart", 20194);
 		next();
-		mes("^3355FF[Quest started: The Method's Price]^000000");
 		mes("^3355FFConfront Scholar Pratt at the Tower's upper archive. Then descend to thana_boss and face the Memory of Thanatos.^000000");
 		close();
 	}
 
-	if (questprogress(20194) == 1 && !dm_arc15_pratt_exposed && !dm_arc15_pratt_delayed && !dm_arc15_pratt_challenged) {
-		mes("[Lysandra]");
-		mes("Pratt is on the seventh floor. His volunteers arrive in two hours.");
-		close();
-	}
-
-	if (questprogress(20194) == 1 && (dm_arc15_pratt_exposed || dm_arc15_pratt_delayed || dm_arc15_pratt_challenged)) {
+	if (dm_arc15_pratt_exposed || dm_arc15_pratt_delayed || dm_arc15_pratt_challenged) {
 		mes("[Lysandra]");
 		mes("Pratt is handled. The memory lies below thana_boss. It will be... intense. You understand what you are walking into.");
 		close();
@@ -178,14 +260,16 @@ S_TurnIns:
 	}
 
 	mes("[Lysandra]");
-	if (questprogress(20192) == 1 && questprogress(20193) == 1)
-		mes("The Hylozoist hunt and the Lude silencing are both still active.");
-	else if (questprogress(20192) == 1)
+	if (questprogress(20192) == 1)
 		mes("What the Tower Remembers is still open. The Hylozoist in the upper floors.");
 	else if (questprogress(20193) == 1)
 		mes("Aldebaran Last Letters is still open. The Lude in the scholar levels.");
+	else if (questprogress(20194) == 1)
+		mes("Clock Tower Daily Wounds is still open. Nightmare Clock Tower 3F is losing minutes.");
+	else if (questprogress(20195) == 1)
+		mes("Fragment Relief Rotation is still open. Thanatos Tower F9 through F12 are shedding pieces.");
 	else
-		mes("Both done. Pratt is on the seventh floor.");
+		mes("All four support routes are complete. Pratt is on the seventh floor.");
 	close();
 }
 
@@ -195,6 +279,12 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 	if (!dm_arc15_started) {
 		mes("[Scholar Pratt]");
 		mes("The Tower's archives are restricted to approved researchers. I suggest you speak to Keeper Lysandra.");
+		close();
+	}
+
+	if (questprogress(20192) != 2 || questprogress(20193) != 2 || questprogress(20194) != 2 || questprogress(20195) != 2) {
+		mes("[Scholar Pratt]");
+		mes("Keeper Lysandra is still arranging your practical education. I prefer not to discuss methodology with an unprepared audience.");
 		close();
 	}
 
@@ -226,10 +316,7 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 	next();
 	switch (select("Name your volunteers. What they agreed to was not informed consent.", "Present your findings to the council before you proceed with any human subjects.", "What do you know about the cost that is not in the official record?")) {
 	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
-		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_exposed", 1);
-		callfunc("DM_InstanceQuestComplete", 20194);
+		callfunc("DM_Decide", "arc15.pratt", "exposed");
 		mes("[Pratt]");
 		mes("They chose to serve research. That is not the same as—");
 		next();
@@ -243,10 +330,7 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 		mes("^3355FF[Encounter: the Tower's resonance weakens because the cycle will not be repeated.]^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
-		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_delayed", 1);
-		callfunc("DM_InstanceQuestComplete", 20194);
+		callfunc("DM_Decide", "arc15.pratt", "delayed");
 		mes("[Pratt]");
 		mes("The council. Yes. The standard review process. My timeline can accommodate that.");
 		next();
@@ -260,10 +344,7 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 		mes("^3355FF[Encounter: the Tower's resonance remains unstable while the method survives.]^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
-		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_challenged", 1);
-		callfunc("DM_InstanceQuestComplete", 20194);
+		callfunc("DM_Decide", "arc15.pratt", "challenged");
 		mes("[Pratt]");
 		mes("What I know that is not in the record. Yes. I can tell you that.");
 		next();
@@ -279,12 +360,12 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 		break;
 	}
 	next();
-	mes("^3355FF[The Method's Price resolved. Descend to thana_boss and face the Memory of Thanatos.]^000000");
+	mes("^3355FF[Pratt resolved. Descend to thana_boss and face the Memory of Thanatos.]^000000");
 	close();
 
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20194, 1;
+	setquestinfo QINFO_QUEST, 20000, 1;
 	end;
 }
 
@@ -347,4 +428,36 @@ OnThanatosDead:
 
 OnAddDead:
 	end;
+}
+
+// Thanatos's Diary - readable handout after the Memory falls
+thana_boss,148,150,3	script	Thanatos Diary#dm	2_BOARD1,{
+	if (!callfunc("DM_PartyActive")) { close; }
+	if (!dm_arc15_thanatos_killed) {
+		mes("^3355FF*The air here is heavy with remembered grief. Whatever the Memory was holding has not fallen free yet.*^000000");
+		close();
+	}
+
+	mes("^3355FF*A torn diary page is clenched in a dead, shaking hand of light. The ink starts steady and ends in desperate scratches.*^000000");
+	next();
+	mes("^0000AA[(Day 412 since the sealing)]^000000");
+	mes("The people in the city above call me a savior. They build statues of me striking down the Nightmare of Midgard.");
+	mes("They do not know the sword broke. They do not know the demon did not die.");
+	next();
+	mes("^0000AA[Thanatos's Diary]^000000");
+	mes("I could not pierce its armor. The only way to stop it was to draw its essence into the only vessel strong enough to hold it. My own soul.");
+	mes("I am the lock. I am the cage. And the cage is rotting.");
+	next();
+	mes("^0000AA[(Day 890)]^000000");
+	mes("It whispers without words. Despair. Agony. When I close my eyes, I see the world burning.");
+	mes("The priests did not bring medicine. They brought chains.");
+	next();
+	mes("^0000AA[(Day ???)]^000000");
+	mes("They are building a tower. Not a monument. A tomb.");
+	mes("To whoever finds this: do not make my mistake. I thought a hero had to carry it alone.");
+	next();
+	mes("^0000AA[Thanatos's Last Word]^000000");
+	mes("The dark is too heavy for one soul. If it must be carried... do not be one. Be many.");
+	mes("Or it will wear your face next.");
+	close();
 }
