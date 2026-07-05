@@ -597,7 +597,7 @@ function	script	DM_BeatArc08	{
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 8 - Glast Heim (The Cursed Kingdom)");
 	next();
-	switch (select("Warp: Sir Aldric", "Beat: Start Arc 8", "Beat: Manfred Spared", "Beat: Manfred Killed", "Warp: Brother Manfred", "Warp: GH Abbey", "Beat: Spawn Dark Lord", "Beat: Dark Lord slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Sir Aldric", "Beat: Start Arc 8", "Beat: Martyrs' Crypt (start trial)", "Beat: Manfred Spared", "Beat: Manfred Killed", "Warp: Brother Manfred", "Warp: Martyrs' Crypt", "Warp: GH Abbey", "Beat: Spawn Dark Lord", "Beat: Dark Lord slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "geffen", 120, 120);
 		mes("Party warped to Sir Aldric.");
@@ -605,45 +605,53 @@ function	script	DM_BeatArc08	{
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc08_started", 1);
 		callfunc("DM_InstanceQuestStart", 20121);
-		callfunc("DM_InstanceQuestStart", 20122);
 		callfunc("DM_InstanceQuestStart", 20123);
+		callfunc("DM_InstanceQuestStart", 20124);
+		callfunc("DM_InstanceQuestStart", 20125);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 801);
 		callfunc("DM_MapStory", "The cascade rings the old bells in Glast Heim. The Dark Lord wakes.");
 		mes("Arc 8 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_Decide", "arc08.manfred", "spared");
-		mes("Manfred spared. Weight of Faith complete.");
+		callfunc("DM_InstanceQuestStart", 20122);
+		callfunc("DM_MapStory", "Beneath the Chivalry, the executed saints stir. They have a question.");
+		mes("Martyrs' Crypt trial started (quest 20122).");
 		break;
 	case 4:
-		callfunc("DM_Decide", "arc08.manfred", "killed");
-		mes("Manfred killed. Weight of Faith complete.");
+		callfunc("DM_Decide", "arc08.manfred", "spared");
+		mes("Manfred spared. The cathedral is open.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc08.manfred", "killed");
+		mes("Manfred killed. The cathedral is open.");
+		break;
+	case 6:
 		callfunc("DM_WarpParty", "gl_in01", 120, 120);
 		mes("Party warped to Brother Manfred.");
 		break;
-	case 6:
+	case 7:
+		callfunc("DM_WarpParty", "gl_knt01", 150, 150);
+		mes("Party warped to the Martyrs' Crypt.");
+		break;
+	case 8:
 		callfunc("DM_WarpParty", "gl_church", 150, 150);
 		mes("Party warped to GH Abbey.");
 		break;
-	case 7:
+	case 9:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Dark Lord", 1272, 1, "Glast Heim Abbey#dm::OnDarkLordDead";
-		if (dm_arc08_manfred_spared) {
-			areamonster .@dm_map$, 145, 145, 155, 155, "Restrained Court", 1291, 2, "Glast Heim Abbey#dm::OnAddDead";
-			dispbottom("[DM] Dark Lord spawned with 2 restrained court adds.");
-		} else if (dm_arc08_manfred_killed) {
-			areamonster .@dm_map$, 145, 145, 155, 155, "Despairing Court", 1291, 5, "Glast Heim Abbey#dm::OnAddDead";
-			areamonster .@dm_map$, 145, 145, 155, 155, "Oathbound Knight", 1132, 3, "Glast Heim Abbey#dm::OnAddDead";
-			dispbottom("[DM] Dark Lord spawned with 8 court adds; Manfred's despair empowers them.");
-		} else {
-			areamonster .@dm_map$, 145, 145, 155, 155, "Restless Court", 1291, 3, "Glast Heim Abbey#dm::OnAddDead";
-			dispbottom("[DM] Dark Lord spawned with default court adds.");
-		}
+		.@court = 3; .@knights = 0; .@note$ = "default court";
+		if (dm_arc08_manfred_spared) { .@court = 2; .@note$ = "restrained court (Manfred's faith)"; }
+		else if (dm_arc08_manfred_killed) { .@court = 5; .@knights = 3; .@note$ = "despairing court (Manfred's despair)"; }
+		if (dm_arc08_martyrs_cursed) { .@court += 3; .@note$ += " + martyrs' curse"; }
+		else if (dm_arc08_martyrs_aid && .@court > 1) { .@court -= 1; .@note$ += " - martyrs' aid"; }
+		areamonster .@dm_map$, 145, 145, 155, 155, "Restless Court", 1291, .@court, "Glast Heim Abbey#dm::OnAddDead";
+		if (.@knights > 0)
+			areamonster .@dm_map$, 145, 145, 155, 155, "Oathbound Knight", 1132, .@knights, "Glast Heim Abbey#dm::OnAddDead";
+		dispbottom("[DM] Dark Lord spawned with " + (.@court + .@knights) + " adds: " + .@note$ + ".");
 		mes("Dark Lord spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 10:
 		callfunc("DM_InstanceQuestComplete", 20121);
 		callfunc("DM_InstanceSetFlag", "dm_arc08_darklord_killed", 1);
 		callfunc("DM_PartyExp", 700000, 400000);
@@ -651,7 +659,7 @@ function	script	DM_BeatArc08	{
 		callfunc("DM_MapStory", "The Dark Lord is banished. The cursed kingdom finally falls silent.");
 		mes("Arc 8 marked complete for the current party.");
 		break;
-	case 9:
+	case 11:
 		callfunc("DM_BeatMenu");
 		break;
 	}
@@ -663,7 +671,7 @@ function	script	DM_BeatArc09	{
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 9 - Rachel (Frozen Faith)");
 	next();
-	switch (select("Warp: Acolyte Naima", "Beat: Start Arc 9", "Beat: Karsh Exposed", "Beat: Karsh Deal", "Warp: High Prelate Karsh", "Warp: Ice Bleed Site", "Beat: Spawn Gloom Under Night", "Beat: Gloom slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Acolyte Naima", "Beat: Start Arc 9", "Beat: Workshop (start reveal)", "Beat: Karsh Exposed", "Beat: Karsh Deal", "Warp: High Prelate Karsh", "Warp: Vesper Workshop", "Warp: Ice Bleed Site", "Beat: Spawn Gloom Under Night", "Beat: Gloom slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "rachel", 120, 120);
 		mes("Party warped to Acolyte Naima.");
@@ -671,35 +679,52 @@ function	script	DM_BeatArc09	{
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc09_started", 1);
 		callfunc("DM_InstanceQuestStart", 20131);
-		callfunc("DM_InstanceQuestStart", 20132);
 		callfunc("DM_InstanceQuestStart", 20133);
+		callfunc("DM_InstanceQuestStart", 20134);
+		callfunc("DM_InstanceQuestStart", 20135);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 901);
 		callfunc("DM_MapStory", "The Blessing of the Twelve is a dimensional rift. The church has known for twenty years.");
 		mes("Arc 9 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_Decide", "arc09.karsh", "exposed");
-		mes("Karsh exposed. Prelate's Record complete.");
+		callfunc("DM_InstanceQuestStart", 20132);
+		callfunc("DM_MapStory", "A warded door in the Sanctuary's service tunnels. Behind it, the miracle has a maintenance schedule.");
+		mes("Angel in the Workshop started (quest 20132).");
 		break;
 	case 4:
-		callfunc("DM_Decide", "arc09.karsh", "deal");
-		mes("Karsh deal made. Prelate's Record complete.");
+		callfunc("DM_Decide", "arc09.karsh", "exposed");
+		mes("Karsh exposed. The ice dungeon is open.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc09.karsh", "deal");
+		mes("Karsh deal made. The ice dungeon is open.");
+		break;
+	case 6:
 		callfunc("DM_WarpParty", "rachel", 130, 120);
 		mes("Party warped to High Prelate Karsh.");
 		break;
-	case 6:
+	case 7:
+		callfunc("DM_WarpParty", "ra_san04", 150, 150);
+		mes("Party warped to the Vesper Workshop.");
+		break;
+	case 8:
 		callfunc("DM_WarpParty", "ice_dun03", 150, 150);
 		mes("Party warped to Ice Bleed Site.");
 		break;
-	case 7:
+	case 9:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Gloom Under Night", 1768, 1, "Ice Bleed Site#dm::OnGloomDead";
-		dispbottom("[DM] Gloom Under Night spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
+		if (dm_arc09_vesper_disable) {
+			dispbottom("[DM] Gloom Under Night spawned. Vesper's disable is pre-armed: the angel falls at the switch (run it as a weakened opener).");
+		} else if (dm_arc09_workshop_smashed) {
+			monster .@dm_map$, 147, 147, "Vesper", 1685, 1;
+			dispbottom("[DM] Gloom Under Night spawned WITH Vesper at full strength - the workshop was smashed; the angel defends the lie.");
+		} else {
+			dispbottom("[DM] Gloom Under Night spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to arc complete.");
+		}
 		mes("Gloom Under Night spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 10:
 		callfunc("DM_InstanceQuestComplete", 20131);
 		callfunc("DM_InstanceSetFlag", "dm_arc09_gloom_killed", 1);
 		callfunc("DM_PartyExp", 800000, 450000);
@@ -707,7 +732,7 @@ function	script	DM_BeatArc09	{
 		callfunc("DM_MapStory", "Gloom Under Night disperses. The dimensional bleed is exposed.");
 		mes("Arc 9 marked complete for the current party.");
 		break;
-	case 9:
+	case 11:
 		callfunc("DM_BeatMenu");
 		break;
 	}

@@ -381,14 +381,23 @@ OnInit:
 		"dm_arc08_started",
 		"dm_arc08_manfred_killed",
 		"dm_arc08_manfred_spared",
-		"dm_arc08_darklord_killed";
+		"dm_arc08_darklord_killed",
+		"dm_arc08_martyrs_aid",
+		"dm_arc08_martyrs_cursed",
+		"dm_arc08_wax_traced",
+		"dm_arc08_oath_cache";
 	callsub S_RegisterArc, 8, .arc08$;
 
 	setarray .arc09$[0],
 		"dm_arc09_started",
 		"dm_arc09_karsh_exposed",
 		"dm_arc09_karsh_deal",
-		"dm_arc09_gloom_killed";
+		"dm_arc09_gloom_killed",
+		"dm_arc09_pilgrim_trust",
+		"dm_arc09_vesper_disable",
+		"dm_arc09_engineer_spared",
+		"dm_arc09_workshop_smashed",
+		"dm_arc09_confessors_protected";
 	callsub S_RegisterArc, 9, .arc09$;
 
 	setarray .arc10$[0],

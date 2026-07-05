@@ -17,8 +17,8 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 | 05 | Tides and Trade | Alberta / Izlude (Mara / Sea-Cultist Captain / Brode / Wynne) | Tao Gunka | 20025–20030 |
 | 06 | The Floating Republic | Yuno / Juperos (Vahl / Gramps / Krenn / Engineer) | Mistress (1059) | 20101–20105 |
 | 07 | Iron and Ash | Einbroch | RSX-0806 (1623) | 20111–20115 |
-| 08 | The Cursed Kingdom | Glast Heim | Dark Lord (1272) | 20121–20124 |
-| 09 | Frozen Faith | Rachel | Gloom Under Night (1768) | 20131–20134 |
+| 08 | The Cursed Kingdom | Glast Heim | Dark Lord (1272) | 20121–20125 |
+| 09 | Frozen Faith | Rachel | Gloom Under Night (1768) | 20131–20135 |
 | 10 | The Lab Beneath | Lighthalzen | Kiel D-01 (1734) | 20141–20144 |
 | 11 | Wrath of Heaven | Hugel | Valkyrie Randgris (1751) | 20151–20155 |
 | 12 | Beyond the Horizon | New World | Naght Sieger (1956) | 20161–20165 |

@@ -153,9 +153,12 @@ function	script	DM_EraseAllCampaignQuests	{
 }
 
 // Seal Cascade Quest Registry
-function	script	DM_QuestRegistry	{
-	// Dummy function body, data lives in OnInit
-	return;
+// Must be a real (invisible) NPC, not a `function`: getvariableofnpc() can only
+// resolve actual NPC objects, and only real NPCs get their OnInit auto-run at
+// boot. A `function script` satisfies neither, so this data was never being
+// read (lookup failure) nor populated (OnInit never fired) until fixed.
+-	script	DM_QuestRegistry	-1,{
+	end;
 
 OnInit:
 	setarray .arc01_id[0], 20001, 20002, 20003, 20004, 20005, 20006;
@@ -172,10 +175,10 @@ OnInit:
 	setarray .arc06_nm$[0], "The Heart That Holds the City", "The Number Nobody Wants", "Harpy Weather Log", "Juperos Parts Requisition", "Norgroad Heat Index";
 	setarray .arc07_id[0], 20111, 20112, 20113, 20114, 20115;
 	setarray .arc07_nm$[0], "The Unit That Wouldn't Stay Dead", "Whose Side the Smoke Is On", "Factory Whistle Shift", "Metaling Scrap Drive", "Mine Dust Medicine";
-	setarray .arc08_id[0], 20121, 20122, 20123, 20124;
-	setarray .arc08_nm$[0], "A Kingdom Unmade", "Outer Garrison", "Fallen Choir", "The Weight of Faith";
-	setarray .arc09_id[0], 20131, 20132, 20133, 20134;
-	setarray .arc09_nm$[0], "The Bleeding Blessing", "Ice Core Samples", "Hollow Blessings", "The Prelate's Record";
+	setarray .arc08_id[0], 20121, 20122, 20123, 20124, 20125;
+	setarray .arc08_nm$[0], "The Kingdom That Was Sure", "The Martyrs' Crypt", "Churchyard Candle Route", "Underprison Name List", "Chivalry Relic Watch";
+	setarray .arc09_id[0], 20131, 20132, 20133, 20134, 20135;
+	setarray .arc09_nm$[0], "The Descending Light", "The Angel in the Workshop", "Roween Pilgrim Road", "Ice Core Collections", "Sanctuary Confessionals";
 	setarray .arc10_id[0], 20141, 20142, 20143, 20144;
 	setarray .arc10_nm$[0], "The Heroes They Made", "Lab Infiltration", "Lower Level Sweep", "Echo's Protocol";
 	setarray .arc11_id[0], 20151, 20153, 20154, 20155;

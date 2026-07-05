@@ -258,8 +258,8 @@ Current scripted arc entry points:
 | 5 | Captain Mara, Alberta | Deep Trench Wake / Tao Gunka, `tur_dun04` | 20025-20030 |
 | 6 | Vahl, Yuno | Mistress, `mjolnir_04` | 20101-20105 |
 | 7 | Foreman Jori, Einbroch | RSX-0806, `ein_dun02` | 20111-20115 |
-| 8 | Sister Margot, Glast Heim | Dark Lord, `gl_chyard` | 20121-20124 |
-| 9 | Sister Ilya, Rachel | Gloom Under Night, `ra_san05` | 20131-20134 |
+| 8 | Sister Margot, Glast Heim | Dark Lord, `gl_chyard` | 20121-20125 |
+| 9 | Sister Ilya, Rachel | Gloom Under Night, `ra_san05` | 20131-20135 |
 | 10 | Doctor Reuter, Lighthalzen | Kiel D-01, `kh_dun02` | 20141-20144 |
 | 11 | Priest Eadric, Hugel | Randgris, `abyss_03` | 20151-20155 |
 | 12 | Quartermaster Lian, New World | Naght Sieger, `spl_fild01` | 20161-20165 |

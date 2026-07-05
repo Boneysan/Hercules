@@ -261,6 +261,40 @@ function	script	DM_PartyExp	{
 	return .@given;
 }
 
+// Grants base/job EXP to a single online player by name, regardless of party.
+// getcharid(CHAR_ID_ACCOUNT, name) resolves an online character's account id
+// (0 if offline/not found); mirrors DM_PartyExp's attach/getexp/detach pattern
+// but for exactly one recipient. Returns 1 if granted, 0 if the player isn't online.
+function	script	DM_TargetExp	{
+	.@name$ = getarg(0, "");
+	.@base = getarg(1, 0);
+	.@job = getarg(2, 0);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@base < 0)
+		.@base = 0;
+	if (.@job < 0)
+		.@job = 0;
+	if (.@name$ == "" || (.@base == 0 && .@job == 0))
+		return 0;
+
+	.@aid = getcharid(CHAR_ID_ACCOUNT, .@name$);
+	if (.@aid <= 0)
+		return 0;
+
+	.@given = 0;
+	if (attachrid(.@aid)) {
+		getexp(.@base, .@job);
+		detachrid();
+		.@given = 1;
+	}
+
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+
+	return .@given;
+}
+
 // Grants Cash Shop currency party-wide. #CASHPOINTS/#KAFRAPOINTS are
 // permanent account variables, so this must attach each recipient's RID the
 // same way DM_PartyExp does -- there is no engine command that targets

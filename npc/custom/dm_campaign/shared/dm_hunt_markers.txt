@@ -251,17 +251,8 @@ OnInit:
 
 // ── Arc 8 ─────────────────────────────────────────────────────────────────
 
-// Quest 20122: Outer Garrison (Raydric → MobId 1164 / Raydric 1163) → gl_knt01 (90 Raydric)
-gl_knt01,100,100,0	script	Hunt Marker#dm_h_arc08a	HIDDEN_NPC,{
-	end;
-OnInit:
-	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20122, 1;
-	end;
-}
-
-// Quest 20123: Fallen Choir (Wraith → MobId 1193 / Wraith 1192) → gl_chyard (Hunter Fly + Wraith area)
-gl_chyard,100,100,0	script	Hunt Marker#dm_h_arc08b	HIDDEN_NPC,{
+// Quest 20123: Churchyard Candle Route (Dark Priest x15 → MobId 1198) → gl_chyard
+gl_chyard,100,100,0	script	Hunt Marker#dm_h_arc08a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -269,23 +260,50 @@ OnInit:
 	end;
 }
 
-// ── Arc 9 ─────────────────────────────────────────────────────────────────
-
-// Quest 20132: Ice Core Samples (Gazeti x? → MobId 1778) → ice_dun03 (42 Gazeti)
-// Quest 20133: Hollow Blessings (Siroma x? → MobId 1776) → ice_dun01 (75 Siroma)
-ice_dun03,100,100,0	script	Hunt Marker#dm_h_arc09a	HIDDEN_NPC,{
+// Quest 20124: Underprison Name List (Skel Prisoner x20 → MobId 1196) → gl_prison1
+gl_prison1,100,100,0	script	Hunt Marker#dm_h_arc08b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20132, 1;
+	setquestinfo QINFO_QUEST, 20124, 1;
 	end;
 }
 
-ice_dun01,100,100,0	script	Hunt Marker#dm_h_arc09b	HIDDEN_NPC,{
+// Quest 20125: Chivalry Relic Watch (Raydric x20 → MobId 1163) → gl_knt01 (90 Raydric)
+gl_knt01,100,100,0	script	Hunt Marker#dm_h_arc08c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20125, 1;
+	end;
+}
+
+// ── Arc 9 ─────────────────────────────────────────────────────────────────
+
+// Quest 20133: Roween Pilgrim Road (Roween x20 → MobId 1782) → ra_fild12
+ra_fild12,100,100,0	script	Hunt Marker#dm_h_arc09a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20133, 1;
+	end;
+}
+
+// Quest 20134: Ice Core Collections (Nereid x20 → MobId 1255) → beach_dun (Karu ice)
+beach_dun,100,100,0	script	Hunt Marker#dm_h_arc09b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20134, 1;
+	end;
+}
+
+// Quest 20135: Sanctuary Confessionals (Vanberk x20 → MobId 1771) → ra_san01
+ra_san01,100,100,0	script	Hunt Marker#dm_h_arc09c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20135, 1;
 	end;
 }
 
