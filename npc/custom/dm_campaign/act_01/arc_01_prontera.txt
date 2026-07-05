@@ -15,7 +15,7 @@
 //= Quests (db/quest_db.conf):
 //=   20001 Omens at the Fountain        (arc tracker)
 //=   20002 Contract: Cellar Vermin      (Tarou x10)
-//=   20003 Field Contract: Rockers...   (Rocker x15)
+//=   20003 Field Contract: Rockers...   (prt_fild07 drop turn-in)
 //=   20004 The Trembling Ground         (story)
 //=   20005 The Goat-Headed Sign         (Deviruchi MVP)
 //=   20006 First Field Test             (Fluff/Jellopy/Clover turn-in)
@@ -125,16 +125,44 @@ S_SwearIn:
 	mes("Take this contract. The Culvert. The city guard says it's just Plankton and Tarou, but the refugees from the south say the ground down there is... humming. Be smart. It pays. It's also a bad idea. Both things are true. Sign here.");
 	callfunc("DM_InstanceSetFlag", "dm_arc01_started", 1);
 	callfunc("DM_InstanceQuestStart", 20001);
+	callfunc("DM_InstanceQuestStart", 20006);
 	callfunc("DM_InstanceQuestStart", 20002);
 	callfunc("DM_InstanceQuestStart", 20003);
 	next();
 	mes("^3355FF[Quest started: Omens at the Fountain]^000000");
-	mes("^3355FFQuests added: Contract: Cellar Vermin & Field Contract: Rockers and Rumors.^000000");
+	mes("^3355FFQuests added: First Field Test, Contract: Cellar Vermin, and Field Contract: Rockers and Rumors.^000000");
 	close();
 
 S_Contracts:
 	// Settle any completed hunting contracts.
 	.@paid = 0;
+	if (questprogress(20006) == 1) {
+		if (countitem(Jellopy) >= 10 && countitem(Fluff) >= 10 && countitem(Clover) >= 10) {
+			mes("[Wynne]");
+			mes("Good. Jellopy, Fluff, Clover - three things a field recruit should be able to find without dying creatively.");
+			next();
+			switch (select("Turn in the field test.", "Hold onto the supplies.")) {
+			case 1:
+				delitem Jellopy, 10;
+				delitem Fluff, 10;
+				delitem Clover, 10;
+				callfunc("DM_InstanceQuestComplete", 20006);
+				callfunc("DM_PartyExp", 2000, 1000);
+				callfunc("DM_GivePartyZeny", 500);
+				.@paid = 1;
+				mes("[Wynne]");
+				mes("You can follow instructions. That puts you above half the ledger. Here's the training pay.");
+				next();
+				break;
+			case 2:
+				break;
+			}
+		} else {
+			mes("[Wynne]");
+			mes("First Field Test is still open. Bring me 10 Jellopy, 10 Fluff, and 10 Clover. Porings, Fabres, and Lunatics will teach you the basics without eating your boots.");
+			next();
+		}
+	}
 	if (questprogress(20002) == 1 && questprogress(20002, HUNTING) == 2) {
 		callfunc("DM_InstanceQuestComplete", 20002);
 		callfunc("DM_PartyExp", 4000, 1500);
@@ -144,14 +172,32 @@ S_Contracts:
 		mes("Cellar's a little cleaner. 2,000 zeny, and the ledger likes you.");
 		next();
 	}
-	if (questprogress(20003) == 1 && questprogress(20003, HUNTING) == 2) {
-		callfunc("DM_InstanceQuestComplete", 20003);
-		callfunc("DM_PartyExp", 4500, 1800);
-		callfunc("DM_GivePartyZeny", 2000);
-		.@paid = 1;
-		mes("[Wynne]");
-		mes("Fields are quieter. Another 2,000. And you brought back rumors with the proof - good.");
-		next();
+	if (questprogress(20003) == 1) {
+		if (countitem(Grasshoppers_Leg) >= 15 && countitem(Animals_Skin) >= 10 && countitem(Mushroom_Spore) >= 5) {
+			mes("[Wynne]");
+			mes("Legs from Rockers, hides from the babes, spores from the black mushrooms. Good. That means you walked the field instead of counting bugs from the road.");
+			next();
+			switch (select("Turn in the field bundle.", "Hold onto the field bundle.")) {
+			case 1:
+				delitem Grasshoppers_Leg, 15;
+				delitem Animals_Skin, 10;
+				delitem Mushroom_Spore, 5;
+				callfunc("DM_InstanceQuestComplete", 20003);
+				callfunc("DM_PartyExp", 8000, 4000);
+				callfunc("DM_GivePartyZeny", 2000);
+				.@paid = 1;
+				mes("[Wynne]");
+				mes("Fields are quieter, and you brought back rumors with the proof - good.");
+				next();
+				break;
+			case 2:
+				break;
+			}
+		} else {
+			mes("[Wynne]");
+			mes("Field Contract is still open. Bring 15 Grasshopper's Legs from Rockers, 10 Animal Skins from Savage Babes, and 5 Mushroom Spores from the black mushrooms on the southwest field.");
+			next();
+		}
 	}
 
 	// Main quest gate: both contracts done -> hand the unofficial job.

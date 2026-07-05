@@ -37,9 +37,9 @@ QuestList[20002] = {
 QuestList[20003] = {
 	Title = "Field Contract: Rockers and Rumors",
 	Description = {
-		"Hunt Rockers in the fields while listening for rumors from refugees.",
+		"Work the Rocker field while listening for rumors from refugees.",
 		"Location: Prontera Field (prt_fild07)",
-		"Mob: Rocker x15",
+		"Turn in: Grasshopper's Leg x15, Animal Skin x10, Mushroom Spore x5",
 		"Hunt: @dm warp prt_fild07 200 200",
 		"Return: @dm warp prontera 156 191",
 		"Field work and intel gathering.",

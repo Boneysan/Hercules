@@ -97,6 +97,7 @@ function	script	DM_BeatArc01	{
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc01_started", 1);
 		callfunc("DM_InstanceQuestStart", 20001);
+		callfunc("DM_InstanceQuestStart", 20006);
 		callfunc("DM_InstanceQuestStart", 20002);
 		callfunc("DM_InstanceQuestStart", 20003);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 101);

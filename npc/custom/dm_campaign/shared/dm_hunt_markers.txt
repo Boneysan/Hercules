@@ -26,7 +26,8 @@ OnInit:
 	end;
 }
 
-// Quest 20003: Field Contract: Rockers (Rocker x15) → prt_fild07 (150 Rocker)
+// Quest 20003: Field Contract: Rockers and Rumors
+// Turn in Grasshopper's Leg / Animal Skin / Mushroom Spore from prt_fild07 mobs
 prt_fild07,200,200,0	script	Hunt Marker#dm_h_arc01b	HIDDEN_NPC,{
 	end;
 OnInit:
