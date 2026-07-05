@@ -93,43 +93,42 @@ bash ./script-checker npc/custom/dm_campaign/act_0X/arc_NN_*.txt \
 ## ✅ Arc 8 — Glast Heim (DONE 2026-07-04, commit 89006fa91)
 ## ✅ Arc 9 — Rachel (DONE 2026-07-04, commit 89006fa91)
 
-## Arc 10 — Lighthalzen (`act_02/arc_10_lighthalzen.txt`, IDs 20141–20145)
+## ✅ Arc 10 — Lighthalzen (`act_02/arc_10_lighthalzen.txt`, IDs 20141–20145) (DONE 2026-07-05)
 
 Target mapping: 20141 **The Factory of Heroes** (climax, Kiel D-01) ·
 20142 **The One Who Said No** (Echo story) · 20143 **Slum Sample Run** ·
 20144 **Scaraba Chitin Order** · 20145 **Clone Name Registry** (new ID).
 
-- [ ] 1. Vault docs read (5 quests + hub + NPCs)
-- [ ] 2. quest_db block rewritten (verify Scaraba/slum-mob MobIds in mob_db!)
-- [ ] 3. dm_quests registry arrays (5 entries)
-- [ ] 4. dm_flags additions
-- [ ] 5. arc_10_lighthalzen.txt rewrite
-      ⚠️ `arc10.echo` decision currently completes 20144 → re-point per new
-      mapping (20142) or flags-only. ⚠️ dm_wynne_* / dm_arc10_echo_freed /
-      dm_echo_trusts_party are referenced by later arcs — must keep working.
-- [ ] 6. dm_decisions updated (arc10.echo, arc10.wynne rows)
-- [ ] 7. dm_beats DM_BeatArc10 updated
-- [ ] 8. hunt markers (3)
-- [ ] 9. CAMPAIGN.md + dm-tooling.md ranges → 20141–20145
-- [ ] ✔ Validation block passes → **Arc 10 done** (date: ______)
+- [x] 1. Vault docs read (5 quests + hub + NPCs) — 2026-07-05
+- [x] 2. quest_db block rewritten (verify Scaraba/slum-mob MobIds in mob_db!) — 2026-07-05
+- [x] 3. dm_quests registry arrays (5 entries) — 2026-07-05
+- [x] 4. dm_flags additions — 2026-07-05
+- [x] 5. arc_10_lighthalzen.txt rewrite — 2026-07-05
+      Resolved: `arc10.echo` now completes 20142; dm_wynne_*,
+      dm_arc10_echo_freed, and dm_echo_trusts_party remain wired for later arcs.
+- [x] 6. dm_decisions updated (arc10.echo, arc10.wynne rows) — 2026-07-05
+- [x] 7. dm_beats DM_BeatArc10 updated — 2026-07-05
+- [x] 8. hunt markers (3) — 2026-07-05
+- [x] 9. CAMPAIGN.md + dm-tooling.md ranges → 20141–20145 — 2026-07-05
+- [x] ✔ Validation block passes → **Arc 10 done** (date: 2026-07-05)
 
-## Arc 11 — Wrath of Heaven / Hugel (`act_03/`, IDs 20151–20155, +20152 free)
+## ✅ Arc 11 — Wrath of Heaven / Hugel (`act_03/`, IDs 20151–20155, +20152 free) (DONE 2026-07-05)
 
 Target: 20151 **When Heaven Turns** (climax, keep) · 20153/54/55 + 20152 remap to
 **The Dying Valkyrie's Word** (story) · **Hugel Airship Muster** ·
 **Dragon Scale Turn-In** · **Temple Edge Vigil**.
 (Replaces: Gryphon Vigil, Dragon Pack Dispersal, The Zealot's Testimony.)
 
-- [ ] 1. Vault docs read
-- [ ] 2. quest_db block (uses free 20152; verify Abyss Lake dragon MobIds)
-- [ ] 3. dm_quests registry
-- [ ] 4. dm_flags additions
-- [ ] 5. arc file rewrite
-- [ ] 6. dm_decisions rows checked/updated
-- [ ] 7. dm_beats updated
-- [ ] 8. hunt markers
-- [ ] 9. doc tables → 20151–20155
-- [ ] ✔ Validation passes → **Arc 11 done** (date: ______)
+- [x] 1. Vault docs read — 2026-07-05
+- [x] 2. quest_db block (uses free 20152; verify Abyss Lake dragon MobIds) — 2026-07-05
+- [x] 3. dm_quests registry — 2026-07-05
+- [x] 4. dm_flags additions — 2026-07-05
+- [x] 5. arc file rewrite — 2026-07-05
+- [x] 6. dm_decisions rows checked/updated — 2026-07-05
+- [x] 7. dm_beats updated — 2026-07-05
+- [x] 8. hunt markers — 2026-07-05
+- [x] 9. doc tables → 20151–20155 — 2026-07-05
+- [x] ✔ Validation passes → **Arc 11 done** (date: 2026-07-05)
 
 ## Arc 12 — Beyond the Horizon / New World (IDs 20161–20165, +20162 free)
 

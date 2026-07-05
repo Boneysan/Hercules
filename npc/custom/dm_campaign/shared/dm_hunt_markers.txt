@@ -309,17 +309,10 @@ OnInit:
 
 // ── Arc 10 ────────────────────────────────────────────────────────────────
 
-// Quest 20142: Lab Infiltration (Remover x20 → MobId 1682) → lhz_dun01 (100 Remover)
-// Quest 20143: Lower Level Sweep (Aliza x? → MobId 1737) → kh_dun02 (10 Aliza)
+// Quest 20143: Slum Sample Run (Remover x20 → MobId 1682) → lhz_dun01
+// Quest 20144: Scaraba Chitin Order (Antler/Rake Scaraba x10 each → MobId 2085/2086) → dic_dun02
+// Quest 20145: Clone Name Registry (Bio Lab F2 clone-stock → MobId 1652-1657) → lhz_dun02
 lhz_dun01,100,100,0	script	Hunt Marker#dm_h_arc10a	HIDDEN_NPC,{
-	end;
-OnInit:
-	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20142, 1;
-	end;
-}
-
-kh_dun02,100,100,0	script	Hunt Marker#dm_h_arc10b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -327,10 +320,26 @@ OnInit:
 	end;
 }
 
+dic_dun02,100,100,0	script	Hunt Marker#dm_h_arc10b	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20144, 1;
+	end;
+}
+
+lhz_dun02,100,100,0	script	Hunt Marker#dm_h_arc10c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20145, 1;
+	end;
+}
+
 // ── Arc 11 ────────────────────────────────────────────────────────────────
 
-// Quest 20153: Gryphon Vigil (Gryphon → MobId 1260) → hu_fild02 (Gryphon 1259 sparse)
-hu_fild02,200,200,0	script	Hunt Marker#dm_h_arc11a	HIDDEN_NPC,{
+// Quest 20153: Hugel Airship Muster (Tatacho/Centipede/Hillslion → MobId 1986/1987/1989) → man_fild03
+man_fild03,200,200,0	script	Hunt Marker#dm_h_arc11a	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
@@ -338,12 +347,21 @@ OnInit:
 	end;
 }
 
-// Quest 20154: Dragon Pack Dispersal (Novus/Ferus → MobId 1715) → abyss_01 (9 Novus + Ferus)
-abyss_01,100,100,0	script	Hunt Marker#dm_h_arc11b	HIDDEN_NPC,{
+// Quest 20154: Dragon Scale Turn-In (Ferus/Acidus → MobId 1714/1716/1717) → abyss_02/03
+abyss_02,100,100,0	script	Hunt Marker#dm_h_arc11b	HIDDEN_NPC,{
 	end;
 OnInit:
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20154, 1;
+	end;
+}
+
+// Quest 20155: Temple Edge Vigil (Dolomedes → MobId 2092) → dic_fild02
+dic_fild02,100,100,0	script	Hunt Marker#dm_h_arc11c	HIDDEN_NPC,{
+	end;
+OnInit:
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20155, 1;
 	end;
 }
 

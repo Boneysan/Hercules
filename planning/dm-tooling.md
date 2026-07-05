@@ -260,7 +260,7 @@ Current scripted arc entry points:
 | 7 | Foreman Jori, Einbroch | RSX-0806, `ein_dun02` | 20111-20115 |
 | 8 | Sister Margot, Glast Heim | Dark Lord, `gl_chyard` | 20121-20125 |
 | 9 | Sister Ilya, Rachel | Gloom Under Night, `ra_san05` | 20131-20135 |
-| 10 | Doctor Reuter, Lighthalzen | Kiel D-01, `kh_dun02` | 20141-20144 |
+| 10 | Doctor Reuter, Lighthalzen | Kiel D-01, `lhz_dun04` | 20141-20145 |
 | 11 | Priest Eadric, Hugel | Randgris, `abyss_03` | 20151-20155 |
 | 12 | Quartermaster Lian, New World | Naght Sieger, `spl_fild01` | 20161-20165 |
 | 13 | Scholar Nadir, Nameless Island | Beelzebub / coalition deal, `abbey03` | 20171-20175 |

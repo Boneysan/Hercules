@@ -744,7 +744,7 @@ function	script	DM_BeatArc10	{
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 10 - Lighthalzen (The Lab Beneath)");
 	next();
-	switch (select("Warp: Doctor Reuter", "Beat: Start Arc 10", "Beat: Reise Confronted", "Beat: Echo Freed", "Warp: Director Reise", "Warp: Kiel Core", "Beat: Spawn Kiel D-01", "Beat: Kiel slain (Act II Complete)", "Beat: Lab containment pressure", "Back")) {
+	switch (select("Warp: Doctor Reuter", "Beat: Start Arc 10", "Beat: Start Echo Quest", "Beat: Reise Confronted", "Beat: Echo Freed", "Beat: Echo Returned", "Warp: Director Reise", "Warp: Kiel Core", "Beat: Spawn Kiel D-01", "Beat: Kiel slain (Act II Complete)", "Beat: Lab containment pressure", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "lighthalzen", 120, 120);
 		mes("Party warped to Doctor Reuter.");
@@ -752,38 +752,57 @@ function	script	DM_BeatArc10	{
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc10_started", 1);
 		callfunc("DM_InstanceQuestStart", 20141);
-		callfunc("DM_InstanceQuestStart", 20142);
 		callfunc("DM_InstanceQuestStart", 20143);
+		callfunc("DM_InstanceQuestStart", 20144);
+		callfunc("DM_InstanceQuestStart", 20145);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1001);
 		callfunc("DM_MapStory", "Rekenber is manufacturing heroes from Ash Vacuum energy. Echo was the first to say no.");
 		mes("Arc 10 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_Decide", "arc10.echo", "confronted");
-		mes("Reise confronted. Echo's Protocol complete.");
+		callfunc("DM_InstanceQuestStart", 20142);
+		mes("The One Who Said No started for the current party.");
 		break;
 	case 4:
-		callfunc("DM_Decide", "arc10.echo", "freed");
-		mes("Echo freed. Echo's Protocol complete.");
+		callfunc("DM_Decide", "arc10.echo", "confronted");
+		mes("Reise confronted. The One Who Said No complete.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc10.echo", "freed");
+		mes("Echo freed. The One Who Said No complete.");
+		break;
+	case 6:
+		callfunc("DM_Decide", "arc10.echo", "returned");
+		mes("Echo returned. The One Who Said No complete.");
+		break;
+	case 7:
 		callfunc("DM_WarpParty", "lighthalzen", 130, 120);
 		mes("Party warped to Director Reise.");
 		break;
-	case 6:
+	case 8:
 		callfunc("DM_WarpParty", "lhz_dun04", 150, 150);
 		mes("Party warped to Kiel Core.");
 		break;
-	case 7:
+	case 9:
 		.@dm_map$ = strcharinfo(3);
 		monster .@dm_map$, 150, 150, "Kiel D-01", 1734, 1, "Kiel Core#dm::OnKielDead";
-		if (dm_arc10_echo_freed)
-			dispbottom("[DM] Kiel D-01 spawned. Echo is free — consider Kiel targeting Echo first as its last directive.");
-		else
-			dispbottom("[DM] Kiel D-01 spawned at 150,150 on " + .@dm_map$ + ". Kill event wired to Act II complete.");
-		mes("Kiel D-01 spawned. Kill to trigger Act II complete.");
+		if (dm_arc10_echo_returned || dm_arc10_registry_erased || dm_arc10_chitin_overharvested) {
+			monster .@dm_map$, 146, 150, "False Hero Seyren", 1634, 1;
+			monster .@dm_map$, 154, 150, "False Hero Eremes", 1635, 1;
+			monster .@dm_map$, 150, 146, "False Hero Howard", 1636, 1;
+			monster .@dm_map$, 150, 154, "False Hero Kathryne", 1639, 1;
+			dispbottom("[DM] Kiel D-01 spawned with a full false-hero mirror; dark Arc 10 flags strengthened the program.");
+		} else if (dm_arc10_echo_freed && dm_arc10_clone_names_restored) {
+			monster .@dm_map$, 146, 150, "False Hero Seyren", 1634, 1;
+			dispbottom("[DM] Kiel D-01 spawned with one unstable false hero; Echo and the restored names weaken the program's hold.");
+		} else {
+			monster .@dm_map$, 146, 150, "False Hero Seyren", 1634, 1;
+			monster .@dm_map$, 154, 150, "False Hero Eremes", 1635, 1;
+			dispbottom("[DM] Kiel D-01 spawned with false heroes at 150,150 on " + .@dm_map$ + ".");
+		}
+		mes("Kiel D-01 spawned. Kill Kiel to trigger Act II complete.");
 		break;
-	case 8:
+	case 10:
 		callfunc("DM_InstanceQuestComplete", 20141);
 		callfunc("DM_InstanceSetFlag", "dm_arc10_kiel_killed", 1);
 		callfunc("DM_InstanceSetFlag", "dm_act02_complete", 1);
@@ -792,7 +811,7 @@ function	script	DM_BeatArc10	{
 		callfunc("DM_MapStory", "Kiel D-01 is destroyed. Act II is complete. The cascade has been manufactured. Now it must be sealed.");
 		mes("Act II marked complete for the current party.");
 		break;
-	case 9:
+	case 11:
 		$@dm_arc10_pressure_party_id = getcharid(CHAR_ID_PARTY);
 		$@dm_arc10_pressure_damage = 5;
 		callfunc("DM_TriggerEvent", "Kiel Core Pressure#dm", "OnPressureStart");
@@ -801,7 +820,7 @@ function	script	DM_BeatArc10	{
 		dispbottom("[DM] Lab containment pressure started.");
 		mes("Lab containment pressure started.");
 		break;
-	case 10:
+	case 12:
 		callfunc("DM_BeatMenu");
 		break;
 	}
@@ -813,7 +832,7 @@ function	script	DM_BeatArc11	{
 	mes("[DM Beat Director]");
 	mes("Act III / Arc 11 - Hugel (Wrath of Heaven)");
 	next();
-	switch (select("Warp: Priest Eadric", "Beat: Start Arc 11", "Beat: Bjorn Subdued", "Beat: Bjorn Joined", "Warp: Zealot Bjorn", "Warp: Valkyrie Hall", "Beat: Spawn Randgris", "Beat: Randgris slain (Arc Complete)", "Back")) {
+	switch (select("Warp: Priest Eadric", "Beat: Start Arc 11", "Beat: Start Sigrun Quest", "Beat: Sigrun Voice", "Beat: Sigrun Comforted", "Beat: Bjorn Talked Down", "Beat: Bjorn Forced", "Beat: Bjorn Exploited", "Warp: Zealot Bjorn", "Warp: Sigrun Chapel", "Warp: Valkyrie Hall", "Beat: Spawn Randgris", "Beat: Randgris slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "hugel", 100, 100);
 		mes("Party warped to Priest Eadric.");
@@ -823,51 +842,77 @@ function	script	DM_BeatArc11	{
 		callfunc("DM_InstanceQuestStart", 20151);
 		callfunc("DM_InstanceQuestStart", 20153);
 		callfunc("DM_InstanceQuestStart", 20154);
+		callfunc("DM_InstanceQuestStart", 20155);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1101);
 		callfunc("DM_MapStory", "The Valkyries of Odin's temple have turned their blades on the faithful.");
 		mes("Arc 11 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_Decide", "arc11.bjorn", "subdued");
-		mes("Bjorn subdued. Zealot's Testimony complete.");
+		callfunc("DM_InstanceQuestStart", 20152);
+		mes("The Dying Valkyrie's Word started for the current party.");
 		break;
 	case 4:
-		callfunc("DM_Decide", "arc11.bjorn", "joined");
-		mes("Bjorn joined. Zealot's Testimony complete.");
+		callfunc("DM_Decide", "arc11.sigrun", "voice");
+		mes("Sigrun's warning recorded. The Dying Valkyrie's Word complete.");
 		break;
 	case 5:
+		callfunc("DM_Decide", "arc11.sigrun", "comfort");
+		mes("Sigrun comforted. The Dying Valkyrie's Word complete.");
+		break;
+	case 6:
+		callfunc("DM_Decide", "arc11.bjorn", "subdued");
+		mes("Bjorn talked down. The temple steps are clear.");
+		break;
+	case 7:
+		callfunc("DM_Decide", "arc11.bjorn", "forced");
+		mes("Bjorn forced aside. The temple steps are clear.");
+		break;
+	case 8:
+		callfunc("DM_Decide", "arc11.bjorn", "exploited");
+		mes("Bjorn exploited. The temple steps are clear.");
+		break;
+	case 9:
 		callfunc("DM_WarpParty", "hugel", 110, 100);
 		mes("Party warped to Zealot Bjorn.");
 		break;
-	case 6:
+	case 10:
+		callfunc("DM_WarpParty", "hugel", 104, 96);
+		mes("Party warped to Sigrun's chapel.");
+		break;
+	case 11:
 		callfunc("DM_WarpParty", "abyss_03", 150, 150);
 		mes("Party warped to Valkyrie Hall.");
 		break;
-	case 7:
+	case 12:
 		.@dm_map$ = strcharinfo(3);
+		if (dm_arc11_bjorn_exploited)
+			monster .@dm_map$, 148, 150, "Detardeurus", 1719, 1, "Valkyrie Hall#dm::OnAddDead";
 		monster .@dm_map$, 150, 150, "Valkyrie Randgris", 1751, 1, "Valkyrie Hall#dm::OnRandgrisDead";
 		if (dm_arc11_bjorn_joined) {
-			areamonster .@dm_map$, 145, 145, 155, 155, "Restrained Skeggiold", 1754, 2, "Valkyrie Hall#dm::OnAddDead";
-			dispbottom("[DM] Randgris spawned with 2 restrained court adds.");
-		} else if (dm_arc11_bjorn_subdued) {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Restrained Skeggiold", 1754, 1, "Valkyrie Hall#dm::OnAddDead";
+			dispbottom("[DM] Randgris spawned with one restrained court add; Bjorn's faith holds part of the hall back.");
+		} else if (dm_arc11_bjorn_subdued || dm_arc11_sigrun_comforted) {
+			areamonster .@dm_map$, 145, 145, 155, 155, "Valkyrie Court", 1754, 2, "Valkyrie Hall#dm::OnAddDead";
+			dispbottom("[DM] Randgris spawned with softened court pressure.");
+		} else if (dm_arc11_bjorn_forced || dm_arc11_bjorn_exploited || dm_arc11_vigil_baited || dm_arc11_scale_wards) {
 			areamonster .@dm_map$, 145, 145, 155, 155, "Valkyrie Court", 1754, 4, "Valkyrie Hall#dm::OnAddDead";
 			areamonster .@dm_map$, 145, 145, 155, 155, "Valkyrie Herald", 1765, 1, "Valkyrie Hall#dm::OnAddDead";
-			dispbottom("[DM] Randgris spawned with her full court.");
+			dispbottom("[DM] Randgris spawned with full court pressure.");
 		} else {
 			areamonster .@dm_map$, 145, 145, 155, 155, "Valkyrie Court", 1754, 3, "Valkyrie Hall#dm::OnAddDead";
 			dispbottom("[DM] Randgris spawned with default court adds.");
 		}
 		mes("Randgris spawned. Kill to trigger arc complete.");
 		break;
-	case 8:
+	case 13:
 		callfunc("DM_InstanceQuestComplete", 20151);
 		callfunc("DM_InstanceSetFlag", "dm_arc11_randgris_killed", 1);
 		callfunc("DM_PartyExp", 1200000, 700000);
 		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1199);
-		callfunc("DM_MapStory", "Valkyrie Randgris falls. A dying Valkyrie hears Loki laugh.");
+		callfunc("DM_MapStory", "Valkyrie Randgris falls. The Voice Sigrun warned about laughs once through the hall.");
 		mes("Arc 11 marked complete for the current party.");
 		break;
-	case 9:
+	case 14:
 		callfunc("DM_BeatMenu");
 		break;
 	}

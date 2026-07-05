@@ -407,7 +407,17 @@ OnInit:
 		"dm_wynne_lost",
 		"dm_arc10_reise_confronted",
 		"dm_arc10_echo_freed",
+		"dm_arc10_echo_returned",
 		"dm_echo_trusts_party",
+		"dm_arc10_patients_protected",
+		"dm_arc10_clinic_funded",
+		"dm_arc10_sample_swapped",
+		"dm_arc10_chitin_shared",
+		"dm_arc10_juniors_guarded",
+		"dm_arc10_chitin_overharvested",
+		"dm_arc10_clone_names_restored",
+		"dm_arc10_clone_serials_logged",
+		"dm_arc10_registry_erased",
 		"dm_arc10_kiel_killed",
 		"dm_act02_complete";
 	callsub S_RegisterArc, 10, .arc10$;
@@ -416,6 +426,20 @@ OnInit:
 		"dm_arc11_started",
 		"dm_arc11_bjorn_subdued",
 		"dm_arc11_bjorn_joined",
+		"dm_arc11_bjorn_forced",
+		"dm_arc11_bjorn_exploited",
+		"dm_arc11_airship_refugees",
+		"dm_arc11_airship_clergy",
+		"dm_arc11_airship_weapons",
+		"dm_arc11_scales_studied",
+		"dm_arc11_scales_split",
+		"dm_arc11_scale_wards",
+		"dm_arc11_vigil_prayed",
+		"dm_arc11_vigil_scouted",
+		"dm_arc11_vigil_baited",
+		"dm_arc11_sigrun_voice",
+		"dm_arc11_sigrun_comforted",
+		"dm_arc11_sword_shard",
 		"dm_arc11_randgris_killed";
 	callsub S_RegisterArc, 11, .arc11$;
 

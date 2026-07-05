@@ -179,10 +179,10 @@ OnInit:
 	setarray .arc08_nm$[0], "The Kingdom That Was Sure", "The Martyrs' Crypt", "Churchyard Candle Route", "Underprison Name List", "Chivalry Relic Watch";
 	setarray .arc09_id[0], 20131, 20132, 20133, 20134, 20135;
 	setarray .arc09_nm$[0], "The Descending Light", "The Angel in the Workshop", "Roween Pilgrim Road", "Ice Core Collections", "Sanctuary Confessionals";
-	setarray .arc10_id[0], 20141, 20142, 20143, 20144;
-	setarray .arc10_nm$[0], "The Heroes They Made", "Lab Infiltration", "Lower Level Sweep", "Echo's Protocol";
-	setarray .arc11_id[0], 20151, 20153, 20154, 20155;
-	setarray .arc11_nm$[0], "When Heaven Turns", "Gryphon Vigil", "Dragon Pack Dispersal", "The Zealot's Testimony";
+	setarray .arc10_id[0], 20141, 20142, 20143, 20144, 20145;
+	setarray .arc10_nm$[0], "The Factory of Heroes", "The One Who Said No", "Slum Sample Run", "Scaraba Chitin Order", "Clone Name Registry";
+	setarray .arc11_id[0], 20151, 20152, 20153, 20154, 20155;
+	setarray .arc11_nm$[0], "When Heaven Turns", "The Dying Valkyrie's Word", "Hugel Airship Muster", "Dragon Scale Turn-In", "Temple Edge Vigil";
 	setarray .arc12_id[0], 20161, 20163, 20164, 20165;
 	setarray .arc12_nm$[0], "The Wound With a Keeper", "New World Cornus Survey", "Naga Border Patrol", "The Vance Proposal";
 	setarray .arc13_id[0], 20171, 20173, 20174, 20175;

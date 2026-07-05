@@ -19,7 +19,7 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 | 07 | Iron and Ash | Einbroch | RSX-0806 (1623) | 20111–20115 |
 | 08 | The Cursed Kingdom | Glast Heim | Dark Lord (1272) | 20121–20125 |
 | 09 | Frozen Faith | Rachel | Gloom Under Night (1768) | 20131–20135 |
-| 10 | The Lab Beneath | Lighthalzen | Kiel D-01 (1734) | 20141–20144 |
+| 10 | The Lab Beneath | Lighthalzen | Kiel D-01 (1734) | 20141–20145 |
 | 11 | Wrath of Heaven | Hugel | Valkyrie Randgris (1751) | 20151–20155 |
 | 12 | Beyond the Horizon | New World | Naght Sieger (1956) | 20161–20165 |
 | 13 | Island of the Damned | Nameless Island | Beelzebub (1874) | 20171–20175 |
@@ -79,12 +79,13 @@ around `lhz_dun04` 150,150 with confusion pressure.
 **Flow:** Each arc introduces a mortal "co-seal" character with a 3-choice
 villain confrontation, then an MVP boss spawned via DM console.
 
-### Arc 11 — Zealot Bjorn (Hugel)
-- Hunting: Priest Eadric questline (20153 × 15, 20154 × 20)
-- Villain: Bjorn — subdued / persuaded / **joined**
+### Arc 11 — Wrath of Heaven (Hugel)
+- Hunting: Hugel Airship Muster (20153), Dragon Scale Turn-In (20154), Temple Edge Vigil (20155)
+- Story: Sigrun's last word (20152) — Voice clue or comfort branch
+- Gate: Bjorn — talked down / forced / exploited
 - Boss: Randgris at `abyss_03`
-- Flags: `dm_arc11_bjorn_subdued`, `dm_arc11_bjorn_joined`
-- Bjorn_joined reduces Randgris court adds; Bjorn_subdued spawns the full court.
+- Flags: `dm_arc11_sigrun_voice`, `dm_arc11_sigrun_comforted`, `dm_arc11_bjorn_joined`
+- Bjorn_joined or Sigrun comfort softens court adds; forced/exploited routes increase pressure.
 
 ### Arc 12 — Captain Vance (New World)
 - Hunting: Cornus (1992 × 15), Naga (1993 × 15)
