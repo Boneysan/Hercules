@@ -39,24 +39,104 @@ Required (place in your client):
 
 Without these, scene commands will still change weather/effects but BGM and portraits will be missing or silent.
 
-## 3. LAN / Multi-PC Setup
+## 3. LAN / Multi-PC Setup (friends connecting to your host)
 
-On the **server** machine:
-```bash
-cd /path/to/Hercules_RO
-./tools/set-lan-ip.sh lan          # or specify IP
+> ⚠️ **Read this whole section before touching anything.** The obvious step —
+> editing `data/clientinfo.xml` — does **NOT** work with this client. See the GRF
+> gotcha below. It is the single biggest time-sink in getting a friend connected.
+
+### 3.1 Server config (host machine)
+
+The client is handed three server addresses in sequence: **login** (from the
+client's clientinfo) → **char** (`char_ip`) → **map** (`map_ip`). Two of the IPs are
+"advertised to clients" and one set is "server-to-server". Set them like this:
+
+| File | Field | Value | Meaning |
+|------|-------|-------|---------|
+| `conf/char/char-server.conf` | `char_ip`  | **LAN IP** (e.g. `192.168.20.60`) | advertised to clients |
+| `conf/map/map-server.conf`   | `map_ip`   | **LAN IP** | advertised to clients |
+| `conf/char/char-server.conf` | `login_ip` | **`127.0.0.1`** | char→login, same box |
+| `conf/map/map-server.conf`   | `char_ip`  | **`127.0.0.1`** | map→char, same box |
+
+Keep the inter-server pair on `127.0.0.1` — all three servers share the WSL box, so
+there is no reason to bounce those out to the LAN. `tools/set-lan-ip.sh lan [IP]`
+sets `char_ip`/`map_ip` for you (but see 3.3 — its clientinfo edit is not enough).
+
+### 3.2 WSL2 port forwarding (host machine)
+
+Under WSL2's default NAT networking, WSL has its own internal IP (`172.31.x.x`) that
+**changes on every restart** and that friends cannot reach. The Windows host must
+forward its LAN IP into WSL. Run **`setup-wsl-portforward.ps1`** (in an Administrator
+PowerShell) — it auto-detects the current WSL IP and adds `netsh portproxy` rules +
+a firewall rule for all three ports. **Re-run it after any WSL restart.**
+
+Cleaner permanent alternative (Windows 11 22H2+): add to `%UserProfile%\.wslconfig`
+```ini
+[wsl2]
+networkingMode=mirrored
+```
+then `wsl --shutdown`. With mirrored mode you skip portproxy entirely.
+
+Ports to open / forward: **login 6900, char 6121, map 5121** (TCP). If the host runs
+a third-party firewall (e.g. **Bitdefender**), open the ports **there too** — its
+rules are separate from Windows Firewall.
+
+### 3.3 ⚠️ The GRF clientinfo gotcha (the important part)
+
+**This client reads `data\clientinfo.xml` from INSIDE the GRF archives, not from the
+loose `data/clientinfo.xml` file.** (The "Read Data Folder First" client patch is not
+applied, so GRFs win.) Editing the loose file changes nothing.
+
+Worse, GRF precedence follows **`DATA.INI` order, and the LOWER index wins**, and more
+than one GRF can carry its own embedded clientinfo. In this client:
+
+```
+1=renewal2021.grf   <- has an embedded data\clientinfo.xml — THIS one wins
+2=resources2021.grf
+3=data.grf          <- also has one (loses to #1)
+4=rdata.grf
 ```
 
-On **every player machine**:
-- Edit `clientinfo.xml` (or `data/clientinfo.xml` / sclientinfo.xml).
-- Change `<address>127.0.0.1</address>` (or whatever) to the LAN IP of the server machine.
+If any winning GRF still says `127.0.0.1`, a **remote** player's client dials
+`127.0.0.1` = *their own PC*, and shows **"failed to connect to server"** — even
+though ping/`Test-NetConnection` to the host succeeds and the firewall is off (those
+test the network; the game exe is quietly dialing the wrong address). The host itself
+works regardless, because on the host `127.0.0.1` reaches its own WSL server — which
+is why this bug looks like "works for me, not for them."
 
-Restart clients after changes.
+**Fix it with the repo tool** (patches the address *inside* every GRF that has an
+embedded clientinfo, in place, with a verified reversible backup):
 
-To go back to single-PC:
 ```bash
-./tools/set-lan-ip.sh local
+# inspect what each GRF currently advertises
+python3 tools/patch-grf-clientinfo.py --show
+
+# set the address in ALL embedded clientinfos (and the loose file, for good measure)
+python3 tools/patch-grf-clientinfo.py 192.168.20.60
+
+# back to single-PC play
+python3 tools/patch-grf-clientinfo.py 127.0.0.1
 ```
+
+Then **fully relaunch** the client (GRFs load only at startup). To onboard a friend
+you can hand them just the patched **`renewal2021.grf`** (~7 MB, the winning GRF) to
+drop into their client, or the whole client folder / zip.
+
+### 3.4 Diagnosing "friend can't connect"
+
+- **`netstat -ano | findstr 6900`** on the *friend's* PC while it's connecting shows
+  the real Foreign Address — if it's `127.0.0.1`, it's the GRF gotcha (3.3), not the
+  network.
+- On the host, watch `log/run-login.out` for `Request for connection of <user>`. Note
+  the portproxy NATs every client to the WSL gateway (`172.31.208.1`), so the source
+  IP can't tell host from friend — use the **account name** instead. Check
+  `SELECT userid,lastlogin,last_ip,logincount FROM login;` — a friend's account with
+  `logincount 0` never reached the server.
+- Login flow is 3 hops (login→char→map). `char_ip`/`map_ip` come from the *server*
+  config; only the **login** address comes from the client's (GRF) clientinfo.
+
+To reset everything to single-PC play: `tools/set-lan-ip.sh local` **and**
+`python3 tools/patch-grf-clientinfo.py 127.0.0.1`.
 
 ## 4. Other Client Recommendations
 
