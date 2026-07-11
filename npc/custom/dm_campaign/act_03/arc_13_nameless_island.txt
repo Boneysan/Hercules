@@ -23,11 +23,11 @@
 nameless_i,100,100,5	script	Father Quill#dm	4_M_04,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20171) == 2) {
-		mes("[Father Quill]");
+		callfunc("DM_PartyMes", "[Father Quill]");
 		if (dm_arc13_carrion_bribed)
-			mes("Beelzebub is gone. Carrion's deal will cost us something later. I know how his contracts work. But the island is quiet tonight. I will take that.");
+			callfunc("DM_PartyMes", "Beelzebub is gone. Carrion's deal will cost us something later. I know how his contracts work. But the island is quiet tonight. I will take that.");
 		else
-			mes("Beelzebub is gone. Carrion is gone. The island is not safe — it never was — but the coordination is broken. My vigil may be pointless for a while. I have forgotten what that feels like.");
+			callfunc("DM_PartyMes", "Beelzebub is gone. Carrion is gone. The island is not safe — it never was — but the coordination is broken. My vigil may be pointless for a while. I have forgotten what that feels like.");
 		close();
 	}
 
@@ -47,53 +47,53 @@ OnInit:
 	end;
 
 S_StartArc:
-	mes("[Father Quill]");
-	mes("You found the island. That means something. Most people who find it were already dead before they arrived.");
+	callfunc("DM_PartyMes", "[Father Quill]");
+	callfunc("DM_PartyMes", "You found the island. That means something. Most people who find it were already dead before they arrived.");
 	next();
 	if (dm_arc08_darklord_killed) {
-		mes("[Quill]");
-		mes("The dark thing in Glast Heim. The Dark Lord. The dead of that kingdom found their way here eventually — everything that falls tends to wash up on this shore. I recognized some of them.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "The dark thing in Glast Heim. The Dark Lord. The dead of that kingdom found their way here eventually — everything that falls tends to wash up on this shore. I recognized some of them.");
 		next();
 	}
 	if (dm_arc11_bjorn_joined) {
-		mes("[Quill]");
-		mes("A zealot walks with you. I can tell by the crook. This island was built by people who believed too completely in things that could not hold. He should be careful.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "A zealot walks with you. I can tell by the crook. This island was built by people who believed too completely in things that could not hold. He should be careful.");
 		next();
 	}
-	mes("[Quill]");
-	mes("I have been maintaining the wards since the incident. Before that there were twelve of us. Attrition happens.");
+	callfunc("DM_PartyMes", "[Quill]");
+	callfunc("DM_PartyMes", "I have been maintaining the wards since the incident. Before that there were twelve of us. Attrition happens.");
 	next();
-	mes("[Quill]");
-	mes("The problem is not that the demons are breaking through. The problem is that they have stopped trying to break through independently. Something has organized them.");
+	callfunc("DM_PartyMes", "[Quill]");
+	callfunc("DM_PartyMes", "The problem is not that the demons are breaking through. The problem is that they have stopped trying to break through independently. Something has organized them.");
 	next();
 	switch (select("What organized them?", "How are the wards failing?", "What do you need from us?")) {
 	case 1:
-		mes("[Quill]");
-		mes("I believe the cascade. The cascade fills the space between intentions with noise. Demons that were individually chaotic now share a frequency. They have accidentally found consensus through the noise they all receive equally.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "I believe the cascade. The cascade fills the space between intentions with noise. Demons that were individually chaotic now share a frequency. They have accidentally found consensus through the noise they all receive equally.");
 		break;
 	case 2:
-		mes("[Quill]");
-		mes("The cascade is providing them with a counter-resonance to the ward's sealing frequency. Like a key made of static. The wards were not built for this. Nothing was built for this.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "The cascade is providing them with a counter-resonance to the ward's sealing frequency. Like a key made of static. The wards were not built for this. Nothing was built for this.");
 		break;
 	case 3:
-		mes("[Quill]");
-		mes("The Banshee in the outer passages are the remnants of the island's clerics — fallen, but tied to the old wards. They must be silenced before the wards can be recalibrated. The Zombie Slaughter in the sanctum are more recent casualties.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "The Banshee in the outer passages are the remnants of the island's clerics — fallen, but tied to the old wards. They must be silenced before the wards can be recalibrated. The Zombie Slaughter in the sanctum are more recent casualties.");
 		break;
 	}
 	next();
-	mes("[Quill]");
-	mes("And there is Carrion. The Broker. He arrived two days ago and he is waiting by the inner gate. He says he has a proposition. I have not spoken to him. I do not negotiate with demons.");
+	callfunc("DM_PartyMes", "[Quill]");
+	callfunc("DM_PartyMes", "And there is Carrion. The Broker. He arrived two days ago and he is waiting by the inner gate. He says he has a proposition. I have not spoken to him. I do not negotiate with demons.");
 	next();
-	mes("[Quill]");
-	mes("I am told you are different. You can decide for yourselves.");
+	callfunc("DM_PartyMes", "[Quill]");
+	callfunc("DM_PartyMes", "I am told you are different. You can decide for yourselves.");
 	callfunc("DM_InstanceSetFlag", "dm_arc13_started", 1);
 	callfunc("DM_InstanceQuestStart", 20171);
 	callfunc("DM_InstanceQuestStart", 20173);
 	callfunc("DM_InstanceQuestStart", 20174);
 	next();
-	mes("^3355FF[Quest started: The Council of the Drowned]^000000");
-	mes("^3355FFAbbey Bell Silencing - silence 20 Banshee in the outer passages.^000000");
-	mes("^3355FFSanctum Sweep - clear 20 Zombie Slaughter from the inner sanctum.^000000");
+	callfunc("DM_PartyMes", "^3355FF[Quest started: The Council of the Drowned]^000000");
+	callfunc("DM_PartyMes", "^3355FFAbbey Bell Silencing - silence 20 Banshee in the outer passages.^000000");
+	callfunc("DM_PartyMes", "^3355FFSanctum Sweep - clear 20 Zombie Slaughter from the inner sanctum.^000000");
 	close();
 
 S_TurnIns:
@@ -103,21 +103,21 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 380000, 185000);
 		callfunc("DM_GivePartyZeny", 32000);
 		.@paid = 1;
-		mes("[Quill]");
-		mes("The outer passage is quiet. The Banshee were singing — not screaming. The old ward harmonics. They were trying to maintain the seals by resonating with them. They just could not stop anymore.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "The outer passage is quiet. The Banshee were singing — not screaming. The old ward harmonics. They were trying to maintain the seals by resonating with them. They just could not stop anymore.");
 		next();
 		switch (select("Give them release. The seals stand without them now.", "Document what they were singing. It is ward lore.", "They were still protecting this place in their way.")) {
 		case 1:
-			mes("[Quill]");
-			mes("I said the words over the outer passage. It felt presumptuous. I said them anyway.");
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "I said the words over the outer passage. It felt presumptuous. I said them anyway.");
 			break;
 		case 2:
-			mes("[Quill]");
-			mes("I can transcribe it from memory. The old resonance forms. Some of them predate the incident by centuries. Useful knowledge.");
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "I can transcribe it from memory. The old resonance forms. Some of them predate the incident by centuries. Useful knowledge.");
 			break;
 		case 3:
-			mes("[Quill]");
-			mes("Yes. I have been alone here long enough that I had started to think of them as neighbors. That is probably not healthy.");
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "Yes. I have been alone here long enough that I had started to think of them as neighbors. That is probably not healthy.");
 			break;
 		}
 		next();
@@ -128,81 +128,81 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 390000, 190000);
 		callfunc("DM_GivePartyZeny", 33000);
 		.@paid = 1;
-		mes("[Quill]");
-		mes("The sanctum is clear. The Zombie Slaughter were recent. Last year or two. People who came to investigate the island and encountered the seal's breakdown rather than the island's normal defenses.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "The sanctum is clear. The Zombie Slaughter were recent. Last year or two. People who came to investigate the island and encountered the seal's breakdown rather than the island's normal defenses.");
 		next();
 		switch (select("This island draws the curious and kills them.", "Were any of them from the Church?", "The coordinated demons are the greater danger. These were just in the way.")) {
 		case 1:
-			mes("[Quill]");
-			mes("Always. The island does not advertise. But the absence of a name makes it a mystery, and mysteries draw people. I have been burying the curious for years.");
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "Always. The island does not advertise. But the absence of a name makes it a mystery, and mysteries draw people. I have been burying the curious for years.");
 			break;
 		case 2:
-			mes("[Quill]");
-			mes("Two of them. Investigating the old heresy trials. The Church's memory is long and its curiosity is persistent.");
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "Two of them. Investigating the old heresy trials. The Church's memory is long and its curiosity is persistent.");
 			break;
 		case 3:
-			mes("[Quill]");
-			mes("They were. But they are cleared now. The sanctum holds. You can pass to the inner gate.");
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "They were. But they are cleared now. The sanctum holds. You can pass to the inner gate.");
 			break;
 		}
 		next();
 	}
 
 	if (questprogress(20173) == 2 && questprogress(20174) == 2 && questprogress(20175) == 0) {
-		mes("[Quill]");
-		mes("The passages are clear. Carrion is still at the inner gate. He has been there for two days. He brought chairs.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "The passages are clear. Carrion is still at the inner gate. He has been there for two days. He brought chairs.");
 		next();
-		mes("[Quill]");
-		mes("I will tell you what I know of him. He is a Broker. A demon of the second tier — not a lord but not an errand runner. He profits from the chaos that demon lords generate. He does not want the lords to be destroyed. He wants them to be... redistributed.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "I will tell you what I know of him. He is a Broker. A demon of the second tier — not a lord but not an errand runner. He profits from the chaos that demon lords generate. He does not want the lords to be destroyed. He wants them to be... redistributed.");
 		next();
 		switch (select("What does a Broker's deal usually cost?", "We will hear what he offers.", "Carrion talks while Beelzebub moves. We go straight to Beelzebub.")) {
 		case 1:
-			mes("[Quill]");
-			mes("More than you think. Less than you fear. And always something that will be useful to him later in a way that was not apparent at signing.");
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "More than you think. Less than you fear. And always something that will be useful to him later in a way that was not apparent at signing.");
 			break;
 		case 2:
-			mes("[Quill]");
-			mes("Understand what you are walking into. A Broker's offer is always real. The catch is always real too. The catch is just harder to see than the offer.");
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "Understand what you are walking into. A Broker's offer is always real. The catch is always real too. The catch is just harder to see than the offer.");
 			break;
 		case 3:
-			mes("[Quill]");
-			mes("The direct approach. Beelzebub is the logistics coordinator. Without him the coalition loses its coherence. That is the objective.");
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "The direct approach. Beelzebub is the logistics coordinator. Without him the coalition loses its coherence. That is the objective.");
 			break;
 		}
 		callfunc("DM_InstanceQuestStart", 20175);
 		next();
-		mes("^3355FF[Quest started: The Broker's Terms]^000000");
-		mes("^3355FFConfront Broker Carrion at the inner gate. Then descend to abbey03 and face Beelzebub.^000000");
+		callfunc("DM_PartyMes", "^3355FF[Quest started: The Broker's Terms]^000000");
+		callfunc("DM_PartyMes", "^3355FFConfront Broker Carrion at the inner gate. Then descend to abbey03 and face Beelzebub.^000000");
 		close();
 	}
 
 	if (questprogress(20175) == 1 && !dm_arc13_carrion_killed && !dm_arc13_carrion_bribed) {
-		mes("[Quill]");
-		mes("Carrion is at the inner gate. Still waiting.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "Carrion is at the inner gate. Still waiting.");
 		close();
 	}
 
 	if (questprogress(20175) == 1 && (dm_arc13_carrion_killed || dm_arc13_carrion_bribed)) {
-		mes("[Quill]");
-		mes("Carrion is dealt with. Beelzebub waits in the abbey's deepest sanctum. abbey03. He knows you are coming — Beelzebub always knows.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "Carrion is dealt with. Beelzebub waits in the abbey's deepest sanctum. abbey03. He knows you are coming — Beelzebub always knows.");
 		close();
 	}
 
 	if (.@paid) {
-		mes("[Quill]");
-		mes("Clear both the outer passages and the sanctum first. Carrion is patient.");
+		callfunc("DM_PartyMes", "[Quill]");
+		callfunc("DM_PartyMes", "Clear both the outer passages and the sanctum first. Carrion is patient.");
 		close();
 	}
 
-	mes("[Quill]");
+	callfunc("DM_PartyMes", "[Quill]");
 	if (questprogress(20173) == 1 && questprogress(20174) == 1)
-		mes("The Bell Silencing and Sanctum Sweep are both still active.");
+		callfunc("DM_PartyMes", "The Bell Silencing and Sanctum Sweep are both still active.");
 	else if (questprogress(20173) == 1)
-		mes("Abbey Bell Silencing is still open. The Banshee in the outer passages.");
+		callfunc("DM_PartyMes", "Abbey Bell Silencing is still open. The Banshee in the outer passages.");
 	else if (questprogress(20174) == 1)
-		mes("Sanctum Sweep is still open. Zombie Slaughter in the inner sanctum.");
+		callfunc("DM_PartyMes", "Sanctum Sweep is still open. Zombie Slaughter in the inner sanctum.");
 	else
-		mes("The passages are clear. Carrion waits at the inner gate.");
+		callfunc("DM_PartyMes", "The passages are clear. Carrion waits at the inner gate.");
 	close();
 }
 
@@ -210,37 +210,37 @@ S_TurnIns:
 nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc13_started) {
-		mes("[The Broker Carrion]");
-		mes("Not yet. Come back when you have seen what Father Quill is protecting.");
+		callfunc("DM_PartyMes", "[The Broker Carrion]");
+		callfunc("DM_PartyMes", "Not yet. Come back when you have seen what Father Quill is protecting.");
 		close();
 	}
 
 	if (questprogress(20171) == 2) {
-		mes("[Broker Carrion]");
+		callfunc("DM_PartyMes", "[Broker Carrion]");
 		if (dm_arc13_carrion_bribed)
-			mes("A deal is a deal. We will honor the terms. The lords are... not pleased. But they respect contractual obligation.");
+			callfunc("DM_PartyMes", "A deal is a deal. We will honor the terms. The lords are... not pleased. But they respect contractual obligation.");
 		else
-			mes("Beelzebub is gone. So is the coordination. You understand what comes next is messier, not safer? Uncoordinated demon pressure on a hundred seals simultaneously instead of one organized push. Messier.");
+			callfunc("DM_PartyMes", "Beelzebub is gone. So is the coordination. You understand what comes next is messier, not safer? Uncoordinated demon pressure on a hundred seals simultaneously instead of one organized push. Messier.");
 		close();
 	}
 
 	if (dm_arc13_carrion_killed || dm_arc13_carrion_bribed) {
-		mes("[Broker Carrion]");
+		callfunc("DM_PartyMes", "[Broker Carrion]");
 		if (dm_arc13_carrion_bribed)
-			mes("The terms stand. We will be watching.");
+			callfunc("DM_PartyMes", "The terms stand. We will be watching.");
 		else
-			mes("...");
+			callfunc("DM_PartyMes", "...");
 		close();
 	}
 
-	mes("[Broker Carrion]");
-	mes("You made it past the old doorkeeper. Good. I was beginning to think you would be here until the seals finished failing on their own.");
+	callfunc("DM_PartyMes", "[Broker Carrion]");
+	callfunc("DM_PartyMes", "You made it past the old doorkeeper. Good. I was beginning to think you would be here until the seals finished failing on their own.");
 	next();
-	mes("[Carrion]");
-	mes("I represent the Demon Lords' Coalition. Not all of them — the reasonable fraction. The ones who understand that a destroyed Midgard produces no chaos, and demons need chaos the way plants need light.");
+	callfunc("DM_PartyMes", "[Carrion]");
+	callfunc("DM_PartyMes", "I represent the Demon Lords' Coalition. Not all of them — the reasonable fraction. The ones who understand that a destroyed Midgard produces no chaos, and demons need chaos the way plants need light.");
 	next();
-	mes("[Carrion]");
-	mes("The offer: withdraw from this island. Do not interfere with Beelzebub's coordination. In exchange, the coalition agrees to maintain the seals themselves — keep the unaffiliated demons contained. A self-enforcing containment treaty.");
+	callfunc("DM_PartyMes", "[Carrion]");
+	callfunc("DM_PartyMes", "The offer: withdraw from this island. Do not interfere with Beelzebub's coordination. In exchange, the coalition agrees to maintain the seals themselves — keep the unaffiliated demons contained. A self-enforcing containment treaty.");
 	next();
 	switch (select("Kill the messenger. This deal does not exist.", "What is the catch?", "If we take the deal, what happens to the cascade?")) {
 	case 1:
@@ -248,50 +248,50 @@ nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
 		callfunc("DM_InstanceClearFlag", "dm_arc13_coalition_deal_honored");
 		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_killed", 1);
 		callfunc("DM_InstanceQuestComplete", 20175);
-		mes("[Carrion]");
-		mes("Mm. The direct approach. I respect it.");
+		callfunc("DM_PartyMes", "[Carrion]");
+		callfunc("DM_PartyMes", "Mm. The direct approach. I respect it.");
 		next();
-		mes("^3355FF*Carrion dissolves into a scatter of flies. He will reform elsewhere. The inner gate is open.*^000000");
-		mes("^3355FF[Encounter: Beelzebub will fight with full coalition support.]^000000");
+		callfunc("DM_PartyMes", "^3355FF*Carrion dissolves into a scatter of flies. He will reform elsewhere. The inner gate is open.*^000000");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: Beelzebub will fight with full coalition support.]^000000");
 		break;
 	case 2:
 		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_bribed");
 		callfunc("DM_InstanceClearFlag", "dm_arc13_coalition_deal_honored");
 		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_killed", 1);
 		callfunc("DM_InstanceQuestComplete", 20175);
-		mes("[Carrion]");
-		mes("The catch is that Beelzebub remains. The cascade remains. The coalition's containment holds only while it suits us. Which is to say: until Loki makes a better offer.");
+		callfunc("DM_PartyMes", "[Carrion]");
+		callfunc("DM_PartyMes", "The catch is that Beelzebub remains. The cascade remains. The coalition's containment holds only while it suits us. Which is to say: until Loki makes a better offer.");
 		next();
-		mes("[Carrion]");
-		mes("You have identified the catch. Congratulations. The offer still stands, if you want it.");
+		callfunc("DM_PartyMes", "[Carrion]");
+		callfunc("DM_PartyMes", "You have identified the catch. Congratulations. The offer still stands, if you want it.");
 		next();
-		mes("[Broker Carrion]");
-		mes("No? Then I will let you through. I will be watching.");
+		callfunc("DM_PartyMes", "[Broker Carrion]");
+		callfunc("DM_PartyMes", "No? Then I will let you through. I will be watching.");
 		next();
-		mes("^3355FF*Carrion dissolves. The inner gate is open. He was always going to let you through.*^000000");
-		mes("^3355FF[Encounter: Beelzebub will fight at full strength.]^000000");
+		callfunc("DM_PartyMes", "^3355FF*Carrion dissolves. The inner gate is open. He was always going to let you through.*^000000");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: Beelzebub will fight at full strength.]^000000");
 		break;
 	case 3:
 		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_killed");
 		callfunc("DM_InstanceClearFlag", "dm_arc13_beelzebub_killed");
 		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_bribed", 1);
 		callfunc("DM_InstanceQuestComplete", 20175);
-		mes("[Carrion]");
-		mes("Nothing. The cascade is not our department. We exist within it the same way you do. The coalition wants the cascade to slow down — a world in the middle of an extinction event generates less productive chaos than a world in ordinary distress.");
+		callfunc("DM_PartyMes", "[Carrion]");
+		callfunc("DM_PartyMes", "Nothing. The cascade is not our department. We exist within it the same way you do. The coalition wants the cascade to slow down — a world in the middle of an extinction event generates less productive chaos than a world in ordinary distress.");
 		next();
-		mes("[Carrion]");
-		mes("Which is, I recognize, an alignment of interests that should make you suspicious. You are right to be suspicious. And the offer still stands.");
+		callfunc("DM_PartyMes", "[Carrion]");
+		callfunc("DM_PartyMes", "Which is, I recognize, an alignment of interests that should make you suspicious. You are right to be suspicious. And the offer still stands.");
 		next();
-		mes("[Carrion]");
-		mes("Do we have a deal?");
+		callfunc("DM_PartyMes", "[Carrion]");
+		callfunc("DM_PartyMes", "Do we have a deal?");
 		next();
-		mes("^3355FF*The deal is struck. The coalition maintains the seals.*^000000");
-		mes("^3355FF*Beelzebub is withdrawn rather than fought. The coordination is dissolved by agreement.*^000000");
-		mes("^3355FF[Encounter: the Beelzebub fight is skipped if the coalition deal is honored.]^000000");
+		callfunc("DM_PartyMes", "^3355FF*The deal is struck. The coalition maintains the seals.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Beelzebub is withdrawn rather than fought. The coordination is dissolved by agreement.*^000000");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: the Beelzebub fight is skipped if the coalition deal is honored.]^000000");
 		break;
 	}
 	next();
-	mes("^3355FF[The Broker's Terms resolved.]^000000");
+	callfunc("DM_PartyMes", "^3355FF[The Broker's Terms resolved.]^000000");
 	close();
 
 OnInit:

@@ -25,14 +25,14 @@
 moc_ruins,150,150,5	script	Loki The Voice#dm	4_M_04,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (dm_campaign_complete) {
-		mes("[Loki The Voice]");
-		mes("The choice was made. The seal is different now. I watched you understand what that meant while you were doing it. That was the part I did not predict.");
+		callfunc("DM_PartyMes", "[Loki The Voice]");
+		callfunc("DM_PartyMes", "The choice was made. The seal is different now. I watched you understand what that meant while you were doing it. That was the part I did not predict.");
 		close();
 	}
 
 	if (dm_arc19_surt_defeated) {
-		mes("[Loki The Voice]");
-		mes("Surt is down. The seal point is open. The Central Choice is where I was standing before. That is not a metaphor.");
+		callfunc("DM_PartyMes", "[Loki The Voice]");
+		callfunc("DM_PartyMes", "Surt is down. The seal point is open. The Central Choice is where I was standing before. That is not a metaphor.");
 		close();
 	}
 
@@ -52,67 +52,67 @@ OnInit:
 	end;
 
 S_StartArc:
-	mes("[Loki The Voice]");
-	mes("You came to Morroc's ruins. That means you have done what needed to be done. Or close enough that the difference does not matter anymore.");
+	callfunc("DM_PartyMes", "[Loki The Voice]");
+	callfunc("DM_PartyMes", "You came to Morroc's ruins. That means you have done what needed to be done. Or close enough that the difference does not matter anymore.");
 	next();
 	if (dm_arc17_admin_running) {
-		mes("[Loki]");
-		mes("Varmundt's Administrator. Still running. Its cascade analysis agrees with mine on the frequency deviation. 847 percent above the original baseline. Varmundt would have found that number satisfying in the specific way that very bad news can be satisfying when it confirms your model.");
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "Varmundt's Administrator. Still running. Its cascade analysis agrees with mine on the frequency deviation. 847 percent above the original baseline. Varmundt would have found that number satisfying in the specific way that very bad news can be satisfying when it confirms your model.");
 		next();
 	}
 	if (dm_arc18_himmelmez_bargained) {
-		mes("[Loki]");
-		mes("Himmelmez made the pact. She is holding the dead in Niflheim while you stand here. That is something Thanatos did not have. He had no one holding anything while he worked. I want you to understand how different that makes this moment.");
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "Himmelmez made the pact. She is holding the dead in Niflheim while you stand here. That is something Thanatos did not have. He had no one holding anything while he worked. I want you to understand how different that makes this moment.");
 		next();
 	}
 	if (dm_arc15_pratt_challenged) {
-		mes("[Loki]");
-		mes("Scholar Pratt now knows the full cost. That knowledge will reach the councils. This time the people making decisions about the seal will understand what they are asking of whoever carries it.");
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "Scholar Pratt now knows the full cost. That knowledge will reach the councils. This time the people making decisions about the seal will understand what they are asking of whoever carries it.");
 		next();
 	}
 	if (dm_arc13_carrion_bribed) {
-		mes("[Loki]");
-		mes("Carrion's deal. The demon coalition holds. There is a reason the Broker wanted the cascade to slow down. Demons live in the space between what-is and what-isn't. If the cascade seals completely and that space collapses, there is nowhere for them to be. Carrion was not acting against you. He was acting for his own survival in a way that aligned with yours. That alignment is rare. It is worth knowing about.");
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "Carrion's deal. The demon coalition holds. There is a reason the Broker wanted the cascade to slow down. Demons live in the space between what-is and what-isn't. If the cascade seals completely and that space collapses, there is nowhere for them to be. Carrion was not acting against you. He was acting for his own survival in a way that aligned with yours. That alignment is rare. It is worth knowing about.");
 		next();
 	}
-	mes("[Loki]");
-	mes("I need to tell you what I am. I am not the cascade. I did not create the seal or break it. I recognized what was happening three centuries ago and I have been watching.");
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "I need to tell you what I am. I am not the cascade. I did not create the seal or break it. I recognized what was happening three centuries ago and I have been watching.");
 	next();
-	mes("[Loki]");
-	mes("The cascade is what happens when a seal resonates at the wrong frequency indefinitely. Thanatos created a seal. The seal had a frequency. The frequency has been amplifying for three hundred years. What you call the cascade is the seal's harmonic decay. It is not the end of the world. It is the end of a seal that was never meant to last this long.");
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "The cascade is what happens when a seal resonates at the wrong frequency indefinitely. Thanatos created a seal. The seal had a frequency. The frequency has been amplifying for three hundred years. What you call the cascade is the seal's harmonic decay. It is not the end of the world. It is the end of a seal that was never meant to last this long.");
 	next();
 	switch (select("If the cascade is the seal, what happens when we stop it?", "What were you doing while it amplified?", "Why come to us now?")) {
 	case 1:
-		mes("[Loki]");
-		mes("The seal closes. The thing beneath Morroc that Thanatos sealed stops receiving the resonance that has been sustaining its containment. Closing the cascade correctly creates a new seal. Closing it incorrectly releases what is beneath.");
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "The seal closes. The thing beneath Morroc that Thanatos sealed stops receiving the resonance that has been sustaining its containment. Closing the cascade correctly creates a new seal. Closing it incorrectly releases what is beneath.");
 		break;
 	case 2:
-		mes("[Loki]");
-		mes("Introducing variables. Nudging events. Giving thrones to people I believed might make useful decisions. I was not confident any of it would work. I was the least confident about Himmelmez. That one surprised me.");
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "Introducing variables. Nudging events. Giving thrones to people I believed might make useful decisions. I was not confident any of it would work. I was the least confident about Himmelmez. That one surprised me.");
 		break;
 	case 3:
-		mes("[Loki]");
-		mes("Because you are the only people alive who understand the full picture. Everyone else has one piece. You have the thread from Cassell through Krenn through Kessler through Karsh through Hesma through Bjorn through Pratt through Rina through the Administrator and through Himmelmez. That thread ends here. I needed you to have all of it.");
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "Because you are the only people alive who understand the full picture. Everyone else has one piece. You have the thread from Cassell through Krenn through Kessler through Karsh through Hesma through Bjorn through Pratt through Rina through the Administrator and through Himmelmez. That thread ends here. I needed you to have all of it.");
 		break;
 	}
 	next();
-	mes("[Loki]");
-	mes("Surt is the cascade's focal point in this region. He is not the cause. He is where the resonance has concentrated. If the resonance is redirected, Surt disperses. But first: his vanguard.");
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "Surt is the cascade's focal point in this region. He is not the cause. He is where the resonance has concentrated. If the resonance is redirected, Surt disperses. But first: his vanguard.");
 	next();
-	mes("[Loki]");
-	mes("The Khalitzburg walking the ruins are the cascade-animated dead of the last great war — Thanatos's war. They have been in the seal's resonance since the beginning. They are the oldest consequence of what he did. They deserve to be quieted first.");
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "The Khalitzburg walking the ruins are the cascade-animated dead of the last great war — Thanatos's war. They have been in the seal's resonance since the beginning. They are the oldest consequence of what he did. They deserve to be quieted first.");
 	callfunc("DM_InstanceSetFlag", "dm_arc19_started", 1);
 	callfunc("DM_InstanceQuestStart", 20231);
 	callfunc("DM_InstanceQuestStart", 20232);
 	next();
-	mes("^3355FF[Quest started: Where Thanatos Stood]^000000");
-	mes("^3355FFBeyond the Veil - quiet 15 Khalitzburg in the ruins of Morroc. Then return to Loki.^000000");
+	callfunc("DM_PartyMes", "^3355FF[Quest started: Where Thanatos Stood]^000000");
+	callfunc("DM_PartyMes", "^3355FFBeyond the Veil - quiet 15 Khalitzburg in the ruins of Morroc. Then return to Loki.^000000");
 	close();
 
 S_Progress:
 	if (questprogress(20232) == 1 && questprogress(20232, HUNTING) < 2) {
-		mes("[Loki The Voice]");
-		mes("The Khalitzburg are still in the ruins. They have been here for three hundred years. A few more minutes is fine. Take your time.");
+		callfunc("DM_PartyMes", "[Loki The Voice]");
+		callfunc("DM_PartyMes", "The Khalitzburg are still in the ruins. They have been here for three hundred years. A few more minutes is fine. Take your time.");
 		close();
 	}
 
@@ -124,35 +124,35 @@ S_Progress:
 	}
 
 	if (questprogress(20233) == 1 && !dm_arc19_surt_defeated) {
-		mes("[Loki The Voice]");
-		mes("Surt waits at the Ash Vacuum Rift. moc_fild22. When he falls, The Central Choice is where I was standing before I stepped aside.");
+		callfunc("DM_PartyMes", "[Loki The Voice]");
+		callfunc("DM_PartyMes", "Surt waits at the Ash Vacuum Rift. moc_fild22. When he falls, The Central Choice is where I was standing before I stepped aside.");
 		close();
 	}
 
-	mes("[Loki The Voice]");
-	mes("You are doing well. Keep going.");
+	callfunc("DM_PartyMes", "[Loki The Voice]");
+	callfunc("DM_PartyMes", "You are doing well. Keep going.");
 	close();
 
 S_FinalAudience:
 	callfunc("DM_InstanceQuestStart", 20233);
-	mes("[Loki The Voice]");
-	mes("The Khalitzburg are at rest. They were the last loose end from Thanatos's original decision. It is appropriate that you closed that before making your own.");
+	callfunc("DM_PartyMes", "[Loki The Voice]");
+	callfunc("DM_PartyMes", "The Khalitzburg are at rest. They were the last loose end from Thanatos's original decision. It is appropriate that you closed that before making your own.");
 	next();
-	mes("[Loki]");
-	mes("What you found in the Tower: Thanatos is still in the seal. What Varmundt found: the inverse-frequency can suppress the cascade but not close it permanently. What Himmelmez holds: the dead, for now, while you work.");
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "What you found in the Tower: Thanatos is still in the seal. What Varmundt found: the inverse-frequency can suppress the cascade but not close it permanently. What Himmelmez holds: the dead, for now, while you work.");
 	next();
 	if (dm_arc04_cassell_unmasked) {
-		mes("[Loki]");
-		mes("Cassell. The Seal's Warden. The first thread in what became this. He was not wrong about what the seal was. He was wrong about whether it could be maintained indefinitely by suppression alone. Everything since Cassell has been the proof that he was wrong.");
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "Cassell. The Seal's Warden. The first thread in what became this. He was not wrong about what the seal was. He was wrong about whether it could be maintained indefinitely by suppression alone. Everything since Cassell has been the proof that he was wrong.");
 		next();
 	}
-	mes("[Loki]");
-	mes("There are five ways to close the cascade. You have done the work to make all five possible. Only you have done enough of that work to know which one is right.");
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "There are five ways to close the cascade. You have done the work to make all five possible. Only you have done enough of that work to know which one is right.");
 	next();
-	mes("[Loki]");
-	mes("Face Surt. He holds the focal point open. When the focal point closes, the choice will be available. The Ash Vacuum Rift at moc_fild22.");
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "Face Surt. He holds the focal point open. When the focal point closes, the choice will be available. The Ash Vacuum Rift at moc_fild22.");
 	next();
-	mes("^3355FF[The Choice He Never Had - go to moc_fild22 and face Surt. The Central Choice follows.]^000000");
+	callfunc("DM_PartyMes", "^3355FF[The Choice He Never Had - go to moc_fild22 and face Surt. The Central Choice follows.]^000000");
 	close();
 }
 
@@ -217,52 +217,52 @@ OnSurtDead:
 moc_fild22,155,150,5	script	The Central Choice#dm	4_M_05,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (dm_campaign_complete) {
-		mes("[The Central Choice]");
-		mes("The choice was made. The seal is different now.");
+		callfunc("DM_PartyMes", "[The Central Choice]");
+		callfunc("DM_PartyMes", "The choice was made. The seal is different now.");
 		close();
 	}
 
 	if (!dm_arc19_surt_defeated) {
-		mes("[The Central Choice]");
-		mes("Surt holds the focal point open. The choice is not available while the focal point is open.");
+		callfunc("DM_PartyMes", "[The Central Choice]");
+		callfunc("DM_PartyMes", "Surt holds the focal point open. The choice is not available while the focal point is open.");
 		close();
 	}
 
-	mes("[Loki The Voice]");
-	mes("Here is what Thanatos never had: options.");
+	callfunc("DM_PartyMes", "[Loki The Voice]");
+	callfunc("DM_PartyMes", "Here is what Thanatos never had: options.");
 	next();
-	mes("[Loki]");
-	mes("Five ways to close the cascade. Each one uses what you learned differently. Each one creates a different kind of seal. Choose what the next three centuries look like.");
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "Five ways to close the cascade. Each one uses what you learned differently. Each one creates a different kind of seal. Choose what the next three centuries look like.");
 	next();
 	switch (select("The Shared Seal — many carry what one could not hold alone.", "The Reforged Seal — Varmundt's counter-frequency rebuilds the lock.", "The Queen's Bargain — Himmelmez holds the seal from the other side.", "Thanatos's Road — one person chooses the seal, knowing the cost.", "Ragnarok Unbound — the seal is not rebuilt. Let what is beneath rise and be faced.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_finale_shared_seal", 1);
-		mes("^3355FF[The Shared Seal]^000000");
-		mes("The party distributes the resonance across a network of willing carriers. No single person becomes the lock. The seal holds through collective intention. It requires maintenance. It requires trust. It will last exactly as long as the trust does.");
+		callfunc("DM_PartyMes", "^3355FF[The Shared Seal]^000000");
+		callfunc("DM_PartyMes", "The party distributes the resonance across a network of willing carriers. No single person becomes the lock. The seal holds through collective intention. It requires maintenance. It requires trust. It will last exactly as long as the trust does.");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_finale_reforged_seal", 1);
-		mes("^3355FF[The Reforged Seal]^000000");
-		mes("Varmundt's inverse-frequency counter-broadcasts at the cascade's exact harmonic inverse. The seal closes mechanically. No living lock. No collective. A machine that cancels itself. It requires power and maintenance. It will last as long as someone keeps it running.");
+		callfunc("DM_PartyMes", "^3355FF[The Reforged Seal]^000000");
+		callfunc("DM_PartyMes", "Varmundt's inverse-frequency counter-broadcasts at the cascade's exact harmonic inverse. The seal closes mechanically. No living lock. No collective. A machine that cancels itself. It requires power and maintenance. It will last as long as someone keeps it running.");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_finale_queens_bargain", 1);
-		mes("^3355FF[The Queen's Bargain]^000000");
-		mes("Himmelmez holds the seal from Niflheim's side. The dead become the lock. This is what the cascade feared — that the dead and the living would cooperate on the seal rather than divide it between them. The seal is permanent while Himmelmez holds it. The cost is hers. She already knew that when she made the pact.");
+		callfunc("DM_PartyMes", "^3355FF[The Queen's Bargain]^000000");
+		callfunc("DM_PartyMes", "Himmelmez holds the seal from Niflheim's side. The dead become the lock. This is what the cascade feared — that the dead and the living would cooperate on the seal rather than divide it between them. The seal is permanent while Himmelmez holds it. The cost is hers. She already knew that when she made the pact.");
 		break;
 	case 4:
 		callfunc("DM_InstanceSetFlag", "dm_finale_thanatos_road", 1);
-		mes("^3355FF[Thanatos's Road]^000000");
-		mes("One person chooses the seal, knowing the full cost. Not ignorantly, the way Thanatos could not have known. With full knowledge of what three centuries in the lock means. The seal is perfect. The person is permanent. Scholar Pratt's volunteers are gone. The choice is for whoever is willing to make it knowing.");
+		callfunc("DM_PartyMes", "^3355FF[Thanatos's Road]^000000");
+		callfunc("DM_PartyMes", "One person chooses the seal, knowing the full cost. Not ignorantly, the way Thanatos could not have known. With full knowledge of what three centuries in the lock means. The seal is perfect. The person is permanent. Scholar Pratt's volunteers are gone. The choice is for whoever is willing to make it knowing.");
 		break;
 	case 5:
 		callfunc("DM_InstanceSetFlag", "dm_finale_ragnarok_unbound", 1);
-		mes("^3355FF[Ragnarok Unbound]^000000");
-		mes("The seal is not rebuilt. What Thanatos sealed rises. It has been in there for three hundred years. The cascade's amplification has been feeding it. What rises is not what went in. It may be reasoned with. It may not. Midgard faces what it has been avoiding facing and finds out what that is.");
+		callfunc("DM_PartyMes", "^3355FF[Ragnarok Unbound]^000000");
+		callfunc("DM_PartyMes", "The seal is not rebuilt. What Thanatos sealed rises. It has been in there for three hundred years. The cascade's amplification has been feeding it. What rises is not what went in. It may be reasoned with. It may not. Midgard faces what it has been avoiding facing and finds out what that is.");
 		break;
 	}
 	next();
-	mes("^FF6600[DM] The Seal Cascade ends. The party has shaped the fate of Midgard.^000000");
+	callfunc("DM_PartyMes", "^FF6600[DM] The Seal Cascade ends. The party has shaped the fate of Midgard.^000000");
 	callfunc("DM_InstanceQuestComplete", 20233);
 	callfunc("DM_InstanceSetFlag", "dm_campaign_complete", 1);
 	callfunc("DM_PartyExp", 1000000, 500000);

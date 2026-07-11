@@ -161,6 +161,51 @@ These are not parse blockers. Treat them as product/experience work:
 The current working backlog for these items lives in
 `planning/dm-handoff.md`.
 
+## Cross-Project Client Improvement: WASD Movement
+
+Korangar owns implementation of camera-relative WASD character movement; see
+`korangar/docs/FEATURE_ROADMAP.md` and
+`korangar/docs/plans/modern-mechanics.md`. Hercules remains authoritative for
+walkability and movement validation, so this server project owns the live
+compatibility pass.
+
+Planned acceptance work:
+
+- [ ] Verify `Click`, `WASD`, and `Both` modes against `PACKETVER=20220406`.
+- [ ] Confirm held keys and diagonals do not trigger movement packet flood or
+  anti-cheat behavior.
+- [ ] Test walls, narrow corners, rapid reversals, map changes, and latency for
+  rubber-banding.
+- [ ] Confirm chat/NPC text focus prevents unintended movement.
+- [ ] Confirm NPC interaction, item pickup, melee chase, skills, hazards, and
+  campaign instances still behave normally.
+- [ ] Run a 30-minute mixed click/WASD campaign session with no disconnect or
+  path desynchronization.
+
+No Hercules protocol change is expected for the MVP. Any server change must be
+justified by live evidence rather than client prediction.
+
+## Cross-Project Aspirational Improvement: Campaign Lighting
+
+Korangar owns rendering and interpolation; Hercules owns permission,
+campaign-state integration, and recoverable scene intent. The desired DM flow
+is preview -> send/activate -> visible acknowledgement -> restore/cleanup.
+
+Planned server responsibilities:
+
+- [ ] Define a small scene-light vocabulary (baseline, dim, cold, ritual,
+  hazard pulse, blackout, boss, victory) rather than exposing raw shader values
+  through atcommands.
+- [ ] Add private preview/status controls and explicit party-visible activation.
+- [ ] Associate optional lighting cues with selected `dm_story_beat` entries
+  without making lighting required for quest progression.
+- [ ] Ensure cleanup, DnD mode off, instance end, map change, and reconnect can
+  restore or reconstruct the correct state.
+- [ ] Keep non-Korangar clients playable; lighting cues enhance presentation but
+  never carry essential mechanics or hidden-only information.
+- [ ] Use structured script feedback first; add a custom packet/plugin only when
+  the vertical slice proves chat transport cannot represent state safely.
+
 ## Validation
 
 Run script validation after NPC script changes:

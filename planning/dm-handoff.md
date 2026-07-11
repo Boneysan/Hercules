@@ -34,6 +34,14 @@ updates in `npc/custom/dm_campaign/`.
 
 ## Existing Systems
 
+- Campaign quest-giver dialogue is party-visible: the interacting player gets
+  the normal NPC window and every other online party member receives the same
+  lines as `[Party Story]` chat messages. One player controls each `select`
+  menu, making that response the party's decision.
+- Campaign quest starts, completions, erasures, and story flags are applied to
+  every online party member. Arc scripts contain no direct per-character
+  `setquest`, `completequest`, or `erasequest` calls; they use the shared party
+  helpers exclusively.
 - Private instances are implemented in `shared/dm_instances.txt`.
 - Party-facing quest helpers are implemented in `shared/dm_quests.txt`.
 - Loot rewards are implemented in `shared/dm_rewards.txt`.

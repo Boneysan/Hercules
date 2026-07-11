@@ -24,13 +24,13 @@
 prontera,150,150,5	script	Kronecker G Heine#dm	4_M_01,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20201) == 2) {
-		mes("[Kronecker G Heine]");
+		callfunc("DM_PartyMes", "[Kronecker G Heine]");
 		if (dm_arc16_rina_defected)
-			mes("Rina's briefing was thorough. We understand the network's reach now. The King has been told what he needs to know, which is not everything, but it is enough.");
+			callfunc("DM_PartyMes", "Rina's briefing was thorough. We understand the network's reach now. The King has been told what he needs to know, which is not everything, but it is enough.");
 		else if (dm_arc16_rina_exposed)
-			mes("The King knows. The court is... quieter than it was. Some of that quiet is relief. Some of it is people waiting to see who else gets exposed.");
+			callfunc("DM_PartyMes", "The King knows. The court is... quieter than it was. Some of that quiet is relief. Some of it is people waiting to see who else gets exposed.");
 		else
-			mes("The network is dismantled. Quietly. The court does not know how deep it went. That is probably the right call.");
+			callfunc("DM_PartyMes", "The network is dismantled. Quietly. The court does not know how deep it went. That is probably the right call.");
 		close();
 	}
 
@@ -50,47 +50,47 @@ OnInit:
 	end;
 
 S_StartArc:
-	mes("[Kronecker G Heine]");
-	mes("I need people who have not been in Prontera for the last six months. Everyone here has been breathing the same air.");
+	callfunc("DM_PartyMes", "[Kronecker G Heine]");
+	callfunc("DM_PartyMes", "I need people who have not been in Prontera for the last six months. Everyone here has been breathing the same air.");
 	next();
 	if (dm_arc06_krenn_bribed) {
-		mes("[Kronecker]");
-		mes("Director Krenn in Yuno. The suppression deal. One of the Whisperer agents passed through his office last quarter. The data he was paid to suppress fed directly into the cult's cascade-timing models.");
+		callfunc("DM_PartyMes", "[Kronecker]");
+		callfunc("DM_PartyMes", "Director Krenn in Yuno. The suppression deal. One of the Whisperer agents passed through his office last quarter. The data he was paid to suppress fed directly into the cult's cascade-timing models.");
 		next();
 	}
 	if (dm_arc10_echo_freed) {
-		mes("[Kronecker]");
-		mes("The laboratory prototype — Echo. It surfaced in Prontera three weeks ago. The Whisperers tried to recruit it. It declined. Then it disappeared again. I would like to know where it went.");
+		callfunc("DM_PartyMes", "[Kronecker]");
+		callfunc("DM_PartyMes", "The laboratory prototype — Echo. It surfaced in Prontera three weeks ago. The Whisperers tried to recruit it. It declined. Then it disappeared again. I would like to know where it went.");
 		next();
 	}
-	mes("[Kronecker]");
-	mes("The Whisperers believe the cascade's completion is desirable. They call it the Great Opening. They have been placing agents in the advisory council for eighteen months, steering policy toward doing nothing useful.");
+	callfunc("DM_PartyMes", "[Kronecker]");
+	callfunc("DM_PartyMes", "The Whisperers believe the cascade's completion is desirable. They call it the Great Opening. They have been placing agents in the advisory council for eighteen months, steering policy toward doing nothing useful.");
 	next();
 	switch (select("How many agents are in the court?", "Who is Bijou?", "What do you need from us?")) {
 	case 1:
-		mes("[Kronecker]");
-		mes("Seven confirmed. Three probable. I have been unable to act because I cannot determine where the information goes after they receive it. If I expose one, the others vanish. I need the source.");
+		callfunc("DM_PartyMes", "[Kronecker]");
+		callfunc("DM_PartyMes", "Seven confirmed. Three probable. I have been unable to act because I cannot determine where the information goes after they receive it. If I expose one, the others vanish. I need the source.");
 		break;
 	case 2:
-		mes("[Kronecker]");
-		mes("Their oracle. Someone in the Underground Prison who reads the cascade's 'intent' and translates it for the cult. The previous warden converted the lower levels to a coordination center. The new warden does not know.");
+		callfunc("DM_PartyMes", "[Kronecker]");
+		callfunc("DM_PartyMes", "Their oracle. Someone in the Underground Prison who reads the cascade's 'intent' and translates it for the cult. The previous warden converted the lower levels to a coordination center. The new warden does not know.");
 		break;
 	case 3:
-		mes("[Kronecker]");
-		mes("The Disguise creatures in the prison corridors are Whisperer agents in a cascade-altered state — they have worn their disguises so long the shape has become permanent. And the Bloody Murderers in the deeper levels are former zealots who completed what the cult calls 'full surrender.' Clear both.");
+		callfunc("DM_PartyMes", "[Kronecker]");
+		callfunc("DM_PartyMes", "The Disguise creatures in the prison corridors are Whisperer agents in a cascade-altered state — they have worn their disguises so long the shape has become permanent. And the Bloody Murderers in the deeper levels are former zealots who completed what the cult calls 'full surrender.' Clear both.");
 		break;
 	}
 	next();
-	mes("[Kronecker]");
-	mes("After the prison is clear, Matron Rina will have no shelter and no assets. She coordinates between Bijou and the court. She is in the east wing of the prison. She is the only one who knows how Bijou works.");
+	callfunc("DM_PartyMes", "[Kronecker]");
+	callfunc("DM_PartyMes", "After the prison is clear, Matron Rina will have no shelter and no assets. She coordinates between Bijou and the court. She is in the east wing of the prison. She is the only one who knows how Bijou works.");
 	callfunc("DM_InstanceSetFlag", "dm_arc16_started", 1);
 	callfunc("DM_InstanceQuestStart", 20201);
 	callfunc("DM_InstanceQuestStart", 20202);
 	callfunc("DM_InstanceQuestStart", 20203);
 	next();
-	mes("^3355FF[Quest started: The Royal Banquet]^000000");
-	mes("^3355FFUnderground Prison Cleanup - clear 20 Disguise from the prison corridors.^000000");
-	mes("^3355FFTerra Gloria - eliminate 20 Bloody Murderer from the deeper prison levels.^000000");
+	callfunc("DM_PartyMes", "^3355FF[Quest started: The Royal Banquet]^000000");
+	callfunc("DM_PartyMes", "^3355FFUnderground Prison Cleanup - clear 20 Disguise from the prison corridors.^000000");
+	callfunc("DM_PartyMes", "^3355FFTerra Gloria - eliminate 20 Bloody Murderer from the deeper prison levels.^000000");
 	close();
 
 S_TurnIns:
@@ -100,21 +100,21 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 520000, 260000);
 		callfunc("DM_GivePartyZeny", 42000);
 		.@paid = 1;
-		mes("[Kronecker]");
-		mes("The Disguise. The cascade accelerated their transformation — they cannot change back. They were once people. That is the cult's argument for 'full surrender': at the end, the transformation is complete and there is no returning. They call that freedom.");
+		callfunc("DM_PartyMes", "[Kronecker]");
+		callfunc("DM_PartyMes", "The Disguise. The cascade accelerated their transformation — they cannot change back. They were once people. That is the cult's argument for 'full surrender': at the end, the transformation is complete and there is no returning. They call that freedom.");
 		next();
 		switch (select("They were not free. They were consumed.", "Document what they looked like before. Someone may want to know.", "The cult recruits people by calling the end of self a liberation.")) {
 		case 1:
-			mes("[Kronecker]");
-			mes("That is the distinction the cult does not make. They consider consumption and liberation synonymous when the cascade is the consuming thing.");
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "That is the distinction the cult does not make. They consider consumption and liberation synonymous when the cascade is the consuming thing.");
 			break;
 		case 2:
-			mes("[Kronecker]");
-			mes("I have records from when they entered the prison. Pre-transformation. I will hold those.");
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "I have records from when they entered the prison. Pre-transformation. I will hold those.");
 			break;
 		case 3:
-			mes("[Kronecker]");
-			mes("Precisely. And the cascade's frequency does feel like release to certain attunements. It is not incorrect that there is no self left to suffer after complete surrender. The cult is not lying about the experience. It is lying about whether that is a good thing.");
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "Precisely. And the cascade's frequency does feel like release to certain attunements. It is not incorrect that there is no self left to suffer after complete surrender. The cult is not lying about the experience. It is lying about whether that is a good thing.");
 			break;
 		}
 		next();
@@ -125,78 +125,78 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 540000, 270000);
 		callfunc("DM_GivePartyZeny", 44000);
 		.@paid = 1;
-		mes("[Kronecker]");
-		mes("The Bloody Murderers. Terra Gloria — that is the cult's name for the deeper prison. They believed the underground held Prontera's original consecration seal. They were not entirely wrong. The prison was built on an old blessing site.");
+		callfunc("DM_PartyMes", "[Kronecker]");
+		callfunc("DM_PartyMes", "The Bloody Murderers. Terra Gloria — that is the cult's name for the deeper prison. They believed the underground held Prontera's original consecration seal. They were not entirely wrong. The prison was built on an old blessing site.");
 		next();
 		switch (select("The cascade corrupted the blessing into a recruitment tool.", "The site is clear now. Is it recoverable?", "The cult knows exactly where to establish itself.")) {
 		case 1:
-			mes("[Kronecker]");
-			mes("The blessing amplified the cascade's frequency in the prison. The Bloody Murderers felt it as certainty. As divine confirmation. They were certain they were right. That is very hard to argue with.");
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "The blessing amplified the cascade's frequency in the prison. The Bloody Murderers felt it as certainty. As divine confirmation. They were certain they were right. That is very hard to argue with.");
 			break;
 		case 2:
-			mes("[Kronecker]");
-			mes("The Acolytes' Guild is sending a team. Whether the original blessing can be restored or whether it is now a cascade scar — I do not know. But the Bloody Murderers are no longer using it.");
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "The Acolytes' Guild is sending a team. Whether the original blessing can be restored or whether it is now a cascade scar — I do not know. But the Bloody Murderers are no longer using it.");
 			break;
 		case 3:
-			mes("[Kronecker]");
-			mes("They have been doing this for longer than I have been an intelligence director. The cascade reveals pre-existing weakness in consecrated sites. The Whisperers map those sites before they recruit.");
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "They have been doing this for longer than I have been an intelligence director. The cascade reveals pre-existing weakness in consecrated sites. The Whisperers map those sites before they recruit.");
 			break;
 		}
 		next();
 	}
 
 	if (questprogress(20202) == 2 && questprogress(20203) == 2 && questprogress(20204) == 0) {
-		mes("[Kronecker]");
-		mes("The prison is clear. Matron Rina is in the east wing, room seven. She has not tried to leave. She is either very calm or she was expecting you to reach her eventually.");
+		callfunc("DM_PartyMes", "[Kronecker]");
+		callfunc("DM_PartyMes", "The prison is clear. Matron Rina is in the east wing, room seven. She has not tried to leave. She is either very calm or she was expecting you to reach her eventually.");
 		next();
 		switch (select("What does she want?", "How much does she actually know about Bijou?", "Is she dangerous?")) {
 		case 1:
-			mes("[Kronecker]");
-			mes("I believe she wants to complete the transition. The cult's prophecy says the Great Opening requires a specific sequence of events. She believes she has set that sequence in motion and is now waiting for it to conclude.");
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "I believe she wants to complete the transition. The cult's prophecy says the Great Opening requires a specific sequence of events. She believes she has set that sequence in motion and is now waiting for it to conclude.");
 			break;
 		case 2:
-			mes("[Kronecker]");
-			mes("More than anyone else alive, I think. She has been coordinating with Bijou for four years. She may be the only person who can explain what Bijou actually is — as distinct from what the cult claims it is.");
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "More than anyone else alive, I think. She has been coordinating with Bijou for four years. She may be the only person who can explain what Bijou actually is — as distinct from what the cult claims it is.");
 			break;
 		case 3:
-			mes("[Kronecker]");
-			mes("Physically, no. She is sixty-one. But she is calm in a way that makes me uncomfortable. People who are calm when they should not be either know something you do not or have already accepted an outcome you have not.");
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "Physically, no. She is sixty-one. But she is calm in a way that makes me uncomfortable. People who are calm when they should not be either know something you do not or have already accepted an outcome you have not.");
 			break;
 		}
 		callfunc("DM_InstanceQuestStart", 20204);
 		next();
-		mes("^3355FF[Quest started: Royal House Audience Rounds]^000000");
-		mes("^3355FFConfront Matron Rina in the east wing of prt_q. Then find Bijou below.^000000");
+		callfunc("DM_PartyMes", "^3355FF[Quest started: Royal House Audience Rounds]^000000");
+		callfunc("DM_PartyMes", "^3355FFConfront Matron Rina in the east wing of prt_q. Then find Bijou below.^000000");
 		close();
 	}
 
 	if (questprogress(20204) == 1 && !dm_arc16_rina_exposed && !dm_arc16_rina_rolled && !dm_arc16_rina_defected) {
-		mes("[Kronecker]");
-		mes("Matron Rina is in the east wing. She is waiting.");
+		callfunc("DM_PartyMes", "[Kronecker]");
+		callfunc("DM_PartyMes", "Matron Rina is in the east wing. She is waiting.");
 		close();
 	}
 
 	if (questprogress(20204) == 1 && (dm_arc16_rina_exposed || dm_arc16_rina_rolled || dm_arc16_rina_defected)) {
-		mes("[Kronecker]");
-		mes("Rina is handled. Bijou is in the deepest level of prt_q. You understand what Bijou is now. Go find out if understanding is enough.");
+		callfunc("DM_PartyMes", "[Kronecker]");
+		callfunc("DM_PartyMes", "Rina is handled. Bijou is in the deepest level of prt_q. You understand what Bijou is now. Go find out if understanding is enough.");
 		close();
 	}
 
 	if (.@paid) {
-		mes("[Kronecker]");
-		mes("Both prison contracts need to be complete before you face Rina. She knows if we are still distracted.");
+		callfunc("DM_PartyMes", "[Kronecker]");
+		callfunc("DM_PartyMes", "Both prison contracts need to be complete before you face Rina. She knows if we are still distracted.");
 		close();
 	}
 
-	mes("[Kronecker]");
+	callfunc("DM_PartyMes", "[Kronecker]");
 	if (questprogress(20202) == 1 && questprogress(20203) == 1)
-		mes("The Underground Prison Cleanup and Terra Gloria are both still active.");
+		callfunc("DM_PartyMes", "The Underground Prison Cleanup and Terra Gloria are both still active.");
 	else if (questprogress(20202) == 1)
-		mes("Underground Prison Cleanup is still open. The Disguise in the prison corridors.");
+		callfunc("DM_PartyMes", "Underground Prison Cleanup is still open. The Disguise in the prison corridors.");
 	else if (questprogress(20203) == 1)
-		mes("Terra Gloria is still open. Bloody Murderer in the deeper levels.");
+		callfunc("DM_PartyMes", "Terra Gloria is still open. Bloody Murderer in the deeper levels.");
 	else
-		mes("Both done. Matron Rina is in the east wing of prt_q.");
+		callfunc("DM_PartyMes", "Both done. Matron Rina is in the east wing of prt_q.");
 	close();
 }
 
@@ -204,33 +204,33 @@ S_TurnIns:
 prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc16_started) {
-		mes("[Matron Rina]");
-		mes("This part of the prison is not open to visitors.");
+		callfunc("DM_PartyMes", "[Matron Rina]");
+		callfunc("DM_PartyMes", "This part of the prison is not open to visitors.");
 		close();
 	}
 
 	if (questprogress(20201) == 2) {
-		mes("[Matron Rina]");
+		callfunc("DM_PartyMes", "[Matron Rina]");
 		if (dm_arc16_rina_defected)
-			mes("I gave you everything I had. That was the agreement. I will cooperate with whatever process Heine has arranged.");
+			callfunc("DM_PartyMes", "I gave you everything I had. That was the agreement. I will cooperate with whatever process Heine has arranged.");
 		else if (dm_arc16_rina_exposed)
-			mes("The King knows. I expected that. I accept what follows.");
+			callfunc("DM_PartyMes", "The King knows. I expected that. I accept what follows.");
 		else
-			mes("The network is gone. I will do what was agreed. The cascade does not require the network anymore.");
+			callfunc("DM_PartyMes", "The network is gone. I will do what was agreed. The cascade does not require the network anymore.");
 		close();
 	}
 
 	if (dm_arc16_rina_exposed || dm_arc16_rina_rolled || dm_arc16_rina_defected) {
-		mes("[Matron Rina]");
-		mes("Bijou is below. Through the deepest gate. You already know what you need to know.");
+		callfunc("DM_PartyMes", "[Matron Rina]");
+		callfunc("DM_PartyMes", "Bijou is below. Through the deepest gate. You already know what you need to know.");
 		close();
 	}
 
-	mes("[Matron Rina]");
-	mes("You cleared the prison. I wondered if you would come yourself or send soldiers. The cascade said you would come yourself.");
+	callfunc("DM_PartyMes", "[Matron Rina]");
+	callfunc("DM_PartyMes", "You cleared the prison. I wondered if you would come yourself or send soldiers. The cascade said you would come yourself.");
 	next();
-	mes("[Rina]");
-	mes("Bijou is not what the cult calls it. They call it an oracle. A prophet. A window into the cascade's intention. What Bijou actually is: a person who was attuned to the cascade so completely that the attrition took a different form. Not full surrender. Something else.");
+	callfunc("DM_PartyMes", "[Rina]");
+	callfunc("DM_PartyMes", "Bijou is not what the cult calls it. They call it an oracle. A prophet. A window into the cascade's intention. What Bijou actually is: a person who was attuned to the cascade so completely that the attrition took a different form. Not full surrender. Something else.");
 	next();
 	switch (select("You are exposed. Heine's people are outside.", "Dismantle the network quietly. On our timeline.", "Defect. Tell us how Bijou works and walk free.")) {
 	case 1:
@@ -238,49 +238,49 @@ prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
 		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_defected");
 		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_exposed", 1);
 		callfunc("DM_InstanceQuestComplete", 20204);
-		mes("[Rina]");
-		mes("Yes. I expected this. The King will want to understand the scale of the infiltration. The trial will be public and it will be large and it will tell the cascade exactly how well it worked.");
+		callfunc("DM_PartyMes", "[Rina]");
+		callfunc("DM_PartyMes", "Yes. I expected this. The King will want to understand the scale of the infiltration. The trial will be public and it will be large and it will tell the cascade exactly how well it worked.");
 		next();
-		mes("[Rina]");
-		mes("But yes. I cooperate. The cult does not require my loyalty anymore. The sequence is in motion.");
+		callfunc("DM_PartyMes", "[Rina]");
+		callfunc("DM_PartyMes", "But yes. I cooperate. The cult does not require my loyalty anymore. The sequence is in motion.");
 		next();
-		mes("^3355FF*Rina places her hands on the table and waits.*^000000");
-		mes("^3355FF[Encounter: Bijou remains a hostile relay and must be silenced.]^000000");
+		callfunc("DM_PartyMes", "^3355FF*Rina places her hands on the table and waits.*^000000");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: Bijou remains a hostile relay and must be silenced.]^000000");
 		break;
 	case 2:
 		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_exposed");
 		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_defected");
 		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_rolled", 1);
 		callfunc("DM_InstanceQuestComplete", 20204);
-		mes("[Rina]");
-		mes("Quietly. Yes. I understand quiet. The court does not know how many of them were being managed. That is probably better for the court's functioning.");
+		callfunc("DM_PartyMes", "[Rina]");
+		callfunc("DM_PartyMes", "Quietly. Yes. I understand quiet. The court does not know how many of them were being managed. That is probably better for the court's functioning.");
 		next();
-		mes("[Rina]");
-		mes("I will give Heine the full list. Every name. I have been keeping records — I expected this conversation eventually.");
+		callfunc("DM_PartyMes", "[Rina]");
+		callfunc("DM_PartyMes", "I will give Heine the full list. Every name. I have been keeping records — I expected this conversation eventually.");
 		next();
-		mes("^3355FF*Rina produces a ledger from her jacket. It is organized by court position.*^000000");
-		mes("^3355FF[Encounter: Bijou remains a hostile relay, but the court network is already unraveling.]^000000");
+		callfunc("DM_PartyMes", "^3355FF*Rina produces a ledger from her jacket. It is organized by court position.*^000000");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: Bijou remains a hostile relay, but the court network is already unraveling.]^000000");
 		break;
 	case 3:
 		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_exposed");
 		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_rolled");
 		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_defected", 1);
 		callfunc("DM_InstanceQuestComplete", 20204);
-		mes("[Rina]");
-		mes("Bijou. What Bijou is. Yes. I can tell you that.");
+		callfunc("DM_PartyMes", "[Rina]");
+		callfunc("DM_PartyMes", "Bijou. What Bijou is. Yes. I can tell you that.");
 		next();
-		mes("[Rina]");
-		mes("Bijou was a woman named Maret. A court musician. She was attuned to the cascade and instead of full surrender, the cascade began using her as a relay — she hears the cascade's frequency the way a radio hears a signal. She is still herself. She just cannot stop receiving.");
+		callfunc("DM_PartyMes", "[Rina]");
+		callfunc("DM_PartyMes", "Bijou was a woman named Maret. A court musician. She was attuned to the cascade and instead of full surrender, the cascade began using her as a relay — she hears the cascade's frequency the way a radio hears a signal. She is still herself. She just cannot stop receiving.");
 		next();
-		mes("[Rina]");
-		mes("She does not want to be Bijou. She has not wanted to be Bijou for three years. The cult does not know that because the cascade's transmissions still come through her correctly. She has been trying to introduce errors. Small ones. The kind that slow a sequence down.");
+		callfunc("DM_PartyMes", "[Rina]");
+		callfunc("DM_PartyMes", "She does not want to be Bijou. She has not wanted to be Bijou for three years. The cult does not know that because the cascade's transmissions still come through her correctly. She has been trying to introduce errors. Small ones. The kind that slow a sequence down.");
 		next();
-		mes("^3355FF*Rina slides the ledger across the table with Maret's real name written on the first page.*^000000");
-		mes("^3355FF[Encounter: Bijou can be resolved as Maret freed instead of a simple kill.]^000000");
+		callfunc("DM_PartyMes", "^3355FF*Rina slides the ledger across the table with Maret's real name written on the first page.*^000000");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: Bijou can be resolved as Maret freed instead of a simple kill.]^000000");
 		break;
 	}
 	next();
-	mes("^3355FF[Royal House Audience Rounds resolved. Find Bijou in the deepest level of prt_q.]^000000");
+	callfunc("DM_PartyMes", "^3355FF[Royal House Audience Rounds resolved. Find Bijou in the deepest level of prt_q.]^000000");
 	close();
 
 OnInit:

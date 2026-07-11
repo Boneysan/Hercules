@@ -33,6 +33,8 @@ All commands require GM level 60 or higher.
 @dmquest <start|complete|erase> <quest_id>
 @dm beat
 @dmbeat
+@dmguide
+@dmguide 1
 @dm story <message>
 @dmstory <message>
 @dm globalstory <message>
@@ -153,6 +155,13 @@ hazards, and write `dm_story_beat`.
 `@dmbeat` with no argument opens the full Act → Arc → Beat director. `@dmbeat
 <1-19>` jumps **straight into that arc's beat submenu** (`OnBeat` parses the
 numeric arg and calls `DM_BeatArcNN` directly, skipping the Act/Arc navigation).
+
+`@dmguide` opens the private in-game GM Handbook. `@dmguide <1-19>` jumps to an
+arc guide. Arc 1 currently has the complete cue-card vertical slice: scene
+purpose, NPC performance notes, suggested play/checks, party-state summary,
+prepared read-aloud, and a safe handoff to the authoritative Beat Director.
+Browsing never changes state. Only the clearly labelled `SEND read-aloud`
+choice broadcasts text to the current map.
 The client **Beats tab** (GM/DM panel) uses this: one button per arc, grouped by
 act. Invalid/out-of-range arg falls back to the full menu.
 

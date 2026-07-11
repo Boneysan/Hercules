@@ -1,0 +1,97 @@
+// Private in-game GM Handbook. Browsing never mutates campaign state.
+
+function	script	DM_HandbookMenu	{
+	mes("[GM Handbook]");
+	mes("Private role-playing cues for The Seal Cascade. Only actions labelled SEND are shown to players.");
+	next();
+	switch (select("Arc 1 - Omens at the Fountain (full guide)", "Arcs 2-19 - Campaign Reference", "Open Beat Director", "Close")) {
+	case 1: callfunc("DM_HandbookArc01"); break;
+	case 2:
+		mes("[Campaign Reference]");
+		mes("Arc overview cue cards are being expanded after the Arc 1 playtest. For now, use the quest-giver dialogue for character voice and CAMPAIGN.md for branches and callbacks.");
+		next();
+		callfunc("DM_BeatMenu");
+		break;
+	case 3: callfunc("DM_BeatMenu"); break;
+	case 4: close();
+	}
+	return;
+}
+
+function	script	DM_HandbookArc	{
+	.@arc = getarg(0, 1);
+	if (.@arc == 1) callfunc("DM_HandbookArc01");
+	else {
+		mes("[GM Handbook - Arc " + .@arc + "]");
+		mes("This arc currently uses its scripted quest-giver dialogue plus the campaign reference. Its full cue cards will follow the Arc 1 table test.");
+		next();
+		callfunc("DM_BeatArc" + (.@arc < 10 ? "0" : "") + .@arc);
+	}
+	return;
+}
+
+function	script	DM_HandbookArc01	{
+	mes("[Arc 1 - Omens at the Fountain]");
+	mes("Goal: establish the Guild, Morroc's refugees, the weakening seals, Cassell, and the Sigil Ring.");
+	next();
+	switch (select("Wynne's Guild Ledger", "The Trembling Ground", "Tibbets and the Key", "The Listening Chamber", "Arc Resolution", "Party State", "Open Arc 1 Beats", "Back")) {
+	case 1: callfunc("DM_HandbookArc01Scene", 1); break;
+	case 2: callfunc("DM_HandbookArc01Scene", 2); break;
+	case 3: callfunc("DM_HandbookArc01Scene", 3); break;
+	case 4: callfunc("DM_HandbookArc01Scene", 4); break;
+	case 5: callfunc("DM_HandbookArc01Scene", 5); break;
+	case 6:
+		mes("[Arc 1 Party State]");
+		mes("Started: " + dm_arc01_started + "  Refugees helped: " + dm_arc01_refugees_helped);
+		mes("Tibbets: " + dm_arc01_tibbets_befriended + "  Holt spared: " + dm_arc01_holt_spared + "  Holt killed: " + dm_arc01_holt_killed);
+		mes("Sigil Ring: " + dm_arc01_sigil_ring_obtained + "  Beat: " + dm_story_beat);
+		next(); callfunc("DM_HandbookArc01"); break;
+	case 7: callfunc("DM_BeatArc01"); break;
+	case 8: callfunc("DM_HandbookMenu"); break;
+	}
+	return;
+}
+
+function	script	DM_HandbookArc01Scene	{
+	.@scene = getarg(0);
+	if (.@scene == 1) {
+		mes("[Wynne's Guild Ledger]");
+		mes("Purpose: swear in the party and make heroism feel like dangerous municipal work.");
+		mes("Wynne: dry and practical, compassionate beneath gallows humor; never grandiose.");
+		.@read$ = "Prontera's fountain throws clean water into a city pretending the southern road is not full of refugees. Wynne opens an ink-stained ledger.";
+	} else if (.@scene == 2) {
+		mes("[The Trembling Ground]");
+		mes("Purpose: humanize Morroc's refugees. The mother is exhausted and protective, not helpless.");
+		mes("Choice: quiet rescue or city guard. Helping refugees unlocks Holt's mercy route and removes encounter adds.");
+		.@read$ = "Outside Prontera's wall, frightened families sleep where they can see open sky. Someone in gray has been offering them certainty.";
+	} else if (.@scene == 3) {
+		mes("[Tibbets and the Key]");
+		mes("Purpose: provide a local witness and reward listening with a non-combat advantage.");
+		mes("Tibbets: stubborn, observant, unimpressed by rank. Befriending him removes an encounter add.");
+		.@read$ = "The Culvert hums through the sluice wheel like a struck glass. Old Tibbets has heard its rhythm changing.";
+	} else if (.@scene == 4) {
+		mes("[The Listening Chamber]");
+		mes("Purpose: reveal the weakening seals and introduce Cassell. Holt is frightened and breathless; Cassell is calm, intimate, and certain.");
+		mes("Reveal: the Deviruchi is a listening conduit, not the cause. If refugees were helped, offer Holt mercy. Prior mercy reduces adds.");
+		.@read$ = "Wet stone, iron, and candle smoke fill the Listening Chamber. Beneath a cracked goat-headed seal, a chained demon is being used to listen.";
+	} else {
+		mes("[Arc 1 Resolution]");
+		mes("Let victory feel incomplete. Confirm party credit and point north toward Payon's sleepless dead.");
+		.@read$ = "The chamber falls silent. The Sigil Ring grows colder. Far below, something vast shifts once in its sleep.";
+	}
+	next();
+	mes("[Suggested Play]");
+	if (.@scene == 1) mes("Ask who should be notified if they do not return, and what kind of party they intend to be. Do not gate the campaign behind a roll.");
+	if (.@scene == 2) mes("Use Insight, Diplomacy, or Investigation if useful; accept good role-play without requiring dice.");
+	if (.@scene == 3) mes("Perception can hear the rhythm; Lore can identify a failing ward. Honest treatment needs no roll.");
+	if (.@scene == 4) mes("Insight exposes Holt's fear; Persuasion supports mercy; Lore identifies a prison-prayer.");
+	if (.@scene == 5) mes("Give the table a quiet pause before moving to rewards or the next arc.");
+	next();
+	switch (select("SEND read-aloud to current map", "Open Arc 1 Beats", "Back to Arc 1", "Close")) {
+	case 1: callfunc("DM_MapStory", .@read$); dispbottom("[GM Handbook] Narration sent; no story state changed."); close();
+	case 2: callfunc("DM_BeatArc01"); break;
+	case 3: callfunc("DM_HandbookArc01"); break;
+	case 4: close();
+	}
+	return;
+}

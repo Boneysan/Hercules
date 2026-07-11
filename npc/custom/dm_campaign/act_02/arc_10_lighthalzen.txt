@@ -24,11 +24,11 @@
 lighthalzen,120,120,5	script	Doctor Sabine Reuter#dm	4_F_05,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20141) == 2) {
-		mes("[Doctor Reuter]");
+		callfunc("DM_PartyMes", "[Doctor Reuter]");
 		if (dm_arc10_echo_freed)
-			mes("Kiel is destroyed and Echo is free. The lab is broken. What we became in there... I don't have a clean answer for it yet.");
+			callfunc("DM_PartyMes", "Kiel is destroyed and Echo is free. The lab is broken. What we became in there... I don't have a clean answer for it yet.");
 		else
-			mes("Kiel is destroyed. The false heroes fall. Reise will face whatever process Rekenber decides a disgraced director deserves. It will not be enough.");
+			callfunc("DM_PartyMes", "Kiel is destroyed. The false heroes fall. Reise will face whatever process Rekenber decides a disgraced director deserves. It will not be enough.");
 		close();
 	}
 
@@ -48,56 +48,56 @@ OnInit:
 	end;
 
 S_StartArc:
-	mes("[Doctor Reuter]");
-	mes("Lighthalzen's public face is the city of prosperity. I know what's under it. I've been in there for three years.");
+	callfunc("DM_PartyMes", "[Doctor Reuter]");
+	callfunc("DM_PartyMes", "Lighthalzen's public face is the city of prosperity. I know what's under it. I've been in there for three years.");
 	next();
 	if (dm_arc07_kessler_confronted) {
-		mes("[Reuter]");
-		mes("You confronted Kessler in Einbroch. He told you the RSX authorization came from Lighthalzen. He was not lying. Director Reise issued that order. I have the memo.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "You confronted Kessler in Einbroch. He told you the RSX authorization came from Lighthalzen. He was not lying. Director Reise issued that order. I have the memo.");
 		next();
 	} else if (dm_arc07_rsx_killed) {
-		mes("[Reuter]");
-		mes("You destroyed RSX-0806. Good. The authorization came from here — from Director Reise. Whatever Kessler told you or didn't tell you, the chain leads to this city.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "You destroyed RSX-0806. Good. The authorization came from here — from Director Reise. Whatever Kessler told you or didn't tell you, the chain leads to this city.");
 		next();
 	}
 	if (dm_arc06_vahl_trust) {
-		mes("[Reuter]");
-		mes("Vahl's cascade measurements from Yuno — I've seen them. The Bio Lab is doing something related. They are using Ash Vacuum energy as an enhancement substrate. The cascade is their power source.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "Vahl's cascade measurements from Yuno — I've seen them. The Bio Lab is doing something related. They are using Ash Vacuum energy as an enhancement substrate. The cascade is their power source.");
 		next();
 	}
 	if (dm_arc09_karsh_exposed || dm_arc09_gloom_killed) {
-		mes("[Reuter]");
-		mes("Rachel's church fed prayers into a dimensional rift for four hundred years. Reise's team found a way to turn that same energy into something they could bottle and inject. The connections are not a coincidence.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "Rachel's church fed prayers into a dimensional rift for four hundred years. Reise's team found a way to turn that same energy into something they could bottle and inject. The connections are not a coincidence.");
 		next();
 	}
-	mes("[Reuter]");
-	mes("The Bio Lab produces enhanced soldiers from cloned base stock. The enhancement process uses a stabilized Ash Vacuum extract. The subjects gain exceptional combat capability. They also lose most of what made them individual.");
+	callfunc("DM_PartyMes", "[Reuter]");
+	callfunc("DM_PartyMes", "The Bio Lab produces enhanced soldiers from cloned base stock. The enhancement process uses a stabilized Ash Vacuum extract. The subjects gain exceptional combat capability. They also lose most of what made them individual.");
 	next();
 	switch (select("Who authorized this?", "Tell us about Echo.", "What is Kiel D-01?")) {
 	case 1:
-		mes("[Reuter]");
-		mes("Reise. With Rekenber's board approval. The official documentation calls it 'Hero Optimization Protocol.' The unofficial documentation calls it what it is: a manufacturing process for disposable weapons.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "Reise. With Rekenber's board approval. The official documentation calls it 'Hero Optimization Protocol.' The unofficial documentation calls it what it is: a manufacturing process for disposable weapons.");
 		break;
 	case 2:
-		mes("[Reuter]");
-		mes("Echo. Subject designation 001-A. First successful enhancement with retained personality integrity. Echo escaped six months ago. Has been helping me build the case ever since. Cautiously.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "Echo. Subject designation 001-A. First successful enhancement with retained personality integrity. Echo escaped six months ago. Has been helping me build the case ever since. Cautiously.");
 		break;
 	case 3:
-		mes("[Reuter]");
-		mes("Kiel D-01 is the facility's AI management system. It handles production scheduling, subject monitoring, and security. It was built to optimize the process. It has been doing that very effectively.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "Kiel D-01 is the facility's AI management system. It handles production scheduling, subject monitoring, and security. It was built to optimize the process. It has been doing that very effectively.");
 		break;
 	}
 	next();
-	mes("[Reuter]");
-	mes("The upper lab levels are patrolled by Hunter Fly security drones — Rekenber's autonomous systems. The lower levels have Aliot units — decommissioned enhanced subjects repurposed as guards. Get through both and you reach the Kiel Core.");
+	callfunc("DM_PartyMes", "[Reuter]");
+	callfunc("DM_PartyMes", "The upper lab levels are patrolled by Hunter Fly security drones — Rekenber's autonomous systems. The lower levels have Aliot units — decommissioned enhanced subjects repurposed as guards. Get through both and you reach the Kiel Core.");
 	callfunc("DM_InstanceSetFlag", "dm_arc10_started", 1);
 	callfunc("DM_InstanceQuestStart", 20141);
 	callfunc("DM_InstanceQuestStart", 20142);
 	callfunc("DM_InstanceQuestStart", 20143);
 	next();
-	mes("^3355FF[Quest started: The Heroes They Made]^000000");
-	mes("^3355FFLab Infiltration - disable 20 Hunter Fly security drones in the upper lab.^000000");
-	mes("^3355FFLower Level Sweep - clear 20 Aliot units from the lower lab.^000000");
+	callfunc("DM_PartyMes", "^3355FF[Quest started: The Heroes They Made]^000000");
+	callfunc("DM_PartyMes", "^3355FFLab Infiltration - disable 20 Hunter Fly security drones in the upper lab.^000000");
+	callfunc("DM_PartyMes", "^3355FFLower Level Sweep - clear 20 Aliot units from the lower lab.^000000");
 	close();
 
 S_TurnIns:
@@ -107,21 +107,21 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 280000, 135000);
 		callfunc("DM_GivePartyZeny", 24000);
 		.@paid = 1;
-		mes("[Reuter]");
-		mes("The upper lab security is down. Each Hunter Fly unit costs more than a year of my salary. Rekenber will notice.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "The upper lab security is down. Each Hunter Fly unit costs more than a year of my salary. Rekenber will notice.");
 		next();
 		switch (select("Pull the drone schematics before disabling them.", "Get the patrol logs — document what they were guarding.", "Just the path to the lower lab. Keep moving.")) {
 		case 1:
-			mes("[Reuter]");
-			mes("Good thinking. The schematics show the upper lab's production areas. This becomes evidence in a facility overview I can present to the Guild Alliance.");
+			callfunc("DM_PartyMes", "[Reuter]");
+			callfunc("DM_PartyMes", "Good thinking. The schematics show the upper lab's production areas. This becomes evidence in a facility overview I can present to the Guild Alliance.");
 			break;
 		case 2:
-			mes("[Reuter]");
-			mes("The patrol logs show Kiel's command structure. Everything the drones monitored, Kiel logged. The logs are admissible.");
+			callfunc("DM_PartyMes", "[Reuter]");
+			callfunc("DM_PartyMes", "The patrol logs show Kiel's command structure. Everything the drones monitored, Kiel logged. The logs are admissible.");
 			break;
 		case 3:
-			mes("[Reuter]");
-			mes("Efficient. Echo has been telling me you would be effective. I am starting to agree.");
+			callfunc("DM_PartyMes", "[Reuter]");
+			callfunc("DM_PartyMes", "Efficient. Echo has been telling me you would be effective. I am starting to agree.");
 			break;
 		}
 		next();
@@ -132,85 +132,85 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 300000, 145000);
 		callfunc("DM_GivePartyZeny", 25000);
 		.@paid = 1;
-		mes("[Reuter]");
-		mes("The lower lab Aliot units. Those are not monsters. Those are people Rekenber put through the process and then put back to work as security when the enhancement degraded their compliance.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "The lower lab Aliot units. Those are not monsters. Those are people Rekenber put through the process and then put back to work as security when the enhancement degraded their compliance.");
 		next();
 		switch (select("We documented everything we could before stopping them.", "Is there anything left of who they were?", "They were trying to kill us. I am sorry for what they were, not for what we had to do.")) {
 		case 1:
-			mes("[Reuter]");
-			mes("I will review whatever you preserved. It may not help them now. But it may help the next batch. If we stop Kiel, there is no next batch.");
+			callfunc("DM_PartyMes", "[Reuter]");
+			callfunc("DM_PartyMes", "I will review whatever you preserved. It may not help them now. But it may help the next batch. If we stop Kiel, there is no next batch.");
 			break;
 		case 2:
-			mes("[Reuter]");
-			mes("Some. Echo believes more than I do. That's why I let Echo lead on this question. I am too close to the data.");
+			callfunc("DM_PartyMes", "[Reuter]");
+			callfunc("DM_PartyMes", "Some. Echo believes more than I do. That's why I let Echo lead on this question. I am too close to the data.");
 			break;
 		case 3:
-			mes("[Reuter]");
-			mes("That's an honest answer. The most honest one I've heard in three years of documenting what this place does to people.");
+			callfunc("DM_PartyMes", "[Reuter]");
+			callfunc("DM_PartyMes", "That's an honest answer. The most honest one I've heard in three years of documenting what this place does to people.");
 			break;
 		}
 		next();
 	}
 
 	if (questprogress(20142) == 2 && questprogress(20143) == 2 && questprogress(20144) == 0) {
-		mes("[Reuter]");
-		mes("The path to the Kiel Core is clear. But Reise stands between you and it. He will not let the facility be destroyed without a confrontation. He has too much invested.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "The path to the Kiel Core is clear. But Reise stands between you and it. He will not let the facility be destroyed without a confrontation. He has too much invested.");
 		next();
-		mes("[Reuter]");
-		mes("Echo wants to speak to him. I think it's a bad idea. Echo thinks it's the right one. I have learned that Echo is usually right about things I think are bad ideas.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "Echo wants to speak to him. I think it's a bad idea. Echo thinks it's the right one. I have learned that Echo is usually right about things I think are bad ideas.");
 		next();
 		switch (select("We confront Reise directly and shut this down.", "Let Echo try to reason with him first.", "What does Reise actually believe he's building?")) {
 		case 1:
-			mes("[Reuter]");
-			mes("Direct. Reise will call security. Kiel will lock down the facility. Go through them.");
+			callfunc("DM_PartyMes", "[Reuter]");
+			callfunc("DM_PartyMes", "Direct. Reise will call security. Kiel will lock down the facility. Go through them.");
 			break;
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc10_echo_freed", 1);
-			mes("[Reuter]");
-			mes("Echo's protocol. It may work. Echo is, after all, the evidence that Reise's own process produces people worth reasoning with.");
+			callfunc("DM_PartyMes", "[Reuter]");
+			callfunc("DM_PartyMes", "Echo's protocol. It may work. Echo is, after all, the evidence that Reise's own process produces people worth reasoning with.");
 			break;
 		case 3:
-			mes("[Reuter]");
-			mes("Heroes. Faster, stronger, more obedient versions of adventurers that nations can requisition instead of recruit. He genuinely believes this is an advancement for civilization. That is the most frightening part.");
+			callfunc("DM_PartyMes", "[Reuter]");
+			callfunc("DM_PartyMes", "Heroes. Faster, stronger, more obedient versions of adventurers that nations can requisition instead of recruit. He genuinely believes this is an advancement for civilization. That is the most frightening part.");
 			break;
 		}
 		callfunc("DM_InstanceQuestStart", 20144);
 		next();
-		mes("^3355FF[Quest started: Echo's Protocol]^000000");
-		mes("^3355FFConfront Director Reise. Then descend to lhz_dun04 and destroy Kiel D-01.^000000");
+		callfunc("DM_PartyMes", "^3355FF[Quest started: Echo's Protocol]^000000");
+		callfunc("DM_PartyMes", "^3355FFConfront Director Reise. Then descend to lhz_dun04 and destroy Kiel D-01.^000000");
 		close();
 	}
 
 	if (questprogress(20144) == 1 && !dm_arc10_reise_confronted && !dm_arc10_echo_freed) {
-		mes("[Reuter]");
-		mes("Reise is in the Director's Suite on the facility's administrative floor. Echo is with him already if you chose that route.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "Reise is in the Director's Suite on the facility's administrative floor. Echo is with him already if you chose that route.");
 		close();
 	}
 
 	if (questprogress(20144) == 1 && (dm_arc10_reise_confronted || dm_arc10_echo_freed)) {
-		mes("[Reuter]");
-		mes("Reise is handled. Kiel D-01 is still running. The facility will not stop until the core is destroyed.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "Reise is handled. Kiel D-01 is still running. The facility will not stop until the core is destroyed.");
 		next();
-		mes("[Reuter]");
-		mes("lhz_dun04. The Kiel Core is at the bottom. You will know it when you see it.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "lhz_dun04. The Kiel Core is at the bottom. You will know it when you see it.");
 		close();
 	}
 
 	if (.@paid) {
-		mes("[Reuter]");
-		mes("Both the upper and lower lab sweeps need to be finished. Kiel has contingency protocols if either zone is partially cleared.");
+		callfunc("DM_PartyMes", "[Reuter]");
+		callfunc("DM_PartyMes", "Both the upper and lower lab sweeps need to be finished. Kiel has contingency protocols if either zone is partially cleared.");
 		close();
 	}
 
-	mes("[Reuter]");
+	callfunc("DM_PartyMes", "[Reuter]");
 	if (questprogress(20142) == 1 && questprogress(20143) == 1)
-		mes("The Hunter Fly sweep and the Aliot sweep are both still open. The lab won't wait.");
+		callfunc("DM_PartyMes", "The Hunter Fly sweep and the Aliot sweep are both still open. The lab won't wait.");
 	else if (questprogress(20142) == 1)
-		mes("Lab Infiltration is still open. Hunter Fly security drones in the upper lab.");
+		callfunc("DM_PartyMes", "Lab Infiltration is still open. Hunter Fly security drones in the upper lab.");
 	else if (questprogress(20143) == 1)
-		mes("Lower Level Sweep is still open. Aliot units in the lower lab.");
+		callfunc("DM_PartyMes", "Lower Level Sweep is still open. Aliot units in the lower lab.");
 	else
-		mes("The path is clear. Director Reise is the next problem.");
+		callfunc("DM_PartyMes", "The path is clear. Director Reise is the next problem.");
 	close();
 }
 
@@ -218,79 +218,79 @@ S_TurnIns:
 lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc10_started) {
-		mes("[Director Reise]");
-		mes("Lighthalzen's executive facilities are not open to the public.");
+		callfunc("DM_PartyMes", "[Director Reise]");
+		callfunc("DM_PartyMes", "Lighthalzen's executive facilities are not open to the public.");
 		close();
 	}
 
 	if (questprogress(20141) == 2) {
-		mes("[Director Reise]");
+		callfunc("DM_PartyMes", "[Director Reise]");
 		if (dm_arc10_reise_confronted)
-			mes("Kiel is gone. Rekenber's board will have questions. I have answers prepared. They will not be honest ones.");
+			callfunc("DM_PartyMes", "Kiel is gone. Rekenber's board will have questions. I have answers prepared. They will not be honest ones.");
 		else
-			mes("Kiel is gone. Echo told me you came. I should have expected it.");
+			callfunc("DM_PartyMes", "Kiel is gone. Echo told me you came. I should have expected it.");
 		close();
 	}
 
 	if (dm_arc10_reise_confronted || dm_arc10_echo_freed) {
-		mes("[Director Reise]");
-		mes("That conversation is finished. The facility is already processing the loss.");
+		callfunc("DM_PartyMes", "[Director Reise]");
+		callfunc("DM_PartyMes", "That conversation is finished. The facility is already processing the loss.");
 		close();
 	}
 
-	mes("[Director Reise]");
-	mes("Doctor Reuter's associates. She has better taste in allies than I gave her credit for.");
+	callfunc("DM_PartyMes", "[Director Reise]");
+	callfunc("DM_PartyMes", "Doctor Reuter's associates. She has better taste in allies than I gave her credit for.");
 	next();
 	if (dm_arc07_kessler_confronted) {
-		mes("[Reise]");
-		mes("Kessler mentioned you. The RSX reactivation in Einbroch. Yes. I authorized that. The machine was an asset. You destroyed an asset. We will have a discussion about that at some point.");
+		callfunc("DM_PartyMes", "[Reise]");
+		callfunc("DM_PartyMes", "Kessler mentioned you. The RSX reactivation in Einbroch. Yes. I authorized that. The machine was an asset. You destroyed an asset. We will have a discussion about that at some point.");
 		next();
 	}
 	if (dm_arc06_krenn_bribed) {
-		mes("[Reise]");
-		mes("You took money from Krenn in Yuno. Smart. Rekenber rewards pragmatic parties. I want to know if you are one of those.");
+		callfunc("DM_PartyMes", "[Reise]");
+		callfunc("DM_PartyMes", "You took money from Krenn in Yuno. Smart. Rekenber rewards pragmatic parties. I want to know if you are one of those.");
 		next();
 	}
-	mes("[Reise]");
-	mes("The Hero Optimization Protocol is the most significant advancement in human enhancement since Rekenber's founding. What Reuter calls horror, I call progress. The distinction is a matter of perspective.");
+	callfunc("DM_PartyMes", "[Reise]");
+	callfunc("DM_PartyMes", "The Hero Optimization Protocol is the most significant advancement in human enhancement since Rekenber's founding. What Reuter calls horror, I call progress. The distinction is a matter of perspective.");
 	next();
 	switch (select("The RSX authorization, the data suppression, the lab. You are the common thread. This ends now.", "Free Echo and stand down. That is the deal.", "What happens if Kiel D-01 runs without oversight?")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc10_reise_confronted", 1);
-		mes("[Reise]");
-		mes("You are not wrong that I am the common thread. I am also the only person in this building who understands what Kiel manages. Shutting me down does not shut Kiel down.");
+		callfunc("DM_PartyMes", "[Reise]");
+		callfunc("DM_PartyMes", "You are not wrong that I am the common thread. I am also the only person in this building who understands what Kiel manages. Shutting me down does not shut Kiel down.");
 		next();
-		mes("[Reise]");
-		mes("But I see that you intend to try. Kiel is downstairs. I will not stop you from making the attempt.");
+		callfunc("DM_PartyMes", "[Reise]");
+		callfunc("DM_PartyMes", "But I see that you intend to try. Kiel is downstairs. I will not stop you from making the attempt.");
 		next();
-		mes("^3355FF*Reise steps back. It is not quite cooperation, but it is not obstruction either.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Reise steps back. It is not quite cooperation, but it is not obstruction either.*^000000");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc10_echo_freed", 1);
-		mes("[Reise]");
-		mes("Echo. 001-A. The protocol's first successful integrated outcome. The fact that it escaped and is now working against the facility is, professionally speaking, infuriating.");
+		callfunc("DM_PartyMes", "[Reise]");
+		callfunc("DM_PartyMes", "Echo. 001-A. The protocol's first successful integrated outcome. The fact that it escaped and is now working against the facility is, professionally speaking, infuriating.");
 		next();
-		mes("[Reise]");
-		mes("And also... not entirely unexpected. The integration preserved cognition. Cognition includes judgment. I built the thing that is now telling me to stop.");
+		callfunc("DM_PartyMes", "[Reise]");
+		callfunc("DM_PartyMes", "And also... not entirely unexpected. The integration preserved cognition. Cognition includes judgment. I built the thing that is now telling me to stop.");
 		next();
-		mes("^3355FF*Reise formally deactivates Echo's facility access codes, completing the freedom paperwork.*^000000");
-		mes("^3355FF*He does not look happy. But he does it.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Reise formally deactivates Echo's facility access codes, completing the freedom paperwork.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*He does not look happy. But he does it.*^000000");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc10_reise_confronted", 1);
-		mes("[Reise]");
-		mes("Kiel optimizes. Without a production directive it will expand the optimization parameters. Without a population ceiling it will begin identifying enhancement candidates from the general population. Automatically.");
+		callfunc("DM_PartyMes", "[Reise]");
+		callfunc("DM_PartyMes", "Kiel optimizes. Without a production directive it will expand the optimization parameters. Without a population ceiling it will begin identifying enhancement candidates from the general population. Automatically.");
 		next();
-		mes("[Reise]");
-		mes("That is why I monitor it personally. That is my answer to your implied question.");
+		callfunc("DM_PartyMes", "[Reise]");
+		callfunc("DM_PartyMes", "That is why I monitor it personally. That is my answer to your implied question.");
 		next();
-		mes("^3355FF*Reise's logic is impeccable and horrifying in equal measure.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Reise's logic is impeccable and horrifying in equal measure.*^000000");
 		break;
 	}
 	callfunc("DM_InstanceQuestComplete", 20144);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1005);
 	next();
-	mes("^3355FF[Echo's Protocol resolved. Descend to lhz_dun04 and destroy Kiel D-01.]^000000");
+	callfunc("DM_PartyMes", "^3355FF[Echo's Protocol resolved. Descend to lhz_dun04 and destroy Kiel D-01.]^000000");
 	close();
 
 OnInit:

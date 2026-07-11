@@ -25,11 +25,11 @@
 alberta,183,151,4	script	Captain Mara#dm	4_F_01,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20030) == 2) {
-		mes("[Captain Mara]");
+		callfunc("DM_PartyMes", "[Captain Mara]");
 		if (dm_arc05_manifest_taken)
-			mes("Every port on Brode's ledger is a storm waiting for a name.");
+			callfunc("DM_PartyMes", "Every port on Brode's ledger is a storm waiting for a name.");
 		else
-			mes("The deep is quiet. I do not trust quiet water, but I will take it.");
+			callfunc("DM_PartyMes", "The deep is quiet. I do not trust quiet water, but I will take it.");
 		close();
 	}
 
@@ -49,46 +49,46 @@ OnInit:
 	end;
 
 S_StartArc:
-	mes("[Captain Mara]");
-	mes("Welcome to Alberta. Smells like salt, tar, fish, and men pretending cargo has no conscience.");
+	callfunc("DM_PartyMes", "[Captain Mara]");
+	callfunc("DM_PartyMes", "Welcome to Alberta. Smells like salt, tar, fish, and men pretending cargo has no conscience.");
 	next();
 	if (countitem(50001) > 0 || dm_arc01_sigil_ring_obtained) {
-		mes("^3355FF*The Sigil Ring sweats cold at the waterline. The cold moves with the tide.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The Sigil Ring sweats cold at the waterline. The cold moves with the tide.*^000000");
 		next();
 	}
 	if (dm_arc03_sabra_deal) {
-		mes("[Captain Mara]");
-		mes("Sabra's people are aboard the Saltmother. Alive, because somebody paid for mercy before it was profitable.");
+		callfunc("DM_PartyMes", "[Captain Mara]");
+		callfunc("DM_PartyMes", "Sabra's people are aboard the Saltmother. Alive, because somebody paid for mercy before it was profitable.");
 		next();
 	} else if (dm_arc03_sabra_exposed) {
-		mes("[Captain Mara]");
-		mes("Some of Morroc's survivors made it. Starving. Angry. Justice must have looked cleaner from shore.");
+		callfunc("DM_PartyMes", "[Captain Mara]");
+		callfunc("DM_PartyMes", "Some of Morroc's survivors made it. Starving. Angry. Justice must have looked cleaner from shore.");
 		next();
 	}
-	mes("[Captain Mara]");
-	mes("Brode owns the blind spots between Izlude and Alberta. I know them because I used to sail them.");
+	callfunc("DM_PartyMes", "[Captain Mara]");
+	callfunc("DM_PartyMes", "Brode owns the blind spots between Izlude and Alberta. I know them because I used to sail them.");
 	next();
 	switch (select("We're here to stop smuggling, not refugees.", "Just point us at Brode.", "Stay out of our way, smuggler.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_trust", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_network", 1);
-		mes("[Captain Mara]");
-		mes("Good. Then my crew is yours, and every honest deckhand I know hears your name kindly.");
+		callfunc("DM_PartyMes", "[Captain Mara]");
+		callfunc("DM_PartyMes", "Good. Then my crew is yours, and every honest deckhand I know hears your name kindly.");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_pragmatic", 1);
-		mes("[Captain Mara]");
-		mes("Brode's counting-house. Locked holds. Inspection exemptions. That is the route.");
+		callfunc("DM_PartyMes", "[Captain Mara]");
+		callfunc("DM_PartyMes", "Brode's counting-house. Locked holds. Inspection exemptions. That is the route.");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_insulted", 1);
-		mes("[Captain Mara]");
-		mes("I've heard worse from better sailors. You get directions, not shelter.");
+		callfunc("DM_PartyMes", "[Captain Mara]");
+		callfunc("DM_PartyMes", "I've heard worse from better sailors. You get directions, not shelter.");
 		break;
 	}
 	next();
-	mes("[Captain Mara]");
-	mes("Do the harbor work first. Ferry tokens, Byalan contract tags, and Sunken Ship pages will show you how Brode moves people like freight.");
+	callfunc("DM_PartyMes", "[Captain Mara]");
+	callfunc("DM_PartyMes", "Do the harbor work first. Ferry tokens, Byalan contract tags, and Sunken Ship pages will show you how Brode moves people like freight.");
 	callfunc("DM_InstanceSetFlag", "dm_arc05_started", 1);
 	callfunc("DM_InstanceQuestStart", 20025);
 	callfunc("DM_InstanceQuestStart", 20026);
@@ -96,37 +96,37 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20028);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 501);
 	next();
-	mes("^3355FF[Quest started: Tides and Trade]^000000");
-	mes("^3355FFRefugee Ferry Rotation - return to Mara after choosing who the Saltmother carries first.^000000");
-	mes("^3355FFByalan Tide Contract - clear 25 Marc from the tide route.^000000");
-	mes("^3355FFSunken Ship Manifest - break 20 Pirate Skeletons and recover manifest pages.^000000");
+	callfunc("DM_PartyMes", "^3355FF[Quest started: Tides and Trade]^000000");
+	callfunc("DM_PartyMes", "^3355FFRefugee Ferry Rotation - return to Mara after choosing who the Saltmother carries first.^000000");
+	callfunc("DM_PartyMes", "^3355FFByalan Tide Contract - clear 25 Marc from the tide route.^000000");
+	callfunc("DM_PartyMes", "^3355FFSunken Ship Manifest - break 20 Pirate Skeletons and recover manifest pages.^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
 	if (questprogress(20026) == 1) {
-		mes("[Captain Mara]");
-		mes("The Saltmother has one clean rotation before Brode's men notice. Who gets deck space?");
+		callfunc("DM_PartyMes", "[Captain Mara]");
+		callfunc("DM_PartyMes", "The Saltmother has one clean rotation before Brode's men notice. Who gets deck space?");
 		next();
 		switch (select("Move people.", "Move supplies.", "Move spies under watch.", "Decide later.")) {
 		case 1:
 			callfunc("DM_InstanceSetFlag", "dm_arc05_ferry_choice", 1);
 			callfunc("DM_InstanceSetFlag", "dm_arc05_refugees_moved", 1);
 			callfunc("DM_InstanceSetFlag", "dm_arc19_ally_turnout", dm_arc19_ally_turnout + 1);
-			mes("[Captain Mara]");
-			mes("People first. Ships were invented for that before merchants got clever.");
+			callfunc("DM_PartyMes", "[Captain Mara]");
+			callfunc("DM_PartyMes", "People first. Ships were invented for that before merchants got clever.");
 			break;
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc05_ferry_choice", 2);
 			callfunc("DM_InstanceSetFlag", "dm_arc05_supplies_moved", 1);
-			mes("[Captain Mara]");
-			mes("Food and medicine. Not noble, not selfish. Necessary.");
+			callfunc("DM_PartyMes", "[Captain Mara]");
+			callfunc("DM_PartyMes", "Food and medicine. Not noble, not selfish. Necessary.");
 			break;
 		case 3:
 			callfunc("DM_InstanceSetFlag", "dm_arc05_ferry_choice", 3);
 			callfunc("DM_InstanceSetFlag", "dm_arc05_spies_moved", 1);
-			mes("[Captain Mara]");
-			mes("Spies under watch. Fine. If one of them cuts a throat, it will not be mine first.");
+			callfunc("DM_PartyMes", "[Captain Mara]");
+			callfunc("DM_PartyMes", "Spies under watch. Fine. If one of them cuts a throat, it will not be mine first.");
 			break;
 		case 4:
 			close();
@@ -143,26 +143,26 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 70000, 32000);
 		callfunc("DM_GivePartyZeny", 8500);
 		.@paid = 1;
-		mes("[Captain Mara]");
-		mes("Salt-eaten contract tags. Byalan is not just dangerous now. It is organized wrong.");
+		callfunc("DM_PartyMes", "[Captain Mara]");
+		callfunc("DM_PartyMes", "Salt-eaten contract tags. Byalan is not just dangerous now. It is organized wrong.");
 		next();
 		switch (select("Clear sea monsters.", "Rescue trapped divers.", "Trace cult crates underwater.")) {
 		case 1:
 			callfunc("DM_InstanceSetFlag", "dm_arc05_byalan_choice", 1);
-			mes("[Captain Mara]");
-			mes("Clean lanes save lives. Boring heroism is still heroism.");
+			callfunc("DM_PartyMes", "[Captain Mara]");
+			callfunc("DM_PartyMes", "Clean lanes save lives. Boring heroism is still heroism.");
 			break;
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc05_byalan_choice", 2);
 			callfunc("DM_InstanceSetFlag", "dm_arc05_divers_rescued", 1);
-			mes("[Captain Mara]");
-			mes("Those divers will drink to your names until memory improves them.");
+			callfunc("DM_PartyMes", "[Captain Mara]");
+			callfunc("DM_PartyMes", "Those divers will drink to your names until memory improves them.");
 			break;
 		case 3:
 			callfunc("DM_InstanceSetFlag", "dm_arc05_byalan_choice", 3);
 			callfunc("DM_InstanceSetFlag", "dm_arc05_sea_cult_evidence", 1);
-			mes("[Captain Mara]");
-			mes("Crates below the tide. Brode's kind always thinks water hides invoices.");
+			callfunc("DM_PartyMes", "[Captain Mara]");
+			callfunc("DM_PartyMes", "Crates below the tide. Brode's kind always thinks water hides invoices.");
 			break;
 		}
 		next();
@@ -173,41 +173,41 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 76000, 35000);
 		callfunc("DM_GivePartyZeny", 9000);
 		.@paid = 1;
-		mes("[Captain Mara]");
-		mes("Waterlogged manifest pages. Brode's ink runs, but his greed stays legible.");
+		callfunc("DM_PartyMes", "[Captain Mara]");
+		callfunc("DM_PartyMes", "Waterlogged manifest pages. Brode's ink runs, but his greed stays legible.");
 		next();
 		switch (select("Return cargo records.", "Sell salvage.", "Expose Brode early.")) {
 		case 1:
 			callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_choice", 1);
 			callfunc("DM_InstanceSetFlag", "dm_arc05_records_returned", 1);
-			mes("[Captain Mara]");
-			mes("Records go home. Some families will finally have names for grief.");
+			callfunc("DM_PartyMes", "[Captain Mara]");
+			callfunc("DM_PartyMes", "Records go home. Some families will finally have names for grief.");
 			break;
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_choice", 2);
-			mes("[Captain Mara]");
-			mes("Salvage pays. Just do not become the sort of person Brode would hire.");
+			callfunc("DM_PartyMes", "[Captain Mara]");
+			callfunc("DM_PartyMes", "Salvage pays. Just do not become the sort of person Brode would hire.");
 			break;
 		case 3:
 			callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_choice", 3);
 			callfunc("DM_InstanceSetFlag", "dm_arc05_brode_exposed_early", 1);
-			mes("[Captain Mara]");
-			mes("Then his lawyers wake before his conscience. We move tonight.");
+			callfunc("DM_PartyMes", "[Captain Mara]");
+			callfunc("DM_PartyMes", "Then his lawyers wake before his conscience. We move tonight.");
 			break;
 		}
 		next();
 	}
 
 	if (questprogress(20027) == 2 && questprogress(20028) == 2 && questprogress(20029) == 0) {
-		mes("[Captain Mara]");
-		mes("Brode has one hold listed as ballast. Ballast does not knock back.");
+		callfunc("DM_PartyMes", "[Captain Mara]");
+		callfunc("DM_PartyMes", "Brode has one hold listed as ballast. Ballast does not knock back.");
 		next();
 		switch (select("Start Cargo of Souls.", "Later.")) {
 		case 1:
 			callfunc("DM_InstanceQuestStart", 20029);
 			callfunc("DM_PartyApplyFlag", "dm_story_beat", 529);
-			mes("^3355FF[Quest started: Cargo of Souls]^000000");
-			mes("^3355FFFind the inspection-exempt hold on the Sunken Ship route.^000000");
+			callfunc("DM_PartyMes", "^3355FF[Quest started: Cargo of Souls]^000000");
+			callfunc("DM_PartyMes", "^3355FFFind the inspection-exempt hold on the Sunken Ship route.^000000");
 			close();
 		case 2:
 			close();
@@ -215,15 +215,15 @@ S_TurnIns:
 	}
 
 	if (questprogress(20029) == 2 && questprogress(20030) == 0) {
-		mes("[Captain Mara]");
-		mes("The ledger says Brode dumped heavy crates past Byalan. The sea turned wrong after that.");
+		callfunc("DM_PartyMes", "[Captain Mara]");
+		callfunc("DM_PartyMes", "The ledger says Brode dumped heavy crates past Byalan. The sea turned wrong after that.");
 		next();
 		switch (select("Start What Turned Over in the Deep.", "Later.")) {
 		case 1:
 			callfunc("DM_InstanceQuestStart", 20030);
 			callfunc("DM_PartyApplyFlag", "dm_story_beat", 530);
-			mes("^3355FF[Quest started: What Turned Over in the Deep]^000000");
-			mes("^3355FFDive to Turtle Island's deep shelf and stop what the cargo woke.^000000");
+			callfunc("DM_PartyMes", "^3355FF[Quest started: What Turned Over in the Deep]^000000");
+			callfunc("DM_PartyMes", "^3355FFDive to Turtle Island's deep shelf and stop what the cargo woke.^000000");
 			close();
 		case 2:
 			close();
@@ -231,13 +231,13 @@ S_TurnIns:
 	}
 
 	if (.@paid) {
-		mes("[Captain Mara]");
-		mes("The port work is done. Now we open the locked hold.");
+		callfunc("DM_PartyMes", "[Captain Mara]");
+		callfunc("DM_PartyMes", "The port work is done. Now we open the locked hold.");
 		close();
 	}
 
-	mes("[Captain Mara]");
-	mes("Ferry the living, clear Byalan, and pull pages from the Sunken Ship. Brode's route is written in all three.");
+	callfunc("DM_PartyMes", "[Captain Mara]");
+	callfunc("DM_PartyMes", "Ferry the living, clear Byalan, and pull pages from the Sunken Ship. Brode's route is written in all three.");
 	close();
 }
 
@@ -245,55 +245,55 @@ S_TurnIns:
 alberta,101,65,4	script	Smuggler-Baron Brode#dm	4_M_03,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (!dm_arc05_started) {
-		mes("[Brode]");
-		mes("Appointments, invoices, or threats. If you have none of those, leave.");
+		callfunc("DM_PartyMes", "[Brode]");
+		callfunc("DM_PartyMes", "Appointments, invoices, or threats. If you have none of those, leave.");
 		close();
 	}
 
 	if (questprogress(20029) == 2) {
-		mes("[Brode]");
+		callfunc("DM_PartyMes", "[Brode]");
 		if (dm_arc05_brode_sold_manifest)
-			mes("You bought a ledger. Do not pretend that makes you cleaner than the man who sold it.");
+			callfunc("DM_PartyMes", "You bought a ledger. Do not pretend that makes you cleaner than the man who sold it.");
 		else if (dm_arc05_brode_threatened)
-			mes("Sink one ship and ten hungry men buy rope. Remember that.");
+			callfunc("DM_PartyMes", "Sink one ship and ten hungry men buy rope. Remember that.");
 		else if (dm_arc05_brode_ruined)
-			mes("You ruined me. That means I have time now.");
+			callfunc("DM_PartyMes", "You ruined me. That means I have time now.");
 		else
-			mes("Freight moves. Heroes shout. Ports stay hungry.");
+			callfunc("DM_PartyMes", "Freight moves. Heroes shout. Ports stay hungry.");
 		close();
 	}
 
-	mes("[Brode]");
-	mes("People keep saying cult like that changes the bill of lading. I ship freight. Freight pays.");
+	callfunc("DM_PartyMes", "[Brode]");
+	callfunc("DM_PartyMes", "People keep saying cult like that changes the bill of lading. I ship freight. Freight pays.");
 	next();
 	switch (select("You're trafficking people for a death-cult.", "We'll outbid the cult for the ledger.", "Talk, or we sink everything you own.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_ruined", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_enemy", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_taken", 1);
-		mes("[Brode]");
-		mes("Then come take your righteous inventory. The cargo's conscience was never on my manifest.");
+		callfunc("DM_PartyMes", "[Brode]");
+		callfunc("DM_PartyMes", "Then come take your righteous inventory. The cargo's conscience was never on my manifest.");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_sold_manifest", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_taken", 1);
-		mes("[Brode]");
-		mes("Gold for paper. Finally, someone speaks an honest language.");
+		callfunc("DM_PartyMes", "[Brode]");
+		callfunc("DM_PartyMes", "Gold for paper. Finally, someone speaks an honest language.");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_threatened", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_enemy", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_manifest_taken", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_northern_account", 1);
-		mes("[Brode]");
-		mes("Fine. Gray courier. Northern account. Yuno money. Now stop looking at my ships like kindling.");
+		callfunc("DM_PartyMes", "[Brode]");
+		callfunc("DM_PartyMes", "Fine. Gray courier. Northern account. Yuno money. Now stop looking at my ships like kindling.");
 		break;
 	}
 	callfunc("DM_InstanceSetFlag", "dm_arc05_cassell_courier_drop", 1);
 	callfunc("DM_InstanceQuestStart", 20029);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 525);
 	next();
-	mes("^3355FF*Brode's Manifest lists ports and dates forward into places you have not yet visited.*^000000");
+	callfunc("DM_PartyMes", "^3355FF*Brode's Manifest lists ports and dates forward into places you have not yet visited.*^000000");
 	close();
 
 OnInit:
@@ -307,39 +307,39 @@ treasure01,153,160,4	script	Exempt Hold#dm	4_TREASURE_BOX,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20029) != 1) {
 		if (questprogress(20029) == 2) {
-			mes("^3355FF*The hold is open. Saltwater washes over empty shackles and broken crate seals.*^000000");
+			callfunc("DM_PartyMes", "^3355FF*The hold is open. Saltwater washes over empty shackles and broken crate seals.*^000000");
 			close();
 		}
-		mes("^3355FF*This hold is sealed by maritime exemption and better locks than a wreck deserves.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*This hold is sealed by maritime exemption and better locks than a wreck deserves.*^000000");
 		close();
 	}
 	if ('boss_up) {
-		mes("^3355FF*Brode's crew is already fighting to keep the hold closed.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Brode's crew is already fighting to keep the hold closed.*^000000");
 		close();
 	}
 
-	mes("^3355FF*The manifest lists this hold as ballast. Ballast does not breathe, pray, or knock back.*^000000");
+	callfunc("DM_PartyMes", "^3355FF*The manifest lists this hold as ballast. Ballast does not breathe, pray, or knock back.*^000000");
 	next();
 	switch (select("Crack the hold quietly.", "Break it open loudly.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_hold_quiet", 1);
-		mes("^3355FF*The lock gives with a soft click. Mara's cover survives another hour.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The lock gives with a soft click. Mara's cover survives another hour.*^000000");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_hold_loud", 1);
-		mes("^3355FF*The door breaks. Every hired blade on the route hears it.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The door breaks. Every hired blade on the route hears it.*^000000");
 		break;
 	}
 	next();
 
 	if (dm_arc03_sabra_deal) {
 		callfunc("DM_InstanceSetFlag", "dm_arc05_sabra_refugees_safe", 1);
-		mes("^3355FF*Sabra's people are inside, alive. The old debt comes due as gratitude, not accusation.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Sabra's people are inside, alive. The old debt comes due as gratitude, not accusation.*^000000");
 	} else if (dm_arc03_sabra_exposed) {
 		callfunc("DM_InstanceSetFlag", "dm_arc05_sabra_refugees_starved", 1);
-		mes("^3355FF*The survivors inside are starving. They look at you like justice had a face once.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The survivors inside are starving. They look at you like justice had a face once.*^000000");
 	} else {
-		mes("^3355FF*Refugees and cult cargo share one manifest. The image explains the whole arc.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Refugees and cult cargo share one manifest. The image explains the whole arc.*^000000");
 	}
 	next();
 
@@ -377,27 +377,27 @@ tur_dun04,99,93,4	script	Deep Trench Wake#dm	4_ENERGY_BLUE,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20030) != 1) {
 		if (questprogress(20030) == 2) {
-			mes("^3355FF*The shelf is scarred where Tao Gunka turned over. A sodden crate-seal lies cold in memory.*^000000");
+			callfunc("DM_PartyMes", "^3355FF*The shelf is scarred where Tao Gunka turned over. A sodden crate-seal lies cold in memory.*^000000");
 			close();
 		}
-		mes("^3355FF*The deep shelf is only a turtle palace until Mara names the drowned route.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The deep shelf is only a turtle palace until Mara names the drowned route.*^000000");
 		close();
 	}
 	if ('boss_up) {
-		mes("^3355FF*The deep is already awake. Finish what the cargo started.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The deep is already awake. Finish what the cargo started.*^000000");
 		close();
 	}
 
-	mes("^3355FF*Below the shelf, the water turns like a sleeping island rolling in its dream. Brode's dumped crates are wedged into the trench.*^000000");
+	callfunc("DM_PartyMes", "^3355FF*Below the shelf, the water turns like a sleeping island rolling in its dream. Brode's dumped crates are wedged into the trench.*^000000");
 	next();
 	switch (select("Recover and neutralize the relic crates.", "Ignore the crates and meet the beast.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_relic_crates_recovered", 1);
-		mes("^3355FF*The crate-seals come loose still cold. The beast loses the rhythm feeding its rage.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The crate-seals come loose still cold. The beast loses the rhythm feeding its rage.*^000000");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_relic_crates_ignored", 1);
-		mes("^3355FF*The crates keep pulsing below you. The deep answers with teeth.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The crates keep pulsing below you. The deep answers with teeth.*^000000");
 		break;
 	}
 	next();
@@ -405,14 +405,14 @@ tur_dun04,99,93,4	script	Deep Trench Wake#dm	4_ENERGY_BLUE,{
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_relics_surrendered", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_relics_kept", 0);
-		mes("^3355FF*The crown will study the crate-seals. The crown will also remember who touched them first.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The crown will study the crate-seals. The crown will also remember who touched them first.*^000000");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_relics_kept", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_relics_surrendered", 0);
 		if (dm_arc04_pilgrim_catechism)
 			callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
-		mes("^3355FF*You keep the same cargo Brode trafficked. The difference is motive. For now.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*You keep the same cargo Brode trafficked. The difference is motive. For now.*^000000");
 		break;
 	}
 	next();

@@ -33,14 +33,14 @@
 payon,181,104,4	script	Sun-Hwa#dm	4_F_THAISHAMAN,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20012) == 2) {
-		mes("[Sun-Hwa]");
+		callfunc("DM_PartyMes", "[Sun-Hwa]");
 		if (dm_arc02_grove_restored)
-			mes("The incense burns warm again. Not bright. Warm is enough.");
+			callfunc("DM_PartyMes", "The incense burns warm again. Not bright. Warm is enough.");
 		else
-			mes("Payon is quiet. That is not the same thing as peace, but it is what remains.");
+			callfunc("DM_PartyMes", "Payon is quiet. That is not the same thing as peace, but it is what remains.");
 		next();
-		mes("[Sun-Hwa]");
-		mes("Keep Voss's notebook. What he wrote in clean ink, others will try in blood.");
+		callfunc("DM_PartyMes", "[Sun-Hwa]");
+		callfunc("DM_PartyMes", "Keep Voss's notebook. What he wrote in clean ink, others will try in blood.");
 		close();
 	}
 
@@ -60,47 +60,47 @@ OnInit:
 	end;
 
 S_StartArc:
-	mes("[Sun-Hwa]");
-	mes("You carry a cold thing.");
+	callfunc("DM_PartyMes", "[Sun-Hwa]");
+	callfunc("DM_PartyMes", "You carry a cold thing.");
 	next();
 	if (countitem(50001) > 0 || dm_arc01_sigil_ring_obtained) {
-		mes("^3355FF*The Sigil Ring in your pack chills until your fingers ache. It points down - toward Payon's cave-tombs.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The Sigil Ring in your pack chills until your fingers ache. It points down - toward Payon's cave-tombs.*^000000");
 		next();
 	}
-	mes("[Sun-Hwa]");
-	mes("I am Sun-Hwa, voice to the ancestors. Lately, the dead speak without being asked.");
+	callfunc("DM_PartyMes", "[Sun-Hwa]");
+	callfunc("DM_PartyMes", "I am Sun-Hwa, voice to the ancestors. Lately, the dead speak without being asked.");
 	next();
-	mes("[Sun-Hwa]");
-	mes("A scholar named Voss came to honor our rites. Since then, graves empty, lanterns burn blue, and the cave breathes like a wounded animal.");
+	callfunc("DM_PartyMes", "[Sun-Hwa]");
+	callfunc("DM_PartyMes", "A scholar named Voss came to honor our rites. Since then, graves empty, lanterns burn blue, and the cave breathes like a wounded animal.");
 	next();
 	switch (select("We'll bring peace to them.", "What does Payon pay for proof?", "Tell us why they are waking.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_rite_path", 1);
-		mes("[Sun-Hwa]");
-		mes("Then we begin with respect. The dead answer slowly to those who do not command them.");
+		callfunc("DM_PartyMes", "[Sun-Hwa]");
+		callfunc("DM_PartyMes", "Then we begin with respect. The dead answer slowly to those who do not command them.");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_rite_path", 2);
-		mes("[Sun-Hwa]");
-		mes("The Guild pays for work. Payon pays for care. Do both and no one will call you mercenary.");
+		callfunc("DM_PartyMes", "[Sun-Hwa]");
+		callfunc("DM_PartyMes", "The Guild pays for work. Payon pays for care. Do both and no one will call you mercenary.");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_rite_path", 2);
-		mes("[Sun-Hwa]");
-		mes("Someone is harvesting the oldest souls first. To know who, we must ask one of them directly.");
+		callfunc("DM_PartyMes", "[Sun-Hwa]");
+		callfunc("DM_PartyMes", "Someone is harvesting the oldest souls first. To know who, we must ask one of them directly.");
 		break;
 	}
 	next();
-	mes("[Sun-Hwa]");
-	mes("Take these contracts while I prepare the shrine-map. Clear the mushroom rings outside Payon and gather bone tags from Cave 1.");
+	callfunc("DM_PartyMes", "[Sun-Hwa]");
+	callfunc("DM_PartyMes", "Take these contracts while I prepare the shrine-map. Clear the mushroom rings outside Payon and gather bone tags from Cave 1.");
 	callfunc("DM_InstanceSetFlag", "dm_arc02_started", 1);
 	callfunc("DM_InstanceQuestStart", 20007);
 	callfunc("DM_InstanceQuestStart", 20008);
 	callfunc("DM_InstanceQuestStart", 20009);
 	next();
-	mes("^3355FF[Quest started: The Sleeping Forest]^000000");
-	mes("^3355FFMushroom Ring Patrol - cull 20 Spores near Payon.^000000");
-	mes("^3355FFBone Tag Turn-In - cull 15 Skeletons in Payon Cave F1.^000000");
+	callfunc("DM_PartyMes", "^3355FF[Quest started: The Sleeping Forest]^000000");
+	callfunc("DM_PartyMes", "^3355FFMushroom Ring Patrol - cull 20 Spores near Payon.^000000");
+	callfunc("DM_PartyMes", "^3355FFBone Tag Turn-In - cull 15 Skeletons in Payon Cave F1.^000000");
 	close();
 
 S_TurnIns:
@@ -111,24 +111,24 @@ S_TurnIns:
 		callfunc("DM_GivePartyZeny", 2500);
 		callfunc("DM_GivePartyItem", Strawberry, 5);
 		.@paid = 1;
-		mes("[Sun-Hwa]");
-		mes("The mushroom ring is clear. Keep the charm; proof that even field work can disturb a sacred place.");
+		callfunc("DM_PartyMes", "[Sun-Hwa]");
+		callfunc("DM_PartyMes", "The mushroom ring is clear. Keep the charm; proof that even field work can disturb a sacred place.");
 		next();
 		switch (select("Clear the ring and burn the rot.", "Preserve samples for Sun-Hwa.", "Let Voss inspect the samples.")) {
 		case 1:
 			callfunc("DM_InstanceSetFlag", "dm_arc02_mushroom_choice", 1);
-			mes("[Sun-Hwa]");
-			mes("A clean answer. Not always a complete one.");
+			callfunc("DM_PartyMes", "[Sun-Hwa]");
+			callfunc("DM_PartyMes", "A clean answer. Not always a complete one.");
 			break;
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc02_mushroom_choice", 2);
-			mes("[Sun-Hwa]");
-			mes("Careful hands. These spores carry grave-cold sap.");
+			callfunc("DM_PartyMes", "[Sun-Hwa]");
+			callfunc("DM_PartyMes", "Careful hands. These spores carry grave-cold sap.");
 			break;
 		case 3:
 			callfunc("DM_InstanceSetFlag", "dm_arc02_mushroom_choice", 3);
-			mes("[Sun-Hwa]");
-			mes("Do not hand knives to people who call wounds data.");
+			callfunc("DM_PartyMes", "[Sun-Hwa]");
+			callfunc("DM_PartyMes", "Do not hand knives to people who call wounds data.");
 			break;
 		}
 		next();
@@ -139,32 +139,32 @@ S_TurnIns:
 		callfunc("DM_GivePartyZeny", 3000);
 		callfunc("DM_GivePartyItem", Skel_Bone, 3);
 		.@paid = 1;
-		mes("[Sun-Hwa]");
-		mes("The bone tags are names. Not trophies. Names.");
+		callfunc("DM_PartyMes", "[Sun-Hwa]");
+		callfunc("DM_PartyMes", "The bone tags are names. Not trophies. Names.");
 		next();
 		switch (select("Return the tags to their families.", "Sell them for faster gear.", "Give the tags to Voss.")) {
 		case 1:
 			callfunc("DM_InstanceSetFlag", "dm_arc02_bone_tags_choice", 1);
-			mes("[Sun-Hwa]");
-			mes("Then one ancestor will answer willingly when the time comes.");
+			callfunc("DM_PartyMes", "[Sun-Hwa]");
+			callfunc("DM_PartyMes", "Then one ancestor will answer willingly when the time comes.");
 			break;
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc02_bone_tags_choice", 2);
-			mes("[Sun-Hwa]");
-			mes("Payon remembers prices. So do the dead.");
+			callfunc("DM_PartyMes", "[Sun-Hwa]");
+			callfunc("DM_PartyMes", "Payon remembers prices. So do the dead.");
 			break;
 		case 3:
 			callfunc("DM_InstanceSetFlag", "dm_arc02_bone_tags_choice", 3);
-			mes("[Sun-Hwa]");
-			mes("He will thank you in ink. That should worry you.");
+			callfunc("DM_PartyMes", "[Sun-Hwa]");
+			callfunc("DM_PartyMes", "He will thank you in ink. That should worry you.");
 			break;
 		}
 		next();
 	}
 
 	if (questprogress(20010) == 0 && questprogress(20008) == 2) {
-		mes("[Sun-Hwa]");
-		mes("The lanterns along the shrine road are burning blue. Walk them tonight. Guide what can still be guided.");
+		callfunc("DM_PartyMes", "[Sun-Hwa]");
+		callfunc("DM_PartyMes", "The lanterns along the shrine road are burning blue. Walk them tonight. Guide what can still be guided.");
 		next();
 		switch (select("Guide the spirits home.", "Use the lanterns to trap Voss.", "Keep one lantern as leverage.", "Later.")) {
 		case 1:
@@ -172,14 +172,14 @@ S_TurnIns:
 			callfunc("DM_InstanceQuestComplete", 20010);
 			callfunc("DM_PartyExp", 6000, 2500);
 			callfunc("DM_GivePartyZeny", 1500);
-			mes("^3355FF*You spend the night relighting lanterns until the road remembers warmth.*^000000");
+			callfunc("DM_PartyMes", "^3355FF*You spend the night relighting lanterns until the road remembers warmth.*^000000");
 			close();
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc02_lantern_choice", 2);
 			callfunc("DM_InstanceQuestComplete", 20010);
 			callfunc("DM_PartyExp", 6000, 2500);
 			callfunc("DM_GivePartyZeny", 2500);
-			mes("^3355FF*You leave one lantern dark. Whoever checks it will leave tracks.*^000000");
+			callfunc("DM_PartyMes", "^3355FF*You leave one lantern dark. Whoever checks it will leave tracks.*^000000");
 			close();
 		case 3:
 			callfunc("DM_InstanceSetFlag", "dm_arc02_lantern_choice", 3);
@@ -187,7 +187,7 @@ S_TurnIns:
 			callfunc("DM_PartyExp", 5000, 2000);
 			callfunc("DM_GivePartyZeny", 3000);
 			callfunc("DM_GivePartyItem", Lantern, 1);
-			mes("^3355FF*The blue lantern is cold in your hand. Useful things often are.*^000000");
+			callfunc("DM_PartyMes", "^3355FF*The blue lantern is cold in your hand. Useful things often are.*^000000");
 			close();
 		case 4:
 			break;
@@ -195,8 +195,8 @@ S_TurnIns:
 	}
 
 	if (questprogress(20011) == 0 && questprogress(20009) == 2) {
-		mes("[Sun-Hwa]");
-		mes("A family elder waits by the cliff-tombs. Their grandmother's grave is empty. Help them and the dead may help us.");
+		callfunc("DM_PartyMes", "[Sun-Hwa]");
+		callfunc("DM_PartyMes", "A family elder waits by the cliff-tombs. Their grandmother's grave is empty. Help them and the dead may help us.");
 		next();
 		switch (select("We'll recover the remains and comb.", "We only need the map.", "Later.")) {
 		case 1:
@@ -204,14 +204,14 @@ S_TurnIns:
 			callfunc("DM_InstanceQuestComplete", 20011);
 			callfunc("DM_PartyExp", 12000, 5000);
 			callfunc("DM_GivePartyZeny", 2500);
-			mes("^3355FF*You recover the grandmother's remains and funerary comb. Payon's families open their doors to you.*^000000");
+			callfunc("DM_PartyMes", "^3355FF*You recover the grandmother's remains and funerary comb. Payon's families open their doors to you.*^000000");
 			close();
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc02_ancestor_helped", 0);
 			callfunc("DM_InstanceQuestComplete", 20011);
 			callfunc("DM_PartyExp", 10000, 4000);
 			callfunc("DM_GivePartyZeny", 5000);
-			mes("^3355FF*You copy the tomb-map and leave the comb where Voss left it: with the things he could not use.*^000000");
+			callfunc("DM_PartyMes", "^3355FF*You copy the tomb-map and leave the comb where Voss left it: with the things he could not use.*^000000");
 			close();
 		case 3:
 			break;
@@ -219,52 +219,52 @@ S_TurnIns:
 	}
 
 	if (questprogress(20008) == 2 && questprogress(20009) == 2 && questprogress(20012) == 0) {
-		mes("[Sun-Hwa]");
-		mes("The pattern points to the lowest cave. To name the thief, we must ask the dead.");
+		callfunc("DM_PartyMes", "[Sun-Hwa]");
+		callfunc("DM_PartyMes", "The pattern points to the lowest cave. To name the thief, we must ask the dead.");
 		next();
 		if (dm_arc02_ancestor_helped) {
-			mes("[Sun-Hwa]");
-			mes("Because you returned the grandmother whole, she will answer without force. That matters.");
+			callfunc("DM_PartyMes", "[Sun-Hwa]");
+			callfunc("DM_PartyMes", "Because you returned the grandmother whole, she will answer without force. That matters.");
 			callfunc("DM_InstanceSetFlag", "dm_arc02_rite_path", 1);
 		} else {
 			switch (select("Respect the taboo; let hints guide us.", "Wake one ancestor and ask directly.", "Teach us the rite. We'll do it.")) {
 			case 1:
 				callfunc("DM_InstanceSetFlag", "dm_arc02_rite_path", 1);
-				mes("[Sun-Hwa]");
-				mes("Then we go slowly. The dead keep their dignity, and we keep our ignorance a little longer.");
+				callfunc("DM_PartyMes", "[Sun-Hwa]");
+				callfunc("DM_PartyMes", "Then we go slowly. The dead keep their dignity, and we keep our ignorance a little longer.");
 				break;
 			case 2:
 				callfunc("DM_InstanceSetFlag", "dm_arc02_rite_path", 2);
 				callfunc("DM_InstanceSetFlag", "dm_arc02_sunhwa_marked", 1);
-				mes("[Sun-Hwa]");
-				mes("I will carry the mark. If this saves Payon, let the ancestors judge me kindly.");
+				callfunc("DM_PartyMes", "[Sun-Hwa]");
+				callfunc("DM_PartyMes", "I will carry the mark. If this saves Payon, let the ancestors judge me kindly.");
 				break;
 			case 3:
 				callfunc("DM_InstanceSetFlag", "dm_arc02_rite_path", 3);
 				callfunc("DM_InstanceSetFlag", "dm_arc02_sunhwa_marked", 1);
-				mes("[Sun-Hwa]");
-				mes("Then listen well. This is a door. Do not mistake it for a road.");
+				callfunc("DM_PartyMes", "[Sun-Hwa]");
+				callfunc("DM_PartyMes", "Then listen well. This is a door. Do not mistake it for a road.");
 				break;
 			}
 		}
 		next();
 		callfunc("DM_InstanceQuestStart", 20012);
-		mes("^3355FF[Quest started: What the Ancestors Won't Say]^000000");
-		mes("^3355FFDescend to Payon Cave F5. Scholar Voss is feeding the Moonlight Flower from the grove there.^000000");
+		callfunc("DM_PartyMes", "^3355FF[Quest started: What the Ancestors Won't Say]^000000");
+		callfunc("DM_PartyMes", "^3355FFDescend to Payon Cave F5. Scholar Voss is feeding the Moonlight Flower from the grove there.^000000");
 		close();
 	}
 
 	if (.@paid) {
-		mes("[Sun-Hwa]");
-		mes("Finish both contracts. The shrine-map is nearly ready.");
+		callfunc("DM_PartyMes", "[Sun-Hwa]");
+		callfunc("DM_PartyMes", "Finish both contracts. The shrine-map is nearly ready.");
 		close();
 	}
 
-	mes("[Sun-Hwa]");
+	callfunc("DM_PartyMes", "[Sun-Hwa]");
 	if (questprogress(20012) == 1)
-		mes("The cave points down. If you can, sever the conduits before you strike the Flower.");
+		callfunc("DM_PartyMes", "The cave points down. If you can, sever the conduits before you strike the Flower.");
 	else
-		mes("Clear the rings, gather the bone tags, and come back before the incense burns blue again.");
+		callfunc("DM_PartyMes", "Clear the rings, gather the bone tags, and come back before the incense burns blue again.");
 	close();
 }
 
@@ -273,61 +273,61 @@ pay_dun04,120,115,4	script	Scholar Voss#dm	4_M_SCIENCE,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20012) != 1) {
 		if (questprogress(20012) == 2) {
-			mes("^3355FF*The grove is bruised but quiet. Voss's neat chalk circles are scuffed into useless dust.*^000000");
+			callfunc("DM_PartyMes", "^3355FF*The grove is bruised but quiet. Voss's neat chalk circles are scuffed into useless dust.*^000000");
 			close();
 		}
-		mes("[Scholar Voss]");
-		mes("Not now. Field work is most easily spoiled by footsteps.");
+		callfunc("DM_PartyMes", "[Scholar Voss]");
+		callfunc("DM_PartyMes", "Not now. Field work is most easily spoiled by footsteps.");
 		close();
 	}
 	if ('boss_up) {
-		mes("[Scholar Voss]");
-		mes("Do try not to contaminate the sample while it is blooming.");
+		callfunc("DM_PartyMes", "[Scholar Voss]");
+		callfunc("DM_PartyMes", "Do try not to contaminate the sample while it is blooming.");
 		close();
 	}
 
-	mes("^3355FF*Roots pulse under the cave floor. Moonlight gathers in the grove like a wound pretending to be beautiful.*^000000");
+	callfunc("DM_PartyMes", "^3355FF*Roots pulse under the cave floor. Moonlight gathers in the grove like a wound pretending to be beautiful.*^000000");
 	next();
-	mes("[Scholar Voss]");
-	mes("Ah. Prontera's sewer party. Cassell said the Guild might send dogs after the second trial.");
+	callfunc("DM_PartyMes", "[Scholar Voss]");
+	callfunc("DM_PartyMes", "Ah. Prontera's sewer party. Cassell said the Guild might send dogs after the second trial.");
 	next();
 	switch (select("These were people, Voss.", "Walk away and leave the notes.", "Show us how the harvest works.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_killed", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_spared", 0);
-		mes("[Voss]");
-		mes("These were data. People are the storage medium.");
+		callfunc("DM_PartyMes", "[Voss]");
+		callfunc("DM_PartyMes", "These were data. People are the storage medium.");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_spared", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_killed", 0);
-		mes("[Voss]");
-		mes("A practical offer. I keep my life, you keep the notebook, and Payon keeps pretending this was an aberration.");
+		callfunc("DM_PartyMes", "[Voss]");
+		callfunc("DM_PartyMes", "A practical offer. I keep my life, you keep the notebook, and Payon keeps pretending this was an aberration.");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_spared", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc02_voss_killed", 0);
 		callfunc("DM_InstanceSetFlag", "dm_arc02_rite_path", 3);
-		mes("[Voss]");
-		mes("Delightful. A bound spirit resonates with the seal when fed memory-rich souls. It is less theology than acoustics.");
+		callfunc("DM_PartyMes", "[Voss]");
+		callfunc("DM_PartyMes", "Delightful. A bound spirit resonates with the seal when fed memory-rich souls. It is less theology than acoustics.");
 		break;
 	}
 	next();
 	if (!dm_arc02_notebook_obtained) {
 		callfunc("DM_InstanceSetFlag", "dm_arc02_notebook_obtained", 1);
-		mes("^3355FF[Voss's Notebook obtained.]^000000");
-		mes("^3355FFThe final page mentions: 'the cold north, at scale.'^000000");
+		callfunc("DM_PartyMes", "^3355FF[Voss's Notebook obtained.]^000000");
+		callfunc("DM_PartyMes", "^3355FFThe final page mentions: 'the cold north, at scale.'^000000");
 		next();
 	}
 
 	switch (select("Sever the soul-conduits first.", "Rush the Flower now.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_conduits_severed", 1);
-		mes("^3355FF*You cut the blue roots around the grove. The Moonlight Flower shrieks, starving, weaker than it should be.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*You cut the blue roots around the grove. The Moonlight Flower shrieks, starving, weaker than it should be.*^000000");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_conduits_severed", 0);
-		mes("^3355FF*The grove drinks from the cave-dead. The Flower blooms brighter. This will hurt.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The grove drinks from the cave-dead. The Flower blooms brighter. This will hurt.*^000000");
 		break;
 	}
 	next();
@@ -338,12 +338,12 @@ pay_dun04,120,115,4	script	Scholar Voss#dm	4_M_SCIENCE,{
 		callfunc("DM_InstanceSetFlag", "dm_arc02_grove_burned", 0);
 		if (!dm_arc02_ancestor_helped)
 			callfunc("DM_InstanceSetFlag", "dm_arc02_sunhwa_marked", 1);
-		mes("^3355FF*Sun-Hwa's rite anchors the stolen souls. Mercy has weight; someone has to carry it.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Sun-Hwa's rite anchors the stolen souls. Mercy has weight; someone has to carry it.*^000000");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc02_grove_burned", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc02_grove_restored", 0);
-		mes("^3355FF*Fire is quick. Not all things released by fire are freed.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Fire is quick. Not all things released by fire are freed.*^000000");
 		break;
 	}
 	next();

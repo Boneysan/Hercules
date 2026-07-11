@@ -36,6 +36,64 @@ This maps almost 1:1 to a multiplayer tabletop session.
 
 **Goal:** Fun game night with friends → Hercules is the fastest path.
 
+## Modernization Charter
+
+This project is not limited to reproducing the official Ragnarok client. Large
+improvements are explicitly in scope when they make the private, DM-led game
+night easier to run or more enjoyable to play: modern controls, richer party
+UI, campaign journals, GM guidance, encounter telegraphs, accessibility,
+spectator tools, and purpose-built client/server features are all valid work.
+
+The safety boundary is architectural rather than nostalgic:
+
+- Hercules remains authoritative for movement, combat, inventory, quests,
+  permissions, and persistence.
+- Existing RO packets and scripts are preferred until evidence shows that a
+  custom packet/plugin is warranted.
+- Client and server changes that form one feature are planned and tested as a
+  single cross-project slice.
+- Core fallbacks remain available where practical, especially click movement
+  alongside WASD and manual DM commands alongside graphical tools.
+- Large changes require focused acceptance criteria, validation against the
+  live `PACKETVER=20220406` stack, and a rollback/configuration path when the
+  behavior is disruptive.
+- Campaign state must remain party-safe and recoverable through DM tooling.
+
+The official client is a content/protocol reference, not the product ceiling.
+
+### UI contract for server-backed features
+
+When Hercules exposes a feature to Korangar, the server contract must allow a
+good interface rather than forcing chat scraping or ambiguous optimistic state:
+
+- permission and final state remain authoritative on Hercules;
+- success and rejection responses are explicit and actionable;
+- preview/read operations are distinct from mutations;
+- destructive DM/campaign actions expose their consequences before commit;
+- party-visible and GM-private data are deliberately separated;
+- reconnect/map-change recovery can reconstruct current state;
+- high-frequency updates are bounded and do not require UI spam.
+
+Use existing packets and structured script feedback first. Add custom packets
+only when a tested UI slice demonstrates that the existing transport cannot
+represent the required state safely.
+
+### Visual-improvement contract
+
+Modern Korangar graphics are presentation improvements, not alternate game
+rules. Hercules supplies authoritative positions, facing, combat/effect events,
+weather/campaign intent, and permissions; the client may interpolate and enrich
+their presentation without inventing mechanical outcomes.
+
+- Telegraph geometry must reflect server-owned hazard areas and timing.
+- Smoother movement/animation must converge on authoritative coordinates.
+- Weather, lighting, camera, and particles cannot conceal required information;
+  reduced-effects modes remain mechanically complete.
+- Visual scene commands are optional enhancements and must not block official or
+  other compatible clients from completing campaign content.
+- Server-driven visual state must be inspectable and recoverable after map
+  changes, reconnects, instance cleanup, and DnD mode shutdown.
+
 ---
 
 ## Development Environment

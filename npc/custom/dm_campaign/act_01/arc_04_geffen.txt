@@ -24,13 +24,13 @@
 geffen,120,100,4	script	Apprentice Elsbeth#dm	4_F_01,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20024) == 2) {
-		mes("[Apprentice Elsbeth]");
+		callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
 		if (dm_arc04_seal_reinforced)
-			mes("The tower lamps are dimmer. The city is angry. The seal is alive.");
+			callfunc("DM_PartyMes", "The tower lamps are dimmer. The city is angry. The seal is alive.");
 		else if (dm_arc04_overflow_kept)
-			mes("The tower shines beautifully tonight. Please do not ask me what it costs.");
+			callfunc("DM_PartyMes", "The tower shines beautifully tonight. Please do not ask me what it costs.");
 		else
-			mes("The vault is quiet for now. I am learning to distrust quiet things.");
+			callfunc("DM_PartyMes", "The vault is quiet for now. I am learning to distrust quiet things.");
 		close();
 	}
 
@@ -50,42 +50,42 @@ OnInit:
 	end;
 
 S_StartArc:
-	mes("[Apprentice Elsbeth]");
-	mes("Everyone calls Geffen the city of spellcraft. No one says what the craft is chained to.");
+	callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+	callfunc("DM_PartyMes", "Everyone calls Geffen the city of spellcraft. No one says what the craft is chained to.");
 	next();
 	if (countitem(50001) > 0 || dm_arc01_sigil_ring_obtained) {
-		mes("^3355FF*The Sigil Ring vibrates under the tower's bells. It does not point toward a dungeon. It points under the city itself.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The Sigil Ring vibrates under the tower's bells. It does not point toward a dungeon. It points under the city itself.*^000000");
 		next();
 	}
-	mes("[Apprentice Elsbeth]");
-	mes("I am Elsbeth. Third-year apprentice. Keeper of keys I am not supposed to understand.");
+	callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+	callfunc("DM_PartyMes", "I am Elsbeth. Third-year apprentice. Keeper of keys I am not supposed to understand.");
 	next();
 	switch (select("Stay safe and give us the ward-key.", "Come with us and explain the vault.", "I do not trust Guild people.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 0);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 1);
-		mes("[Apprentice Elsbeth]");
-		mes("Then take this ward-key. If the lower door asks a question, answer with silence.");
+		callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+		callfunc("DM_PartyMes", "Then take this ward-key. If the lower door asks a question, answer with silence.");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 0);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 1);
-		mes("[Apprentice Elsbeth]");
-		mes("I know the prayers they carved into the locks. I will come, and I will regret being useful.");
+		callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+		callfunc("DM_PartyMes", "I know the prayers they carved into the locks. I will come, and I will regret being useful.");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_protected", 0);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_elsbeth_with_party", 0);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_ward_key", 0);
-		mes("[Apprentice Elsbeth]");
-		mes("Fair. Trust the key, then, if not the hand that offers it. No? Then you will force the old way.");
+		callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+		callfunc("DM_PartyMes", "Fair. Trust the key, then, if not the hand that offers it. No? Then you will force the old way.");
 		break;
 	}
 	next();
-	mes("[Apprentice Elsbeth]");
-	mes("Start with the work the Guild pretends is ordinary. Chalk sigils, orc banners, black silk. They all hum with the same prison-song.");
+	callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+	callfunc("DM_PartyMes", "Start with the work the Guild pretends is ordinary. Chalk sigils, orc banners, black silk. They all hum with the same prison-song.");
 	callfunc("DM_InstanceSetFlag", "dm_arc04_started", 1);
 	callfunc("DM_InstanceQuestStart", 20019);
 	callfunc("DM_InstanceQuestStart", 20020);
@@ -93,10 +93,10 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20022);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 401);
 	next();
-	mes("^3355FF[Quest started: The City Above the Beast]^000000");
-	mes("^3355FFTower Apprentice Drills - clear 20 Poison Spores from Geffen's training route.^000000");
-	mes("^3355FFOrc Village Bounty - break 20 Orc Warriors at the village edge.^000000");
-	mes("^3355FFArgiope Silk Run - gather black silk evidence from 20 Argiope.^000000");
+	callfunc("DM_PartyMes", "^3355FF[Quest started: The City Above the Beast]^000000");
+	callfunc("DM_PartyMes", "^3355FFTower Apprentice Drills - clear 20 Poison Spores from Geffen's training route.^000000");
+	callfunc("DM_PartyMes", "^3355FFOrc Village Bounty - break 20 Orc Warriors at the village edge.^000000");
+	callfunc("DM_PartyMes", "^3355FFArgiope Silk Run - gather black silk evidence from 20 Argiope.^000000");
 	close();
 
 S_TurnIns:
@@ -106,26 +106,26 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 38000, 17000);
 		callfunc("DM_GivePartyZeny", 5500);
 		.@paid = 1;
-		mes("[Apprentice Elsbeth]");
-		mes("Apprentice chalk covered in spore dust. Wonderful. Also horrifying.");
+		callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+		callfunc("DM_PartyMes", "Apprentice chalk covered in spore dust. Wonderful. Also horrifying.");
 		next();
 		switch (select("Teach restraint.", "Teach power.", "Let students test forbidden diagrams.")) {
 		case 1:
 			callfunc("DM_InstanceSetFlag", "dm_arc04_drills_choice", 1);
 			callfunc("DM_InstanceSetFlag", "dm_arc04_students_warned", 1);
-			mes("[Apprentice Elsbeth]");
-			mes("Restraint is slower. It also leaves more apprentices alive.");
+			callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+			callfunc("DM_PartyMes", "Restraint is slower. It also leaves more apprentices alive.");
 			break;
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc04_drills_choice", 2);
-			mes("[Apprentice Elsbeth]");
-			mes("Power first, explanations later. The Guild will pretend it disapproves.");
+			callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+			callfunc("DM_PartyMes", "Power first, explanations later. The Guild will pretend it disapproves.");
 			break;
 		case 3:
 			callfunc("DM_InstanceSetFlag", "dm_arc04_drills_choice", 3);
 			callfunc("DM_InstanceSetFlag", "dm_arc04_forbidden_diagrams", 1);
-			mes("[Apprentice Elsbeth]");
-			mes("Those diagrams are Doran's. If they answer you, do not answer back.");
+			callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+			callfunc("DM_PartyMes", "Those diagrams are Doran's. If they answer you, do not answer back.");
 			break;
 		}
 		next();
@@ -136,26 +136,26 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 52000, 23000);
 		callfunc("DM_GivePartyZeny", 6500);
 		.@paid = 1;
-		mes("[Apprentice Elsbeth]");
-		mes("Chipped orc banners. The sigil marks are not orcish. They are bait.");
+		callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+		callfunc("DM_PartyMes", "Chipped orc banners. The sigil marks are not orcish. They are bait.");
 		next();
 		switch (select("Take the bounty cleanly.", "Arm frightened villagers.", "Use cult bait to draw more monsters.")) {
 		case 1:
 			callfunc("DM_InstanceSetFlag", "dm_arc04_orc_choice", 1);
-			mes("[Apprentice Elsbeth]");
-			mes("Clean work still leaves blood. But it does not multiply it.");
+			callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+			callfunc("DM_PartyMes", "Clean work still leaves blood. But it does not multiply it.");
 			break;
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc04_orc_choice", 2);
 			callfunc("DM_InstanceSetFlag", "dm_arc04_villagers_armed", 1);
-			mes("[Apprentice Elsbeth]");
-			mes("Good. People near Geffen should know what the city is doing to them.");
+			callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+			callfunc("DM_PartyMes", "Good. People near Geffen should know what the city is doing to them.");
 			break;
 		case 3:
 			callfunc("DM_InstanceSetFlag", "dm_arc04_orc_choice", 3);
 			callfunc("DM_InstanceSetFlag", "dm_arc04_cult_bait_used", 1);
-			mes("[Apprentice Elsbeth]");
-			mes("Effective. Doran would call that word a pardon.");
+			callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+			callfunc("DM_PartyMes", "Effective. Doran would call that word a pardon.");
 			break;
 		}
 		next();
@@ -166,41 +166,41 @@ S_TurnIns:
 		callfunc("DM_PartyExp", 62000, 28000);
 		callfunc("DM_GivePartyZeny", 8000);
 		.@paid = 1;
-		mes("[Apprentice Elsbeth]");
-		mes("Black silk thread. Every strand maps back to the lower vault.");
+		callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+		callfunc("DM_PartyMes", "Black silk thread. Every strand maps back to the lower vault.");
 		next();
 		switch (select("Deliver the silk to the mages.", "Burn the contaminated silk.", "Keep it for ritual tracing.")) {
 		case 1:
 			callfunc("DM_InstanceSetFlag", "dm_arc04_silk_choice", 1);
 			callfunc("DM_InstanceSetFlag", "dm_arc04_seal_pattern_evidence", 1);
-			mes("[Apprentice Elsbeth]");
-			mes("Evidence enters the archive. Whether the archive opens again is a political question.");
+			callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+			callfunc("DM_PartyMes", "Evidence enters the archive. Whether the archive opens again is a political question.");
 			break;
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc04_silk_choice", 2);
-			mes("[Apprentice Elsbeth]");
-			mes("The smoke stinks like hymnals. That is new.");
+			callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+			callfunc("DM_PartyMes", "The smoke stinks like hymnals. That is new.");
 			break;
 		case 3:
 			callfunc("DM_InstanceSetFlag", "dm_arc04_silk_choice", 3);
 			callfunc("DM_InstanceSetFlag", "dm_arc04_ritual_thread_kept", 1);
-			mes("[Apprentice Elsbeth]");
-			mes("Then you can trace Doran's route. You can also be traced.");
+			callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+			callfunc("DM_PartyMes", "Then you can trace Doran's route. You can also be traced.");
 			break;
 		}
 		next();
 	}
 
 	if (questprogress(20020) == 2 && questprogress(20021) == 2 && questprogress(20022) == 2 && questprogress(20023) == 0) {
-		mes("[Apprentice Elsbeth]");
-		mes("The proof is complete. Archmagus Doran has gone below the west locks. The lower vault is praying wrong.");
+		callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+		callfunc("DM_PartyMes", "The proof is complete. Archmagus Doran has gone below the west locks. The lower vault is praying wrong.");
 		next();
 		switch (select("Start The Vault That Prays.", "Later.")) {
 		case 1:
 			callfunc("DM_InstanceQuestStart", 20023);
 			callfunc("DM_PartyApplyFlag", "dm_story_beat", 423);
-			mes("^3355FF[Quest started: The Vault That Prays]^000000");
-			mes("^3355FFEnter Geffen Dungeon F3. Break Doran's glyphs and drive Baphomet off the seal.^000000");
+			callfunc("DM_PartyMes", "^3355FF[Quest started: The Vault That Prays]^000000");
+			callfunc("DM_PartyMes", "^3355FFEnter Geffen Dungeon F3. Break Doran's glyphs and drive Baphomet off the seal.^000000");
 			close();
 		case 2:
 			close();
@@ -208,13 +208,13 @@ S_TurnIns:
 	}
 
 	if (.@paid) {
-		mes("[Apprentice Elsbeth]");
-		mes("That is all the ordinary work. Which means the dangerous work is ready.");
+		callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+		callfunc("DM_PartyMes", "That is all the ordinary work. Which means the dangerous work is ready.");
 		close();
 	}
 
-	mes("[Apprentice Elsbeth]");
-	mes("Bring back the chalk sigil, orc banner, and black silk. Geffen's problem is hiding in its chores.");
+	callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
+	callfunc("DM_PartyMes", "Bring back the chalk sigil, orc banner, and black silk. Geffen's problem is hiding in its chores.");
 	close();
 }
 
@@ -223,55 +223,55 @@ gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20023) != 1) {
 		if (questprogress(20023) == 2) {
-			mes("[Archmagus Doran]");
+			callfunc("DM_PartyMes", "[Archmagus Doran]");
 			if (dm_arc04_doran_stood_down)
-				mes("Publish the proof, then. Let Geffen hate the truth in daylight.");
+				callfunc("DM_PartyMes", "Publish the proof, then. Let Geffen hate the truth in daylight.");
 			else
-				mes("The Guild will call me traitor because that word is cheaper than history.");
+				callfunc("DM_PartyMes", "The Guild will call me traitor because that word is cheaper than history.");
 			close();
 		}
-		mes("[Archmagus Doran]");
-		mes("Every tower is built on something buried. Come back when you are ready to look down.");
+		callfunc("DM_PartyMes", "[Archmagus Doran]");
+		callfunc("DM_PartyMes", "Every tower is built on something buried. Come back when you are ready to look down.");
 		close();
 	}
 
 	if (dm_arc04_doran_confronted) {
-		mes("[Archmagus Doran]");
-		mes("The glyphs are placed. The beast will wake whether you flatter or threaten me.");
+		callfunc("DM_PartyMes", "[Archmagus Doran]");
+		callfunc("DM_PartyMes", "The glyphs are placed. The beast will wake whether you flatter or threaten me.");
 		close();
 	}
 
-	mes("[Archmagus Doran]");
-	mes("I proved the tower runs on seal overflow. They buried the proof and promoted the cowards.");
+	callfunc("DM_PartyMes", "[Archmagus Doran]");
+	callfunc("DM_PartyMes", "I proved the tower runs on seal overflow. They buried the proof and promoted the cowards.");
 	next();
-	mes("[Archmagus Doran]");
-	mes("Cassell understood immediately. A prison is only a machine whose owner refuses to admit it has controls.");
+	callfunc("DM_PartyMes", "[Archmagus Doran]");
+	callfunc("DM_PartyMes", "Cassell understood immediately. A prison is only a machine whose owner refuses to admit it has controls.");
 	next();
 	switch (select("You endangered the whole city.", "Publish the proof. Stand down.", "Teach us what Cassell taught you.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_fought", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 0);
-		mes("[Archmagus Doran]");
-		mes("Then learn from danger. Geffen certainly did.");
+		callfunc("DM_PartyMes", "[Archmagus Doran]");
+		callfunc("DM_PartyMes", "Then learn from danger. Geffen certainly did.");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_stood_down", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_fought", 0);
-		mes("[Archmagus Doran]");
-		mes("If the city reads my proof with the lamps dimmed, perhaps truth will finally have a cost.");
+		callfunc("DM_PartyMes", "[Archmagus Doran]");
+		callfunc("DM_PartyMes", "If the city reads my proof with the lamps dimmed, perhaps truth will finally have a cost.");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_doran_taught", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_unmasked", 1);
-		mes("[Archmagus Doran]");
-		mes("Cassell calls it a catechism. Not worship. Engineering for abandoned locks.");
+		callfunc("DM_PartyMes", "[Archmagus Doran]");
+		callfunc("DM_PartyMes", "Cassell calls it a catechism. Not worship. Engineering for abandoned locks.");
 		break;
 	}
 	callfunc("DM_InstanceSetFlag", "dm_arc04_doran_confronted", 1);
 	callfunc("DM_InstanceSetFlag", "dm_arc04_cassell_unmasked", 1);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 430);
 	next();
-	mes("^3355FF*The vault door opens below him. The air smells like old candles and wet fur.*^000000");
+	callfunc("DM_PartyMes", "^3355FF*The vault door opens below him. The air smells like old candles and wet fur.*^000000");
 	close();
 
 OnInit:
@@ -285,29 +285,29 @@ gef_dun02,214,212,4	script	Baphomet's Seal#dm	4_ENERGY_RED,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20023) != 1) {
 		if (questprogress(20023) == 2) {
-			mes("^3355FF*The cracked keystone still hums where the beast struck it.*^000000");
+			callfunc("DM_PartyMes", "^3355FF*The cracked keystone still hums where the beast struck it.*^000000");
 			close();
 		}
-		mes("^3355FF*The lower vault is locked by Guild wards. Elsbeth and Doran must move the story here first.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The lower vault is locked by Guild wards. Elsbeth and Doran must move the story here first.*^000000");
 		close();
 	}
 	if (!(dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3)) {
-		mes("^3355FF*The inner vault is protected by an outer glyph sequence. You must align the three outer glyphs before approaching the center.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The inner vault is protected by an outer glyph sequence. You must align the three outer glyphs before approaching the center.*^000000");
 		close();
 	}
 	if ('boss_up) {
-		mes("^3355FF*Baphomet is already battering the seal. Survive the prayer.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Baphomet is already battering the seal. Survive the prayer.*^000000");
 		close();
 	}
 
-	mes("^3355FF*The chamber is a chapel built to face inward. Every glyph prays at Baphomet's prison, begging it to stay closed and keep feeding Geffen.*^000000");
+	callfunc("DM_PartyMes", "^3355FF*The chamber is a chapel built to face inward. Every glyph prays at Baphomet's prison, begging it to stay closed and keep feeding Geffen.*^000000");
 	next();
 	if (!dm_arc04_doran_confronted) {
-		mes("^3355FF*Doran's work is still hidden in the glyphs. The set-piece will be harsher unless someone confronts him first.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Doran's work is still hidden in the glyphs. The set-piece will be harsher unless someone confronts him first.*^000000");
 		next();
 	}
 	if (dm_arc04_elsbeth_with_party) {
-		mes("^3355FF*Elsbeth reads the lock aloud. Something below hears her name.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Elsbeth reads the lock aloud. Something below hears her name.*^000000");
 		next();
 	}
 	switch (select("Reinforce the seal, even if Geffen dims.", "Keep the overflow flowing and hold the beast down.")) {
@@ -315,13 +315,13 @@ gef_dun02,214,212,4	script	Baphomet's Seal#dm	4_ENERGY_RED,{
 		callfunc("DM_InstanceSetFlag", "dm_arc04_seal_reinforced", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_city_dimmed", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_overflow_kept", 0);
-		mes("^3355FF*You turn the glyphs inward. The tower lights above begin to go out one floor at a time.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*You turn the glyphs inward. The tower lights above begin to go out one floor at a time.*^000000");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_overflow_kept", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_seal_reinforced", 0);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_city_dimmed", 0);
-		mes("^3355FF*You keep Geffen bright. The seal accepts the compromise with a sound like cracking teeth.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*You keep Geffen bright. The seal accepts the compromise with a sound like cracking teeth.*^000000");
 		break;
 	}
 	next();
@@ -385,42 +385,42 @@ OnInit:
 gef_dun02,218,210,4	script	Brother Cassell#dm04	4_M_MONK,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20024) == 2) {
-		mes("[Brother Cassell]");
-		mes("You have already chosen what to do with a key when the door begs to stay closed.");
+		callfunc("DM_PartyMes", "[Brother Cassell]");
+		callfunc("DM_PartyMes", "You have already chosen what to do with a key when the door begs to stay closed.");
 		close();
 	}
 	if (questprogress(20024) != 1) {
-		mes("[Brother Cassell]");
-		mes("Not yet. First see what the city asks its prison to become.");
+		callfunc("DM_PartyMes", "[Brother Cassell]");
+		callfunc("DM_PartyMes", "Not yet. First see what the city asks its prison to become.");
 		close();
 	}
 
-	mes("[Brother Cassell]");
-	mes("No sermon this time. Sit with me. The ring knows me now, and you know enough to decide whether knowledge is guilt.");
+	callfunc("DM_PartyMes", "[Brother Cassell]");
+	callfunc("DM_PartyMes", "No sermon this time. Sit with me. The ring knows me now, and you know enough to decide whether knowledge is guilt.");
 	next();
-	mes("[Brother Cassell]");
-	mes("The seals can be read. Weakened. Re-forged. The gods left locks and called ignorance virtue.");
+	callfunc("DM_PartyMes", "[Brother Cassell]");
+	callfunc("DM_PartyMes", "The seals can be read. Weakened. Re-forged. The gods left locks and called ignorance virtue.");
 	next();
 	switch (select("Refuse in faith.", "Refuse, but listen for investigative signs.", "Accept the Pilgrim's Catechism.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_catechism_choice", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_pilgrim_catechism", 0);
-		mes("[Brother Cassell]");
-		mes("Clean hands, then. Keep them clean enough to open doors by force.");
+		callfunc("DM_PartyMes", "[Brother Cassell]");
+		callfunc("DM_PartyMes", "Clean hands, then. Keep them clean enough to open doors by force.");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_catechism_choice", 2);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_pilgrim_catechism", 0);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_tamper_sense", 1);
-		mes("[Brother Cassell]");
-		mes("A detective's heresy. Sensible. You will know when a seal has been touched.");
+		callfunc("DM_PartyMes", "[Brother Cassell]");
+		callfunc("DM_PartyMes", "A detective's heresy. Sensible. You will know when a seal has been touched.");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc04_catechism_choice", 3);
 		callfunc("DM_InstanceSetFlag", "dm_arc04_pilgrim_catechism", 1);
 		callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
-		mes("[Brother Cassell]");
-		mes("Then learn the grammar of locks. Later, your friends will ask why you needed the language.");
+		callfunc("DM_PartyMes", "[Brother Cassell]");
+		callfunc("DM_PartyMes", "Then learn the grammar of locks. Later, your friends will ask why you needed the language.");
 		break;
 	}
 	callfunc("DM_InstanceQuestComplete", 20024);
@@ -428,7 +428,7 @@ gef_dun02,218,210,4	script	Brother Cassell#dm04	4_M_MONK,{
 	callfunc("DM_PartyExp", 80000, 35000);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 499);
 	next();
-	mes("^3355FF[Arc 4 complete: The City Above the Beast]^000000");
+	callfunc("DM_PartyMes", "^3355FF[Arc 4 complete: The City Above the Beast]^000000");
 	close();
 
 OnInit:
@@ -477,20 +477,20 @@ OnTimer15000:
 gef_dun02,219,212,4	script	East Seal Glyph#dm	4_ENERGY_WHITE,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
-		mes("[East Glyph]");
-		mes("The glyph burns with a steady blue light.");
+		callfunc("DM_PartyMes", "[East Glyph]");
+		callfunc("DM_PartyMes", "The glyph burns with a steady blue light.");
 		close();
 	}
-	mes("[East Glyph]");
-	mes("An old guild inscription. It seems part of a sequence.");
+	callfunc("DM_PartyMes", "[East Glyph]");
+	callfunc("DM_PartyMes", "An old guild inscription. It seems part of a sequence.");
 	next();
 	if (select("Channel magic", "Leave it") == 2) close();
 	
 	if (dm_arc04_puzzle_1 == 0 && dm_arc04_puzzle_2 == 0 && dm_arc04_puzzle_3 == 0) {
 		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_1", 1);
-		mes("The glyph lights up with a steady hum.");
+		callfunc("DM_PartyMes", "The glyph lights up with a steady hum.");
 	} else {
-		mes("The glyph flares red and sparks. The sequence is broken.");
+		callfunc("DM_PartyMes", "The glyph flares red and sparks. The sequence is broken.");
 		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();
@@ -499,20 +499,20 @@ gef_dun02,219,212,4	script	East Seal Glyph#dm	4_ENERGY_WHITE,{
 gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
-		mes("[North Glyph]");
-		mes("The glyph burns with a steady blue light.");
+		callfunc("DM_PartyMes", "[North Glyph]");
+		callfunc("DM_PartyMes", "The glyph burns with a steady blue light.");
 		close();
 	}
-	mes("[North Glyph]");
-	mes("An old guild inscription. It seems part of a sequence.");
+	callfunc("DM_PartyMes", "[North Glyph]");
+	callfunc("DM_PartyMes", "An old guild inscription. It seems part of a sequence.");
 	next();
 	if (select("Channel magic", "Leave it") == 2) close();
 	
 	if (dm_arc04_puzzle_1 == 1 && dm_arc04_puzzle_2 == 0 && dm_arc04_puzzle_3 == 0) {
 		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_2", 1);
-		mes("The glyph lights up with a steady hum.");
+		callfunc("DM_PartyMes", "The glyph lights up with a steady hum.");
 	} else {
-		mes("The glyph flares red and sparks. The sequence is broken.");
+		callfunc("DM_PartyMes", "The glyph flares red and sparks. The sequence is broken.");
 		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();
@@ -521,21 +521,21 @@ gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
 gef_dun02,209,212,4	script	West Seal Glyph#dm	4_ENERGY_WHITE,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
-		mes("[West Glyph]");
-		mes("The glyph burns with a steady blue light.");
+		callfunc("DM_PartyMes", "[West Glyph]");
+		callfunc("DM_PartyMes", "The glyph burns with a steady blue light.");
 		close();
 	}
-	mes("[West Glyph]");
-	mes("An old guild inscription. It seems part of a sequence.");
+	callfunc("DM_PartyMes", "[West Glyph]");
+	callfunc("DM_PartyMes", "An old guild inscription. It seems part of a sequence.");
 	next();
 	if (select("Channel magic", "Leave it") == 2) close();
 	
 	if (dm_arc04_puzzle_1 == 1 && dm_arc04_puzzle_2 == 1 && dm_arc04_puzzle_3 == 0) {
 		callfunc("DM_InstanceSetFlag", "dm_arc04_puzzle_3", 1);
-		mes("The final glyph lights up. A heavy stone grinding noise comes from the center of the vault.");
+		callfunc("DM_PartyMes", "The final glyph lights up. A heavy stone grinding noise comes from the center of the vault.");
 		mapannounce strnpcinfo(NPC_MAP), "The outer seal sequence is complete. The vault center is accessible.", bc_map, 0x3355FF;
 	} else {
-		mes("The glyph flares red and sparks. The sequence is broken.");
+		callfunc("DM_PartyMes", "The glyph flares red and sparks. The sequence is broken.");
 		callfunc("DM_ResetPuzzleFlag", "dm_arc04_puzzle_", 3);
 	}
 	close();

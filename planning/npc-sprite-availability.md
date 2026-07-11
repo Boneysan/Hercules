@@ -113,6 +113,7 @@ Append each sprite swap here (newest first). Mark verified once confirmed in-gam
 
 | Date | NPC (map) | Old constant (id) | New constant (id) | File | Status |
 |------|-----------|-------------------|-------------------|------|--------|
+| 2026-07-11 | Five Prontera WoE castle flags | `GUILD_FLAG` (722, mapped asset missing) | Client compatibility mapping to `1_flag_eagle` (present) | `korangar/src/world/library/job_identity.rs` | Awaiting live verification |
 | 2026-07-11 | Sun-Hwa#dm (Payon) | `4_F_SHAMAN` (720, `.spr` missing) | `4_F_THAISHAMAN` (840, present) | `act_01/arc_02_payon.txt` | ✅ live-verified |
 
 ## Rule for new campaign NPCs

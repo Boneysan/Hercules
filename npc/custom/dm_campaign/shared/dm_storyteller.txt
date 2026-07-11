@@ -1,5 +1,32 @@
 // Seal Cascade narration helpers.
 
+// Show normal NPC dialogue to the attached player and mirror the same line to
+// every other online member of their party. This keeps one player in control
+// of the NPC conversation/select menus while ensuring the rest of the table
+// can follow the quest giver and see the consequence of the chosen response.
+// `message` targets an account directly, so this does not disturb another
+// member's RID or any NPC dialogue they already have open.
+function	script	DM_PartyMes	{
+	.@text$ = getarg(0);
+	mes(.@text$);
+
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	if (.@party_id <= 0 || .@text$ == "")
+		return 1;
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (.@accid[.@i] == .@origin_aid)
+			continue;
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		message(.@accid[.@i], "[Party Story] " + .@text$);
+	}
+	return 1;
+}
+
 function	script	DM_MapStory	{
 	.@text$ = getarg(0);
 	.@map$ = getarg(1, callfunc("DM_CurrentMap"));

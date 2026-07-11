@@ -14,6 +14,7 @@ OnInit:
 	bindatcmd("dmflag", strnpcinfo(NPC_NAME_UNIQUE)+"::OnFlag", 1, 99, 1);
 	bindatcmd("dmquest", strnpcinfo(NPC_NAME_UNIQUE)+"::OnQuest", 1, 99, 1);
 	bindatcmd("dmbeat", strnpcinfo(NPC_NAME_UNIQUE)+"::OnBeat", 1, 99, 1);
+	bindatcmd("dmguide", strnpcinfo(NPC_NAME_UNIQUE)+"::OnGuide", 1, 99, 1);
 	bindatcmd("dmstory", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStory", 1, 99, 1);
 	bindatcmd("dmcleanup", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCleanup", 1, 99, 1);
 	bindatcmd("dmwarp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnWarp", 1, 99, 1);
@@ -65,6 +66,10 @@ OnDM:
 
 	if (.@sub$ == "beat") {
 		callfunc("DM_BeatMenu");
+		end;
+	}
+	if (.@sub$ == "guide" || .@sub$ == "handbook") {
+		callfunc("DM_HandbookMenu");
 		end;
 	}
 
@@ -177,6 +182,16 @@ OnBeat:
 		end;
 	}
 	callfunc("DM_BeatMenu");
+	end;
+
+OnGuide:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	.@arc = atoi(.@atcmd_parameters$[0]);
+	if (.@arc >= 1 && .@arc <= 19)
+		callfunc("DM_HandbookArc", .@arc);
+	else
+		callfunc("DM_HandbookMenu");
 	end;
 
 OnStory:
