@@ -64,6 +64,28 @@ both `$dm_mode` and `$dm_active_party`, returning all NPCs to silent for everyon
 Already-active stock BOSS/MVP spawns are removed on their next hard or lazy AI
 tick and held on a short retry loop until mode is disabled.
 
+### Implementation pitfall (`callsub` + `.@atcmd_parameters$`)
+
+`bindatcmd` fills **scope** vars `.@atcmd_parameters$` / `.@atcmd_numparameters`.
+**`callsub` / `callfunc` start a new `.@` scope**, so those arrays are empty
+inside `S_*` labels unless you bridge them first.
+
+`dm_console.txt` copies into character temps before every param-using `callsub`:
+
+```text
+deletearray @dm_atcmd_p$[0], 128;
+copyarray @dm_atcmd_p$[0], .@atcmd_parameters$[0], .@atcmd_numparameters;
+@dm_atcmd_n = .@atcmd_numparameters;
+```
+
+`S_Mode` / `S_Reward` / … read `@dm_atcmd_p$`, not `.@atcmd_parameters$`.
+
+If a rebuild or rewrite drops that bridge, `@dm mode on` reports
+**“Mode is currently OFF”** even when the command was sent correctly.
+
+Full symptom matrix (client `0x017F` silence, reload steps, regression test):
+**[dm-mode-troubleshooting.md](dm-mode-troubleshooting.md)**.
+
 `@roll` is public map output for players and DMs, including individual dice for
 rolls up to 20 dice. `@roll hidden` requires GM level 60+ and reports only to
 the roller. `@roll fudge` / `@roll override` are transparent DM-only set-result

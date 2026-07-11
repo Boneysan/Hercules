@@ -196,10 +196,16 @@ villain confrontation, then an MVP boss spawned via DM console.
 2. Run `@dm mode on` — this enables DnD mode AND locks campaign NPCs to your party.
    - Only players in your party can interact with campaign NPCs.
    - Players outside the party see the NPC sprites but get silence if they click.
+   - Korangar: **GM / DM Commands** (`Ctrl+O`) → **DM mode ON** sends the same command.
+   - Expect chat: `→ @dm mode on` then `[DM] DnD mode enabled…` (not “Mode is currently OFF”).
 3. Run `@dm mode off` at end of session to reset everything.
 
 `$dm_active_party` stores the active party ID. If you need to check which party
 is currently active: `@dm mode` with no argument reports the current state.
+
+**If mode/help feedback breaks after a rebuild or script edit**, use the breadcrumb
+runbook: [planning/dm-mode-troubleshooting.md](../../../planning/dm-mode-troubleshooting.md)
+(server `callsub` + `.@` scope; client packet `0x017F` for `dispbottom`).
 
 ---
 
