@@ -30,7 +30,7 @@
 //===========================================================
 
 // Sun-Hwa - shrine-medium and Arc 2 quest-giver
-payon,181,104,4	script	Sun-Hwa#dm	4_F_SHAMAN,{
+payon,181,104,4	script	Sun-Hwa#dm	4_F_THAISHAMAN,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (questprogress(20012) == 2) {
 		mes("[Sun-Hwa]");

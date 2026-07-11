@@ -162,6 +162,73 @@ name and runs `atcommand->exec` on `@dm mode on`.
 
 ---
 
+## Symptom D — Ctrl+O does nothing / DM Commands panel won't open
+
+### What it means
+
+The **GM / DM Commands** window is bound to **Ctrl+O**, but the keypress is
+being swallowed because the **chat box still has focus** (you just typed an
+`@dm` command). Every menu shortcut (Alt+E inventory, Ctrl+S settings, …) is
+gated the same way while a text field is focused.
+
+### Root cause (Korangar)
+
+In `korangar/src/lib.rs` (`process_user_events`), the full keyboard handler
+runs only when the interface is **not** focused:
+
+```text
+if !interface_has_focus {
+    self.input_system.handle_keyboard_input(...);   // menu shortcuts live here
+} else {
+    self.input_system.handle_game_action_keys(...); // sit + hotbar only
+}
+```
+
+`interface.has_focus()` is `focused_element.is_some()` — true whenever a text
+widget (the chat box) is focused. Pressing **Enter** to send a chat line
+**submits but does not unfocus** (`components/text_box.rs`: only **Escape**
+queues `Unfocus`). So after any `@dm` command the chat box keeps focus and
+Ctrl+O is dropped.
+
+### Fix (applied in tree; live-verified 2026-07-11)
+
+Moved the Ctrl+O → `ToggleCommandsWindow` binding into the "always works even
+while focused" path so a DM can type a command and immediately open the panel.
+Confirmed in-game: with the chat box focused, Ctrl+O opens the GM/DM Commands
+panel and toggles it closed on a second press.
+
+File: `korangar/src/input/mod.rs`
+
+1. In `push_game_action_keys` (runs in **both** focus branches, alongside
+   sit/hotbar), add:
+
+```text
+let control_down = ControlLeft.down() || ControlRight.down();
+if control_down && KeyO.pressed() {
+    events.push(InputEvent::ToggleCommandsWindow);
+}
+```
+
+2. **Remove** the old Ctrl+O block from `handle_keyboard_input` — leaving both
+   would fire the toggle twice when chat is *not* focused (open+close = nothing).
+
+Ctrl+O produces no printable character, so it does not leak an `o` into chat.
+Rebuild + restart the client (see Symptom B rebuild note).
+
+### Workaround without rebuilding
+
+Press **Escape** once (unfocuses the chat box), then **Ctrl+O**. Or click empty
+ground first, then Ctrl+O.
+
+### Quick re-break check
+
+If Ctrl+O toggles nothing again after a rebuild, confirm the binding sits in
+`push_game_action_keys` and **not** in `handle_keyboard_input` (double-toggle),
+and that `handle_game_action_keys` is still called in the focused branch of
+`process_user_events`.
+
+---
+
 ## Server log breadcrumbs
 
 Map log path (this workspace): `Hercules/log/run-map.out` / `Hercules/log/map.log`
@@ -190,6 +257,8 @@ Long help lines for `@dm flag` can truncate; that is cosmetic, not the mode bug.
 - [ ] `ragnarok-packets`: `DisplayBottomMessagePacket` `0x017F`
 - [ ] `korangar-networking` `version_20220406.rs`: register → `ChatMessage`
 - [ ] `korangar/src/lib.rs`: `@` local echo on `SendMessage`
+- [ ] `korangar/src/input/mod.rs`: Ctrl+O binding in `push_game_action_keys`
+      (NOT in `handle_keyboard_input` — would double-toggle) — see Symptom D
 - [ ] `interface/windows/commands.rs`: GM panel still sends `@dm mode on`
 - [ ] Restart **new** `target/release/korangar` process
 
@@ -209,7 +278,10 @@ Long help lines for `@dm flag` can truncate; that is cosmetic, not the mode bug.
 3. `@dm mode on` → expect **DnD mode enabled**, not “currently OFF”.
 4. `@dm mode` again → expect ON + party id.
 5. `@dm mode off` → expect disabled.
-6. Panel button **DM mode ON** → same as step 3.
+6. **Ctrl+O** right after typing a command (chat still focused) → GM/DM Commands
+   window opens (Symptom D fix). Ctrl+O again closes it.
+7. Panel button **DM mode ON** → same as step 3.
 
 If step 3 shows “currently OFF” → Symptom A (script scope).  
-If step 3 has no `[DM]` lines but map log truncates help → Symptom B (client `0x017F`).
+If step 3 has no `[DM]` lines but map log truncates help → Symptom B (client `0x017F`).  
+If step 6 does nothing → Symptom D (Ctrl+O eaten by chat focus / double-toggle).

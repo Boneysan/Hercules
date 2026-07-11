@@ -168,6 +168,14 @@ OnQuest:
 OnBeat:
 	if (!callfunc("DM_RequireDM"))
 		end;
+	// @dmbeat <1-19> jumps straight into that arc's beat submenu (used by the
+	// client Beats tab). .@atcmd_parameters$ is in scope here (event body, no
+	// callsub), so no @dm_atcmd bridge is needed. No/invalid arg = full menu.
+	.@arc = atoi(.@atcmd_parameters$[0]);
+	if (.@arc >= 1 && .@arc <= 19) {
+		callfunc("DM_BeatArc" + (.@arc < 10 ? "0" : "") + .@arc);
+		end;
+	}
 	callfunc("DM_BeatMenu");
 	end;
 

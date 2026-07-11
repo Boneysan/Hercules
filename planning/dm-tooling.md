@@ -91,6 +91,11 @@ rolls up to 20 dice. `@roll hidden` requires GM level 60+ and reports only to
 the roller. `@roll fudge` / `@roll override` are transparent DM-only set-result
 commands; they announce that the result was set rather than rolled.
 
+Players can also roll from a GUI: the **Dice Roller** window in Korangar
+(**Ctrl+D**, or Menu → Dice Roller) sends these same `@roll` commands — standard
+dice, common combos, a custom `NdX+mod` field, and a GM-only Hidden toggle. See
+`korangar/docs/dice-roller-window.md`.
+
 ## Live Questline Flow
 
 The campaign is wired around scripted quest-giver NPCs plus a manual beat
@@ -144,6 +149,12 @@ Current scripted arc entry points:
 current party to the relevant NPC/location, start or complete arc quests, set
 branch flags, announce story text, spawn scripted bosses, start scripted
 hazards, and write `dm_story_beat`.
+
+`@dmbeat` with no argument opens the full Act → Arc → Beat director. `@dmbeat
+<1-19>` jumps **straight into that arc's beat submenu** (`OnBeat` parses the
+numeric arg and calls `DM_BeatArcNN` directly, skipping the Act/Arc navigation).
+The client **Beats tab** (GM/DM panel) uses this: one button per arc, grouped by
+act. Invalid/out-of-range arg falls back to the full menu.
 
 ## Party Warp And Instances
 
