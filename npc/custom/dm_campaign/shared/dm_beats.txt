@@ -124,7 +124,7 @@ function	script	DM_BeatArc01	{
 		mes("Tibbets/key flag set for the current party.");
 		break;
 	case 7:
-		callfunc("DM_WarpParty", "prt_sewb4", 103, 100);
+		callfunc("DM_WarpParty", "prt_sewb4", 104, 99);
 		mes("Party warped to Deacon Holt.");
 		break;
 	case 8:
@@ -257,7 +257,7 @@ function	script	DM_BeatArc03	{
 		mes("Sabra branch tracked for the current party.");
 		break;
 	case 5:
-		callfunc("DM_WarpParty", "moc_pryd04", 100, 92);
+		callfunc("DM_WarpParty", "moc_pryd04", 91, 83);
 		mes("Party warped to Osiris's Court.");
 		break;
 	case 6:
@@ -420,7 +420,7 @@ function	script	DM_BeatArc05	{
 	next();
 	switch (select("Warp: Captain Mara", "Beat: Mara starts contracts", "Beat: Mara branch", "Warp: Smuggler-Baron Brode", "Beat: Brode manifest branch", "Warp: Cargo Hold", "Beat: Complete Cargo of Souls", "Warp: Deep Trench Wake", "Beat: Start Tao Gunka", "Beat: Complete Act I", "Back")) {
 	case 1:
-		callfunc("DM_WarpParty", "alberta", 183, 151);
+		callfunc("DM_WarpParty", "alberta", 184, 150);
 		mes("Party warped to Captain Mara.");
 		break;
 	case 2:
@@ -551,7 +551,7 @@ function	script	DM_BeatArc06	{
 		mes("Krenn exposed flag set.");
 		break;
 	case 6:
-		callfunc("DM_WarpParty", "juperos_01", 150, 150);
+		callfunc("DM_WarpParty", "juperos_01", 143, 143);
 		mes("Party warped to Juperos Vault.");
 		break;
 	case 7:
@@ -582,7 +582,7 @@ function	script	DM_BeatArc07	{
 	next();
 	switch (select("Warp: Greta Holm", "Beat: Greta starts contracts", "Warp: Supervisor Kessler", "Beat: Strike Supported", "Beat: Strike Broken", "Warp: Reactivation Bay", "Beat: Spawn RSX-0806", "Beat: RSX-0806 slain (Arc Complete)", "Back")) {
 	case 1:
-		callfunc("DM_WarpParty", "einbroch", 145, 230);
+		callfunc("DM_WarpParty", "einbroch", 146, 237);
 		mes("Party warped to Greta Holm.");
 		break;
 	case 2:
@@ -596,7 +596,7 @@ function	script	DM_BeatArc07	{
 		mes("Arc 7 started for the current party.");
 		break;
 	case 3:
-		callfunc("DM_WarpParty", "einbroch", 160, 200);
+		callfunc("DM_WarpParty", "einbroch", 169, 191);
 		mes("Party warped to Supervisor Kessler.");
 		break;
 	case 4:
@@ -614,7 +614,7 @@ function	script	DM_BeatArc07	{
 		mes("Strike broken flag set.");
 		break;
 	case 6:
-		callfunc("DM_WarpParty", "ein_dun02", 150, 150);
+		callfunc("DM_WarpParty", "ein_dun02", 152, 147);
 		mes("Party warped to Reactivation Bay.");
 		break;
 	case 7:
@@ -651,7 +651,7 @@ function	script	DM_BeatArc08	{
 	next();
 	switch (select("Warp: Sir Aldric", "Beat: Start Arc 8", "Beat: Manfred Spared", "Beat: Manfred Killed", "Warp: Brother Manfred", "Warp: GH Abbey", "Beat: Spawn Dark Lord", "Beat: Dark Lord slain (Arc Complete)", "Back")) {
 	case 1:
-		callfunc("DM_WarpParty", "geffen", 120, 120);
+		callfunc("DM_WarpParty", "geffen", 118, 115);
 		mes("Party warped to Sir Aldric.");
 		break;
 	case 2:
@@ -684,7 +684,7 @@ function	script	DM_BeatArc08	{
 		mes("Party warped to Brother Manfred.");
 		break;
 	case 6:
-		callfunc("DM_WarpParty", "gl_church", 150, 150);
+		callfunc("DM_WarpParty", "gl_church", 147, 148);
 		mes("Party warped to GH Abbey.");
 		break;
 	case 7:
@@ -752,11 +752,11 @@ function	script	DM_BeatArc09	{
 		mes("Karsh deal made. Prelate's Record complete.");
 		break;
 	case 5:
-		callfunc("DM_WarpParty", "rachel", 130, 120);
+		callfunc("DM_WarpParty", "rachel", 129, 119);
 		mes("Party warped to High Prelate Karsh.");
 		break;
 	case 6:
-		callfunc("DM_WarpParty", "ice_dun03", 150, 150);
+		callfunc("DM_WarpParty", "ice_dun03", 160, 148);
 		mes("Party warped to Ice Bleed Site.");
 		break;
 	case 7:
@@ -936,7 +936,7 @@ function	script	DM_BeatArc12	{
 	next();
 	switch (select("Warp: Envoy Aelith", "Beat: Start Arc 12", "Beat: Vance Exposed", "Beat: Vance Helped", "Warp: Captain Vance", "Warp: Rift Anchor", "Beat: Spawn Naght Sieger", "Beat: Naght Sieger slain (Arc Complete)", "Back")) {
 	case 1:
-		callfunc("DM_WarpParty", "mid_camp", 100, 100);
+		callfunc("DM_WarpParty", "mid_camp", 95, 95);
 		mes("Party warped to Envoy Aelith.");
 		break;
 	case 2:
@@ -963,7 +963,7 @@ function	script	DM_BeatArc12	{
 		mes("Vance helped. Vance Proposal complete.");
 		break;
 	case 5:
-		callfunc("DM_WarpParty", "mid_camp", 110, 100);
+		callfunc("DM_WarpParty", "mid_camp", 99, 89);
 		mes("Party warped to Captain Vance.");
 		break;
 	case 6:
@@ -1041,7 +1041,7 @@ function	script	DM_BeatArc13	{
 		mes("Party warped to Broker Carrion.");
 		break;
 	case 6:
-		callfunc("DM_WarpParty", "abbey03", 150, 150);
+		callfunc("DM_WarpParty", "abbey03", 152, 148);
 		mes("Party warped to Beelzebub Sanctum.");
 		break;
 	case 7:
@@ -1092,7 +1092,7 @@ function	script	DM_BeatArc14	{
 	next();
 	switch (select("Warp: Foreman Dunmar", "Beat: Start Arc 14", "Beat: Hesma Exposed", "Beat: Hesma Bribed", "Warp: Prelate Hesma", "Warp: Magma Cathedral", "Beat: Spawn Ifrit", "Beat: Ifrit slain (Act III Complete)", "Back")) {
 	case 1:
-		callfunc("DM_WarpParty", "veins", 100, 100);
+		callfunc("DM_WarpParty", "veins", 111, 112);
 		mes("Party warped to Foreman Dunmar.");
 		break;
 	case 2:
@@ -1119,7 +1119,7 @@ function	script	DM_BeatArc14	{
 		mes("Hesma bribed. Prelate's Silence complete.");
 		break;
 	case 5:
-		callfunc("DM_WarpParty", "veins", 110, 100);
+		callfunc("DM_WarpParty", "veins", 118, 108);
 		mes("Party warped to Prelate Hesma.");
 		break;
 	case 6:
@@ -1166,7 +1166,7 @@ function	script	DM_BeatArc15	{
 	next();
 	switch (select("Warp: Keeper Lysandra", "Beat: Start Arc 15", "Beat: Pratt Exposed", "Beat: Pratt Delayed", "Beat: Pratt Challenged", "Warp: Scholar Pratt", "Warp: Memory of Thanatos", "Beat: Spawn Thanatos", "Beat: Thanatos slain (Arc Complete)", "Back")) {
 	case 1:
-		callfunc("DM_WarpParty", "aldebaran", 100, 100);
+		callfunc("DM_WarpParty", "aldebaran", 99, 99);
 		mes("Party warped to Keeper Lysandra.");
 		break;
 	case 2:
@@ -1355,7 +1355,7 @@ function	script	DM_BeatArc17	{
 	next();
 	switch (select("Warp: Doctor Tressa", "Beat: Start Arc 17", "Beat: Admin Purged", "Beat: Admin Negotiated", "Beat: Admin Running", "Warp: The Administrator", "Warp: Biosphere Core", "Beat: Spawn Amdarais", "Beat: Biosphere Core slain (Arc Complete)", "Back")) {
 	case 1:
-		callfunc("DM_WarpParty", "ba_in01", 100, 100);
+		callfunc("DM_WarpParty", "ba_in01", 104, 96);
 		mes("Party warped to Doctor Mira Tressa.");
 		break;
 	case 2:
@@ -1399,7 +1399,7 @@ function	script	DM_BeatArc17	{
 		mes("Party warped to The Administrator.");
 		break;
 	case 7:
-		callfunc("DM_WarpParty", "ba_pw03", 150, 150);
+		callfunc("DM_WarpParty", "ba_pw03", 154, 154);
 		mes("Party warped to Biosphere Core.");
 		break;
 	case 8:
@@ -1433,7 +1433,7 @@ function	script	DM_BeatArc18	{
 	next();
 	switch (select("Warp: The Familiar Dead", "Beat: Start Arc 18", "Beat: Himmelmez Killed", "Beat: Himmelmez Bargained", "Warp: Himmelmez", "Beat: Arc 18 Complete", "Beat: Himmelmez curse pressure", "Back")) {
 	case 1:
-		callfunc("DM_WarpParty", "niflheim", 100, 100);
+		callfunc("DM_WarpParty", "niflheim", 95, 95);
 		mes("Party warped to The Familiar Dead.");
 		break;
 	case 2:
@@ -1462,7 +1462,7 @@ function	script	DM_BeatArc18	{
 		mes("Himmelmez bargained. Arc 18 complete for the current party.");
 		break;
 	case 5:
-		callfunc("DM_WarpParty", "nif_in", 150, 150);
+		callfunc("DM_WarpParty", "nif_in", 138, 162);
 		mes("Party warped to Himmelmez.");
 		break;
 	case 6:
@@ -1519,12 +1519,12 @@ function	script	DM_BeatArc19	{
 		mes("Loki final audience triggered. 20233 started.");
 		break;
 	case 5:
-		callfunc("DM_WarpParty", "moc_fild22", 150, 150);
+		callfunc("DM_WarpParty", "moc_fild22", 170, 140);
 		mes("Party warped to The Ash Vacuum Rift.");
 		break;
 	case 6:
 		.@dm_map$ = strcharinfo(3);
-		monster .@dm_map$, 150, 150, "Surt", 1252, 1, "The Ash Vacuum Rift#dm::OnSurtDead";
+		monster .@dm_map$, 170, 140, "Surt", 1252, 1, "The Ash Vacuum Rift#dm::OnSurtDead";
 		$@dm_arc19_rift_party_id = getcharid(CHAR_ID_PARTY);
 		$@dm_arc19_rift_damage = (dm_arc18_himmelmez_bargained ? 5 : 8);
 		$@dm_arc19_rift_status = (dm_arc18_himmelmez_bargained ? 0 : SC_CURSE);
@@ -1548,7 +1548,7 @@ function	script	DM_BeatArc19	{
 		mes("Surt defeated for the current party.");
 		break;
 	case 8:
-		callfunc("DM_WarpParty", "moc_fild22", 155, 150);
+		callfunc("DM_WarpParty", "moc_fild22", 175, 140);
 		mes("Party warped to The Central Choice.");
 		break;
 	case 9:

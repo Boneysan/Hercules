@@ -157,7 +157,7 @@ S_FinalAudience:
 }
 
 // ── The Ash Vacuum Rift Set-piece ─────────────────────────────────────────
-moc_fild22,150,150,0	script	The Ash Vacuum Rift#dm	HIDDEN_NPC,{
+moc_fild22,170,140,0	script	The Ash Vacuum Rift#dm	HIDDEN_NPC,{
 	end;
 
 OnRiftStart:
@@ -179,22 +179,22 @@ OnRiftStop:
 
 OnTimer8000:
 	mapannounce 'rift_map$, "[Ash Vacuum Rift] The cascade hammers against the old seal.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	callfunc("DM_HazardArea", 'rift_map$, 170, 140, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	end;
 
 OnTimer16000:
 	mapannounce 'rift_map$, "[Ash Vacuum Rift] A pressure wave rolls out from Surt's focal point.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	callfunc("DM_HazardArea", 'rift_map$, 170, 140, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	end;
 
 OnTimer24000:
 	mapannounce 'rift_map$, "[Ash Vacuum Rift] The old lock flexes and nearly gives way.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	callfunc("DM_HazardArea", 'rift_map$, 170, 140, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	end;
 
 OnTimer32000:
 	mapannounce 'rift_map$, "[Ash Vacuum Rift] The rift spends its last violent surge.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	callfunc("DM_HazardArea", 'rift_map$, 170, 140, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	stopnpctimer;
 	end;
 
@@ -214,7 +214,7 @@ OnSurtDead:
 }
 
 // ── The Central Choice — The Five Paths ───────────────────────────────────
-moc_fild22,155,150,5	script	The Central Choice#dm	4_M_05,{
+moc_fild22,175,140,5	script	The Central Choice#dm	4_M_05,{
 	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
 	if (dm_campaign_complete) {
 		callfunc("DM_PartyMes", "[The Central Choice]");

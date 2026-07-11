@@ -174,12 +174,12 @@ villain confrontation, then an MVP boss spawned via DM console.
 - Hunting: Khalitzburg (1132 × 15 / 20232)
   - Auto-completes when party returns to Loki after hunt done (S_Progress)
 - Revelation: Loki explains cascade = Thanatos's seal in harmonic decay
-- Boss: Garm (1252) as Surt at `moc_fild22,150,150`
-- HIDDEN_NPC: `The Ash Vacuum Rift#dm` at `moc_fild22,150,150`
+- Boss: Garm (1252) as Surt at `moc_fild22,170,140`
+- HIDDEN_NPC: `The Ash Vacuum Rift#dm` at `moc_fild22,170,140`
 - Surt starts the Ash Vacuum Rift hazard: four pulses around `moc_fild22`
-  150,150. Himmelmez_bargained lowers pulse damage from 8% to 5% and removes
+  170,140. Himmelmez_bargained lowers pulse damage from 8% to 5% and removes
   the curse rider.
-- Final NPC: The Central Choice (`moc_fild22,155,150`) — gated on `dm_arc19_surt_defeated`
+- Final NPC: The Central Choice (`moc_fild22,175,140`) — gated on `dm_arc19_surt_defeated`
 - Five endings (each sets a `dm_finale_*` flag):
   1. `dm_finale_shared_seal` — distributed resonance network
   2. `dm_finale_reforged_seal` — Varmundt's inverse-frequency machine
