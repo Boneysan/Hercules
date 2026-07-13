@@ -227,6 +227,12 @@ static int instance_add_map(const char *name, int instance_id, bool usebasename,
 		map->cellfromcache(&map->list[m]);
 
 	memcpy( &map->list[im], &map->list[m], sizeof(struct map_data) ); // Copy source map
+	// The memcpy shallow-copies the source map's questinfo vector; clearing
+	// it on instance destruction would free the source map's array and leave
+	// a dangling qi_list behind (crash in quest_questinfo_refresh on the next
+	// map-load ack). Instanced NPC duplicates carry no questinfo of their
+	// own, so the instanced map starts with an empty list.
+	VECTOR_INIT(map->list[im].qi_list);
 	if( map_name != NULL ) {
 		snprintf(map->list[im].name, MAP_NAME_LENGTH, "%s", map_name);
 		map->list[im].custom_name = true;

@@ -322,12 +322,21 @@ OnRoll:
 	.@sides = 20;
 	.@mod = 0;
 
-	if (sscanf(.@input$, "%dd%d+%d", .@num, .@sides, .@mod) >= 3) {
-	} else if (sscanf(.@input$, "%dd%d-%d", .@num, .@sides, .@mod) >= 3) {
+	// Pick the format by the modifier sign actually present: sscanf on a
+	// modifier-less input against "%dd%d+%d" leaks a spurious modifier
+	// instead of failing (found by the headless dm-roll-bounds scenario).
+	if (compare(.@input$, "+")) {
+		if (sscanf(.@input$, "%dd%d+%d", .@num, .@sides, .@mod) < 3) {
+			dispbottom("[DM] Usage: @roll [hidden] <NdX[+/-mod]> (e.g. 1d20+3)");
+			end;
+		}
+	} else if (compare(.@input$, "-")) {
+		if (sscanf(.@input$, "%dd%d-%d", .@num, .@sides, .@mod) < 3) {
+			dispbottom("[DM] Usage: @roll [hidden] <NdX[+/-mod]> (e.g. 1d20+3)");
+			end;
+		}
 		.@mod = -.@mod;
-	} else if (sscanf(.@input$, "%dd%d", .@num, .@sides) >= 2) {
-		.@mod = 0;
-	} else {
+	} else if (sscanf(.@input$, "%dd%d", .@num, .@sides) < 2) {
 		dispbottom("[DM] Usage: @roll [hidden] <NdX[+/-mod]> (e.g. 1d20+3)");
 		end;
 	}

@@ -89,7 +89,7 @@ function	script	DM_BeatArc01	{
 	mes("[Arc 1 - Omens at the Fountain]");
 	mes("Pick the NPC/location or story beat.");
 	next();
-	switch (select("Warp: Quartermaster Wynne", "Beat: Wynne starts contracts", "Warp: Frightened Mother", "Beat: Trembling Ground", "Warp: Tibbets", "Beat: Tibbets gives key", "Warp: Deacon Holt", "Beat: Start Goat-Headed Sign", "Beat: Complete Arc 1", "Back")) {
+	switch (select("Warp - Quartermaster Wynne", "Beat - Wynne starts contracts", "Warp - Frightened Mother", "Beat - Trembling Ground", "Warp - Tibbets", "Beat - Tibbets gives key", "Warp - Deacon Holt", "Beat - Start Goat-Headed Sign", "Beat - Complete Arc 1", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "prontera", 156, 191);
 		mes("Party warped to Quartermaster Wynne.");
@@ -152,7 +152,7 @@ function	script	DM_BeatArc02	{
 	mes("[Arc 2 - The Sleeping Forest]");
 	mes("Pick the NPC/location or story beat.");
 	next();
-	switch (select("Warp: Sun-Hwa", "Beat: Sun-Hwa starts contracts", "Beat: Lantern choice", "Beat: Emptied Graves choice", "Warp: Scholar Voss", "Beat: Start Moonlight set-piece", "Beat: Complete Arc 2", "Back")) {
+	switch (select("Warp - Sun-Hwa", "Beat - Sun-Hwa starts contracts", "Beat - Lantern choice", "Beat - Emptied Graves choice", "Warp - Scholar Voss", "Beat - Start Moonlight set-piece", "Beat - Complete Arc 2", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "payon", 181, 104);
 		mes("Party warped to Sun-Hwa.");
@@ -217,7 +217,7 @@ function	script	DM_BeatArc03	{
 	mes("[Arc 3 - Sand and Whispers]");
 	mes("Pick the NPC/location or story beat.");
 	next();
-	switch (select("Warp: Rashid", "Beat: Rashid starts contracts", "Warp: Mother Sabra", "Beat: Sabra branch", "Warp: Osiris Court", "Beat: Start Osiris side quest", "Warp: Amon Ra Lid", "Beat: Start King Beneath", "Beat: Complete Arc 3", "Back")) {
+	switch (select("Warp - Rashid", "Beat - Rashid starts contracts", "Warp - Mother Sabra", "Beat - Sabra branch", "Warp - Osiris Court", "Beat - Start Osiris side quest", "Warp - Amon Ra Lid", "Beat - Start King Beneath", "Beat - Complete Arc 3", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "morocc", 159, 97);
 		mes("Party warped to Rashid.");
@@ -296,7 +296,7 @@ function	script	DM_BeatArc04	{
 	mes("[Arc 4 - The City Above the Beast]");
 	mes("Pick the NPC/location or story beat.");
 	next();
-	switch (select("Warp: Apprentice Elsbeth", "Beat: Elsbeth starts contracts", "Beat: Elsbeth branch", "Warp: Archmagus Doran", "Beat: Doran branch", "Warp: Baphomet's Seal", "Beat: Start Vault set-piece", "Beat: Complete Vault", "Warp: Brother Cassell", "Beat: Complete Arc 4", "Beat: Vault seal pressure", "Back")) {
+	switch (select("Warp - Apprentice Elsbeth", "Beat - Elsbeth starts contracts", "Beat - Elsbeth branch", "Warp - Archmagus Doran", "Beat - Doran branch", "Warp - Baphomet's Seal", "Beat - Start Vault set-piece", "Beat - Complete Vault", "Warp - Brother Cassell", "Beat - Complete Arc 4", "Beat - Vault seal pressure", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "geffen", 120, 100);
 		mes("Party warped to Apprentice Elsbeth.");
@@ -418,7 +418,7 @@ function	script	DM_BeatArc05	{
 	mes("[Arc 5 - Tides and Trade]");
 	mes("Pick the NPC/location or story beat.");
 	next();
-	switch (select("Warp: Captain Mara", "Beat: Mara starts contracts", "Beat: Mara branch", "Warp: Smuggler-Baron Brode", "Beat: Brode manifest branch", "Warp: Cargo Hold", "Beat: Complete Cargo of Souls", "Warp: Deep Trench Wake", "Beat: Start Tao Gunka", "Beat: Complete Act I", "Back")) {
+	switch (select("Warp - Captain Mara", "Beat - Mara starts contracts", "Beat - Mara branch", "Warp - Smuggler-Baron Brode", "Beat - Brode manifest branch", "Warp - Cargo Hold", "Beat - Complete Cargo of Souls", "Warp - Deep Trench Wake", "Beat - Start Tao Gunka", "Beat - Complete Act I", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "alberta", 184, 150);
 		mes("Party warped to Captain Mara.");
@@ -518,7 +518,7 @@ function	script	DM_BeatArc06	{
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 6 - Yuno (The Floating Republic)");
 	next();
-	switch (select("Warp: Doctor Ingrid Vahl", "Beat: Vahl starts contracts", "Warp: Director Krenn", "Beat: Krenn Bribed", "Beat: Krenn Exposed", "Warp: Juperos Vault", "Beat: Spawn Mistress", "Beat: Mistress slain (Arc Complete)", "Back")) {
+	switch (select("Warp - Doctor Ingrid Vahl", "Beat - Vahl starts contracts", "Warp - Director Krenn", "Beat - Krenn Bribed", "Beat - Krenn Exposed", "Warp - Juperos Vault", "Beat - Spawn Mistress", "Beat - Mistress slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "yuno", 155, 185);
 		mes("Party warped to Doctor Vahl.");
@@ -580,7 +580,7 @@ function	script	DM_BeatArc07	{
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 7 - Einbroch (Iron and Ash)");
 	next();
-	switch (select("Warp: Greta Holm", "Beat: Greta starts contracts", "Warp: Supervisor Kessler", "Beat: Strike Supported", "Beat: Strike Broken", "Warp: Reactivation Bay", "Beat: Spawn RSX-0806", "Beat: RSX-0806 slain (Arc Complete)", "Back")) {
+	switch (select("Warp - Greta Holm", "Beat - Greta starts contracts", "Warp - Supervisor Kessler", "Beat - Strike Supported", "Beat - Strike Broken", "Warp - Reactivation Bay", "Beat - Spawn RSX-0806", "Beat - RSX-0806 slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "einbroch", 146, 237);
 		mes("Party warped to Greta Holm.");
@@ -649,7 +649,7 @@ function	script	DM_BeatArc08	{
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 8 - Glast Heim (The Cursed Kingdom)");
 	next();
-	switch (select("Warp: Sir Aldric", "Beat: Start Arc 8", "Beat: Manfred Spared", "Beat: Manfred Killed", "Warp: Brother Manfred", "Warp: GH Abbey", "Beat: Spawn Dark Lord", "Beat: Dark Lord slain (Arc Complete)", "Back")) {
+	switch (select("Warp - Sir Aldric", "Beat - Start Arc 8", "Beat - Manfred Spared", "Beat - Manfred Killed", "Warp - Brother Manfred", "Warp - GH Abbey", "Beat - Spawn Dark Lord", "Beat - Dark Lord slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "geffen", 118, 115);
 		mes("Party warped to Sir Aldric.");
@@ -723,7 +723,7 @@ function	script	DM_BeatArc09	{
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 9 - Rachel (Frozen Faith)");
 	next();
-	switch (select("Warp: Acolyte Naima", "Beat: Start Arc 9", "Beat: Karsh Exposed", "Beat: Karsh Deal", "Warp: High Prelate Karsh", "Warp: Ice Bleed Site", "Beat: Spawn Gloom Under Night", "Beat: Gloom slain (Arc Complete)", "Back")) {
+	switch (select("Warp - Acolyte Naima", "Beat - Start Arc 9", "Beat - Karsh Exposed", "Beat - Karsh Deal", "Warp - High Prelate Karsh", "Warp - Ice Bleed Site", "Beat - Spawn Gloom Under Night", "Beat - Gloom slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "rachel", 120, 120);
 		mes("Party warped to Acolyte Naima.");
@@ -785,7 +785,7 @@ function	script	DM_BeatArc10	{
 	mes("[DM Beat Director]");
 	mes("Act II / Arc 10 - Lighthalzen (The Lab Beneath)");
 	next();
-	switch (select("Warp: Doctor Reuter", "Beat: Start Arc 10", "Beat: Reise Confronted", "Beat: Echo Freed", "Warp: Director Reise", "Warp: Kiel Core", "Beat: Spawn Kiel D-01", "Beat: Kiel slain (Act II Complete)", "Beat: Lab containment pressure", "Back")) {
+	switch (select("Warp - Doctor Reuter", "Beat - Start Arc 10", "Beat - Reise Confronted", "Beat - Echo Freed", "Warp - Director Reise", "Warp - Kiel Core", "Beat - Spawn Kiel D-01", "Beat - Kiel slain (Act II Complete)", "Beat - Lab containment pressure", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "lighthalzen", 120, 120);
 		mes("Party warped to Doctor Reuter.");
@@ -860,7 +860,7 @@ function	script	DM_BeatArc11	{
 	mes("[DM Beat Director]");
 	mes("Act III / Arc 11 - Hugel (Wrath of Heaven)");
 	next();
-	switch (select("Warp: Priest Eadric", "Beat: Start Arc 11", "Beat: Bjorn Subdued", "Beat: Bjorn Joined", "Warp: Zealot Bjorn", "Warp: Valkyrie Hall", "Beat: Spawn Randgris", "Beat: Randgris slain (Arc Complete)", "Back")) {
+	switch (select("Warp - Priest Eadric", "Beat - Start Arc 11", "Beat - Bjorn Subdued", "Beat - Bjorn Joined", "Warp - Zealot Bjorn", "Warp - Valkyrie Hall", "Beat - Spawn Randgris", "Beat - Randgris slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "hugel", 100, 100);
 		mes("Party warped to Priest Eadric.");
@@ -934,7 +934,7 @@ function	script	DM_BeatArc12	{
 	mes("[DM Beat Director]");
 	mes("Act III / Arc 12 - New World (Beyond the Horizon)");
 	next();
-	switch (select("Warp: Envoy Aelith", "Beat: Start Arc 12", "Beat: Vance Exposed", "Beat: Vance Helped", "Warp: Captain Vance", "Warp: Rift Anchor", "Beat: Spawn Naght Sieger", "Beat: Naght Sieger slain (Arc Complete)", "Back")) {
+	switch (select("Warp - Envoy Aelith", "Beat - Start Arc 12", "Beat - Vance Exposed", "Beat - Vance Helped", "Warp - Captain Vance", "Warp - Rift Anchor", "Beat - Spawn Naght Sieger", "Beat - Naght Sieger slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "mid_camp", 95, 95);
 		mes("Party warped to Envoy Aelith.");
@@ -1004,7 +1004,7 @@ function	script	DM_BeatArc13	{
 	mes("[DM Beat Director]");
 	mes("Act III / Arc 13 - Nameless Island (Island of the Damned)");
 	next();
-	switch (select("Warp: Father Quill", "Beat: Start Arc 13", "Beat: Carrion Killed", "Beat: Carrion Bribed", "Warp: Broker Carrion", "Warp: Beelzebub Sanctum", "Beat: Spawn Beelzebub", "Beat: Complete Arc 13", "Back")) {
+	switch (select("Warp - Father Quill", "Beat - Start Arc 13", "Beat - Carrion Killed", "Beat - Carrion Bribed", "Warp - Broker Carrion", "Warp - Beelzebub Sanctum", "Beat - Spawn Beelzebub", "Beat - Complete Arc 13", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "nameless_i", 100, 100);
 		mes("Party warped to Father Quill.");
@@ -1090,7 +1090,7 @@ function	script	DM_BeatArc14	{
 	mes("[DM Beat Director]");
 	mes("Act III / Arc 14 - Veins (The Fire That Ends the World)");
 	next();
-	switch (select("Warp: Foreman Dunmar", "Beat: Start Arc 14", "Beat: Hesma Exposed", "Beat: Hesma Bribed", "Warp: Prelate Hesma", "Warp: Magma Cathedral", "Beat: Spawn Ifrit", "Beat: Ifrit slain (Act III Complete)", "Back")) {
+	switch (select("Warp - Foreman Dunmar", "Beat - Start Arc 14", "Beat - Hesma Exposed", "Beat - Hesma Bribed", "Warp - Prelate Hesma", "Warp - Magma Cathedral", "Beat - Spawn Ifrit", "Beat - Ifrit slain (Act III Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "veins", 111, 112);
 		mes("Party warped to Foreman Dunmar.");
@@ -1164,7 +1164,7 @@ function	script	DM_BeatArc15	{
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 15 - Thanatos Tower (The Hero's Tomb)");
 	next();
-	switch (select("Warp: Keeper Lysandra", "Beat: Start Arc 15", "Beat: Pratt Exposed", "Beat: Pratt Delayed", "Beat: Pratt Challenged", "Warp: Scholar Pratt", "Warp: Memory of Thanatos", "Beat: Spawn Thanatos", "Beat: Thanatos slain (Arc Complete)", "Back")) {
+	switch (select("Warp - Keeper Lysandra", "Beat - Start Arc 15", "Beat - Pratt Exposed", "Beat - Pratt Delayed", "Beat - Pratt Challenged", "Warp - Scholar Pratt", "Warp - Memory of Thanatos", "Beat - Spawn Thanatos", "Beat - Thanatos slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "aldebaran", 99, 99);
 		mes("Party warped to Keeper Lysandra.");
@@ -1265,7 +1265,7 @@ function	script	DM_BeatArc16	{
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 16 - Prontera (The Royal Banquet)");
 	next();
-	switch (select("Warp: Kronecker G Heine", "Beat: Start Arc 16", "Beat: Rina Exposed", "Beat: Rina Rolled", "Beat: Rina Defected", "Warp: Matron Rina", "Warp: Prison Vault", "Beat: Spawn Bijou", "Beat: Resolve Bijou (Arc Complete)", "Back")) {
+	switch (select("Warp - Kronecker G Heine", "Beat - Start Arc 16", "Beat - Rina Exposed", "Beat - Rina Rolled", "Beat - Rina Defected", "Warp - Matron Rina", "Warp - Prison Vault", "Beat - Spawn Bijou", "Beat - Resolve Bijou (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "prontera", 150, 150);
 		mes("Party warped to Kronecker G Heine.");
@@ -1353,7 +1353,7 @@ function	script	DM_BeatArc17	{
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 17 - Varmundt Biolabs (The Sage's Legacy)");
 	next();
-	switch (select("Warp: Doctor Tressa", "Beat: Start Arc 17", "Beat: Admin Purged", "Beat: Admin Negotiated", "Beat: Admin Running", "Warp: The Administrator", "Warp: Biosphere Core", "Beat: Spawn Amdarais", "Beat: Biosphere Core slain (Arc Complete)", "Back")) {
+	switch (select("Warp - Doctor Tressa", "Beat - Start Arc 17", "Beat - Admin Purged", "Beat - Admin Negotiated", "Beat - Admin Running", "Warp - The Administrator", "Warp - Biosphere Core", "Beat - Spawn Amdarais", "Beat - Biosphere Core slain (Arc Complete)", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "ba_in01", 104, 96);
 		mes("Party warped to Doctor Mira Tressa.");
@@ -1431,7 +1431,7 @@ function	script	DM_BeatArc18	{
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 18 - Niflheim (The Witch of Death)");
 	next();
-	switch (select("Warp: The Familiar Dead", "Beat: Start Arc 18", "Beat: Himmelmez Killed", "Beat: Himmelmez Bargained", "Warp: Himmelmez", "Beat: Arc 18 Complete", "Beat: Himmelmez curse pressure", "Back")) {
+	switch (select("Warp - The Familiar Dead", "Beat - Start Arc 18", "Beat - Himmelmez Killed", "Beat - Himmelmez Bargained", "Warp - Himmelmez", "Beat - Arc 18 Complete", "Beat - Himmelmez curse pressure", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "niflheim", 95, 95);
 		mes("Party warped to The Familiar Dead.");
@@ -1493,7 +1493,7 @@ function	script	DM_BeatArc19	{
 	mes("[DM Beat Director]");
 	mes("Act IV / Arc 19 - Morroc (Nightmare of Midgard)");
 	next();
-	switch (select("Warp: Loki The Voice", "Beat: Start Arc 19", "Beat: Khalitzburg Hunt Done", "Beat: Loki Final Audience", "Warp: The Ash Vacuum Rift", "Beat: Spawn Surt", "Beat: Surt defeated", "Warp: The Central Choice", "Beat: Complete Campaign", "Back")) {
+	switch (select("Warp - Loki The Voice", "Beat - Start Arc 19", "Beat - Khalitzburg Hunt Done", "Beat - Loki Final Audience", "Warp - The Ash Vacuum Rift", "Beat - Spawn Surt", "Beat - Surt defeated", "Warp - The Central Choice", "Beat - Complete Campaign", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "moc_ruins", 150, 150);
 		mes("Party warped to Loki The Voice.");
