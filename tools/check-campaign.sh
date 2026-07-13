@@ -25,7 +25,13 @@ LOG="$(mktemp)"
 trap 'rm -f "$LOG"' EXIT
 
 echo "Loading all scripts via map-server --run-once ..."
-timeout 120 ./map-server --run-once 2>&1 | tr '\r' '\n' > "$LOG" || true
+if command -v timeout >/dev/null 2>&1; then
+	timeout 120 ./map-server --run-once 2>&1 | tr '\r' '\n' > "$LOG" || true
+elif command -v gtimeout >/dev/null 2>&1; then
+	gtimeout 120 ./map-server --run-once 2>&1 | tr '\r' '\n' > "$LOG" || true
+else
+	./map-server --run-once 2>&1 | tr '\r' '\n' > "$LOG" || true
+fi
 
 # Real script/load errors. Exclude known-benign library chatter.
 ERRORS=$(grep -iE '\[Error\]' "$LOG" | grep -ivE 'MYSQL_OPT_RECONNECT' || true)
