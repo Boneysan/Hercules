@@ -1,0 +1,46 @@
+//===== Hercules Script ======================================
+//= Identify Test Helper NPC
+//===== Description: =========================================
+//= Hands out UNIDENTIFIED equipment so the M1 P0 "item identify"
+//= row can be driven in the GUI. `@item` always grants identified
+//= items, so it cannot be used for this; `getitem2` takes an
+//= explicit identify flag (3rd argument, 0 = unidentified).
+//=
+//= Deliberately a SEPARATE NPC from `headless_dialog_test.txt`:
+//= the headless `dialogue-choice` scenario asserts that NPC's menu
+//= equals exactly ["Linear Dialogue", "Number Input", "String Input",
+//= "Dialogue Warp"], and selects options by index, so adding a choice
+//= there would break the suite.
+//=
+//= See docs/plans/M1-p0-verification.md §4.1 (run sheet).
+//============================================================
+
+prontera,164,200,4	script	Identify Test NPC	4_M_01,{
+	mes "[Identify Test NPC]";
+	mes "I hand out ^FF0000unidentified^000000 gear for testing";
+	mes "the identify (magnifier) flow.";
+	next;
+	switch(select("Give me unidentified gear", "What is this for?", "Cancel")) {
+		case 1:
+			// getitem2 <id>,<amount>,<identify>,<refine>,<attribute>,<card1>,<card2>,<card3>,<card4>
+			//                        ^ 0 = unidentified
+			getitem2 2301,1,0,0,0,0,0,0,0;	// Cotton Shirt
+			getitem2 1201,1,0,0,0,0,0,0,0;	// Knife
+			getitem2 2101,1,0,0,0,0,0,0,0;	// Guard
+			getitem2 5001,1,0,0,0,0,0,0,0;	// Headset
+			mes "[Identify Test NPC]";
+			mes "Done — 4 unidentified items added.";
+			mes "Open your inventory and use the";
+			mes "magnifier on them.";
+			close;
+		case 2:
+			mes "[Identify Test NPC]";
+			mes "The M1 P0 checklist needs an unidentified";
+			mes "item to verify the identify UI.";
+			mes "@item only grants identified items,";
+			mes "so this NPC uses getitem2 instead.";
+			close;
+		case 3:
+			close;
+	}
+}
