@@ -10256,6 +10256,15 @@ static int status_get_val_flag(enum sc_type type)
 	PRAGMA_GCC46(GCC diagnostic push)
 	PRAGMA_GCC46(GCC diagnostic ignored "-Wswitch-enum")
 	switch (type) {
+		// Korangar fork: the three Sage elemental fields all share one status
+		// icon (SI_GROUNDMAGIC), so the client cannot tell them apart or show
+		// what they grant without their values. val1 is the skill level and
+		// val2 the computed bonus (Watk/Matk, deluge_eff[] HP%, Flee).
+		case SC_VOLCANO:
+		case SC_DELUGE:
+		case SC_VIOLENTGALE:
+			val_flag |= 1 | 2;
+			break;
 		case SC_CLAN_INFO:
 			val_flag |= 1 | 2;
 			break;
