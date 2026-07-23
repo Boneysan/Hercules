@@ -14027,6 +14027,19 @@ static int skill_unit_onplace(struct skill_unit *src, struct block_list *bl, int
 			}
 			break;
 
+		// Korangar fork: informational status so the client can show that ground
+		// magic is being suppressed here, and for how long. Uses the group's
+		// *remaining* time rather than sg->limit — walking into a field that is
+		// half over must not show a full-length timer.
+		case UNT_LANDPROTECTOR:
+			if (sce == NULL) {
+				int remaining = sg->limit - DIFF_TICK32(tick, sg->tick);
+
+				if (remaining > 0)
+					sc_start(ss, bl, type, 100, sg->skill_lv, remaining, skill_id);
+			}
+			break;
+
 		case UNT_HERMODE:
 			if (sg->src_id!=bl->id && battle->check_target(&src->bl,bl,BCT_PARTY|BCT_GUILD) > 0)
 				status->change_clear_buffs(bl,1); //Should dispell only allies.
@@ -15064,6 +15077,9 @@ static int skill_unit_onout(struct skill_unit *src, struct block_list *bl, int64
 		case UNT_PNEUMA:
 		case UNT_NEUTRALBARRIER:
 		case UNT_STEALTHFIELD:
+		// Korangar fork: clear the informational Land Protector status the
+		// moment the player steps off the field.
+		case UNT_LANDPROTECTOR:
 			if (sce)
 				status_change_end(bl, type, INVALID_TIMER);
 			break;
