@@ -3102,8 +3102,15 @@ static void clif_inventoryItems(struct map_session_data *sd, enum inventory_type
 		clif->send(&itemlist_normal, itemlist_normal.PacketLength, &sd->bl, SELF);
 	}
 
-	if( sd->equip_index[EQI_AMMO] >= 0 )
+	if( sd->equip_index[EQI_AMMO] >= 0 ) {
 		clif->arrowequip(sd,sd->equip_index[EQI_AMMO]);
+		// Korangar fork: seed the broadcast ammo on login. pc_equipitem only runs
+		// when ammo is equipped by hand, so without this a character who logs in
+		// with arrows already equipped would have vd->ammo == 0 and be drawn with
+		// the generic arrow by everyone until they re-equipped. Cosmetic; see
+		// LOOK_AMMO in map.h.
+		clif->changelook(&sd->bl, LOOK_AMMO, sd->status.inventory[sd->equip_index[EQI_AMMO]].nameid);
+	}
 
 	if( equip ) {
 		itemlist_equip.PacketType  = inventorylistequipType;
@@ -4003,8 +4010,16 @@ static void clif_changelook(struct block_list *bl, enum look type, int val)
 				//Shoes? No packet uses this....
 			break;
 			case LOOK_BODY:
-			case LOOK_FLOOR:
 				// unknown purpose
+			break;
+			// LOOK_AMMO (Korangar fork) — same value as the unused LOOK_FLOOR;
+			// see the LOOK_AMMO comment in map.h. Players only: nothing else
+			// carries ammunition, and a mob must not have a stale id broadcast
+			// for it.
+			case LOOK_AMMO:
+				if (sd == NULL)
+					return;
+				vd->ammo = val;
 			break;
 			case LOOK_ROBE:
 		#if PACKETVER < 20110111
@@ -5028,6 +5043,11 @@ static void clif_getareachar_unit(struct map_session_data *sd, struct block_list
 				clif->sendbgemblem_single(sd->fd,tsd);
 			if (tsd->status.look.robe != 0)
 				clif->refreshlook(&sd->bl, bl->id, LOOK_ROBE, tsd->status.look.robe, SELF);
+			// Korangar fork: a look change only reaches whoever was already
+			// watching, so an archer standing here before we arrived would show
+			// no ammunition at all. Re-send it to the arriving observer.
+			if (vd->ammo != 0)
+				clif->refreshlook(&sd->bl, bl->id, LOOK_AMMO, vd->ammo, SELF);
 			clif->hat_effect(bl, &sd->bl, SELF);
 		}
 			break;

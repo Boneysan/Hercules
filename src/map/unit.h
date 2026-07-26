@@ -94,6 +94,17 @@ struct view_data {
 		body_style;
 	uint16 hair_color,
 		cloth_color;
+	/// Korangar fork addition: equipped ammunition item id, 0 for none.
+	///
+	/// Official Ragnarok never tells you what ammunition anyone *else* has
+	/// loaded, so every remote archer's arrows have to be drawn as the generic
+	/// one. Keeping it in the view data lets it be broadcast on equip and
+	/// re-sent when the unit enters view, which is what a spawning observer
+	/// needs — a look change alone only reaches whoever was already watching.
+	///
+	/// Cosmetic only: nothing in combat reads this, the authoritative ammo is
+	/// still `sd->equip_index[EQI_AMMO]`.
+	int ammo;
 	char sex;
 	unsigned dead_sit : 2;
 };
