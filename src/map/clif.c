@@ -13222,6 +13222,27 @@ static void clif_parse_StopAttack(int fd, struct map_session_data *sd)
 	pc_stop_attack(sd);
 }
 
+static void clif_parse_CancelCast(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+/// Korangar fork addition: abort the caster's own in-progress cast on request.
+/// 0F00 (no payload)
+///
+/// Official Ragnarok has no such packet — a player cannot cancel a cast at all
+/// except through the Sage skill SA_CASTCANCEL, and cannot move while casting
+/// (unit->can_move), so there is nothing upstream to reuse. Korangar binds this
+/// to right-click / Escape because the fork is a campaign client, not a fidelity
+/// clone. Movement deliberately does NOT cancel; casting still roots.
+///
+/// Type 0 is intentional: unlike a damage interrupt (type&2) a deliberate abort
+/// must not be blocked by the skill's castcancel flag or by Phen / no_castcancel,
+/// and unlike SA_CASTCANCEL (type&1) the skill to drop is the one in ud->skill_id
+/// rather than skill_id_old. unit->skillcastcancel is a no-op when nothing is
+/// casting and broadcasts clif->skillcastcancel itself, so no reply is needed.
+/// SP is untouched because it is charged at cast *end*, not at cast begin.
+static void clif_parse_CancelCast(int fd, struct map_session_data *sd)
+{
+	unit->skillcastcancel(&sd->bl, 0);
+}
+
 static void clif_parse_PutItemToCart(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
 /// Request to move an item from inventory to cart (CZ_MOVE_ITEM_FROM_BODY_TO_CART).
 /// 0126 <index>.W <amount>.L
@@ -27217,6 +27238,7 @@ void clif_defaults(void)
 	clif->pTradeCancel = clif_parse_TradeCancel;
 	clif->pTradeCommit = clif_parse_TradeCommit;
 	clif->pStopAttack = clif_parse_StopAttack;
+	clif->pCancelCast = clif_parse_CancelCast;
 	clif->pPutItemToCart = clif_parse_PutItemToCart;
 	clif->pGetItemFromCart = clif_parse_GetItemFromCart;
 	clif->pRemoveOption = clif_parse_RemoveOption;
