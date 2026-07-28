@@ -6710,6 +6710,16 @@ static void status_set_viewdata(struct block_list *bl, int class_)
 			}
 			sd->vd.class = class_;
 			clif->get_weapon_view(sd, &sd->vd.weapon, &sd->vd.shield);
+			// Korangar fork: re-derive the broadcast ammunition here, exactly as
+			// weapon and shield are re-derived above. The `else` branch below
+			// memcpy's a whole view_data over sd->vd when a player is disguised
+			// as a mob or NPC, which zeroes vd->ammo; un-disguising comes back
+			// through *this* branch, so without this line the value would stay
+			// zero forever and every observer would draw that player's arrows as
+			// the generic one. See LOOK_AMMO in map.h.
+			sd->vd.ammo = (sd->equip_index[EQI_AMMO] >= 0)
+				? sd->status.inventory[sd->equip_index[EQI_AMMO]].nameid
+				: 0;
 			sd->vd.head_top = sd->status.look.head_top;
 			sd->vd.head_mid = sd->status.look.head_mid;
 			sd->vd.head_bottom = sd->status.look.head_bottom;
