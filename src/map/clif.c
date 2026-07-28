@@ -11321,6 +11321,18 @@ static void clif_parse_LoadEndAck(int fd, struct map_session_data *sd)
 	map->addblock(&sd->bl); // Add the character to the map.
 	clif->spawn(&sd->bl); // Spawn character client side.
 
+	// Korangar fork: re-broadcast the equipped ammunition now that the character
+	// is actually on the map. The seed in clif_inventoryItems runs ~95 lines
+	// earlier, before map->addblock, so its AREA broadcast reaches nobody — an
+	// observer already standing here would draw this archer's arrows as the
+	// generic one forever. vd->ammo is already correct by now; this only re-sends
+	// it, and clif->spawn cannot carry it because LOOK_AMMO rides LOOK_FLOOR,
+	// which the spawn packet does not include. See LOOK_AMMO in map.h.
+	if (sd->equip_index[EQI_AMMO] >= 0) {
+		clif->changelook(&sd->bl, LOOK_AMMO,
+		                 sd->status.inventory[sd->equip_index[EQI_AMMO]].nameid);
+	}
+
 	clif->load_end_ack_sub_messages(sd, (sd->state.connect_new != 0), (sd->state.changemap != 0));
 
 	struct party_data *p = NULL;
