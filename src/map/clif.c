@@ -5046,8 +5046,15 @@ static void clif_getareachar_unit(struct map_session_data *sd, struct block_list
 			// Korangar fork: a look change only reaches whoever was already
 			// watching, so an archer standing here before we arrived would show
 			// no ammunition at all. Re-send it to the arriving observer.
-			if (vd->ammo != 0)
-				clif->refreshlook(&sd->bl, bl->id, LOOK_AMMO, vd->ammo, SELF);
+			//
+			// Sent even when zero, deliberately. Guarding on `vd->ammo != 0` left
+			// an observer who was out of view during an unequip with no way to
+			// learn about it: the zero broadcast never reached them, and on return
+			// the guard suppressed the correction, so they kept drawing the old
+			// ammunition. A weapon change force-unequips ammo (pc.c, gated on
+			// bow_unequip_arrow), which is exactly when a stale value would be
+			// drawn for the wrong weapon class.
+			clif->refreshlook(&sd->bl, bl->id, LOOK_AMMO, vd->ammo, SELF);
 			clif->hat_effect(bl, &sd->bl, SELF);
 		}
 			break;
