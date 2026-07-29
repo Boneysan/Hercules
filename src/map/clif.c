@@ -5025,6 +5025,18 @@ static void clif_getareachar_unit(struct map_session_data *sd, struct block_list
 	else
 		clif->set_unit_idle(bl,sd,SELF);
 
+	// Korangar fork note (audit A5): these two guards, and the LOOK_ROBE one
+	// below, cannot tell an arriving observer that a value is *nothing* — a
+	// reset that happened while they were away would never be corrected.
+	//
+	// They are nonetheless SAFE, and must not be "fixed". `clif->set_unit_idle`
+	// / `set_unit_walking` ran unconditionally just above and its spawn packet
+	// carries cloth_color, body_style and robe outright, so the observer
+	// already has the truth including zero before these run.
+	//
+	// The rule: a guard of this shape can only lose an attribute the spawn
+	// packet does NOT carry. That was ammunition, and only ammunition — which
+	// is why the LOOK_AMMO re-send below is deliberately unguarded.
 	if (vd->cloth_color)
 		clif->refreshlook(&sd->bl,bl->id,LOOK_CLOTHES_COLOR,vd->cloth_color,SELF);
 	if (vd->body_style)
@@ -11212,6 +11224,18 @@ static void clif_parse_LoadEndAck(int fd, struct map_session_data *sd)
 	sd->state.dialog = 0; // Reset when warping. Client dialog will go missing.
 
 	// Character looks.
+	//
+	// Korangar fork note (audit A4): these run ~110 lines BEFORE
+	// `map->addblock` below, so their AREA broadcast walks a block list the
+	// character has not joined yet and reaches nobody. Harmless as written —
+	// weapon and shield are carried by the spawn packet, so every arriving
+	// observer gets the right values from `clif->set_unit_idle` anyway.
+	//
+	// It stops being harmless the moment a look type NOT carried by the spawn
+	// packet is added here. That is exactly how the LOOK_AMMO login seed
+	// failed: ammunition has no spawn-packet slot, so its broadcast here was
+	// the only chance and it reached no one. Re-broadcast after `clif->spawn`
+	// instead. See tools/audits/observer-parity.sh in the client repo.
 #if PACKETVER < 4
 	clif->changelook(&sd->bl, LOOK_WEAPON, sd->status.look.weapon);
 	clif->changelook(&sd->bl, LOOK_SHIELD, sd->status.look.shield);
