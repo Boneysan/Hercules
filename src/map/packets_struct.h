@@ -5229,7 +5229,24 @@ struct PACKET_ZC_NOTIFY_POSITION_TO_GROUPM {
 } __attribute__((packed));
 DEFINE_PACKET_HEADER(ZC_NOTIFY_POSITION_TO_GROUPM, 0x0107);
 
-#if PACKETVER_ZERO_NUM >= 20210504
+/**
+ * Korangar fork delta: party-member SP.
+ *
+ * Official main-branch clients never learn a party member's SP — only the Zero
+ * branch got the wider `ZC_NOTIFY_HP_TO_GROUPM` (0x0bab, 22 bytes) that carries
+ * `sp`/`maxsp`. The Korangar client draws an SP bar over party members, so this
+ * fork selects that layout on every branch.
+ *
+ * Cheap and low-risk because 0x0bab is **already** `packetLen(0x0bab, 22)` in
+ * `packets2022_len_main.h`, and correspondingly in the client's generated
+ * `lengths_20220406.rs` — nothing needs a new length entry, and an older client
+ * that lacks the handler consumes it via the known-length fallback rather than
+ * desyncing. Both send sites (`clif_party_hp`, `clif_hpmeter_single`) already
+ * assign the two fields under the same guard, so this is the only edit.
+ */
+#define KORANGAR_PARTY_SP_TO_GROUPM 1
+
+#if PACKETVER_ZERO_NUM >= 20210504 || defined(KORANGAR_PARTY_SP_TO_GROUPM)
 struct PACKET_ZC_NOTIFY_HP_TO_GROUPM {
 	int16 PacketType;
 	uint32 AID;

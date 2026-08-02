@@ -3858,9 +3858,9 @@ static void clif_updatestatus(struct map_session_data *sd, enum status_point_typ
 			pc->update_job_and_level(sd);
 			break;
 		case SP_HP:
-#if PACKETVER_ZERO_NUM >= 20210504
+#if PACKETVER_ZERO_NUM >= 20210504 || defined(KORANGAR_PARTY_SP_TO_GROUPM)
 		case SP_SP:
-#endif  // PACKETVER_ZERO_NUM >= 20210504
+#endif  // PACKETVER_ZERO_NUM >= 20210504 || KORANGAR_PARTY_SP_TO_GROUPM
 			if (map->list[sd->bl.m].hpmeter_visible)
 				clif->hpmeter(sd);
 			if (!battle_config.party_hp_mode && sd->status.party_id)
@@ -7793,10 +7793,10 @@ static void clif_party_hp(struct map_session_data *sd)
 	p.hp = sd->battle_status.hp;
 	p.maxhp = sd->battle_status.max_hp;
 #endif
-#if PACKETVER_ZERO_NUM >= 20210504
+#if PACKETVER_ZERO_NUM >= 20210504 || defined(KORANGAR_PARTY_SP_TO_GROUPM)
 	p.sp = sd->battle_status.sp;
 	p.maxsp = sd->battle_status.max_sp;
-#endif  // PACKETVER_ZERO_NUM >= 20210504
+#endif  // PACKETVER_ZERO_NUM >= 20210504 || KORANGAR_PARTY_SP_TO_GROUPM
 	clif->send(&p, sizeof(struct PACKET_ZC_NOTIFY_HP_TO_GROUPM), &sd->bl, PARTY_AREA_WOS);
 }
 
@@ -7821,10 +7821,10 @@ static void clif_hpmeter_single(int fd, int id, unsigned int hp, unsigned int ma
 	p->hp = hp;
 	p->maxhp = maxhp;
 #endif
-#if PACKETVER_ZERO_NUM >= 20210504
+#if PACKETVER_ZERO_NUM >= 20210504 || defined(KORANGAR_PARTY_SP_TO_GROUPM)
 	p->sp = sp;
 	p->maxsp = maxsp;
-#endif  // PACKETVER_ZERO_NUM >= 20210504
+#endif  // PACKETVER_ZERO_NUM >= 20210504 || KORANGAR_PARTY_SP_TO_GROUPM
 	WFIFOSET(fd, sizeof(struct PACKET_ZC_NOTIFY_HP_TO_GROUPM));
 }
 
