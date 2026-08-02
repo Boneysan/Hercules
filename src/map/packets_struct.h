@@ -5244,6 +5244,31 @@ DEFINE_PACKET_HEADER(ZC_NOTIFY_POSITION_TO_GROUPM, 0x0107);
  * desyncing. Both send sites (`clif_party_hp`, `clif_hpmeter_single`) already
  * assign the two fields under the same guard, so this is the only edit.
  */
+/**
+ * Korangar fork packet: who sent a party invite.
+ *
+ * `ZC_PARTY_JOIN_REQ` carries only the party id and party name, so official
+ * clients can say "you are invited to join <party>" but never "<player> invites
+ * you". This companion packet is sent immediately *before* the invite and
+ * carries the inviter's character name; the client pairs the two by party id.
+ *
+ * Sent alongside rather than by widening 0x00fe on purpose: the official packet
+ * keeps its official shape (so a stock client is unaffected and an upstream
+ * change to it cannot conflict), and the feature **degrades gracefully** -- a
+ * client that never receives this simply falls back to naming the party.
+ *
+ * 0x0eff is comfortably above the highest official packet (0x0bc0) and at or
+ * below `MAX_PACKET_DB` (0x0f00, already taken by CZ_CANCEL_CAST). Its length
+ * lives in the hand-maintained `common/packets_len.h`, never in the generated
+ * `packets<year>_len_*.h`, which a regeneration would silently drop.
+ */
+struct PACKET_ZC_PARTY_INVITE_SENDER {
+	int16 PacketType;
+	uint32 GRID;
+	char senderName[NAME_LENGTH];
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(ZC_PARTY_INVITE_SENDER, 0x0eff);
+
 #define KORANGAR_PARTY_SP_TO_GROUPM 1
 
 #if PACKETVER_ZERO_NUM >= 20210504 || defined(KORANGAR_PARTY_SP_TO_GROUPM)

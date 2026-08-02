@@ -7534,6 +7534,16 @@ static void clif_party_invite(struct map_session_data *sd, struct map_session_da
 	if (p == NULL)
 		return;
 
+	// Korangar fork: name the inviter, which ZC_PARTY_JOIN_REQ cannot. Sent
+	// first so the client has it in hand when the invite itself arrives.
+	WFIFOHEAD(fd, sizeof(struct PACKET_ZC_PARTY_INVITE_SENDER));
+	struct PACKET_ZC_PARTY_INVITE_SENDER *sender = WFIFOP(fd, 0);
+
+	sender->PacketType = HEADER_ZC_PARTY_INVITE_SENDER;
+	sender->GRID = sd->status.party_id;
+	safestrncpy(sender->senderName, sd->status.name, NAME_LENGTH);
+	WFIFOSET(fd, sizeof(struct PACKET_ZC_PARTY_INVITE_SENDER));
+
 	WFIFOHEAD(fd, sizeof(struct PACKET_ZC_PARTY_JOIN_REQ));
 	struct PACKET_ZC_PARTY_JOIN_REQ *packet = WFIFOP(fd, 0);
 

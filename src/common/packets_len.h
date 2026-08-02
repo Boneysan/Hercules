@@ -43,4 +43,9 @@
 // 2 bytes (header only). See clif_parse_CancelCast.
 packetLen(0x0f00, 2)
 
+// 0x0EFF ZC_PARTY_INVITE_SENDER — companion to ZC_PARTY_JOIN_REQ carrying the
+// inviter's character name, which the official packet does not include.
+// 2 (header) + 4 (party id) + 24 (NAME_LENGTH) = 30. See clif_party_invite.
+packetLen(0x0eff, 30)
+
 #endif /* COMMON_PACKETS_LEN_H */
