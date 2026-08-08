@@ -48,4 +48,9 @@ packetLen(0x0f00, 2)
 // 2 (header) + 4 (party id) + 24 (NAME_LENGTH) = 30. See clif_party_invite.
 packetLen(0x0eff, 30)
 
+// 0x0EFE ZC_SKILL_FAIL_REASON — companion to ZC_ACK_TOUSESKILL naming the runtime
+// outcome behind a cause-0 failure, which the official cause enum has no code for.
+// 2 (header) + 2 (skill id) + 2 (reason) = 6. See clif_skill_fail_reason.
+packetLen(0x0efe, 6)
+
 #endif /* COMMON_PACKETS_LEN_H */

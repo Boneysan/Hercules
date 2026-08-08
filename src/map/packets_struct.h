@@ -5269,6 +5269,42 @@ struct PACKET_ZC_PARTY_INVITE_SENDER {
 } __attribute__((packed));
 DEFINE_PACKET_HEADER(ZC_PARTY_INVITE_SENDER, 0x0eff);
 
+/**
+ * ZC_SKILL_FAIL_REASON — why a skill failed, when the protocol has no code for it.
+ *
+ * `ZC_ACK_TOUSESKILL` carries a `useskill_fail_cause`, and Hercules sends
+ * `USESKILL_FAIL_LEVEL` (0) for a great many outcomes that have nothing to do
+ * with skill level, because Gravity never numbered them: 21 of the 33 states in
+ * `skill_check_condition_castbegin`'s switch report 0, and only one of those has
+ * a dedicated cause. A client can only say "Skill level is not high enough",
+ * which is almost never true.
+ *
+ * A *static* precondition (needs a shield, a cart, a falcon) needs nothing from
+ * this packet — it is written in `skill_db.conf`, so both sides already know it,
+ * and Korangar reads it from there. This packet exists for the other half: the
+ * **runtime** outcomes only the server can know at the moment it decides. Did the
+ * petrify roll miss? Was anybody in range? Do you have the experience to spend?
+ * Is there a valid ensemble partner? No table can answer those.
+ *
+ * Sent immediately *before* the `ZC_ACK_TOUSESKILL` it explains, and paired by
+ * skill id — the same shape as ZC_PARTY_INVITE_SENDER, and for the same reasons:
+ * the official packet keeps its official shape, a stock client is unaffected,
+ * and the feature degrades gracefully to the old generic text if this is lost.
+ *
+ * `reason` is a fork enum (`enum skill_fail_reason`), deliberately *not* an
+ * extension of `useskill_fail_cause` — that enum is Gravity's, and inventing
+ * values in it would collide with a future official one.
+ *
+ * 0x0efe is below 0x0eff and above the highest official packet (0x0bc0); its
+ * length lives in the hand-maintained `common/packets_len.h`.
+ */
+struct PACKET_ZC_SKILL_FAIL_REASON {
+	int16 PacketType;
+	uint16 SKID;
+	uint16 reason;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(ZC_SKILL_FAIL_REASON, 0x0efe);
+
 #define KORANGAR_PARTY_SP_TO_GROUPM 1
 
 #if PACKETVER_ZERO_NUM >= 20210504 || defined(KORANGAR_PARTY_SP_TO_GROUPM)

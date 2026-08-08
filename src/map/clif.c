@@ -5934,6 +5934,41 @@ static void clif_skill_fail(struct map_session_data *sd, uint16 skill_id, enum u
 	WFIFOSET(fd, sizeof(struct PACKET_ZC_ACK_TOUSESKILL));
 }
 
+/**
+ * Korangar fork addition: report a cause-0 skill failure *and* say why.
+ *
+ * `useskill_fail_cause` has no code for most of the outcomes Hercules reports as
+ * `USESKILL_FAIL_LEVEL`, so a client can only tell the player to level the skill
+ * up — which is almost never the problem. This sends `ZC_SKILL_FAIL_REASON`
+ * (0x0efe) naming the runtime reason, immediately followed by the ordinary
+ * failure packet, and is a drop-in replacement at any cause-0 call site.
+ *
+ * Only *runtime* outcomes belong here. A static precondition (`State:` in
+ * skill_db) is already on disk at both ends and needs no packet.
+ *
+ * A client that does not know 0x0efe consumes it through its length table and
+ * falls back to the generic text, so this cannot break a stock client.
+ */
+static void clif_skill_fail_reason(struct map_session_data *sd, uint16 skill_id, enum skill_fail_reason reason)
+{
+	nullpo_retv(sd);
+
+	int fd = sd->fd;
+	// Mirror clif_skill_fail's global suppression so the reason is never sent
+	// without the failure it explains; the client would otherwise hold a
+	// reason with nothing to attach it to.
+	if (fd != 0 && !(battle_config.display_skill_fail&1)) {
+		WFIFOHEAD(fd, sizeof(struct PACKET_ZC_SKILL_FAIL_REASON));
+		struct PACKET_ZC_SKILL_FAIL_REASON *p = WFIFOP(fd, 0);
+		p->PacketType = HEADER_ZC_SKILL_FAIL_REASON;
+		p->SKID = skill_id;
+		p->reason = reason;
+		WFIFOSET(fd, sizeof(struct PACKET_ZC_SKILL_FAIL_REASON));
+	}
+
+	clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+}
+
 /// Skill cooldown display icon (ZC_SKILL_POSTDELAY).
 /// 043d <skill ID>.W <tick>.L
 static void clif_skill_cooldown(struct map_session_data *sd, uint16 skill_id, unsigned int duration)
@@ -26815,6 +26850,7 @@ void clif_defaults(void)
 	clif->outsight = clif_outsight;
 	clif->skillcastcancel = clif_skillcastcancel;
 	clif->skill_fail = clif_skill_fail;
+	clif->skill_fail_reason = clif_skill_fail_reason;
 	clif->skill_cooldown = clif_skill_cooldown;
 	clif->skill_memomessage = clif_skill_memomessage;
 	clif->skill_mapinfomessage = clif_skill_mapinfomessage;

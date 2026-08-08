@@ -7001,7 +7001,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 		case PR_REDEMPTIO:
 			if (sd && !(flag&1)) {
 				if (sd->status.party_id == 0) {
-					clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+					clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_NO_PARTY);
 					break;
 				}
 				skill->area_temp[0] = 0;
@@ -7010,7 +7010,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 					src,skill_id,skill_lv,tick, flag|BCT_PARTY|1,
 					skill->castend_nodamage_id);
 				if (skill->area_temp[0] == 0) {
-					clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+					clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_NO_ONE_IN_RANGE);
 					break;
 				}
 				skill->area_temp[0] = 5 - skill->area_temp[0]; // The actual penalty...
@@ -8272,7 +8272,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 					clif->skill_nodamage(src, bl, skill_id, skill_lv, sc_start2(src, bl, type, 70, skill_lv, src->id, skill->get_time(skill_id, skill_lv), skill_id));
 				} else {
 					clif->skill_nodamage(src,bl,skill_id,skill_lv,0);
-					if(sd) clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+					if(sd) clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_TARGET_RESISTED);
 				}
 			}
 			break;
@@ -8295,7 +8295,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 					clif->skill_nodamage(src, bl, skill_id, amount, 1);
 
 				} else
-					clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+					clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_NOTHING_TO_STEAL);
 			}
 			break;
 
@@ -8303,7 +8303,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 			{
 				int brate = 0;
 				if (tstatus->mode&MD_BOSS) {
-					if (sd) clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+					if (sd) clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_TARGET_IMMUNE);
 					break;
 				}
 				if(status->isimmune(bl) || !tsc)
@@ -8322,7 +8322,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 					skill->get_time2(skill_id, skill_lv), skill_id))
 						clif->skill_nodamage(src,bl,skill_id,skill_lv,1);
 				else if(sd) {
-					clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+					clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_TARGET_RESISTED);
 					// Level 6-10 doesn't consume a red gem if it fails [celest]
 					if (skill_lv > 5) {
 						// not to consume items
@@ -10000,7 +10000,7 @@ static int skill_castend_nodamage_id(struct block_list *src, struct block_list *
 			{
 				if( !sd->status.party_id )
 				{
-					clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+					clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_NO_PARTY);
 					break;
 				}
 				party->foreachsamemap(skill->area_sub, sd, skill->get_splash(skill_id, skill_lv), src, skill_id, skill_lv, tick, flag|BCT_PARTY|1, skill->castend_nodamage_id);
@@ -16012,7 +16012,7 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 		case PR_BENEDICTIO:
 			if (skill->check_pc_partner(sd, skill_id, &skill_lv, 1, 0) < 2)
 			{
-				clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+				clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_BENEDICTIO_HELPERS);
 				return 0;
 			}
 			break;
@@ -16053,7 +16053,7 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 				int64 exp;
 				if (((exp = pc->nextbaseexp(sd)) > 0 && get_percentage64(sd->status.base_exp, exp) < 1) ||
 					((exp = pc->nextjobexp(sd)) > 0 && get_percentage64(sd->status.job_exp, exp) < 1)) {
-					clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0); //Not enough exp.
+					clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_NOT_ENOUGH_EXPERIENCE); //Not enough exp.
 					return 0;
 				}
 				break;
@@ -16376,7 +16376,7 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 			break;
 		case CR_REFLECTSHIELD:
 			if( sc && sc->data[SC_KYOMU] && rnd()%100 < 5 * sc->data[SC_KYOMU]->val1 ){
-				clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+				clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_SUPPRESSED_BY_KYOMU);
 				return 0;
 			}
 			break;
