@@ -5954,10 +5954,19 @@ static void clif_skill_fail_reason(struct map_session_data *sd, uint16 skill_id,
 	nullpo_retv(sd);
 
 	int fd = sd->fd;
-	// Mirror clif_skill_fail's global suppression so the reason is never sent
-	// without the failure it explains; the client would otherwise hold a
-	// reason with nothing to attach it to.
-	if (fd != 0 && !(battle_config.display_skill_fail&1)) {
+	// Mirror *every* condition under which clif_skill_fail sends nothing, so a
+	// reason is never sent without the failure it explains — the client would
+	// otherwise hold one with nothing to attach it to. None of the current call
+	// sites can be RG_SNATCHER or TF_POISON, but this is meant to be a drop-in
+	// replacement at any cause-0 site, so it must not depend on that list.
+	//
+	// The USESKILL_FAIL_SKILLINTERVAL check there needs no mirror: this always
+	// reports USESKILL_FAIL_LEVEL.
+	bool suppressed = (battle_config.display_skill_fail&1) != 0
+		|| (skill_id == RG_SNATCHER && (battle_config.display_skill_fail & 4) != 0)
+		|| (skill_id == TF_POISON && (battle_config.display_skill_fail & 8) != 0);
+
+	if (fd != 0 && !suppressed) {
 		WFIFOHEAD(fd, sizeof(struct PACKET_ZC_SKILL_FAIL_REASON));
 		struct PACKET_ZC_SKILL_FAIL_REASON *p = WFIFOP(fd, 0);
 		p->PacketType = HEADER_ZC_SKILL_FAIL_REASON;
