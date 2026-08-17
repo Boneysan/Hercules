@@ -170,6 +170,7 @@ struct Battle_Config {
 	int death_penalty_base,death_penalty_job;
 	int pvp_exp;  // [MouseJstr]
 	int gtb_sc_immunity;
+	int hermode_requires_warp; ///< Korangar fork: official RO pins CG_HERMODE to a warp portal.
 	int zeny_penalty;
 	int restart_hp_rate;
 	int restart_sp_rate;

@@ -456,6 +456,10 @@ enum skill_fail_reason {
 	/// The target cannot be affected at all (boss, wrong race), as opposed to
 	/// having won a roll. Only worth distinguishing because this packet can.
 	SKILLFAILREASON_TARGET_IMMUNE = 9,
+	/// Hermode must be cast beside a warp portal. Only reachable while
+	/// `battle_config.hermode_requires_warp` is on, but kept unconditionally so
+	/// the numbering never depends on a config value.
+	SKILLFAILREASON_NEEDS_WARP_PORTAL = 10,
 };
 
 /**

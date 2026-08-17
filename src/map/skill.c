@@ -16028,9 +16028,16 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 			break;
 
 		case CG_HERMODE:
-			if(!npc->check_areanpc(1,sd->bl.m,sd->bl.x,sd->bl.y,skill->get_splash(skill_id, skill_lv)))
+			// Official RO stages Hermode at a warp portal ("an encore with a
+			// warp"), which makes it a siege tool welded to a chokepoint. This
+			// campaign fork casts it as a free-standing anti-magic field, so the
+			// requirement is a config toggle rather than a deletion — a named
+			// key survives an upstream merge visibly, where a missing `if` does
+			// not. See battle_config.hermode_requires_warp.
+			if (battle_config.hermode_requires_warp != 0
+			 && !npc->check_areanpc(1,sd->bl.m,sd->bl.x,sd->bl.y,skill->get_splash(skill_id, skill_lv)))
 			{
-				clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+				clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_NEEDS_WARP_PORTAL);
 				return 0;
 			}
 			break;
