@@ -1,0 +1,412 @@
+//===== Seal Cascade Campaign ================================
+//= Encounter composer
+//===== Description: =========================================
+//= Named, reusable encounters the DM drops as a unit, instead
+//= of one @dm spawn per mob type.
+//=
+//= An encounter is up to three slots — elite / minions / caster
+//= — spawned in a formation, scaled to the online party, wired
+//= to one event label so `@dm cleanup` removes the whole thing.
+//=
+//= Everything spawns map-relative off the DM's current map
+//= (strcharinfo(3)), which is what makes an encounter work
+//= unchanged inside a private instance. The arc beat spawns
+//= follow the same rule; a hard-coded map name would place the
+//= mobs in the public copy of the map while the party is in
+//= their instance, where nobody would ever meet them.
+//=
+//= Commands (registered in dm_console.txt):
+//=   @dmenc list                 — what is available
+//=   @dmenc info <name>          — composition and budget
+//=   @dmenc spawn <name> [form]  — drop it at your feet
+//=   form = ambush | line | scatter   (default per encounter)
+//===========================================================
+
+// ── Formation geometry ────────────────────────────────────────────────────
+// ambush  : ring the DM at radius 6-8 — the party is already inside it
+// line    : a wall 5 cells ahead, blocking a corridor
+// scatter : loose box, the ordinary case
+//
+// Formation is the cheapest tactical variable a DM has. The same four mobs
+// read completely differently as a wall you must break through versus a ring
+// that has already closed.
+function	script	DM_EncFormation	{
+	.@form$ = strtolower(getarg(0, "scatter"));
+	.@map$  = getarg(1);
+	.@cx    = getarg(2);
+	.@cy    = getarg(3);
+	.@name$ = getarg(4);
+	.@mob   = getarg(5);
+	.@count = getarg(6);
+	.@event$ = getarg(7);
+
+	if (.@count <= 0)
+		return 0;
+
+	if (.@form$ == "ambush") {
+		// Ring: alternate the four quadrants so the party is enclosed rather
+		// than facing a clump on one side.
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			.@r = 6 + (.@i % 3);
+			switch (.@i % 4) {
+				case 0: .@mx = .@cx + .@r; .@my = .@cy; break;
+				case 1: .@mx = .@cx - .@r; .@my = .@cy; break;
+				case 2: .@mx = .@cx; .@my = .@cy + .@r; break;
+				default: .@mx = .@cx; .@my = .@cy - .@r; break;
+			}
+			monster .@map$, .@mx, .@my, .@name$, .@mob, 1, .@event$;
+		}
+		return .@count;
+	}
+
+	if (.@form$ == "line") {
+		.@start = .@cx - (.@count / 2);
+		for (.@i = 0; .@i < .@count; ++.@i)
+			monster .@map$, .@start + .@i, .@cy + 5, .@name$, .@mob, 1, .@event$;
+		return .@count;
+	}
+
+	areamonster .@map$, .@cx - 4, .@cy - 4, .@cx + 4, .@cy + 4,
+		.@name$, .@mob, .@count, .@event$;
+	return .@count;
+}
+
+// ── Party scaling ─────────────────────────────────────────────────────────
+// Encounter tables are written for a party of four. Below that, drop minions;
+// above it, add them. The elite is never duplicated — two bosses is a
+// different encounter, not a harder one.
+function	script	DM_EncScale	{
+	.@base = getarg(0);
+	.@online = callfunc("DM_PartyOnlineCount");
+
+	if (.@online <= 0)
+		.@online = 1;
+
+	.@n = .@base + (.@online - 4);
+	if (.@n < 1)
+		.@n = 1;
+	if (.@n > 20)
+		.@n = 20;
+	return .@n;
+}
+
+// ── The encounter table ───────────────────────────────────────────────────
+// Slots are read back out by index so one caller can drive every encounter:
+//   0 label   1 default formation   2 elite id   3 elite name
+//   4 minion id   5 minion name   6 minion base count
+//   7 caster id   8 caster name   9 caster base count
+//   10 entrance line spoken by the elite
+// A 0 mob id means the slot is empty.
+//
+// Mob ids are verified against db/re/mob_db.conf. Guessing them by name is a
+// known way to lose an afternoon in this tree — eleven campaign hunting quests
+// shipped pointing at the mob one id above the one they named.
+//
+// Elites must NOT be MVPs. Verifying this table caught Baphomet (1039) and
+// Kiel D-01 (1734) sitting in the elite slot of ordinary encounters, where a
+// party expecting four minions and a sergeant would have met an MVP with an
+// MVP's HP and skills. MVPs belong in @dmbeat boss spawns, which announce
+// themselves and grant arc credit. Check MvpExp in mob_db before adding one
+// here. The same pass found 1268 labelled "Wraith Dead" when it is a Bloody
+// Knight, and 1871 with no mob_db entry at all.
+function	script	DM_EncTable	{
+	.@name$ = strtolower(getarg(0));
+	.@field = getarg(1);
+
+	if (.@name$ == "gh_patrol")
+		setarray .@e$[0], "A Glast Heim patrol", "line",
+			"1132", "Khalitzburg Sergeant",
+			"1163", "Raydric", "4",
+			"1192", "Wraith", "1",
+			"Hold the line! Nothing passes the abbey!";
+	else if (.@name$ == "gh_crypt")
+		setarray .@e$[0], "The crypt wakes", "ambush",
+			"1268", "Bloody Knight", "0", "", "0",
+			"1192", "Wraith", "4",
+			"You should not have opened that door.";
+	else if (.@name$ == "sewer_ambush")
+		setarray .@e$[0], "Culvert ambush", "ambush",
+			"1109", "Deviruchi",
+			"1175", "Tarou", "6",
+			"0", "", "0",
+			"";
+	else if (.@name$ == "cult_diggers")
+		setarray .@e$[0], "Cult digging party", "scatter",
+			"1297", "Ancient Mummy",
+			"1178", "Zerom", "5",
+			"0", "", "0",
+			"The seal is thinner here. Keep digging.";
+	else if (.@name$ == "lab_security")
+		setarray .@e$[0], "Lab security response", "line",
+			"1735", "Alicel",
+			"1736", "Aliot", "4",
+			"1737", "Aliza", "2",
+			"Containment breach. Sterilising.";
+	else if (.@name$ == "thor_wardens")
+		setarray .@e$[0], "Magma wardens", "ambush",
+			"1831", "Salamander Warden",
+			"1833", "Kasa", "4",
+			"0", "", "0",
+			"The mountain does not want you.";
+	else if (.@name$ == "abbey_choir")
+		setarray .@e$[0], "The abbey choir", "scatter",
+			"1870", "Necromancer",
+			"1864", "Zombie Slaughter", "4",
+			"1868", "Banshee", "2",
+			"Sing with us, or be sung over.";
+	else if (.@name$ == "valkyrie_court")
+		setarray .@e$[0], "Valkyrie court", "line",
+			"1765", "Valkyrie",
+			"1754", "Skeggiold", "4",
+			"0", "", "0",
+			"Odin's hall is closed to you.";
+	else
+		return "";
+
+	return .@e$[.@field];
+}
+
+// Every encounter name, for @dmenc list. Kept beside the table above —
+// adding an encounter means adding it in both places.
+function	script	DM_EncNames	{
+	setarray .@n$[0], "gh_patrol", "gh_crypt", "sewer_ambush", "cult_diggers",
+		"lab_security", "thor_wardens", "abbey_choir", "valkyrie_court";
+	return getarg(0, -1) < 0 ? getarraysize(.@n$) : .@n$[getarg(0)];
+}
+
+// ── Spawn ─────────────────────────────────────────────────────────────────
+// Every mob is wired to DM_Console::OnDMKilled, which is one of the three
+// labels DM_CleanupMap already sweeps — so `@dm cleanup` takes the whole
+// encounter away without knowing anything about encounters.
+function	script	DM_EncSpawn	{
+	.@name$ = strtolower(getarg(0));
+	.@form$ = getarg(1, "");
+
+	.@label$ = callfunc("DM_EncTable", .@name$, 0);
+	if (.@label$ == "") {
+		dispbottom("[Enc] No encounter named '" + .@name$ + "'. Try @dmenc list.");
+		return 0;
+	}
+	if (.@form$ == "")
+		.@form$ = callfunc("DM_EncTable", .@name$, 1);
+
+	getmapxy(.@map$, .@cx, .@cy, UNITTYPE_PC);
+	.@event$ = "DM_Console::OnDMKilled";
+	.@spawned = 0;
+
+	// Elite first so it is the unit that speaks.
+	.@elite = atoi(callfunc("DM_EncTable", .@name$, 2));
+	if (.@elite > 0) {
+		.@ename$ = callfunc("DM_EncTable", .@name$, 3);
+		monster .@map$, .@cx, .@cy + 5, .@ename$, .@elite, 1, .@event$;
+		++.@spawned;
+	}
+
+	.@minion = atoi(callfunc("DM_EncTable", .@name$, 4));
+	if (.@minion > 0) {
+		.@mname$ = callfunc("DM_EncTable", .@name$, 5);
+		.@mcount = callfunc("DM_EncScale", atoi(callfunc("DM_EncTable", .@name$, 6)));
+		.@spawned += callfunc("DM_EncFormation", .@form$, .@map$, .@cx, .@cy,
+			.@mname$, .@minion, .@mcount, .@event$);
+	}
+
+	.@caster = atoi(callfunc("DM_EncTable", .@name$, 7));
+	if (.@caster > 0) {
+		.@cname$ = callfunc("DM_EncTable", .@name$, 8);
+		.@ccount = callfunc("DM_EncScale", atoi(callfunc("DM_EncTable", .@name$, 9)));
+		// Casters sit behind the line, never in the ambush ring.
+		areamonster .@map$, .@cx - 2, .@cy + 7, .@cx + 2, .@cy + 9,
+			.@cname$, .@caster, .@ccount, .@event$;
+		.@spawned += .@ccount;
+	}
+
+	mapannounce .@map$, "[Encounter] " + .@label$ + " — " + .@spawned + " enemies.",
+		bc_map, 0xFFAA33;
+
+	.@line$ = callfunc("DM_EncTable", .@name$, 10);
+	if (.@line$ != "" && .@elite > 0) {
+		.@ename$ = callfunc("DM_EncTable", .@name$, 3);
+		mapannounce .@map$, "[" + .@ename$ + "] " + .@line$, bc_map, 0xFFCC33;
+	}
+
+	dispbottom("[Enc] " + .@label$ + ": " + .@spawned + " spawned, formation "
+		+ .@form$ + ", on " + .@map$ + ". @dm cleanup removes them.");
+	return .@spawned;
+}
+
+// ── Readout ───────────────────────────────────────────────────────────────
+function	script	DM_EncInfo	{
+	.@name$ = strtolower(getarg(0));
+	.@label$ = callfunc("DM_EncTable", .@name$, 0);
+	if (.@label$ == "") {
+		dispbottom("[Enc] No encounter named '" + .@name$ + "'.");
+		return 0;
+	}
+
+	dispbottom("[Enc] " + .@name$ + " — " + .@label$);
+	dispbottom("  default formation: " + callfunc("DM_EncTable", .@name$, 1));
+
+	.@elite = atoi(callfunc("DM_EncTable", .@name$, 2));
+	if (.@elite > 0)
+		dispbottom("  elite:   1x " + callfunc("DM_EncTable", .@name$, 3)
+			+ " (" + .@elite + ")");
+
+	.@minion = atoi(callfunc("DM_EncTable", .@name$, 4));
+	if (.@minion > 0)
+		dispbottom("  minions: " + callfunc("DM_EncScale", atoi(callfunc("DM_EncTable", .@name$, 6)))
+			+ "x " + callfunc("DM_EncTable", .@name$, 5) + " (" + .@minion
+			+ ") — base " + callfunc("DM_EncTable", .@name$, 6) + " for a party of 4");
+
+	.@caster = atoi(callfunc("DM_EncTable", .@name$, 7));
+	if (.@caster > 0)
+		dispbottom("  casters: " + callfunc("DM_EncScale", atoi(callfunc("DM_EncTable", .@name$, 9)))
+			+ "x " + callfunc("DM_EncTable", .@name$, 8) + " (" + .@caster + ")");
+
+	dispbottom("  scaled for " + callfunc("DM_PartyOnlineCount") + " online member(s).");
+	return 1;
+}
+
+function	script	DM_EncList	{
+	dispbottom("[Enc] Encounters — @dmenc info <name> for composition:");
+	.@n = callfunc("DM_EncNames");
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		.@name$ = callfunc("DM_EncNames", .@i);
+		dispbottom("  " + .@name$ + " — " + callfunc("DM_EncTable", .@name$, 0));
+	}
+	dispbottom("[Enc] @dmenc spawn <name> [ambush|line|scatter]");
+	return 1;
+}
+
+// ── Stealth ───────────────────────────────────────────────────────────────
+// RO already implements this. MD_DETECTOR (0x100, src/map/status.h) is
+// precisely "this monster can see through Hiding and Cloaking", and
+// MD_AGGRESSIVE (0x4) is "it initiates". Stripping both makes a mob oblivious;
+// restoring them IS the moment it notices.
+//
+// The consequence: a Thief with real TF_HIDING is natively stealthed against
+// a non-detector mob and the engine enforces it with no help from us. The AGI
+// check is how everyone else approximates what that class does for free —
+// which is the right shape, because it rewards the build rather than
+// overriding it.
+//
+// Failure must never delete the encounter. The party came for the fight;
+// taking it away reads as lost content. Failure makes the SAME fight worse.
+
+function	script	DM_StealthSet	{
+	.@map$ = getarg(0);
+	.@limit = getarg(1, 0);      // 0 = every mob on the map
+
+	// Remember exactly which units were put to sleep, and what their mode was
+	// before. Restoring by OR-ing MD_AGGRESSIVE back onto everything would make
+	// naturally passive mobs (Poring, Fabre) aggressive for the rest of the
+	// session — the map does not go back to how it was found. getunits' limit
+	// argument treats 0 as "no limit" (script.c: limit < 1 -> SCRIPT_MAX).
+	.@n = getunits(BL_MOB, .@units, 0, .@map$);
+	deletearray @dm_stealth_gid[0], 128;
+	deletearray @dm_stealth_mode[0], 128;
+	.@touched = 0;
+
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		if (.@limit > 0 && .@touched >= .@limit)
+			break;
+		if (.@touched >= 128)
+			break;
+		.@mode = getunitdata(.@units[.@i], UDT_MODE);
+		if (.@mode <= 0)
+			continue;
+		@dm_stealth_gid[.@touched] = .@units[.@i];
+		@dm_stealth_mode[.@touched] = .@mode;
+		setunitdata(.@units[.@i], UDT_MODE, .@mode & ~(MD_AGGRESSIVE | MD_DETECTOR));
+		++.@touched;
+	}
+	@dm_stealth_count = .@touched;
+	return .@touched;
+}
+
+// Wake units back to the mode they actually had. count = 0 wakes all of them,
+// 1 wakes a single sentry.
+function	script	DM_StealthWake	{
+	.@wake = getarg(0, 0);
+	.@n = @dm_stealth_count;
+	if (.@n <= 0)
+		return 0;
+	if (.@wake <= 0 || .@wake > .@n)
+		.@wake = .@n;
+
+	for (.@i = 0; .@i < .@wake; ++.@i)
+		setunitdata(@dm_stealth_gid[.@i], UDT_MODE, @dm_stealth_mode[.@i]);
+
+	if (.@wake >= .@n) {
+		@dm_stealth_count = 0;
+		deletearray @dm_stealth_gid[0], 128;
+		deletearray @dm_stealth_mode[0], 128;
+	}
+	return .@wake;
+}
+
+// @dm stealth <dc> — the whole scene in one call.
+// Every mob on the map goes oblivious, the party rolls AGI, and the outcome
+// bands decide how much of the room wakes up.
+function	script	DM_StealthScene	{
+	.@dc = getarg(0, 15);
+	.@party_id = getarg(1, callfunc("DM_SessionParty"));
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	.@slept = callfunc("DM_StealthSet", .@map$);
+	if (.@slept == 0) {
+		dispbottom("[Stealth] No monsters on " + .@map$ + " to sneak past.");
+		return 0;
+	}
+
+	mapannounce .@map$, "[Stealth] " + .@slept + " enemies have not noticed you yet. AGI vs DC "
+		+ .@dc + ".", bc_map, 0x88CCFF;
+
+	if (.@party_id <= 0) {
+		.@band = callfunc("DM_CheckRoll", "stealth", .@dc);
+		.@seen = (.@band < 1);
+		.@partial = (.@band == 1);
+	} else {
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+		.@failed = 0;
+		.@cost = 0;
+		.@rolled = 0;
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+				continue;
+			if (!attachrid(.@accid[.@i]))
+				continue;
+			.@band = callfunc("DM_CheckRoll", "stealth", .@dc);
+			++.@rolled;
+			if (.@band < 1)
+				++.@failed;
+			else if (.@band == 1)
+				++.@cost;
+			detachrid();
+		}
+		if (.@origin)
+			attachrid(.@origin);
+		.@seen = (.@failed > 0);
+		.@partial = (.@failed == 0 && .@cost > 0);
+	}
+
+	if (.@seen) {
+		callfunc("DM_StealthWake", 0);
+		mapannounce .@map$, "[Stealth] Seen. The room wakes.", bc_map, 0xFF4444;
+		dispbottom("[Stealth] Blown. Consider: reinforcements, a timer on the exit,");
+		dispbottom("  or the boss spawning with more HP because it had warning.");
+		return 0;
+	}
+
+	if (.@partial) {
+		// One sentry only. The party has a problem, not a disaster.
+		callfunc("DM_StealthWake", 1);
+		mapannounce .@map$, "[Stealth] One sentry turns. The rest have not noticed.",
+			bc_map, 0xFFAA33;
+		return 1;
+	}
+
+	mapannounce .@map$, "[Stealth] Nothing has noticed you. Move.", bc_map, 0x88FF88;
+	return 2;
+}

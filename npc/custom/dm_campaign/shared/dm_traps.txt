@@ -3,8 +3,16 @@
 // These functions provide standard puzzle resets, area hazards,
 // and trigger tile abstractions for the DM campaign.
 
-// DM_HazardArea("<map>", x, y, range, hp_percent_loss, status_type, status_duration{, party_id})
+// DM_HazardArea("<map>", x, y, range, hp_percent_loss, status_type,
+//               status_duration{, party_id{, "<save_tag>", save_dc}})
 // Inflicts damage and/or status effects to the caller's party in the area.
+//
+// With a save tag and DC, each member in the area rolls that check first:
+// passing halves the damage and avoids the status entirely, failing takes it
+// whole. This is what turns a hazard from a tax into a decision — the party
+// can position, brace, or send the VIT character in first. Both arguments are
+// optional and every pre-existing caller (Arcs 4, 7, 10, 12, 14, 15, 19) keeps
+// its original unconditional behaviour.
 function	script	DM_HazardArea	{
 	.@map$ = getarg(0);
 	.@x = getarg(1);
@@ -14,6 +22,8 @@ function	script	DM_HazardArea	{
 	.@status_type = getarg(5, 0);
 	.@status_dur = getarg(6, 10000);
 	.@party_id = getarg(7, getcharid(CHAR_ID_PARTY));
+	.@save_tag$ = getarg(8, "");
+	.@save_dc = getarg(9, 0);
 
 	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
 
@@ -26,10 +36,17 @@ function	script	DM_HazardArea	{
 		if (.@dy < 0)
 			.@dy = -.@dy;
 		if (.@pc_map$ == .@map$ && .@dx <= .@range && .@dy <= .@range) {
-			if (.@percent_damage > 0)
-				percentheal -(.@percent_damage), 0;
-			if (.@status_type > 0)
-				sc_start .@status_type, .@status_dur, 1;
+			.@dmg = .@percent_damage;
+			.@sc = .@status_type;
+			if (.@save_tag$ != "" && .@save_dc > 0
+				&& callfunc("DM_CheckRoll", .@save_tag$, .@save_dc) >= 1) {
+				.@dmg = .@dmg / 2;
+				.@sc = 0;
+			}
+			if (.@dmg > 0)
+				percentheal -(.@dmg), 0;
+			if (.@sc > 0)
+				sc_start .@sc, .@status_dur, 1;
 			return 1;
 		}
 		return 0;
@@ -56,10 +73,17 @@ function	script	DM_HazardArea	{
 			continue;
 		}
 
-		if (.@percent_damage > 0)
-			percentheal -(.@percent_damage), 0;
-		if (.@status_type > 0)
-			sc_start .@status_type, .@status_dur, 1;
+		.@dmg = .@percent_damage;
+		.@sc = .@status_type;
+		if (.@save_tag$ != "" && .@save_dc > 0
+			&& callfunc("DM_CheckRoll", .@save_tag$, .@save_dc) >= 1) {
+			.@dmg = .@dmg / 2;
+			.@sc = 0;
+		}
+		if (.@dmg > 0)
+			percentheal -(.@dmg), 0;
+		if (.@sc > 0)
+			sc_start .@sc, .@status_dur, 1;
 		++.@hit;
 		detachrid();
 	}

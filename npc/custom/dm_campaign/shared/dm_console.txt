@@ -30,6 +30,8 @@ OnInit:
 	bindatcmd("check", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCheck", 0, 99, 1);
 	bindatcmd("assist", strnpcinfo(NPC_NAME_UNIQUE)+"::OnAssist", 0, 99, 1);
 	bindatcmd("dmcheck", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDMCheck", 1, 99, 1);
+	bindatcmd("dmstakes", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStakes", 1, 99, 1);
+	bindatcmd("dmenc", strnpcinfo(NPC_NAME_UNIQUE)+"::OnEnc", 1, 99, 1);
 	end;
 
 OnDM:
@@ -145,6 +147,30 @@ OnDM:
 
 	if (.@sub$ == "check") {
 		callsub(S_Check, 1);
+		end;
+	}
+
+	if (.@sub$ == "stakes") {
+		callsub(S_Stakes, 1);
+		end;
+	}
+
+	if (.@sub$ == "enc" || .@sub$ == "encounter") {
+		callsub(S_Enc, 1);
+		end;
+	}
+
+	if (.@sub$ == "stealth") {
+		.@dc = atoi(@dm_atcmd_p$[1]);
+		if (.@dc <= 0)
+			.@dc = 15;
+		callfunc("DM_StealthScene", .@dc);
+		end;
+	}
+
+	if (.@sub$ == "wake") {
+		callfunc("DM_StealthWake", 0);
+		dispbottom("[Stealth] Everything is awake again.");
 		end;
 	}
 
@@ -309,6 +335,24 @@ OnAssist:
 	callfunc("DM_CheckAssist", .@atcmd_parameters$[0], .@atcmd_parameters$[1]);
 	end;
 
+OnEnc:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	deletearray @dm_atcmd_p$[0], 128;
+	copyarray @dm_atcmd_p$[0], .@atcmd_parameters$[0], .@atcmd_numparameters;
+	@dm_atcmd_n = .@atcmd_numparameters;
+	callsub(S_Enc, 0);
+	end;
+
+OnStakes:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	deletearray @dm_atcmd_p$[0], 128;
+	copyarray @dm_atcmd_p$[0], .@atcmd_parameters$[0], .@atcmd_numparameters;
+	@dm_atcmd_n = .@atcmd_numparameters;
+	callsub(S_Stakes, 0);
+	end;
+
 OnDMCheck:
 	if (!callfunc("DM_RequireDM"))
 		end;
@@ -440,6 +484,9 @@ S_Help:
 	dispbottom("[DM] @dm reward [arc] [tier] [preview|dryrun|1]");
 	dispbottom("[DM] @roll [hidden] <NdX[+/-mod]> | @roll fudge <total> [note]");
 	dispbottom("[DM] @dm check <player|me|party> <tag|stat> <dc> [dm_flag]");
+	dispbottom("[DM] @dm stakes <success> | <failure>   (say the price first)");
+	dispbottom("[DM] @dmenc list | info <name> | spawn <name> [ambush|line|scatter]");
+	dispbottom("[DM] @dm stealth [dc]   (default 15) | @dm wake");
 	dispbottom("[DM] Players: @check <tag|stat> <dc> and @assist <player> <tag>");
 	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
 	dispbottom("[DM] @dm quest <start|complete|erase> <quest_id>   (current party)");
@@ -455,6 +502,72 @@ S_Help:
 	dispbottom("[DM] @dm status              (arc progress + key flags at a glance)");
 	dispbottom("[DM] @dm reset confirm       (wipe all campaign flags for a fresh run)");
 	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmstatus, @dmreset");
+	return;
+
+S_Enc:
+	// @dmenc list | info <name> | spawn <name> [formation]
+	.@offset = getarg(0, 0);
+	.@action$ = strtolower(@dm_atcmd_p$[.@offset]);
+
+	if (.@action$ == "" || .@action$ == "list") {
+		callfunc("DM_EncList");
+		return;
+	}
+	if (.@action$ == "info") {
+		if (@dm_atcmd_p$[.@offset + 1] == "") {
+			dispbottom("[Enc] Usage: @dmenc info <name>");
+			return;
+		}
+		callfunc("DM_EncInfo", @dm_atcmd_p$[.@offset + 1]);
+		return;
+	}
+	if (.@action$ == "spawn") {
+		if (@dm_atcmd_p$[.@offset + 1] == "") {
+			dispbottom("[Enc] Usage: @dmenc spawn <name> [ambush|line|scatter]");
+			return;
+		}
+		callfunc("DM_EncSpawn", @dm_atcmd_p$[.@offset + 1], @dm_atcmd_p$[.@offset + 2]);
+		return;
+	}
+
+	dispbottom("[Enc] Unknown action: " + .@action$);
+	callfunc("DM_EncList");
+	return;
+
+S_Stakes:
+	// @dm stakes <success text> | <failure text>
+	// Announced BEFORE the check. A roll whose price nobody knows is just a
+	// number; naming both outcomes first is the cheapest way to make a check
+	// matter at the table.
+	.@offset = getarg(0, 0);
+	.@text$ = "";
+	for (.@i = .@offset; .@i < @dm_atcmd_n; ++.@i)
+		.@text$ += (.@i > .@offset ? " " : "") + @dm_atcmd_p$[.@i];
+
+	if (.@text$ == "") {
+		dispbottom("[DM] Usage: @dm stakes <what success means> | <what failure means>");
+		dispbottom("[DM] Announced to the map before you call the check.");
+		return;
+	}
+
+	.@bar = 0;
+	.@len = getstrlen(.@text$);
+	for (.@i = 0; .@i < .@len; ++.@i) {
+		if (substr(.@text$, .@i, .@i) == "|") {
+			.@bar = .@i;
+			break;
+		}
+	}
+
+	if (.@bar > 0) {
+		// substr() is inclusive at both ends, so bar-1 / bar+1 split cleanly.
+		.@win$ = substr(.@text$, 0, .@bar - 1);
+		.@lose$ = substr(.@text$, .@bar + 1, .@len - 1);
+		mapannounce strcharinfo(PC_MAP), "[Stakes] On success: " + .@win$, bc_map, 0x88FF88;
+		mapannounce strcharinfo(PC_MAP), "[Stakes] On failure: " + .@lose$, bc_map, 0xFF8844;
+	} else {
+		mapannounce strcharinfo(PC_MAP), "[Stakes] " + .@text$, bc_map, 0xFFCC33;
+	}
 	return;
 
 S_Check:
