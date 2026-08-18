@@ -74,14 +74,14 @@ around `lhz_dun04` 150,150 with confusion pressure.
 villain confrontation, then an MVP boss spawned via DM console.
 
 ### Arc 11 — Zealot Bjorn (Hugel)
-- Hunting: Priest Eadric questline (20153 × 15, 20154 × 20)
+- Hunting: Gryphon (1259 × 20 / 20153), Ferus (1714 × 20 / 20154)
 - Villain: Bjorn — subdued / persuaded / **joined**
 - Boss: Randgris at `abyss_03`
 - Flags: `dm_arc11_bjorn_subdued`, `dm_arc11_bjorn_joined`
 - Bjorn_joined reduces Randgris court adds; Bjorn_subdued spawns the full court.
 
 ### Arc 12 — Captain Vance (New World)
-- Hunting: Cornus (1992 × 15), Naga (1993 × 15)
+- Hunting: Cornus (1992 × 20 / 20163), Naga (1993 × 20 / 20164)
 - Villain: Vance — exposed / **helped**
 - Boss: Naght Sieger (1956) at `spl_fild01`
 - Flags: `dm_arc12_vance_exposed`, `dm_arc12_vance_helped`
@@ -90,7 +90,7 @@ villain confrontation, then an MVP boss spawned via DM console.
 - Vance_helped → callback in Arc 15 (Lysandra)
 
 ### Arc 13 — Broker Carrion (Nameless Island)
-- Hunting: Banshee (1868 × 20 / 20173), Zombie Slaughter (1865 × 20 / 20174)
+- Hunting: Banshee (1868 × 20 / 20173), Zombie Slaughter (1864 × 20 / 20174)
 - Villain: Carrion — killed / **bribed**
 - Boss: Beelzebub (1874) at `abbey03`
 - Flags: `dm_arc13_carrion_killed`, `dm_arc13_carrion_bribed`
@@ -98,7 +98,7 @@ villain confrontation, then an MVP boss spawned via DM console.
   without spawning Beelzebub and sets `dm_arc13_coalition_deal_honored`.
 
 ### Arc 14 — Prelate Hesma (Veins)
-- Hunting: Salamander (1832 × 20 / 20183), Lava Golem (1367 × 20 / 20184)
+- Hunting: Salamander (1831 × 20 / 20183), Lava Golem (1366 × 20 / 20184)
 - Villain: Hesma — exposed / **bribed**
 - Boss: Ifrit (1832) at `thor_v03`
 - Flags: `dm_arc14_hesma_exposed`, `dm_arc14_hesma_bribed`
@@ -311,3 +311,35 @@ Arc 18: himmelmez_bargained → Arc 19 boss flavor, unlocks queens_bargain endin
 | Khalitzburg | 1132 | |
 | Cornus | 1992 | (Arc 12, was wrong as 1993 in earlier draft) |
 | Naga | 1993 | (Arc 12, was wrong as 1994 in earlier draft) |
+| Gryphon | 1259 | Arc 11 hunt — `hu_fild02` |
+| Ferus | 1714 | Arc 11 hunt — `abyss_01`–`abyss_03` |
+| Banshee | 1868 | Arc 13 hunt |
+| Zombie Slaughter | 1864 | Arc 13 hunt — `abbey01`/`abbey02` |
+| Salamander | 1831 | Arc 14 hunt — `thor_v01`–`thor_v03` (NOT 1832 IFRIT) |
+| Lava Golem | 1366 | Arc 14 hunt (NOT 1367 BLAZZER) |
+| Harpy | 1376 | Arc 6 hunt — `yuno_fild02`–`yuno_fild07` |
+| Metaling | 1613 | Arc 7 hunt — `ein_fild06`–`ein_fild09` |
+| Raydric | 1163 | Arc 8 hunt — `gl_cas02`, `gl_knt01`/`02` |
+| Wraith | 1192 | Arc 8 hunt — `gl_church`, `gl_chyard` |
+| Hunter Fly | 1035 | Arc 10 hunt — see caveat below |
+| Aliot | 1736 | Arc 10 hunt — `kh_dun01`/`02` |
+
+**Off-by-one sweep (2026-08-18).** Eleven campaign hunting quests in
+`db/quest_db.conf` carried a mob id exactly one higher than the mob their own
+comment/quest name named (e.g. 20183 "Volcanic Salamander Hunt" targeted 1832
+IFRIT, an MVP, instead of 1831 SALAMANDER — which made Arc 14 uncompletable,
+since `arc_14_veins.txt:148` gates the Hesma confrontation on both hunts).
+All eleven are corrected and every arc-script header now agrees with
+`quest_db.conf`. When adding a hunt, verify the id against `mob_db.conf` by
+name, not by neighbouring id.
+
+**Open content caveat — quest 20142 "Lab Infiltration" (Arc 10).** The id now
+matches its stated mob (1035 Hunter Fly), but Hunter Fly spawns in `gef_dun*`,
+`gl_prison*`, and `prt_maze*` — none of them Lighthalzen. The arc's own maps are
+`lighthalzen`/`lhz_dun03`. This is a content choice, not an id error; pick a
+Lighthalzen-region mob if the hunt should be run in-region.
+
+**Unused quest — 20105 "Norgroad Heat Index".** Defined in `quest_db.conf` and
+erased by `@dm reset`, but started by no arc script. Its id now matches its
+comment (1030 Anacondaq, `ra_fild03`/`ra_fild08`); reassign if it is ever wired
+into Arc 6.
