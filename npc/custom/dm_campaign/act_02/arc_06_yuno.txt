@@ -22,7 +22,7 @@
 
 // ── Doctor Ingrid Vahl — Yuno Atmospheric Researcher ───────────────────────
 yuno,155,185,5	script	Doctor Ingrid Vahl#dm	4_F_02,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20101) == 2) {
 		callfunc("DM_PartyMes", "[Doctor Vahl]");
 		if (dm_arc06_mistress_killed)
@@ -225,7 +225,7 @@ S_TurnIns:
 
 // ── Director Aldous Krenn — The Republic's Money ───────────────────────
 yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc06_started) {
 		callfunc("DM_PartyMes", "[Director Krenn]");
 		callfunc("DM_PartyMes", "The Research Bureau handles appointments. I handle approvals. You require neither.");
@@ -269,7 +269,8 @@ yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_bribed", 1);
-		callfunc("DM_GivePartyZeny", 25000);
+		if (callfunc("DM_ClaimGrant", "arc06_krenn_zeny"))
+			callfunc("DM_GivePartyZeny", 25000);
 		callfunc("DM_PartyMes", "[Krenn]");
 		callfunc("DM_PartyMes", "Now you are speaking the Republic's language. Twenty-five thousand zeny. Consider it a retainer for services rendered in the public interest.");
 		next();
@@ -293,9 +294,12 @@ juperos_01,150,150,0	script	Juperos Vault#dm	HIDDEN_NPC,{
 	end;
 
 OnMistressDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc06_mistress", .@party))
+		end;
 	callfunc("DM_InstanceQuestComplete", 20101);
 	callfunc("DM_InstanceSetFlag", "dm_arc06_mistress_killed", 1);
-	callfunc("DM_PartyExp", 500000, 300000);
+	callfunc("DM_PartyExp", 500000, 300000, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 699);
 	instance_announce(instance_id(), "^3355FF[DM] Mistress falls. The Ymir fragment shudders, but the city above holds... for now.^000000", bc_all);
 	sleep(2000);

@@ -97,7 +97,7 @@ function	script	DM_PartyApplyFlag	{
 	.@party_id = getarg(2, getcharid(CHAR_ID_PARTY));
 	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
 
-	if (.@flag$ == "")
+	if (!callfunc("DM_ValidFlagName", .@flag$))
 		return 0;
 
 	if (.@party_id <= 0) {

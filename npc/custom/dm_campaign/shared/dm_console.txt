@@ -517,6 +517,10 @@ S_Exp:
 		dispbottom("[DM] Example: @dm exp 50000 20000");
 		return;
 	}
+	if (.@base > 2000000)
+		.@base = 2000000;
+	if (.@job > 2000000)
+		.@job = 2000000;
 
 	.@given = callfunc("DM_PartyExp", .@base, .@job);
 	dispbottom("[DM] Granted " + .@base + " base / " + .@job + " job EXP to " + .@given + " party member(s).");
@@ -526,14 +530,21 @@ S_Mode:
 	.@offset = getarg(0, 0);
 	.@action$ = @dm_atcmd_p$[.@offset];
 	if (.@action$ == "on") {
+		.@party = getcharid(CHAR_ID_PARTY);
+		if (.@party <= 0) {
+			dispbottom("[DM] Form a party before enabling a campaign session.");
+			dispbottom("[DM] A session with no party would unlock the campaign for every solo player.");
+			return;
+		}
 		$dm_mode = 1;
-		$dm_active_party = getcharid(CHAR_ID_PARTY);
+		$dm_active_party = .@party;
 		dispbottom("[DM] DnD mode enabled. MVP spawns will be suppressed.");
 		dispbottom("[DM] Campaign NPCs are active for party " + $dm_active_party + ".");
 		mapannounce "prontera", "A campaign session has begun. Check the Session Board near the fountain.", bc_map, 0xFFAA33;
 		return;
 	}
 	if (.@action$ == "off") {
+		callfunc("DM_ClearPartyGrants", $dm_active_party);
 		$dm_mode = 0;
 		$dm_active_party = 0;
 		dispbottom("[DM] DnD mode disabled. MVP spawns will resume naturally.");
@@ -637,6 +648,10 @@ S_Warp:
 		dispbottom("[DM] Usage: @dm warp <map> [x] [y]");
 		return;
 	}
+	if (!callfunc("DM_IsCampaignMap", .@map$)) {
+		dispbottom("[DM] Map '" + .@map$ + "' is not on the campaign warp list.");
+		return;
+	}
 
 	.@moved = callfunc("DM_WarpParty", .@map$, .@x, .@y, getcharid(CHAR_ID_PARTY));
 	dispbottom("[DM] Warped " + .@moved + " party member(s) to " + .@map$ + ".");
@@ -661,6 +676,10 @@ S_Instance:
 		.@src$ = @dm_atcmd_p$[.@offset + 1];
 		if (.@src$ == "") {
 			dispbottom("[DM] Usage: @dm instance start <source_map> [x] [y] [label]");
+			return;
+		}
+		if (!callfunc("DM_IsCampaignMap", .@src$)) {
+			dispbottom("[DM] Map '" + .@src$ + "' is not on the campaign instance list.");
 			return;
 		}
 		.@x = atoi(@dm_atcmd_p$[.@offset + 2]);
@@ -808,6 +827,10 @@ S_Flag:
 		dispbottom("[DM] Usage: @dmflag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
 		return;
 	}
+	if (!callfunc("DM_ValidFlagName", .@flag$)) {
+		dispbottom("[DM] Flag names must match dm_[A-Za-z0-9_]+.");
+		return;
+	}
 
 	if (.@action$ == "get") {
 		dispbottom("[DM] " + .@flag$ + " = " + callfunc("DM_GetFlag", .@flag$));
@@ -837,6 +860,10 @@ S_Quest:
 
 	if (.@quest_id <= 0) {
 		dispbottom("[DM] Usage: @dmquest <start|complete|erase> <quest_id>");
+		return;
+	}
+	if (!callfunc("DM_IsCampaignQuest", .@quest_id)) {
+		dispbottom("[DM] Quest " + .@quest_id + " is outside the campaign range (20001-20233).");
 		return;
 	}
 
@@ -874,6 +901,8 @@ S_Spawn:
 
 	if (.@count <= 0)
 		.@count = 1;
+	if (.@count > 20)
+		.@count = 20;
 	if (.@name$ == "")
 		.@name$ = "--ja--";
 

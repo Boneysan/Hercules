@@ -21,7 +21,7 @@
 
 // ── Priest Eadric — The Faithful Witness ───────────────────────────────────
 hugel,100,100,5	script	Priest Eadric#dm	4_M_01,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20151) == 2) {
 		callfunc("DM_PartyMes", "[Priest Eadric]");
 		if (dm_arc11_bjorn_joined)
@@ -204,7 +204,7 @@ S_TurnIns:
 
 // ── Zealot Bjorn — The Man Who Was Right for the Wrong Reasons ─────────────
 hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc11_started) {
 		callfunc("DM_PartyMes", "[Zealot Bjorn]");
 		callfunc("DM_PartyMes", "Midgard sleeps. The reckoning approaches and no one watches the horizon.");
@@ -288,6 +288,9 @@ abyss_03,150,150,0	script	Valkyrie Hall#dm	HIDDEN_NPC,{
 	end;
 
 OnRandgrisDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc11_randgris", .@party))
+		end;
 	killmonster strnpcinfo(NPC_MAP), "Valkyrie Hall#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20151);
 	callfunc("DM_InstanceSetFlag", "dm_arc11_randgris_killed", 1);

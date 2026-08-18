@@ -23,7 +23,7 @@
 
 // Rashid - tomb-guide and Arc 3 quest-giver
 morocc,159,97,4	script	Rashid the Guide#dm	4_M_ORIENT02,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20018) == 2) {
 		callfunc("DM_PartyMes", "[Rashid]");
 		if (dm_arc03_rashid_mocked)
@@ -240,7 +240,7 @@ S_TurnIns:
 
 // Mother Sabra - relief mission leader and human villain
 moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc03_started) {
 		callfunc("DM_PartyMes", "[Mother Sabra]");
 		callfunc("DM_PartyMes", "If you need water, take water. If you need a sermon, I have no strength left for one.");
@@ -295,7 +295,7 @@ moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
 
 // Osiris - side tomb-court set-piece
 moc_pryd04,100,92,4	script	Osiris's Court#dm	4_M_NFDEADMAN,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20017) != 1) {
 		if (questprogress(20017) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*The sand-drowned court is still. A gold mask lies warm only in memory.*^000000");
@@ -338,6 +338,9 @@ OnCourtDead:
 	end;
 
 OnOsirisDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc03_osiris", .@party))
+		end;
 	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Osiris's Court#dm::OnCourtDead";
@@ -357,7 +360,7 @@ OnInit:
 
 // Amon Ra - main Pyramid set-piece
 moc_pryd06,102,85,4	script	Amon Ra's Lid#dm	4_M_CRU_HEAD,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20018) != 1) {
 		if (questprogress(20018) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*Behind the throne, the cult-cut shaft remains sealed. It breathes cold air from far below.*^000000");
@@ -418,6 +421,9 @@ OnAddDead:
 	end;
 
 OnAmonDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc03_amon", .@party))
+		end;
 	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Amon Ra's Lid#dm::OnAddDead";

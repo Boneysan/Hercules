@@ -21,7 +21,7 @@
 
 // ── Father Quill the Doorkeeper — The Last Ward ────────────────────────────
 nameless_i,100,100,5	script	Father Quill#dm	4_M_04,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20171) == 2) {
 		callfunc("DM_PartyMes", "[Father Quill]");
 		if (dm_arc13_carrion_bribed)
@@ -208,7 +208,7 @@ S_TurnIns:
 
 // ── The Broker Carrion — The Deal That Shouldn't Be Tempting ───────────────
 nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc13_started) {
 		callfunc("DM_PartyMes", "[The Broker Carrion]");
 		callfunc("DM_PartyMes", "Not yet. Come back when you have seen what Father Quill is protecting.");
@@ -305,6 +305,9 @@ abbey03,150,150,0	script	Beelzebub Sanctum#dm	HIDDEN_NPC,{
 	end;
 
 OnBeelzebubDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc13_beelzebub", .@party))
+		end;
 	killmonster strnpcinfo(NPC_MAP), "Beelzebub Sanctum#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20171);
 	callfunc("DM_InstanceSetFlag", "dm_arc13_beelzebub_killed", 1);

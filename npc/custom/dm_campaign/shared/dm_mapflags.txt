@@ -1,0 +1,64 @@
+// Campaign set-piece maps: no Fly Wing / Teleport / Memo out with the Sigil Ring.
+// Applied to the live maps the scripts sit on. Instanced copies inherit flags.
+
+prt_sewb4	mapflag	nowarp
+prt_sewb4	mapflag	nowarpto
+prt_sewb4	mapflag	noteleport
+prt_sewb4	mapflag	nomemo
+prt_sewb4	mapflag	nosave	SavePoint
+
+juperos_01	mapflag	nowarp
+juperos_01	mapflag	noteleport
+juperos_01	mapflag	nomemo
+
+pay_dun04	mapflag	nowarp
+pay_dun04	mapflag	noteleport
+pay_dun04	mapflag	nomemo
+
+moc_pryd06	mapflag	nowarp
+moc_pryd06	mapflag	noteleport
+moc_pryd06	mapflag	nomemo
+
+gef_dun02	mapflag	nowarp
+gef_dun02	mapflag	noteleport
+gef_dun02	mapflag	nomemo
+
+iz_dun04	mapflag	nowarp
+iz_dun04	mapflag	noteleport
+iz_dun04	mapflag	nomemo
+
+ein_dun02	mapflag	nowarp
+ein_dun02	mapflag	noteleport
+ein_dun02	mapflag	nomemo
+
+gl_cas02	mapflag	nowarp
+gl_cas02	mapflag	noteleport
+gl_cas02	mapflag	nomemo
+
+ra_san05	mapflag	nowarp
+ra_san05	mapflag	noteleport
+ra_san05	mapflag	nomemo
+
+lhz_dun03	mapflag	nowarp
+lhz_dun03	mapflag	noteleport
+lhz_dun03	mapflag	nomemo
+
+odin_tem03	mapflag	nowarp
+odin_tem03	mapflag	noteleport
+odin_tem03	mapflag	nomemo
+
+abbey03	mapflag	nowarp
+abbey03	mapflag	noteleport
+abbey03	mapflag	nomemo
+
+thor_v03	mapflag	nowarp
+thor_v03	mapflag	noteleport
+thor_v03	mapflag	nomemo
+
+tha_t12	mapflag	nowarp
+tha_t12	mapflag	noteleport
+tha_t12	mapflag	nomemo
+
+moc_fild22	mapflag	nowarp
+moc_fild22	mapflag	noteleport
+moc_fild22	mapflag	nomemo

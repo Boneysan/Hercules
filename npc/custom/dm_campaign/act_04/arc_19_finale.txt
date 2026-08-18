@@ -23,7 +23,7 @@
 
 // ── Loki The Voice — The Observer ─────────────────────────────────────────
 moc_ruins,150,150,5	script	Loki The Voice#dm	4_M_04,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (dm_campaign_complete) {
 		callfunc("DM_PartyMes", "[Loki The Voice]");
 		callfunc("DM_PartyMes", "The choice was made. The seal is different now. I watched you understand what that meant while you were doing it. That was the part I did not predict.");
@@ -200,9 +200,12 @@ OnTimer32000:
 
 OnSurtDead:
 	stopnpctimer;
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc19_surt", .@party))
+		end;
 	callfunc("DM_InstanceQuestComplete", 20231);
 	callfunc("DM_InstanceSetFlag", "dm_arc19_surt_defeated", 1);
-	callfunc("DM_PartyExp", 5000000, 3000000);
+	callfunc("DM_PartyExp", 5000000, 3000000, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1902);
 	if (dm_arc18_himmelmez_bargained)
 		instance_announce(instance_id(), "^3355FF[DM] Surt disperses. The focal point closes. From Niflheim, Himmelmez says nothing — but the dead stop walking north for the first time in three years.^000000", bc_all);
@@ -215,7 +218,7 @@ OnSurtDead:
 
 // ── The Central Choice — The Five Paths ───────────────────────────────────
 moc_fild22,175,140,5	script	The Central Choice#dm	4_M_05,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (dm_campaign_complete) {
 		callfunc("DM_PartyMes", "[The Central Choice]");
 		callfunc("DM_PartyMes", "The choice was made. The seal is different now.");
@@ -265,7 +268,8 @@ moc_fild22,175,140,5	script	The Central Choice#dm	4_M_05,{
 	callfunc("DM_PartyMes", "^FF6600[DM] The Seal Cascade ends. The party has shaped the fate of Midgard.^000000");
 	callfunc("DM_InstanceQuestComplete", 20233);
 	callfunc("DM_InstanceSetFlag", "dm_campaign_complete", 1);
-	callfunc("DM_PartyExp", 1000000, 500000);
+	if (callfunc("DM_ClaimGrant", "arc19_finale"))
+		callfunc("DM_PartyExp", 1000000, 500000);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1999);
 	announce("[DM] The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", bc_all, 0xFF6600);
 	close();

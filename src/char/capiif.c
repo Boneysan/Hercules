@@ -185,8 +185,15 @@ void capiif_parse_emblem_upload_guild_id(int fd)
 		capiif->send_emblem_upload_result(fd, 0);
 		return;
 	}
+	if (data->guild_id <= 0 || !inter_guild->is_guild_master(p->base.char_id, data->guild_id)) {
+		character->data->emblem_guild_id = 0;
+		capiif->send_emblem_upload_result(fd, 0);
+		return;
+	}
 	character->data->emblem_guild_id = data->guild_id;
 	character->data->emblem_gif = data->is_gif;
+	// 2 = authorized. The API must not decode the image until it sees this.
+	capiif->send_emblem_upload_result(fd, 2);
 }
 
 void capiif_parse_emblem_upload(int fd)

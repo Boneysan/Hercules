@@ -22,7 +22,7 @@
 
 // ── Doctor Sabine Reuter — The Whistleblower ───────────────────────────────
 lighthalzen,120,120,5	script	Doctor Sabine Reuter#dm	4_F_05,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20141) == 2) {
 		callfunc("DM_PartyMes", "[Doctor Reuter]");
 		if (dm_arc10_echo_freed)
@@ -216,7 +216,7 @@ S_TurnIns:
 
 // ── Director Hallan Reise — The Architect ──────────────────────────────────
 lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc10_started) {
 		callfunc("DM_PartyMes", "[Director Reise]");
 		callfunc("DM_PartyMes", "Lighthalzen's executive facilities are not open to the public.");
@@ -304,6 +304,9 @@ lhz_dun04,150,150,0	script	Kiel Core#dm	HIDDEN_NPC,{
 	end;
 
 OnKielDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc10_kiel", .@party))
+		end;
 	callfunc("DM_InstanceQuestComplete", 20141);
 	callfunc("DM_InstanceSetFlag", "dm_arc10_kiel_killed", 1);
 	callfunc("DM_InstanceSetFlag", "dm_act02_complete", 1);

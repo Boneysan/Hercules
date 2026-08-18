@@ -323,7 +323,7 @@ static void login_fromchar_parse_auth(int fd, int id, const char *const ip)
 	uint32 login_id1 = RFIFOL(fd,6);
 	uint32 login_id2 = RFIFOL(fd,10);
 	uint8 sex = RFIFOB(fd,14);
-	//uint32 ip_ = ntohl(RFIFOL(fd,15));
+	uint32 ip_ = ntohl(RFIFOL(fd,15));
 	int request_id = RFIFOL(fd,19);
 	RFIFOSKIP(fd,23);
 
@@ -333,8 +333,8 @@ static void login_fromchar_parse_auth(int fd, int id, const char *const ip)
 		node->account_id == account_id &&
 		node->login_id1  == login_id1 &&
 		node->login_id2  == login_id2 &&
-		node->sex        == sex_num2str(sex) /*&&
-		node->ip         == ip_*/ )
+		node->sex        == sex_num2str(sex) &&
+		node->ip         == ip_ )
 	{// found
 		//ShowStatus("Char-server '%s': authentication of the account %d accepted (ip: %s).\n", login->dbs->server[id].name, account_id, ip);
 

@@ -23,7 +23,7 @@
 
 // ── Doctor Mira Tressa — The Archaeologist ─────────────────────────────────
 ba_in01,100,100,5	script	Doctor Mira Tressa#dm	4_F_03,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20211) == 2) {
 		callfunc("DM_PartyMes", "[Doctor Mira Tressa]");
 		if (dm_arc17_admin_running)
@@ -191,7 +191,7 @@ S_TurnIns:
 
 // ── The Administrator — The System That Outlived Its Designer ─────────────
 ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc17_started) {
 		callfunc("DM_PartyMes", "[The Administrator]");
 		callfunc("DM_PartyMes", "Unauthorized access detected. State purpose.");
@@ -283,6 +283,9 @@ ba_pw03,150,150,0	script	Biosphere Core#dm	HIDDEN_NPC,{
 	end;
 
 OnBetaDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc17_beta", .@party))
+		end;
 	callfunc("DM_InstanceQuestComplete", 20211);
 	callfunc("DM_InstanceSetFlag", "dm_arc17_beta_killed", 1);
 	callfunc("DM_PartyExp", 2000000, 1000000);

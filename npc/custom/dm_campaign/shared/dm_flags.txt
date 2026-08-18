@@ -4,7 +4,7 @@ function	script	DM_SetFlag	{
 	.@flag$ = getarg(0);
 	.@value = getarg(1, 1);
 
-	if (.@flag$ == "")
+	if (!callfunc("DM_ValidFlagName", .@flag$))
 		return 0;
 
 	setd(.@flag$, .@value);
@@ -14,7 +14,7 @@ function	script	DM_SetFlag	{
 function	script	DM_GetFlag	{
 	.@flag$ = getarg(0);
 
-	if (.@flag$ == "")
+	if (!callfunc("DM_ValidFlagName", .@flag$))
 		return 0;
 
 	return getd(.@flag$);
@@ -23,7 +23,7 @@ function	script	DM_GetFlag	{
 function	script	DM_ClearFlag	{
 	.@flag$ = getarg(0);
 
-	if (.@flag$ == "")
+	if (!callfunc("DM_ValidFlagName", .@flag$))
 		return 0;
 
 	setd(.@flag$, 0);

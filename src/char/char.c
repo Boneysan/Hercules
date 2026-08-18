@@ -3818,9 +3818,8 @@ static void char_parse_frommap_auth_request(int fd)
 		node != NULL &&
 		node->account_id == account_id &&
 		node->char_id == char_id &&
-		node->login_id1 == login_id1 /*&&
-		node->sex == sex &&
-		node->ip == ip*/ )
+		node->login_id1 == login_id1 &&
+		node->ip == ip )
 	{// auth ok
 		if( cd->sex == 99 )
 			cd->sex = sex;
@@ -4406,7 +4405,7 @@ static void char_parse_char_connect(int fd, struct char_session_data *sd, uint32
 
 	RFIFOSKIP(fd,17);
 
-	ShowInfo("request connect - account_id:%d/login_id1:%u/login_id2:%u\n", account_id, login_id1, login_id2);
+	ShowInfo("request connect - account_id:%d\n", account_id);
 
 	if (sd) {
 		//Received again auth packet for already authenticated account?? Discard it.
@@ -4437,8 +4436,8 @@ static void char_parse_char_connect(int fd, struct char_session_data *sd, uint32
 	if( node != NULL &&
 		node->account_id == account_id &&
 		node->login_id1  == login_id1 &&
-		node->login_id2  == login_id2 /*&&
-		node->ip         == ipl*/ )
+		node->login_id2  == login_id2 &&
+		node->ip         == ipl )
 	{// authentication found (coming from map server)
 		/* restrictions apply */
 		if( chr->server_type == CST_MAINTENANCE && node->group_id < char_maintenance_min_group_id ) {

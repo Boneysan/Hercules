@@ -306,6 +306,43 @@ HTTP_URL(charconfig_load)
 	return true;
 }
 
+static bool handlers_emblem_validate_and_forward(int fd, struct api_session_data *sd)
+{
+	char *imgType = NULL;
+	char *img = NULL;
+	uint32 img_size = 0;
+	bool is_gif = false;
+
+	GET_STR_HEADER(IMG_TYPE, &imgType, NULL);
+	GET_STR_HEADER(IMG, &img, &img_size);
+
+	if (strcmp(imgType, "BMP") == 0) {
+		if (!imageparser->validate_bmp_emblem(img, img_size)) {
+			ShowError("wrong bmp image %d: %s\n", fd, sd->url);
+			httpsender->send_json_text(fd, "{\"Type\":4}", HTTP_STATUS_INTERNAL_SERVER_ERROR);
+			aclif->terminate_connection(fd);
+			return false;
+		}
+	} else if (strcmp(imgType, "GIF") == 0) {
+		if (!imageparser->validate_gif_emblem(img, img_size)) {
+			ShowError("wrong gif image %d: %s\n", fd, sd->url);
+			httpsender->send_json_text(fd, "{\"Type\":4}", HTTP_STATUS_INTERNAL_SERVER_ERROR);
+			aclif->terminate_connection(fd);
+			return false;
+		}
+		is_gif = true;
+	} else {
+		ShowError("unknown image type '%s'. %d: %s\n", imgType, fd, sd->url);
+		httpsender->send_json_text(fd, "{\"Type\":4}", HTTP_STATUS_INTERNAL_SERVER_ERROR);
+		aclif->terminate_connection(fd);
+		return false;
+	}
+
+	(void)is_gif;
+	SEND_CHAR_ASYNC_DATA_SPLIT(emblem_upload, img, img_size);
+	return true;
+}
+
 HTTP_DATA(emblem_upload)
 {
 #ifdef DEBUG_LOG
@@ -313,6 +350,12 @@ HTTP_DATA(emblem_upload)
 #endif
 
 	GET_HTTP_DATA(p, emblem_upload);
+
+	// 2 = char server authorized the (char_id, guild_id) pair. Decode only now.
+	if (p->result == 2) {
+		handlers_emblem_validate_and_forward(fd, sd);
+		return;
+	}
 
 	if (p->result == 1)
 		httpsender->send_json_text(fd, "{\"Type\":1}", HTTP_STATUS_OK);
@@ -330,42 +373,34 @@ HTTP_URL(emblem_upload)
 #ifdef REQUEST_LOG
 	aclif->show_request(fd, sd, false);
 #endif
-	char *imgType = NULL;
-	GET_STR_HEADER(IMG_TYPE, &imgType, NULL);
-	char *img = NULL;
-	uint32 img_size = 0;
-	bool is_gif = false;
-	GET_STR_HEADER(IMG, &img, &img_size);
-
-	bool has_error = false;
-	if (strcmp(imgType, "BMP") == 0) {
-		if (!imageparser->validate_bmp_emblem(img, img_size)) {
-			ShowError("wrong bmp image %d: %s\n", fd, sd->url);
-			has_error = true;
-		}
-	} else if (strcmp(imgType, "GIF") == 0) {
-		if (!imageparser->validate_gif_emblem(img, img_size)) {
-			ShowError("wrong gif image %d: %s\n", fd, sd->url);
-			has_error = true;
-		}
-		is_gif = true;
-	} else {
-		ShowError("unknown image type '%s'. %d: %s\n", imgType, fd, sd->url);
-		has_error = true;
+	int guild_id = RET_INT_HEADER(GUILD_ID, 0);
+	if (guild_id <= 0) {
+		ShowError("emblem upload without guild id %d: %s\n", fd, sd->url);
+		httpsender->send_json_text(fd, "{\"Type\":4}", HTTP_STATUS_INTERNAL_SERVER_ERROR);
+		return false;
 	}
 
-	if (has_error) {
-		// Not sure if intentional, but kRO sends status 500
+	char *imgType = NULL;
+	GET_STR_HEADER(IMG_TYPE, &imgType, NULL);
+	if (strcmp(imgType, "BMP") != 0 && strcmp(imgType, "GIF") != 0) {
+		ShowError("unknown image type '%s'. %d: %s\n", imgType, fd, sd->url);
+		httpsender->send_json_text(fd, "{\"Type\":4}", HTTP_STATUS_INTERNAL_SERVER_ERROR);
+		return false;
+	}
+
+	char *img = NULL;
+	uint32 img_size = 0;
+	GET_STR_HEADER(IMG, &img, &img_size);
+	if (img_size == 0) {
+		ShowError("empty emblem image %d: %s\n", fd, sd->url);
 		httpsender->send_json_text(fd, "{\"Type\":4}", HTTP_STATUS_INTERNAL_SERVER_ERROR);
 		return false;
 	}
 
 	CREATE_HTTP_DATA(data, emblem_upload_guild_id);
-	data.guild_id = RET_INT_HEADER(GUILD_ID, 0);
-	data.is_gif = is_gif;
+	data.guild_id = guild_id;
+	data.is_gif = (strcmp(imgType, "GIF") == 0);
 	SEND_CHAR_ASYNC_DATA(emblem_upload_guild_id, &data);
-	SEND_CHAR_ASYNC_DATA_SPLIT(emblem_upload, img, img_size);
-
 	return true;
 }
 

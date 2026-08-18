@@ -243,7 +243,7 @@ struct PACKET_API_REPLY_charconfig_load {
 */
 
 struct PACKET_API_REPLY_emblem_upload {
-	int result; // 0 = error, 1 = success
+	int result; // 0 = error, 1 = stored, 2 = authorized (send image next)
 } __attribute__((packed));
 
 

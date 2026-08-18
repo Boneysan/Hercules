@@ -22,7 +22,7 @@
 
 // ── Greta Holm — Foundry-council Organizer ───────────────────────
 einbroch,145,230,5	script	Greta Holm#dm	4_F_03,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20111) == 2) {
 		callfunc("DM_PartyMes", "[Greta Holm]");
 		if (dm_arc07_strike_supported)
@@ -220,7 +220,7 @@ S_TurnIns:
 
 // ── Supervisor Kessler — The Company Man ───────────────────────────────
 einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc07_started) {
 		callfunc("DM_PartyMes", "[Supervisor Kessler]");
 		callfunc("DM_PartyMes", "This is a restricted area. Move along.");
@@ -336,6 +336,9 @@ OnTimer15000:
 	end;
 
 OnRSXDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc07_rsx", .@party))
+		end;
 	stopnpctimer;
 	callfunc("DM_InstanceQuestComplete", 20111);
 	callfunc("DM_InstanceSetFlag", "dm_arc07_rsx_killed", 1);

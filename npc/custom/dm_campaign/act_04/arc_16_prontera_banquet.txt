@@ -22,7 +22,7 @@
 
 // ── Kronecker G Heine — The Intelligence Director ─────────────────────────
 prontera,150,150,5	script	Kronecker G Heine#dm	4_M_01,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20201) == 2) {
 		callfunc("DM_PartyMes", "[Kronecker G Heine]");
 		if (dm_arc16_rina_defected)
@@ -202,7 +202,7 @@ S_TurnIns:
 
 // ── Matron Rina — The Coordinator ─────────────────────────────────────────
 prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc16_started) {
 		callfunc("DM_PartyMes", "[Matron Rina]");
 		callfunc("DM_PartyMes", "This part of the prison is not open to visitors.");
@@ -294,6 +294,9 @@ prt_q,150,150,0	script	Prison Vault#dm	HIDDEN_NPC,{
 	end;
 
 OnBijouDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc16_bijou", .@party))
+		end;
 	callfunc("DM_InstanceQuestComplete", 20201);
 	if (dm_arc16_rina_defected)
 		callfunc("DM_InstanceSetFlag", "dm_arc16_maret_freed", 1);

@@ -20,7 +20,7 @@
 
 // ── Envoy Aelith — Voice of the New World ──────────────────────────────────
 mid_camp,100,100,5	script	Envoy Aelith#dm	4_F_01,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20161) == 2) {
 		callfunc("DM_PartyMes", "[Envoy Aelith]");
 		if (dm_arc12_vance_helped)
@@ -200,7 +200,7 @@ S_TurnIns:
 
 // ── Captain Roderick Vance — The Wrong Expedition ──────────────────────────
 mid_camp,110,100,5	script	Captain Vance#dm	4_M_03,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc12_started) {
 		callfunc("DM_PartyMes", "[Captain Vance]");
 		callfunc("DM_PartyMes", "This is a restricted survey zone. Move along.");
@@ -316,6 +316,9 @@ OnTimer28000:
 	end;
 
 OnNaghtDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc12_naght", .@party))
+		end;
 	stopnpctimer;
 	callfunc("DM_InstanceQuestComplete", 20161);
 	callfunc("DM_InstanceSetFlag", "dm_arc12_naght_killed", 1);

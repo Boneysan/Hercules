@@ -29,7 +29,7 @@
 
 // ── Session Board — always-visible onboarding notice near the fountain ─────
 prontera,155,185,5	script	Session Board#dm	4_BOARD3,{
-	if ($dm_mode && getcharid(CHAR_ID_PARTY) == $dm_active_party) {
+	if (callfunc("DM_SessionAllows")) {
 		// Find which arc the party is on: first in-progress, else last complete.
 		setarray .@q[0], 20001, 20007, 20013, 20019, 20025, 20101, 20111, 20121, 20131, 20141, 20151, 20161, 20171, 20181, 20191, 20201, 20211, 20221, 20231;
 		.@current_arc = 0;
@@ -67,7 +67,7 @@ prontera,155,185,5	script	Session Board#dm	4_BOARD3,{
 
 // ── Quartermaster Wynne — Adventurers' Guild handler ───────────────────────
 prontera,156,191,5	script	Quartermaster Wynne#dm	4_F_01,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20005) == 2) {
 		callfunc("DM_PartyMes", "[Quartermaster Wynne]");
 		callfunc("DM_PartyMes", "You went down where the deacons wouldn't. The ledger remembers that.");
@@ -190,7 +190,7 @@ S_Contracts:
 
 // ── Frightened Mother — The Trembling Ground (south gate) ──────────────────
 prontera,156,40,3	script	Frightened Mother#dm	4_F_01,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc01_started) {
 		callfunc("DM_PartyMes", "[Frightened Mother]");
 		callfunc("DM_PartyMes", "Please... the guild handles this sort of thing. Talk to Quartermaster Wynne at the fountain first. They'll vouch for you.");
@@ -255,7 +255,7 @@ OnInit:
 
 // ── Tibbets the Sluice-Keeper — Culvert guide ──────────────────────────────
 prontera,146,193,5	script	Tibbets the Keeper#dm	1_M_SIZ,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc01_started) {
 		callfunc("DM_PartyMes", "[Tibbets]");
 		callfunc("DM_PartyMes", "Eh? Guild business is up at the fountain, friend. Wynne's the one with the ledger.");
@@ -307,7 +307,7 @@ OnInit:
 
 // ── Deacon Holt — The Listening Chamber set-piece (Deviruchi MVP) ───────────
 prt_sewb4,103,100,4	script	Deacon Holt#dm	1_M_PASTOR,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20005) != 1) {
 		if (questprogress(20005) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*The cracked slab is dark and silent. Whatever listened here is gone - for now.*^000000");
@@ -348,7 +348,7 @@ prt_sewb4,103,100,4	script	Deacon Holt#dm	1_M_PASTOR,{
 	callfunc("DM_PartyMes", "The seal is already weakening. You are too late to be heroes today.");
 	next();
 	callfunc("DM_PartyMes", "^3355FF*Cassell drops a smoke bomb and slips through a side-grate. He leaves behind a small silver ring stamped with a goat's head.*^000000");
-	if (!dm_arc01_sigil_ring_obtained) {
+	if (callfunc("DM_ClaimGrant", "sigil_ring") && countitem(50001) == 0) {
 		callfunc("DM_GivePartyItem", 50001, 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc01_sigil_ring_obtained", 1);
 		callfunc("DM_PartyMes", "^3355FF[You obtained the Sigil Ring - it radiates a faint, growing cold.]^000000");
@@ -411,9 +411,12 @@ OnDeviruchiDead:
 	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Deacon Holt#dm::OnAddKilled";
-	// Party-wide quest credit and EXP, not just the killer.
-	callfunc("DM_PartyQuestComplete", 20005, getcharid(CHAR_ID_PARTY));
-	callfunc("DM_PartyExp", 60000, 25000, getcharid(CHAR_ID_PARTY));
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc01_deviruchi", .@party))
+		end;
+	// Session party, not the last-hitter. A random last-hit used to take the arc.
+	callfunc("DM_PartyQuestComplete", 20005, .@party);
+	callfunc("DM_PartyExp", 60000, 25000, .@party);
 	mapannounce .@map$, "[The Listening Chamber] The Deviruchi falls silent. Far below, something vast shifts in its sleep.", bc_map, 0xFFAA33;
 	dispbottom "[Seal Cascade] \"The seals are weakening.\" Arc 1 complete. The Sigil Ring will grow colder near the next.";
 	end;

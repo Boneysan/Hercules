@@ -21,7 +21,7 @@
 
 // ── Sir Aldric the Unfrocked — Survivor of the Holy Kingdom ────────────────
 geffen,120,120,5	script	Sir Aldric Unfrocked#dm	4_M_03,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20121) == 2) {
 		callfunc("DM_PartyMes", "[Sir Aldric]");
 		callfunc("DM_PartyMes", "The Dark Lord sleeps again. I would call it victory if I did not know we are the ones who made it possible in the first place.");
@@ -183,7 +183,7 @@ S_TurnIns:
 
 // ── Brother Manfred — The Last Bishop ──────────────────────────────────────
 gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc08_started) {
 		callfunc("DM_PartyMes", "[Brother Manfred]");
 		callfunc("DM_PartyMes", "This is holy ground. Outsiders are not welcome in the Kingdom's halls.");
@@ -258,6 +258,9 @@ gl_church,150,150,0	script	Glast Heim Abbey#dm	HIDDEN_NPC,{
 	end;
 
 OnDarkLordDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc08_darklord", .@party))
+		end;
 	killmonster strnpcinfo(NPC_MAP), "Glast Heim Abbey#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20121);
 	callfunc("DM_InstanceSetFlag", "dm_arc08_darklord_killed", 1);
