@@ -72,6 +72,8 @@ S_StartArc:
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_trust", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_network", 1);
+		// Counts toward the finale turnout Loki reads back (arc_19_finale.txt).
+		callfunc("DM_InstanceSetFlag", "dm_arc19_ally_turnout", dm_arc19_ally_turnout + 1);
 		callfunc("DM_PartyMes", "[Captain Mara]");
 		callfunc("DM_PartyMes", "Good. Then my crew is yours, and every honest deckhand I know hears your name kindly.");
 		break;
@@ -155,6 +157,8 @@ S_TurnIns:
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc05_byalan_choice", 2);
 			callfunc("DM_InstanceSetFlag", "dm_arc05_divers_rescued", 1);
+			// Counts toward the finale turnout Loki reads back (arc_19_finale.txt).
+			callfunc("DM_InstanceSetFlag", "dm_arc19_ally_turnout", dm_arc19_ally_turnout + 1);
 			callfunc("DM_PartyMes", "[Captain Mara]");
 			callfunc("DM_PartyMes", "Those divers will drink to your names until memory improves them.");
 			break;

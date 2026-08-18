@@ -273,6 +273,8 @@ moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_deal", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc03_refugees_protected", 1);
+		// Counts toward the finale turnout Loki reads back (arc_19_finale.txt).
+		callfunc("DM_InstanceSetFlag", "dm_arc19_ally_turnout", dm_arc19_ally_turnout + 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_exposed", 0);
 		callfunc("DM_PartyMes", "[Mother Sabra]");
 		callfunc("DM_PartyMes", "Guarantee their safety and I abandon the shaft. Not the cause. The shaft.");
