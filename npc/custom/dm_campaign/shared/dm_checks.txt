@@ -1,0 +1,412 @@
+//===== Seal Cascade Campaign ================================
+//= Skill checks on RO's own stat system
+//===== Description: =========================================
+//= d20 + stat/15 + proficiency + assists, against a DC.
+//=
+//= WHY stat/15: RO stats run 1-99 (higher with gear) and a d20
+//= swings 1-20. Using the raw stat makes the die irrelevant and
+//= locks a Wizard out of every STR check forever. The divisor is
+//= then set by the target the DM ladder assumes: someone GOOD at
+//= a task should read DC 10 as easy, 15 as medium, 20 as hard.
+//= Hard means about a coinflip, so they need roughly +10 total —
+//= stat/15 gives +6 at 99, and maxed proficiency adds +4.
+//= An earlier draft used stat/10 with +3/+5 proficiency, which
+//= totalled +14 and slid the whole ladder down a step: DC 15
+//= auto-passed and DC 20 was a 75% gimme. readparam() includes
+//= equipment, so gear counts toward the stat.
+//=
+//= WHY no Charisma: RO has no CHA, and inventing one would waste
+//= the interesting part. Instead the *approach* picks the stat —
+//= threaten (STR), reason (INT), lie (DEX), charm (LUK), outlast
+//= (VIT), read the room (AGI). Every build has a way into a
+//= social scene; they just play it differently.
+//=
+//= WHY skills grant proficiency: the character sheet is already
+//= full, and players filled it in for combat reasons. A Merchant
+//= who took Discount for zeny is now the party's negotiator.
+//= Costs no new bookkeeping — it is all getskilllv().
+//=
+//= WHY LUK widens the crit range: RO's own crit formula is about
+//= LUK*0.3, and LUK is a PvE dump stat. Here it is the "unlikely
+//= things happen to me" stat, which is a build tension nobody
+//= has in ordinary play.
+//=
+//= Commands (registered in dm_console.txt):
+//=   @check <tag|stat> <dc>          — roll it yourself
+//=   @assist <player>                — help someone (DC 10, +2)
+//=   @dm check <who> <tag> <dc> [flag]
+//=       who = a character name, "me", or "party"
+//=       flag = optional dm_* flag set party-wide on success
+//===========================================================
+
+// ── Tag table ─────────────────────────────────────────────────────────────
+// Returns the bStr..bLuk parameter id for a tag, or -1 if unknown.
+// Bare stat names are accepted so "@check str 15" always works.
+function	script	DM_CheckStatId	{
+	.@t$ = strtolower(getarg(0));
+
+	if (.@t$ == "str" || .@t$ == "force" || .@t$ == "intimidate"
+		|| .@t$ == "carry" || .@t$ == "break" || .@t$ == "grapple")
+		return bStr;
+
+	if (.@t$ == "agi" || .@t$ == "acrobatics" || .@t$ == "stealth"
+		|| .@t$ == "reflex" || .@t$ == "balance" || .@t$ == "escape")
+		return bAgi;
+
+	if (.@t$ == "vit" || .@t$ == "endure" || .@t$ == "resist"
+		|| .@t$ == "concentrate" || .@t$ == "hold")
+		return bVit;
+
+	if (.@t$ == "int" || .@t$ == "lore" || .@t$ == "arcana"
+		|| .@t$ == "appraise" || .@t$ == "medicine" || .@t$ == "navigate"
+		|| .@t$ == "reason" || .@t$ == "recall")
+		return bInt;
+
+	if (.@t$ == "dex" || .@t$ == "perceive" || .@t$ == "sleight"
+		|| .@t$ == "traps" || .@t$ == "craft" || .@t$ == "aim"
+		|| .@t$ == "deceive" || .@t$ == "lockpick")
+		return bDex;
+
+	if (.@t$ == "luk" || .@t$ == "haggle" || .@t$ == "charm"
+		|| .@t$ == "gamble" || .@t$ == "scrounge" || .@t$ == "omen")
+		return bLuk;
+
+	return -1;
+}
+
+function	script	DM_CheckStatName	{
+	switch (getarg(0)) {
+		case bStr: return "STR";
+		case bAgi: return "AGI";
+		case bVit: return "VIT";
+		case bInt: return "INT";
+		case bDex: return "DEX";
+		case bLuk: return "LUK";
+	}
+	return "?";
+}
+
+// ── Proficiency ───────────────────────────────────────────────────────────
+// The attached player's best relevant learned skill: +2 for having it at
+// all, +4 at level 5 or higher. Skill names are quoted because that is the
+// form this tree uses (getskilllv("NV_BASIC")) and it resolves against
+// skill_db by name — every name below was verified against db/re/skill_db.conf.
+function	script	DM_CheckProf	{
+	.@t$ = strtolower(getarg(0));
+	.@n = 0;
+
+	if (.@t$ == "stealth" || .@t$ == "escape")
+		setarray .@s$[0], "TF_HIDING", "AS_CLOAKING";
+	else if (.@t$ == "sleight" || .@t$ == "lockpick")
+		setarray .@s$[0], "TF_STEAL";
+	else if (.@t$ == "traps")
+		setarray .@s$[0], "HT_DETECTING", "HT_SKIDTRAP";
+	else if (.@t$ == "perceive")
+		setarray .@s$[0], "AC_OWL", "AC_VULTURE", "HT_DETECTING", "MG_SIGHT";
+	else if (.@t$ == "aim")
+		setarray .@s$[0], "AC_VULTURE", "AC_CONCENTRATION";
+	else if (.@t$ == "medicine")
+		setarray .@s$[0], "AL_HEAL", "AL_CURE", "TF_DETOXIFY", "AM_PHARMACY";
+	else if (.@t$ == "appraise")
+		setarray .@s$[0], "MC_IDENTIFY", "WZ_ESTIMATION", "BS_WEAPONRESEARCH";
+	else if (.@t$ == "lore" || .@t$ == "recall")
+		setarray .@s$[0], "SA_ADVANCEDBOOK";
+	else if (.@t$ == "arcana")
+		setarray .@s$[0], "MG_SIGHT", "AL_TELEPORT", "SA_ADVANCEDBOOK";
+	else if (.@t$ == "navigate")
+		setarray .@s$[0], "AL_WARP", "AL_TELEPORT";
+	else if (.@t$ == "craft")
+		setarray .@s$[0], "AM_PHARMACY", "BS_WEAPONRESEARCH";
+	else if (.@t$ == "haggle")
+		setarray .@s$[0], "MC_DISCOUNT", "MC_OVERCHARGE", "MC_VENDING";
+	else if (.@t$ == "charm")
+		setarray .@s$[0], "BD_ENCORE", "DC_DONTFORGETME";
+	else if (.@t$ == "intimidate")
+		setarray .@s$[0], "RG_INTIMIDATE", "SM_PROVOKE";
+	else if (.@t$ == "endure" || .@t$ == "resist" || .@t$ == "hold")
+		setarray .@s$[0], "AL_DP", "TF_DETOXIFY";
+	else if (.@t$ == "carry")
+		setarray .@s$[0], "MC_INCCARRY";
+	else
+		return 0;
+
+	.@count = getarraysize(.@s$);
+	.@best = 0;
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		.@lv = getskilllv(.@s$[.@i]);
+		if (.@lv > .@best)
+			.@best = .@lv;
+	}
+
+	if (.@best >= 5)
+		return 4;
+	if (.@best > 0)
+		return 2;
+	return 0;
+}
+
+// Name of the skill that granted proficiency, for the result line.
+function	script	DM_CheckProfName	{
+	.@t$ = strtolower(getarg(0));
+	if (.@t$ == "stealth" || .@t$ == "escape") {
+		if (getskilllv("AS_CLOAKING") > 0) return "Cloaking";
+		if (getskilllv("TF_HIDING") > 0) return "Hiding";
+	}
+	if (.@t$ == "sleight" || .@t$ == "lockpick") {
+		if (getskilllv("TF_STEAL") > 0) return "Steal";
+	}
+	if (.@t$ == "traps") {
+		if (getskilllv("HT_DETECTING") > 0) return "Detect";
+		if (getskilllv("HT_SKIDTRAP") > 0) return "Skid Trap";
+	}
+	if (.@t$ == "perceive") {
+		if (getskilllv("AC_VULTURE") > 0) return "Vulture's Eye";
+		if (getskilllv("AC_OWL") > 0) return "Owl's Eye";
+		if (getskilllv("HT_DETECTING") > 0) return "Detect";
+		if (getskilllv("MG_SIGHT") > 0) return "Sight";
+	}
+	if (.@t$ == "aim") {
+		if (getskilllv("AC_VULTURE") > 0) return "Vulture's Eye";
+		if (getskilllv("AC_CONCENTRATION") > 0) return "Improve Concentration";
+	}
+	if (.@t$ == "medicine") {
+		if (getskilllv("AM_PHARMACY") > 0) return "Prepare Potion";
+		if (getskilllv("AL_HEAL") > 0) return "Heal";
+		if (getskilllv("AL_CURE") > 0) return "Cure";
+		if (getskilllv("TF_DETOXIFY") > 0) return "Detoxify";
+	}
+	if (.@t$ == "appraise") {
+		if (getskilllv("MC_IDENTIFY") > 0) return "Item Appraisal";
+		if (getskilllv("WZ_ESTIMATION") > 0) return "Sense";
+		if (getskilllv("BS_WEAPONRESEARCH") > 0) return "Weaponry Research";
+	}
+	if (.@t$ == "lore" || .@t$ == "recall" || .@t$ == "arcana") {
+		if (getskilllv("SA_ADVANCEDBOOK") > 0) return "Study";
+		if (getskilllv("MG_SIGHT") > 0) return "Sight";
+		if (getskilllv("AL_TELEPORT") > 0) return "Teleport";
+	}
+	if (.@t$ == "navigate") {
+		if (getskilllv("AL_WARP") > 0) return "Warp Portal";
+		if (getskilllv("AL_TELEPORT") > 0) return "Teleport";
+	}
+	if (.@t$ == "craft") {
+		if (getskilllv("AM_PHARMACY") > 0) return "Prepare Potion";
+		if (getskilllv("BS_WEAPONRESEARCH") > 0) return "Weaponry Research";
+	}
+	if (.@t$ == "haggle") {
+		if (getskilllv("MC_DISCOUNT") > 0) return "Discount";
+		if (getskilllv("MC_OVERCHARGE") > 0) return "Overcharge";
+		if (getskilllv("MC_VENDING") > 0) return "Vending";
+	}
+	if (.@t$ == "charm") {
+		if (getskilllv("BD_ENCORE") > 0) return "Encore";
+		if (getskilllv("DC_DONTFORGETME") > 0) return "Slow Grace";
+	}
+	if (.@t$ == "intimidate") {
+		if (getskilllv("RG_INTIMIDATE") > 0) return "Snatch";
+		if (getskilllv("SM_PROVOKE") > 0) return "Provoke";
+	}
+	if (.@t$ == "endure" || .@t$ == "resist" || .@t$ == "hold") {
+		if (getskilllv("AL_DP") > 0) return "Divine Protection";
+		if (getskilllv("TF_DETOXIFY") > 0) return "Detoxify";
+	}
+	if (.@t$ == "carry") {
+		if (getskilllv("MC_INCCARRY") > 0) return "Enlarge Weight Limit";
+	}
+	return "";
+}
+
+// ── The roll ──────────────────────────────────────────────────────────────
+// Rolls for the ATTACHED player. Announces to the map (sessions run in a
+// private instance, so map scope is party scope; this matches @roll).
+// Returns the outcome band:
+//   3 critical  2 success  1 success at a cost  0 failure  -1 fumble
+function	script	DM_CheckRoll	{
+	.@tag$ = getarg(0);
+	.@dc   = getarg(1);
+	.@quiet = getarg(2, 0);
+
+	.@statid = callfunc("DM_CheckStatId", .@tag$);
+	if (.@statid < 0) {
+		dispbottom("[Check] Unknown stat or tag: " + .@tag$);
+		return -2;
+	}
+
+	.@stat = readparam(.@statid);
+	.@mod  = .@stat / 15;
+	.@prof = callfunc("DM_CheckProf", .@tag$);
+
+	// Assists are spent by the next check, capped at +4 (two helpers).
+	.@assist = @dm_assist_bonus;
+	if (.@assist > 4)
+		.@assist = 4;
+	if (.@assist < 0)
+		.@assist = 0;
+	@dm_assist_bonus = 0;
+
+	// LUK widens the crit range by 1 per 30 points, floored at 17
+	// (LUK 90+ crits on 17-20). RO's own crit formula is ~LUK*0.3.
+	.@critfloor = 20 - (readparam(bLuk) / 30);
+	if (.@critfloor < 17)
+		.@critfloor = 17;
+
+	.@d20 = rand(1, 20);
+	.@total = .@d20 + .@mod + .@prof + .@assist;
+
+	.@detail$ = "d20(" + .@d20 + ") + " + callfunc("DM_CheckStatName", .@statid)
+		+ "/15(" + .@mod + ")";
+	.@profname$ = callfunc("DM_CheckProfName", .@tag$);
+	if (.@prof > 0)
+		.@detail$ += " + " + .@profname$ + "(" + .@prof + ")";
+	if (.@assist > 0)
+		.@detail$ += " + assist(" + .@assist + ")";
+
+	if (.@d20 == 1) {
+		.@band = -1;
+		.@verdict$ = "FUMBLE";
+		.@colour = 0xFF4444;
+	} else if (.@d20 >= .@critfloor) {
+		.@band = 3;
+		.@verdict$ = "CRITICAL";
+		.@colour = 0xFFCC33;
+	} else if (.@total >= .@dc + 10) {
+		.@band = 3;
+		.@verdict$ = "RESOUNDING SUCCESS";
+		.@colour = 0xFFCC33;
+	} else if (.@total >= .@dc) {
+		.@band = 2;
+		.@verdict$ = "SUCCESS";
+		.@colour = 0x88FF88;
+	} else if (.@total >= .@dc - 4) {
+		.@band = 1;
+		.@verdict$ = "SUCCESS AT A COST";
+		.@colour = 0xFFAA33;
+	} else {
+		.@band = 0;
+		.@verdict$ = "FAILURE";
+		.@colour = 0x999999;
+	}
+
+	if (!.@quiet) {
+		mapannounce strcharinfo(PC_MAP),
+			"[Check] " + strcharinfo(PC_NAME) + " — " + strtoupper(.@tag$)
+			+ " vs DC " + .@dc + ": " + .@total + "  (" + .@detail$ + ")  "
+			+ .@verdict$, bc_map, .@colour;
+	}
+
+	return .@band;
+}
+
+// ── Assists ───────────────────────────────────────────────────────────────
+// Helping is its own check at DC 10 against the same tag, so a helper who
+// is bad at the thing can make it worse by trying. Grants +2, stacking to
+// +4, spent by the target's next check.
+function	script	DM_CheckAssist	{
+	.@name$ = getarg(0);
+	.@tag$  = getarg(1);
+
+	.@target_aid = getcharid(CHAR_ID_ACCOUNT, .@name$);
+	if (.@target_aid <= 0) {
+		dispbottom("[Check] No online character named '" + .@name$ + "'.");
+		return 0;
+	}
+	if (.@target_aid == getcharid(CHAR_ID_ACCOUNT)) {
+		dispbottom("[Check] You cannot assist yourself.");
+		return 0;
+	}
+
+	.@band = callfunc("DM_CheckRoll", .@tag$, 10, 1);
+	if (.@band == -2)
+		return 0;
+
+	.@helper$ = strcharinfo(PC_NAME);
+	if (.@band >= 2) {
+		.@origin = getcharid(CHAR_ID_ACCOUNT);
+		if (attachrid(.@target_aid)) {
+			@dm_assist_bonus = @dm_assist_bonus + 2;
+			if (@dm_assist_bonus > 4)
+				@dm_assist_bonus = 4;
+			.@now = @dm_assist_bonus;
+			detachrid();
+		}
+		attachrid(.@origin);
+		mapannounce strcharinfo(PC_MAP),
+			"[Check] " + .@helper$ + " assists " + .@name$ + " ("
+			+ strtoupper(.@tag$) + "): +" + .@now + " on their next check.",
+			bc_map, 0x88CCFF;
+		return 1;
+	}
+
+	mapannounce strcharinfo(PC_MAP),
+		"[Check] " + .@helper$ + " tries to assist " + .@name$ + " ("
+		+ strtoupper(.@tag$) + ") and gets in the way. No bonus.",
+		bc_map, 0x999999;
+	return 0;
+}
+
+// ── Group check ───────────────────────────────────────────────────────────
+// Every online member rolls; the group passes when at least half succeed
+// (success at a cost counts — the party got through, something broke).
+function	script	DM_CheckParty	{
+	.@tag$ = getarg(0);
+	.@dc   = getarg(1);
+	.@party_id = getarg(2, callfunc("DM_SessionParty"));
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+
+	if (.@party_id <= 0) {
+		callfunc("DM_CheckRoll", .@tag$, .@dc);
+		return 0;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+
+	.@rolled = 0;
+	.@passed = 0;
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		.@band = callfunc("DM_CheckRoll", .@tag$, .@dc);
+		++.@rolled;
+		if (.@band >= 1)
+			++.@passed;
+		detachrid();
+	}
+	if (.@origin)
+		attachrid(.@origin);
+
+	if (.@rolled == 0)
+		return 0;
+
+	// Half, rounded up.
+	.@needed = (.@rolled + 1) / 2;
+	.@ok = (.@passed >= .@needed);
+
+	mapannounce strcharinfo(PC_MAP),
+		"[Check] Group " + strtoupper(.@tag$) + " vs DC " + .@dc + ": "
+		+ .@passed + " of " + .@rolled + " (needed " + .@needed + ") — "
+		+ (.@ok ? "THE PARTY GETS THROUGH" : "THE PARTY DOES NOT"),
+		bc_map, (.@ok ? 0x88FF88 : 0x999999);
+
+	return .@ok;
+}
+
+// ── DC reference, for the DM ──────────────────────────────────────────────
+function	script	DM_CheckDCHelp	{
+	dispbottom("[Check] DC ladder, read against someone GOOD at the task");
+	dispbottom("  (stat 99 + the skill = +10; a dumped stat is +1):");
+	dispbottom("  10 Easy        good: automatic     dumped: ~60%");
+	dispbottom("  15 Medium      good: ~80%          dumped: ~35%");
+	dispbottom("  20 Hard        good: ~55%          dumped: ~10%");
+	dispbottom("  25 Formidable  good: ~30%          dumped: cannot pass alone");
+	dispbottom("  30 Legendary   needs proficiency and assists");
+	dispbottom("[Check] Adjust up or down a step for circumstance — that is the");
+	dispbottom("  intended knob, not rewriting the ladder.");
+	dispbottom("[Check] Bands: beat DC+10 resounding / beat DC success /");
+	dispbottom("  miss by 1-4 SUCCESS AT A COST / miss by 5+ failure / nat 1 fumble.");
+	dispbottom("[Check] The approach picks the stat: threaten=STR reason=INT");
+	dispbottom("  lie=DEX charm=LUK outlast=VIT read-the-room=AGI.");
+	return 1;
+}

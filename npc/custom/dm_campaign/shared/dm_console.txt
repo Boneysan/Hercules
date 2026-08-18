@@ -26,6 +26,10 @@ OnInit:
 	bindatcmd("dmreset", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReset", 1, 99, 1);
 	bindatcmd("dmstatus", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStatus", 1, 99, 1);
 	bindatcmd("roll", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRoll", 0, 99, 1);
+	// Skill checks are player-facing: anyone may roll their own or help.
+	bindatcmd("check", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCheck", 0, 99, 1);
+	bindatcmd("assist", strnpcinfo(NPC_NAME_UNIQUE)+"::OnAssist", 0, 99, 1);
+	bindatcmd("dmcheck", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDMCheck", 1, 99, 1);
 	end;
 
 OnDM:
@@ -136,6 +140,11 @@ OnDM:
 
 	if (.@sub$ == "status") {
 		callsub(S_Status);
+		end;
+	}
+
+	if (.@sub$ == "check") {
+		callsub(S_Check, 1);
 		end;
 	}
 
@@ -275,6 +284,40 @@ OnStatus:
 	callsub(S_Status);
 	end;
 
+OnCheck:
+	// @check <tag|stat> <dc>
+	if (.@atcmd_numparameters < 2) {
+		dispbottom("[Check] Usage: @check <tag|stat> <dc>   (e.g. @check stealth 15)");
+		dispbottom("[Check] Stats: str agi vit int dex luk. Tags: force intimidate carry");
+		dispbottom("  break grapple acrobatics balance stealth reflex escape");
+		dispbottom("  endure resist hold concentrate");
+		dispbottom("  lore arcana appraise medicine navigate reason recall");
+		dispbottom("  perceive sleight traps craft aim deceive lockpick");
+		dispbottom("  haggle charm gamble scrounge omen");
+		end;
+	}
+	callfunc("DM_CheckRoll", .@atcmd_parameters$[0], atoi(.@atcmd_parameters$[1]));
+	end;
+
+OnAssist:
+	// @assist <player> <tag|stat>
+	if (.@atcmd_numparameters < 2) {
+		dispbottom("[Check] Usage: @assist <player> <tag|stat>");
+		dispbottom("[Check] You roll the same tag at DC 10. Success gives them +2 (max +4).");
+		end;
+	}
+	callfunc("DM_CheckAssist", .@atcmd_parameters$[0], .@atcmd_parameters$[1]);
+	end;
+
+OnDMCheck:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	deletearray @dm_atcmd_p$[0], 128;
+	copyarray @dm_atcmd_p$[0], .@atcmd_parameters$[0], .@atcmd_numparameters;
+	@dm_atcmd_n = .@atcmd_numparameters;
+	callsub(S_Check, 0);
+	end;
+
 OnRoll:
 	.@input$ = "";
 	.@hidden = 0;
@@ -396,6 +439,8 @@ S_Help:
 	dispbottom("[DM] @dm mode <on|off>");
 	dispbottom("[DM] @dm reward [arc] [tier] [preview|dryrun|1]");
 	dispbottom("[DM] @roll [hidden] <NdX[+/-mod]> | @roll fudge <total> [note]");
+	dispbottom("[DM] @dm check <player|me|party> <tag|stat> <dc> [dm_flag]");
+	dispbottom("[DM] Players: @check <tag|stat> <dc> and @assist <player> <tag>");
 	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
 	dispbottom("[DM] @dm quest <start|complete|erase> <quest_id>   (current party)");
 	dispbottom("[DM] @dm beat                 (menu: location/NPC/story tracking)");
@@ -410,6 +455,65 @@ S_Help:
 	dispbottom("[DM] @dm status              (arc progress + key flags at a glance)");
 	dispbottom("[DM] @dm reset confirm       (wipe all campaign flags for a fresh run)");
 	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmstatus, @dmreset");
+	return;
+
+S_Check:
+	// @dm check <who> <tag|stat> <dc> [flag]
+	// who = a character name, "me", or "party".
+	.@offset = getarg(0, 0);
+	.@who$  = @dm_atcmd_p$[.@offset];
+	.@tag$  = @dm_atcmd_p$[.@offset + 1];
+	.@dc    = atoi(@dm_atcmd_p$[.@offset + 2]);
+	.@flag$ = @dm_atcmd_p$[.@offset + 3];
+
+	if (.@who$ == "" || .@tag$ == "" || .@dc <= 0) {
+		dispbottom("[DM] Usage: @dm check <player|me|party> <tag|stat> <dc> [dm_flag]");
+		dispbottom("[DM] The flag, if given, is set party-wide on any success.");
+		callfunc("DM_CheckDCHelp");
+		return;
+	}
+	if (.@flag$ != "" && !callfunc("DM_ValidFlagName", .@flag$)) {
+		dispbottom("[DM] Not a valid flag name: " + .@flag$ + " (must start dm_)");
+		return;
+	}
+
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+	.@ok = 0;
+
+	if (strtolower(.@who$) == "party") {
+		.@ok = callfunc("DM_CheckParty", .@tag$, .@dc);
+	} else if (strtolower(.@who$) == "me") {
+		.@band = callfunc("DM_CheckRoll", .@tag$, .@dc);
+		if (.@band == -2)
+			return;
+		.@ok = (.@band >= 1);
+	} else {
+		.@aid = getcharid(CHAR_ID_ACCOUNT, .@who$);
+		if (.@aid <= 0) {
+			dispbottom("[DM] No online character named '" + .@who$ + "'.");
+			return;
+		}
+		if (!attachrid(.@aid)) {
+			dispbottom("[DM] Could not attach to '" + .@who$ + "'.");
+			return;
+		}
+		.@band = callfunc("DM_CheckRoll", .@tag$, .@dc);
+		detachrid();
+		attachrid(.@origin);
+		if (.@band == -2)
+			return;
+		.@ok = (.@band >= 1);
+	}
+
+	if (.@flag$ == "")
+		return;
+
+	if (.@ok) {
+		callfunc("DM_PartySetFlag", .@flag$, 1);
+		dispbottom("[DM] " + .@flag$ + " set party-wide on the successful check.");
+	} else {
+		dispbottom("[DM] Check failed; " + .@flag$ + " left unset.");
+	}
 	return;
 
 S_Reset:
