@@ -95,7 +95,7 @@ function	script	DM_EncScale	{
 //   0 label   1 default formation   2 elite id   3 elite name
 //   4 minion id   5 minion name   6 minion base count
 //   7 caster id   8 caster name   9 caster base count
-//   10 entrance line spoken by the elite
+//   10 entrance line spoken by the elite   11 intended party level
 // A 0 mob id means the slot is empty.
 //
 // Mob ids are verified against db/re/mob_db.conf. Guessing them by name is a
@@ -109,57 +109,65 @@ function	script	DM_EncScale	{
 // themselves and grant arc credit. Check MvpExp in mob_db before adding one
 // here. The same pass found 1268 labelled "Wraith Dead" when it is a Bloody
 // Knight, and 1871 with no mob_db entry at all.
+//
+// Entries are ordered by intended party level (field 11), and the table was
+// re-tiered once real HP/DPS numbers existed. Three entries were unplayable
+// before that: Valkyrie (1765) has 1,005,000 HP and 8,289 DPS, which is
+// boss-tier in everything but the MvpExp flag; Salamander (1831) deals 10,354
+// DPS, roughly nine times its Kasa neighbours; and the abbey choir stacked
+// enough Zombie Slaughter and Banshee to kill a reference party in six
+// seconds. Eyeballing mob names cannot catch that — the numbers can.
 function	script	DM_EncTable	{
 	.@name$ = strtolower(getarg(0));
 	.@field = getarg(1);
 
-	if (.@name$ == "gh_patrol")
-		setarray .@e$[0], "A Glast Heim patrol", "line",
-			"1132", "Khalitzburg Sergeant",
-			"1163", "Raydric", "4",
-			"1192", "Wraith", "1",
-			"Hold the line! Nothing passes the abbey!";
-	else if (.@name$ == "gh_crypt")
-		setarray .@e$[0], "The crypt wakes", "ambush",
-			"1268", "Bloody Knight", "0", "", "0",
-			"1192", "Wraith", "4",
-			"You should not have opened that door.";
-	else if (.@name$ == "sewer_ambush")
+	if (.@name$ == "sewer_ambush")
 		setarray .@e$[0], "Culvert ambush", "ambush",
 			"1109", "Deviruchi",
 			"1175", "Tarou", "6",
 			"0", "", "0",
-			"";
+			"", "30";
 	else if (.@name$ == "cult_diggers")
 		setarray .@e$[0], "Cult digging party", "scatter",
 			"1297", "Ancient Mummy",
 			"1178", "Zerom", "5",
 			"0", "", "0",
-			"The seal is thinner here. Keep digging.";
+			"The seal is thinner here. Keep digging.", "75";
+	else if (.@name$ == "gh_crypt")
+		setarray .@e$[0], "The crypt wakes", "ambush",
+			"1268", "Bloody Knight", "0", "", "0",
+			"1192", "Wraith", "4",
+			"You should not have opened that door.", "100";
+	else if (.@name$ == "gh_patrol")
+		setarray .@e$[0], "A Glast Heim patrol", "line",
+			"1132", "Khalitzburg Sergeant",
+			"1163", "Raydric", "3",
+			"1192", "Wraith", "1",
+			"Hold the line! Nothing passes the abbey!", "110";
 	else if (.@name$ == "lab_security")
 		setarray .@e$[0], "Lab security response", "line",
 			"1735", "Alicel",
 			"1736", "Aliot", "4",
 			"1737", "Aliza", "2",
-			"Containment breach. Sterilising.";
-	else if (.@name$ == "thor_wardens")
-		setarray .@e$[0], "Magma wardens", "ambush",
-			"1831", "Salamander Warden",
-			"1833", "Kasa", "4",
-			"0", "", "0",
-			"The mountain does not want you.";
+			"Containment breach. Sterilising.", "115";
 	else if (.@name$ == "abbey_choir")
 		setarray .@e$[0], "The abbey choir", "scatter",
 			"1870", "Necromancer",
-			"1864", "Zombie Slaughter", "4",
-			"1868", "Banshee", "2",
-			"Sing with us, or be sung over.";
+			"1864", "Zombie Slaughter", "3",
+			"1868", "Banshee", "1",
+			"Sing with us, or be sung over.", "125";
+	else if (.@name$ == "thor_wardens")
+		setarray .@e$[0], "Magma wardens", "ambush",
+			"1833", "Kasa Warden",
+			"1836", "Magmaring", "4",
+			"1837", "Imp", "1",
+			"The mountain does not want you.", "130";
 	else if (.@name$ == "valkyrie_court")
 		setarray .@e$[0], "Valkyrie court", "line",
-			"1765", "Valkyrie",
-			"1754", "Skeggiold", "4",
+			"1754", "Skeggiold",
+			"1761", "Skogul", "3",
 			"0", "", "0",
-			"Odin's hall is closed to you.";
+			"Odin's hall is closed to you.", "130";
 	else
 		return "";
 
@@ -263,6 +271,7 @@ function	script	DM_EncInfo	{
 			+ "x " + callfunc("DM_EncTable", .@name$, 8) + " (" + .@caster + ")");
 
 	dispbottom("  scaled for " + callfunc("DM_PartyOnlineCount") + " online member(s).");
+	callfunc("DM_EncBudget", .@name$);
 	return 1;
 }
 
@@ -271,7 +280,8 @@ function	script	DM_EncList	{
 	.@n = callfunc("DM_EncNames");
 	for (.@i = 0; .@i < .@n; ++.@i) {
 		.@name$ = callfunc("DM_EncNames", .@i);
-		dispbottom("  " + .@name$ + " — " + callfunc("DM_EncTable", .@name$, 0));
+		dispbottom("  " + .@name$ + " (lv~" + callfunc("DM_EncTable", .@name$, 11)
+			+ ") — " + callfunc("DM_EncTable", .@name$, 0));
 	}
 	dispbottom("[Enc] @dmenc spawn <name> [ambush|line|scatter]");
 	return 1;
@@ -409,4 +419,183 @@ function	script	DM_StealthScene	{
 
 	mapannounce .@map$, "[Stealth] Nothing has noticed you. Move.", bc_map, 0x88FF88;
 	return 2;
+}
+
+// ── Difficulty budget ─────────────────────────────────────────────────────
+// Prices an encounter against the party actually standing here, using real
+// numbers on both sides: monster HP/DPS from mob_db (via the generated
+// DM_MobStat table) and the party's own MaxHp, ATK and ASPD.
+//
+// The honest number here is TIME TO DIE — party HP divided by encounter DPS.
+// Both halves are measured, so it means something: "if everything focuses you
+// and nobody heals, you have N seconds."
+//
+// Time to kill is a FLOOR, not a prediction. Party DPS is computed from
+// auto-attack only (ATK x attacks per second, where renewal ASPD gives
+// 50/(200-aspd) attacks/sec). Real parties do most of their damage with
+// skills, so the true kill time will be substantially shorter. A floor is
+// still useful — if even the floor is enormous, the fight is a slog.
+
+function	script	DM_EncPartyPower	{
+	// Returns nothing; fills @dm_enc_php / @dm_enc_pdps / @dm_enc_plv / @dm_enc_pn
+	.@party_id = getarg(0, callfunc("DM_SessionParty"));
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+
+	@dm_enc_php = 0;
+	@dm_enc_pdps = 0;
+	@dm_enc_plv = 0;
+	@dm_enc_pn = 0;
+
+	if (.@party_id <= 0) {
+		@dm_enc_php = MaxHp;
+		@dm_enc_pdps = callfunc("DM_AutoAttackDps");
+		@dm_enc_plv = BaseLevel;
+		@dm_enc_pn = 1;
+		return;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	.@lvsum = 0;
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		@dm_enc_php += MaxHp;
+		@dm_enc_pdps += callfunc("DM_AutoAttackDps");
+		.@lvsum += BaseLevel;
+		++@dm_enc_pn;
+		detachrid();
+	}
+	if (.@origin)
+		attachrid(.@origin);
+	if (@dm_enc_pn > 0)
+		@dm_enc_plv = .@lvsum / @dm_enc_pn;
+	return;
+}
+
+// Renewal ASPD: attacks per second = 50 / (200 - aspd). Scaled by 100 to stay
+// in integer maths, then divided back out.
+function	script	DM_AutoAttackDps	{
+	.@atk = readparam(bAtk) + readparam(bAtk2);
+	.@aspd = readparam(bAspd);
+	if (.@aspd >= 199)
+		.@aspd = 199;
+	if (.@aspd <= 0)
+		return .@atk;
+	.@aps100 = 5000 / (200 - .@aspd);
+	return (.@atk * .@aps100) / 100;
+}
+
+// Adds one slot's contribution into @dm_enc_ehp / @dm_enc_dps, and tracks the
+// single biggest DPS contributor for the spike warning.
+function	script	DM_EncAddSlot	{
+	.@mob = getarg(0);
+	.@count = getarg(1);
+	if (.@mob <= 0 || .@count <= 0)
+		return 0;
+
+	.@ehp = atoi(callfunc("DM_MobStat", .@mob, 3));
+	.@dps = atoi(callfunc("DM_MobStat", .@mob, 4));
+	.@lv  = atoi(callfunc("DM_MobStat", .@mob, 1));
+
+	@dm_enc_ehp += .@ehp * .@count;
+	@dm_enc_dps += .@dps * .@count;
+	@dm_enc_n += .@count;
+	if (.@lv > @dm_enc_maxlv)
+		@dm_enc_maxlv = .@lv;
+	@dm_enc_lvsum += .@lv * .@count;
+	if (.@dps > @dm_enc_spike) {
+		@dm_enc_spike = .@dps;
+		@dm_enc_spike_id = .@mob;
+	}
+	if (atoi(callfunc("DM_MobStat", .@mob, 5)) > 0)
+		@dm_enc_mvp = 1;
+	return 1;
+}
+
+function	script	DM_EncBudget	{
+	.@name$ = strtolower(getarg(0));
+	if (callfunc("DM_EncTable", .@name$, 0) == "")
+		return 0;
+
+	@dm_enc_ehp = 0; @dm_enc_dps = 0; @dm_enc_n = 0;
+	@dm_enc_maxlv = 0; @dm_enc_lvsum = 0;
+	@dm_enc_spike = 0; @dm_enc_spike_id = 0; @dm_enc_mvp = 0;
+
+	callfunc("DM_EncAddSlot", atoi(callfunc("DM_EncTable", .@name$, 2)), 1);
+	callfunc("DM_EncAddSlot", atoi(callfunc("DM_EncTable", .@name$, 4)),
+		callfunc("DM_EncScale", atoi(callfunc("DM_EncTable", .@name$, 6))));
+	callfunc("DM_EncAddSlot", atoi(callfunc("DM_EncTable", .@name$, 7)),
+		callfunc("DM_EncScale", atoi(callfunc("DM_EncTable", .@name$, 9))));
+
+	callfunc("DM_EncPartyPower");
+
+	.@forlv = atoi(callfunc("DM_EncTable", .@name$, 11));
+	dispbottom("[Budget] " + @dm_enc_n + " enemies — total EHP " + @dm_enc_ehp
+		+ ", total DPS " + @dm_enc_dps);
+	if (.@forlv > 0)
+		dispbottom("  built for a party of four around level " + .@forlv + ".");
+	if (@dm_enc_n > 0)
+		dispbottom("  average enemy level " + (@dm_enc_lvsum / @dm_enc_n)
+			+ ", highest " + @dm_enc_maxlv);
+
+	if (@dm_enc_pn <= 0) {
+		dispbottom("  No online party to price this against.");
+		return 1;
+	}
+
+	dispbottom("  party: " + @dm_enc_pn + " member(s), " + @dm_enc_php
+		+ " HP, avg level " + @dm_enc_plv);
+
+	// Time to die — the number that means something.
+	if (@dm_enc_dps > 0) {
+		.@ttd = @dm_enc_php / @dm_enc_dps;
+		dispbottom("  TIME TO DIE: ~" + .@ttd + "s if everything focuses and nobody heals.");
+		// Thresholds are a judgement call, not a derivation. Tune with play.
+		if (.@ttd >= 60)
+			dispbottom("  ^88FF88Verdict: trivial.^000000");
+		else if (.@ttd >= 30)
+			dispbottom("  ^88FF88Verdict: easy.^000000");
+		else if (.@ttd >= 15)
+			dispbottom("  ^FFCC33Verdict: fair fight.^000000");
+		else if (.@ttd >= 8)
+			dispbottom("  ^FFAA33Verdict: dangerous.^000000");
+		else
+			dispbottom("  ^FF4444Verdict: lethal — expect deaths.^000000");
+	}
+
+	// Time to kill, auto-attack floor only.
+	if (@dm_enc_pdps > 0) {
+		dispbottom("  time to kill: >=" + (@dm_enc_ehp / @dm_enc_pdps)
+			+ "s on auto-attacks alone (skills will beat this).");
+	}
+
+	// A single mob carrying the encounter is a different fight from a swarm.
+	if (@dm_enc_dps > 0 && @dm_enc_spike * 100 / @dm_enc_dps >= 40)
+		dispbottom("  ^FFAA33Spike: " + callfunc("DM_MobStat", @dm_enc_spike_id, 0)
+			+ " alone is " + (@dm_enc_spike * 100 / @dm_enc_dps)
+			+ "% of incoming damage.^000000");
+
+	if (@dm_enc_mvp)
+		dispbottom("  ^FF4444Contains an MVP. Use @dmbeat for boss fights instead.^000000");
+
+	if (@dm_enc_maxlv > @dm_enc_plv + 15)
+		dispbottom("  ^FFAA33Level gap: enemies up to " + (@dm_enc_maxlv - @dm_enc_plv)
+			+ " levels above the party.^000000");
+
+	// Off-tier is the most common way a DM gets this wrong: an Act I encounter
+	// is SUPPOSED to be trivial at level 99, and reading its verdict without
+	// that context makes the table look badly calibrated when it is not.
+	if (.@forlv > 0 && @dm_enc_plv > 0) {
+		if (@dm_enc_plv >= .@forlv + 25)
+			dispbottom("  ^88CCFFOff-tier: this is built for ~" + .@forlv
+				+ ", your party is " + @dm_enc_plv + ". Expect it to be a walkover.^000000");
+		else if (@dm_enc_plv + 25 <= .@forlv)
+			dispbottom("  ^FF4444Off-tier: this is built for ~" + .@forlv
+				+ ", your party is " + @dm_enc_plv + ". Well above them.^000000");
+	}
+
+	return 1;
 }

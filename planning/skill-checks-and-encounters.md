@@ -103,14 +103,61 @@ Requirements that shaped it:
 - **An entrance line.** `unittalk` on the elite when it lands. Monsters that
   speak are remembered.
 
-### Difficulty budget — the unused asset
+### Difficulty budget — built, and what it exposed
 
-`korangar/docs/bestiary.json` carries `PhysDPS`, `MagicDPS`, HP, and level for
-~1759 monsters, exported from this tree's own `mob_db.conf`. It is currently
-read only to render the bestiary window. That is enough data to tell a DM
-whether an encounter is a fair fight for four level-70s *before* they drop it,
-which is the thing DMs most often get wrong live. Treat it as an encounter
-balancing corpus, not just display data.
+`@dmenc info <name>` prices an encounter against the party actually standing
+there, using measured numbers on both sides.
+
+**The exported `PhysDPS` field is not DPS.** It is `(atk1+atk2)/2` — the mean
+damage of one hit — with `AttackDelay` discarded. Ranking monsters by it sorts
+them by how hard they hit rather than how fast, and the error is not small:
+
+| Monster | exported `PhysDPS` | actual DPS | attack delay |
+|---|---|---|---|
+| Salamander (1831) | 1449.5 | **10,353.6** | 140 ms |
+| Necromancer (1870) | 1182.5 | **651.2** | 1816 ms |
+
+Those read as comparable threats in the export. One deals sixteen times the
+damage of the other. So `tools/gen-encounter-stats.py` computes DPS from
+`Attack` and `AttackDelay` in this repo's own `mob_db.conf` and generates
+`shared/dm_mobstats.txt`. Run it after touching the encounter table or mob_db;
+`--check` fails on drift.
+
+**What the budget reports.** The honest number is **time to die** — party
+`MaxHp` divided by encounter DPS. Both halves are measured, so it means
+something concrete: "if everything focuses you and nobody heals, you have N
+seconds." Time to kill is reported as a **floor only**, computed from
+auto-attack (`ATK x 50/(200-ASPD)`); real parties do most of their damage with
+skills, so the true figure is shorter. It also flags a damage spike when one
+monster is 40%+ of incoming DPS, any MVP in a slot, and a party more than 25
+levels off the encounter's intended tier.
+
+**It immediately indicted the hand-built table.** Before the numbers existed the
+eight encounters spanned 3s to 102s time-to-die — a 34x range across entries all
+written as "an encounter". Three were unplayable: Valkyrie (1765) carries
+1,005,000 HP and 8,289 DPS, boss-tier in everything but the `MvpExp` flag;
+Salamander (1831) deals roughly nine times its Kasa neighbours; and the abbey
+choir stacked enough Zombie Slaughter and Banshee to kill a reference party in
+six seconds. All three were composed by reading mob names and looked entirely
+reasonable.
+
+After re-tiering, and with each encounter carrying an intended party level
+(field 11) so an Act I fight is judged against an Act I party:
+
+| Encounter | for level | enemies | total EHP | DPS | TTD | verdict |
+|---|---|---|---|---|---|---|
+| sewer_ambush | 30 | 7 | 18,431 | 468 | 30s | easy |
+| cult_diggers | 75 | 6 | 78,343 | 848 | 42s | easy |
+| gh_crypt | 100 | 5 | 189,278 | 1,343 | 35s | easy |
+| gh_patrol | 110 | 5 | 167,643 | 3,191 | 16s | fair |
+| lab_security | 115 | 7 | 223,954 | 3,245 | 17s | fair |
+| abbey_choir | 125 | 5 | 494,831 | 4,822 | 12s | dangerous |
+| thor_wardens | 130 | 6 | 352,232 | 3,386 | 18s | fair |
+| valkyrie_court | 130 | 4 | 275,265 | 4,108 | 15s | fair |
+
+The verdict thresholds (60s trivial, 30s easy, 15s fair, 8s dangerous, below
+that lethal) are a judgement call, not a derivation. They are the first thing to
+tune against real play.
 
 ## DM tools that make checks feel weighty
 
