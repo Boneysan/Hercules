@@ -34,7 +34,7 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 ## Act I (Arcs 1–5) — The First Thread
 
 **Flow:** Tavern intro → each arc uses S_StartArc / S_TurnIns pattern with 2
-hunting quests + 1 story quest. No MVP bosses; story resolution via villain
+hunting contracts + 1 story quest. No MVP bosses; story resolution via villain
 dialogue choices.
 
 Arc 4's Baphomet's Seal beat starts the Vault Seal Pressure hazard: three
@@ -74,14 +74,14 @@ around `lhz_dun04` 150,150 with confusion pressure.
 villain confrontation, then an MVP boss spawned via DM console.
 
 ### Arc 11 — Zealot Bjorn (Hugel)
-- Hunting: Gryphon (1259 × 20 / 20153), Ferus (1714 × 20 / 20154)
+- Hunting (turn-in): 20153 (Talon of Griffon x8, Cyfar x3, Maneater Root x7); 20154 (Dragon Scale x7, Dragon Canine x5, Dragon Skin x5)
 - Villain: Bjorn — subdued / persuaded / **joined**
 - Boss: Randgris at `abyss_03`
 - Flags: `dm_arc11_bjorn_subdued`, `dm_arc11_bjorn_joined`
 - Bjorn_joined reduces Randgris court adds; Bjorn_subdued spawns the full court.
 
 ### Arc 12 — Captain Vance (New World)
-- Hunting: Cornus (1992 × 20 / 20163), Naga (1993 × 20 / 20164)
+- Hunting (turn-in): 20163 (Mystic Horn x10, Solid Shell x4, Sharp Leaf x6); 20164 (Shining Scale x7, Stiff Horn x6, Brown Root x4)
 - Villain: Vance — exposed / **helped**
 - Boss: Naght Sieger (1956) at `spl_fild01`
 - Flags: `dm_arc12_vance_exposed`, `dm_arc12_vance_helped`
@@ -90,7 +90,7 @@ villain confrontation, then an MVP boss spawned via DM console.
 - Vance_helped → callback in Arc 15 (Lysandra)
 
 ### Arc 13 — Broker Carrion (Nameless Island)
-- Hunting: Banshee (1868 × 20 / 20173), Zombie Slaughter (1864 × 20 / 20174)
+- Hunting (turn-in): 20173 (Old White Cloth x6, Skull x8, Monster's Feed x8); 20174 (Clattering Skull x9, Skel-Bone x6, Torn Magic Book x3)
 - Villain: Carrion — killed / **bribed**
 - Boss: Beelzebub (1874) at `abbey03`
 - Flags: `dm_arc13_carrion_killed`, `dm_arc13_carrion_bribed`
@@ -98,7 +98,7 @@ villain confrontation, then an MVP boss spawned via DM console.
   without spawning Beelzebub and sets `dm_arc13_coalition_deal_honored`.
 
 ### Arc 14 — Prelate Hesma (Veins)
-- Hunting: Salamander (1831 × 20 / 20183), Lava Golem (1366 × 20 / 20184)
+- Hunting (turn-in): 20183 (Burning Heart x9, Burning Hair x4, Live Coal x4); 20184 (Sticky Poison x9, Maneater Blossom x4, Jubilee x3)
 - Villain: Hesma — exposed / **bribed**
 - Boss: Ifrit (1832) at `thor_v03`
 - Flags: `dm_arc14_hesma_exposed`, `dm_arc14_hesma_bribed`
@@ -112,7 +112,7 @@ villain confrontation, then an MVP boss spawned via DM console.
 
 ### Arc 15 — The Method's Price (Aldebaran)
 - Hub: Keeper Lysandra (`aldebaran,100,100`)
-- Hunting: Hylozoist (1510 × 15 / 20192), Lude (1509 × 15 / 20193)
+- Hunting (turn-in): 20192 (Worn Out Page x8, Topaz x2, Pearl x2); 20193 (Ruby x3, Garnet x3, Red Feather x2)
 - Villain: Scholar Pratt (`aldebaran,110,100`) — exposed / delayed / **challenged**
   - challenged reveals Thanatos is still living inside the seal
 - Boss: Thanatos (1708) at `thana_boss`
@@ -126,7 +126,7 @@ villain confrontation, then an MVP boss spawned via DM console.
 
 ### Arc 16 — The Prontera Banquet (Prontera)
 - Hub: Kronecker G Heine (`prontera,150,150`)
-- Hunting: Disguise (1506 × 20 / 20202), Bloody Murderer (1507 × 20 / 20203)
+- Hunting (turn-in): 20202 (Worn-out Prison Uniform x10, Manacles x5, Cyfar x5); 20203 (Bear's Footskin x13, Garlet x4, Clover x10)
 - Villain: Matron Rina (`prt_q,100,100`) — exposed / rolled / **defected**
   - defected: Bijou is Maret, trying to introduce cascade errors from inside
 - Boss: Doppelganger (1046) as Bijou at `prt_q,150,150`
@@ -138,7 +138,7 @@ villain confrontation, then an MVP boss spawned via DM console.
 
 ### Arc 17 — The Sage's Legacy (Biolabs)
 - Hub: Doctor Mira Tressa (`ba_in01,100,100`)
-- Hunting: Aliza (1737 × 20 / 20212), Celia (2223 × 15 / 20213)
+- Hunting (turn-in): 20212 (Brigan x7, Solid Iron Piece x4, Smoke Powder x3); 20213 (Handcuffs x5, Research Chart x5, Blood Thirst x2)
 - Villain: The Administrator (`ba_in01,110,100`) — purged / negotiated / **running**
   - running: sends cascade analysis updates; creates Arc 19 callback
 - Boss: Amdarais (2476) at `ba_pw03` (Biosphere Core)
@@ -149,7 +149,7 @@ villain confrontation, then an MVP boss spawned via DM console.
 
 ### Arc 18 — The Witch of Death (Niflheim)
 - Hub: The Familiar Dead (`niflheim,100,100`)
-- Hunting: Dullahan (1504 × 15 / 20222), Gibbet (1503 × 15 / 20223)
+- Hunting (turn-in): 20222 (Armor Piece of Dullahan x9, Ectoplasm x5, Bat Cage x5); 20223 (Decomposed Rope x10, Spool x5, Red Muffler x4)
 - Villain: Himmelmez (`nif_in,150,150`) — **killed** / **bargained**
   - bargained: Himmelmez holds the dead while party faces finale
   - Himmelmez gates: both hunts must be complete before she will speak
@@ -171,7 +171,7 @@ villain confrontation, then an MVP boss spawned via DM console.
 
 ### Arc 19 — Nightmare of Midgard (Morroc Ruins)
 - Hub: Loki The Voice (`moc_ruins,150,150`) — no traditional villain
-- Hunting: Khalitzburg (1132 × 15 / 20232)
+- Hunting (turn-in): 20232 (Rotten Bandage x10, Scale Shell x6, Grit x6)
   - Auto-completes when party returns to Loki after hunt done (S_Progress)
 - Revelation: Loki explains cascade = Thanatos's seal in harmonic decay
 - Boss: Garm (1252) as Surt at `moc_fild22,170,140`
@@ -313,15 +313,15 @@ Arc 18: himmelmez_bargained → Arc 19 boss flavor, unlocks queens_bargain endin
 | Naga | 1993 | (Arc 12, was wrong as 1994 in earlier draft) |
 | Gryphon | 1259 | Arc 11 hunt — `hu_fild02` |
 | Ferus | 1714 | Arc 11 hunt — `abyss_01`–`abyss_03` |
-| Banshee | 1868 | Arc 13 hunt |
+| Banshee | 1867 | Arc 13 hunt — `abbey01`. **NOT 1868**, which is `G_BANSHEE`: no spawns, no drops, no exp |
 | Zombie Slaughter | 1864 | Arc 13 hunt — `abbey01`/`abbey02` |
 | Salamander | 1831 | Arc 14 hunt — `thor_v01`–`thor_v03` (NOT 1832 IFRIT) |
-| Lava Golem | 1366 | Arc 14 hunt (NOT 1367 BLAZZER) |
+| Magmaring / Muscipular / Drosera | 1836 / 1780 / 1781 | Arc 14 hunt — `ve_fild03`/`07` (replaced 1366 Lava Golem, which lives in `mag_dun01`) |
 | Harpy | 1376 | Arc 6 hunt — `yuno_fild02`–`yuno_fild07` |
 | Metaling | 1613 | Arc 7 hunt — `ein_fild06`–`ein_fild09` |
 | Raydric | 1163 | Arc 8 hunt — `gl_cas02`, `gl_knt01`/`02` |
 | Wraith | 1192 | Arc 8 hunt — `gl_church`, `gl_chyard` |
-| Hunter Fly | 1035 | Arc 10 hunt — see caveat below |
+| Whikebain / Kavac / Removal | 1653 / 1656 / 1682 | Arc 10 hunt — `lhz_dun01`/`02` (replaced 1035 Hunter Fly, which spawns nowhere near Lighthalzen) |
 | Aliot | 1736 | Arc 10 hunt — `kh_dun01`/`02` |
 
 **Off-by-one sweep (2026-08-18).** Eleven campaign hunting quests in
@@ -333,13 +333,46 @@ All eleven are corrected and every arc-script header now agrees with
 `quest_db.conf`. When adding a hunt, verify the id against `mob_db.conf` by
 name, not by neighbouring id.
 
-**Open content caveat — quest 20142 "Lab Infiltration" (Arc 10).** The id now
-matches its stated mob (1035 Hunter Fly), but Hunter Fly spawns in `gef_dun*`,
-`gl_prison*`, and `prt_maze*` — none of them Lighthalzen. The arc's own maps are
-`lighthalzen`/`lhz_dun03`. This is a content choice, not an id error; pick a
-Lighthalzen-region mob if the hunt should be run in-region.
+**Hunting contracts are item turn-ins (2026-08-25).** All 41 non-boss hunts now
+ask for drops rather than kills. The six single-boss quests (20005, 20012,
+20017, 20018, 20023, 20030) keep their `Targets:` — killing a named boss is a
+story beat, not a counter.
 
-**Unused quest — 20105 "Norgroad Heat Index".** Defined in `quest_db.conf` and
-erased by `@dm reset`, but started by no arc script. Its id now matches its
-comment (1030 Anacondaq, `ra_fild03`/`ra_fild08`); reassign if it is ever wired
-into Arc 6.
+- **Master data:** `db/dm_hunt_db.json`. Nothing else is authoritative.
+- **Generator:** `tools/gen-hunts.py` writes the `Drops:` blocks in
+  `quest_db.conf`, the `dm_hunts.txt` script table, and korangar's
+  `campaign_quests.tsv`. Rates and turn-in counts are **derived** from each
+  contract's kill budget and the monster's own drop rate — do not hand-edit
+  them. `tools/gen-hunts.py --check` fails on drift and runs first inside
+  `tools/check-campaign.sh`.
+- **Scripts:** arcs call `DM_HuntReady` / `DM_HuntCollect` / `DM_HuntStanding`
+  / `DM_HuntBrief` (in `dm_quests.txt`). No arc reads `questprogress(id,
+  HUNTING)` any more.
+- **Party behaviour:** quest drops roll for every party member in range
+  (`src/map/mob.c:3046`) and land straight in that member's inventory, so a
+  party pools its drops and one member hands them in. Credit and payment stay
+  party-wide.
+- **Client:** korangar now has a quest log (Ctrl+Q, or the menu) showing each
+  contract's items and how many the player is carrying. Before this the three
+  quest packets were registered and discarded.
+
+**Fixed on the way (2026-08-25).**
+
+- **20173 "Abbey Bell Silencing" hunted a monster that does not exist in the
+  world.** It targeted 1868, which is `G_BANSHEE` — the summoned variant: no
+  spawns, no drops, `Exp: 0`. The real Banshee is 1867. The 08-18 off-by-one
+  sweep missed it because `mob_db.conf` names *both* ids "Banshee", so a
+  name-based check passed. `gen-hunts.py` now checks spawns and the `G_`
+  sprite prefix instead of the name.
+- **Ten hunts pointed at mobs from another region entirely**, so the drops
+  could not match the fiction: 20105 and 20113 (Rachel mobs in Yuno/Einbroch
+  arcs), 20115 (Kunlun), 20142 (Geffen — the caveat recorded on 08-18),
+  20184 (Magma Dungeon), 20192/20193 (Niflheim mobs in Thanatos Tower),
+  20202/20203 (Niflheim mobs in the Prontera arc), 20232 (Glast Heim mobs in
+  the Morroc ruins). Each is retargeted to its arc's own maps, with the reason
+  recorded in the `retarget` field of `db/dm_hunt_db.json`. Arc 15 gained the
+  most: Thanatos Tower's own Deathword/Observation/Shelter drop the memory
+  pages and jewels its story is about.
+- **20105 "Norgroad Heat Index" is now wired into Arc 6.** It was defined and
+  reset but started by no script. Vahl asks for three datasets rather than two
+  and gates on all three.

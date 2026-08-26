@@ -14,9 +14,9 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20013 Sand and Whispers          (arc tracker)
-//=   20014 Caravan Water Debt         (Muka x20)
-//=   20015 Ant Hell Survey            (Ant Egg x15)
-//=   20016 Sphinx Night Watch         (Zerom x20)
+//=   20014 Caravan Water Debt (Cactus Needle x13, Bill of Birds x13, Empty Bottle x4)
+//=   20015 Ant Hell Survey (Shell x3, Worm Peeling x10, Elder Pixie's Moustache x6)
+//=   20016 Sphinx Night Watch (Iron Ore x3, Wing of Red Bat x10, Animal Skin x9)
 //=   20017 What the Desert Spat Up    (Osiris)
 //=   20018 The King Beneath           (Amon Ra)
 //===========================================================
@@ -95,14 +95,15 @@ S_StartArc:
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 301);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Sand and Whispers]^000000");
-	callfunc("DM_PartyMes", "^3355FFCaravan Water Debt - cull 20 Muka along Sograt's water routes.^000000");
-	callfunc("DM_PartyMes", "^3355FFAnt Hell Survey - break 15 Ant Eggs and bring back amber-sand samples.^000000");
-	callfunc("DM_PartyMes", "^3355FFSphinx Night Watch - cull 20 Zerom in the Sphinx.^000000");
+	callfunc("DM_PartyMes", "^3355FFCaravan Water Debt - off the bodies along Sograt's water routes: " + callfunc("DM_HuntBrief", 20014) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFAnt Hell Survey - dug out of the Ant Hell galleries: " + callfunc("DM_HuntBrief", 20015) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFSphinx Night Watch - stripped off the dead in the Sphinx: " + callfunc("DM_HuntBrief", 20016) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20014) == 1 && questprogress(20014, HUNTING) == 2) {
+	if (questprogress(20014) == 1 && callfunc("DM_HuntReady", 20014)) {
+		callfunc("DM_HuntCollect", 20014);
 		callfunc("DM_InstanceQuestComplete", 20014);
 		callfunc("DM_PartyExp", 16000, 7000);
 		callfunc("DM_GivePartyZeny", 3500);
@@ -132,7 +133,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20015) == 1 && questprogress(20015, HUNTING) == 2) {
+	if (questprogress(20015) == 1 && callfunc("DM_HuntReady", 20015)) {
+		callfunc("DM_HuntCollect", 20015);
 		callfunc("DM_InstanceQuestComplete", 20015);
 		callfunc("DM_PartyExp", 22000, 9000);
 		callfunc("DM_GivePartyZeny", 4500);
@@ -161,7 +163,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20016) == 1 && questprogress(20016, HUNTING) == 2) {
+	if (questprogress(20016) == 1 && callfunc("DM_HuntReady", 20016)) {
+		callfunc("DM_HuntCollect", 20016);
 		callfunc("DM_InstanceQuestComplete", 20016);
 		callfunc("DM_PartyExp", 30000, 12000);
 		callfunc("DM_GivePartyZeny", 5500);
@@ -235,6 +238,7 @@ S_TurnIns:
 
 	callfunc("DM_PartyMes", "[Rashid]");
 	callfunc("DM_PartyMes", "Clear the water route, survey Ant Hell, and watch the Sphinx. The desert is trying to tell you what the tombs already know.");
+	callfunc("DM_HuntStanding", 20014, 20015, 20016);
 	close();
 }
 

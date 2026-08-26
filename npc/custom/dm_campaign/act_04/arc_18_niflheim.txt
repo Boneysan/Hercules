@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20221 The Queen the Drowned Chose  (arc tracker / Himmelmez)
-//=   20222 The Dead You Failed          (Dullahan x15)
-//=   20223 Banquet Hall Procession      (Gibbet x15)
+//=   20222 The Dead You Failed (Armor Piece of Dullahan x9, Ectoplasm x5, Bat Cage x5)
+//=   20223 Banquet Hall Procession (Decomposed Rope x10, Spool x5, Red Muffler x4)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
 //=   dm_arc18_started, dm_arc18_himmelmez_killed,
@@ -90,13 +90,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20223);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Queen the Drowned Chose]^000000");
-	callfunc("DM_PartyMes", "^3355FFThe Dead You Failed - quiet 15 Dullahan caught in the overflow at Niflheim's border.^000000");
-	callfunc("DM_PartyMes", "^3355FFBanquet Hall Procession - still 15 Gibbet unsettled from the Banquet Hall's structure.^000000");
+	callfunc("DM_PartyMes", "^3355FFThe Dead You Failed - off the overflow at Niflheim's border: " + callfunc("DM_HuntBrief", 20222) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFBanquet Hall Procession - out of the Banquet Hall: " + callfunc("DM_HuntBrief", 20223) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20222) == 1 && questprogress(20222, HUNTING) == 2) {
+	if (questprogress(20222) == 1 && callfunc("DM_HuntReady", 20222)) {
+		callfunc("DM_HuntCollect", 20222);
 		callfunc("DM_InstanceQuestComplete", 20222);
 		callfunc("DM_PartyExp", 450000, 220000);
 		callfunc("DM_GivePartyZeny", 36000);
@@ -121,7 +122,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20223) == 1 && questprogress(20223, HUNTING) == 2) {
+	if (questprogress(20223) == 1 && callfunc("DM_HuntReady", 20223)) {
+		callfunc("DM_HuntCollect", 20223);
 		callfunc("DM_InstanceQuestComplete", 20223);
 		callfunc("DM_PartyExp", 450000, 220000);
 		callfunc("DM_GivePartyZeny", 36000);
@@ -170,6 +172,7 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Banquet Hall Procession is still open. Gibbet in the Banquet Hall.");
 	else
 		callfunc("DM_PartyMes", "Both done. Himmelmez is in the inner hall. nif_in.");
+	callfunc("DM_HuntStanding", 20222, 20223);
 	close();
 }
 

@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20181 The Herald in the Magma    (arc tracker / Ifrit)
-//=   20183 Volcanic Salamander Hunt   (Salamander x20)
-//=   20184 Lava Golem Firebreak       (Lava Golem x20)
+//=   20183 Volcanic Salamander Hunt (Burning Heart x9, Burning Hair x4, Live Coal x4)
+//=   20184 Lava Golem Firebreak (Sticky Poison x9, Maneater Blossom x4, Jubilee x3)
 //=   20185 The Prelate's Silence      (Prelate Hesma)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -89,13 +89,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20184);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Herald in the Magma]^000000");
-	callfunc("DM_PartyMes", "^3355FFVolcanic Salamander Hunt - clear 20 Salamander from the working shafts.^000000");
-	callfunc("DM_PartyMes", "^3355FFLava Golem Firebreak - break through 20 Lava Golem on the evacuation route.^000000");
+	callfunc("DM_PartyMes", "^3355FFVolcanic Salamander Hunt - out of the working shafts: " + callfunc("DM_HuntBrief", 20183) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFLava Golem Firebreak - off the Veins evacuation route: " + callfunc("DM_HuntBrief", 20184) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20183) == 1 && questprogress(20183, HUNTING) == 2) {
+	if (questprogress(20183) == 1 && callfunc("DM_HuntReady", 20183)) {
+		callfunc("DM_HuntCollect", 20183);
 		callfunc("DM_InstanceQuestComplete", 20183);
 		callfunc("DM_PartyExp", 420000, 200000);
 		callfunc("DM_GivePartyZeny", 35000);
@@ -120,7 +121,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20184) == 1 && questprogress(20184, HUNTING) == 2) {
+	if (questprogress(20184) == 1 && callfunc("DM_HuntReady", 20184)) {
+		callfunc("DM_HuntCollect", 20184);
 		callfunc("DM_InstanceQuestComplete", 20184);
 		callfunc("DM_PartyExp", 440000, 210000);
 		callfunc("DM_GivePartyZeny", 37000);
@@ -185,6 +187,7 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Lava Golem Firebreak is still open. The evacuation route is blocked.");
 	else
 		callfunc("DM_PartyMes", "Both contracts done. Hesma is the last obstacle. Temple of Fire, south of the city.");
+	callfunc("DM_HuntStanding", 20183, 20184);
 	close();
 }
 

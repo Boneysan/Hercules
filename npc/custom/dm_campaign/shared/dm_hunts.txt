@@ -1,0 +1,233 @@
+// Seal Cascade hunting contracts - GENERATED, do not edit.
+//
+// Written by tools/gen-hunts.py from db/dm_hunt_db.json. Run
+// 'tools/gen-hunts.py --check' to confirm this file is current.
+//
+// DM_HuntSpec fills .@hunt_item[] / .@hunt_need[] for one contract and
+// returns how many distinct items it asks for, so the turn-in NPCs and
+// the progress lines all read the same numbers.
+
+function	script	DM_HuntSpec	{
+	.@quest_id = getarg(0);
+
+	setarray getarg(1), 0;
+	setarray getarg(2), 0;
+
+	switch (.@quest_id) {
+	case 20002:  // Contract: Cellar Vermin - Rat Tail x7, Single Cell x7, Worm Peeling x3
+		setarray getarg(1), 1016, 1052, 955;
+		setarray getarg(2), 7, 7, 3;
+		return 3;
+	case 20003:  // Field Contract: Rockers and Rumors - Grasshopper's Leg x10, Animal Skin x10, Rocker Doll x3
+		setarray getarg(1), 940, 919, 752;
+		setarray getarg(2), 10, 10, 3;
+		return 3;
+	case 20008:  // Mushroom Ring Patrol - Mushroom Spore x13, Pointed Scale x9, Green Herb x10
+		setarray getarg(1), 921, 906, 511;
+		setarray getarg(2), 13, 9, 10;
+		return 3;
+	case 20009:  // Bone Tag Turn-In - Skel-Bone x4, Decayed Nail x7, Sticky Mucus x5
+		setarray getarg(1), 932, 957, 938;
+		setarray getarg(2), 4, 7, 5;
+		return 3;
+	case 20014:  // Caravan Water Debt - Cactus Needle x13, Bill of Birds x13, Empty Bottle x4
+		setarray getarg(1), 952, 925, 713;
+		setarray getarg(2), 13, 13, 4;
+		return 3;
+	case 20015:  // Ant Hell Survey - Shell x3, Worm Peeling x10, Elder Pixie's Moustache x6
+		setarray getarg(1), 935, 955, 1040;
+		setarray getarg(2), 3, 10, 6;
+		return 3;
+	case 20016:  // Sphinx Night Watch - Iron Ore x3, Wing of Red Bat x10, Animal Skin x9
+		setarray getarg(1), 1002, 7006, 919;
+		setarray getarg(2), 3, 10, 9;
+		return 3;
+	case 20020:  // Tower Apprentice Drills - Poison Spore x13, Sticky Mucus x9, Solid Shell x9
+		setarray getarg(1), 7033, 938, 943;
+		setarray getarg(2), 13, 9, 9;
+		return 3;
+	case 20021:  // Orc Village Bounty - Orcish Voucher x13, Cyfar x8, Milk x8
+		setarray getarg(1), 931, 7053, 519;
+		setarray getarg(2), 13, 8, 8;
+		return 3;
+	case 20022:  // Argiope Silk Run - Bug Leg x9, Cobweb x13, Maneater Blossom x13
+		setarray getarg(1), 1042, 1025, 1032;
+		setarray getarg(2), 9, 13, 13;
+		return 3;
+	case 20027:  // Byalan Tide Contract - Gill x16, Sharp Scale x16, Tentacle x11
+		setarray getarg(1), 956, 963, 962;
+		setarray getarg(2), 16, 16, 11;
+		return 3;
+	case 20028:  // Sunken Ship Manifest - Skel-Bone x6, Worm Peeling x9, Fabric x9
+		setarray getarg(1), 932, 955, 1059;
+		setarray getarg(2), 6, 9, 9;
+		return 3;
+	case 20103:  // Harpy Weather Log - Harpy Feather x12, Antelope Horn x6, Maneater Blossom x7
+		setarray getarg(1), 7115, 7106, 1032;
+		setarray getarg(2), 12, 6, 7;
+		return 3;
+	case 20104:  // Juperos Parts Requisition - Rusty Screw x5, Used Iron Plate x5, Metal Fragment x8
+		setarray getarg(1), 7317, 7319, 7095;
+		setarray getarg(2), 5, 5, 8;
+		return 3;
+	case 20105:  // Norgroad Heat Index - Sand Clump x8, Great Nature x5, Empty Bottle x8
+		setarray getarg(1), 7124, 997, 713;
+		setarray getarg(2), 8, 5, 8;
+		return 3;
+	case 20113:  // Factory Whistle Shift - Old Pick x6, Mould Powder x6, Single Cell x6
+		setarray getarg(1), 7318, 7001, 1052;
+		setarray getarg(2), 6, 6, 6;
+		return 3;
+	case 20114:  // Metaling Scrap Drive - Flexible Tube x10, Jubilee x6, Mole Claw x6
+		setarray getarg(1), 7325, 7312, 1018;
+		setarray getarg(2), 10, 6, 6;
+		return 3;
+	case 20115:  // Mine Dust Medicine - Gun Powder x3, Crystal Fragment x4, Dark Crystal Fragment x4
+		setarray getarg(1), 6244, 7321, 7315;
+		setarray getarg(2), 3, 4, 4;
+		return 3;
+	case 20122:  // Outer Garrison - Brigan x8, Worn Out Page x8, Reins x9
+		setarray getarg(1), 7054, 1097, 1064;
+		setarray getarg(2), 8, 8, 9;
+		return 3;
+	case 20123:  // Fallen Choir - Fabric x9, Zargon x8, Skull x6
+		setarray getarg(1), 1059, 912, 7005;
+		setarray getarg(2), 9, 8, 6;
+		return 3;
+	case 20132:  // Ice Core Samples - Glacial Heart x9, Ice Cubic x2, Cold Ice x2
+		setarray getarg(1), 7561, 7066, 6253;
+		setarray getarg(2), 9, 2, 2;
+		return 3;
+	case 20133:  // Hollow Blessings - Ice Piece x3, Crystal Blue x2, Ice Crystal x3
+		setarray getarg(1), 6256, 991, 6257;
+		setarray getarg(2), 3, 2, 3;
+		return 3;
+	case 20142:  // Lab Infiltration - Handcuffs x4, Research Chart x7, Used Iron Plate x6
+		setarray getarg(1), 7345, 7347, 7319;
+		setarray getarg(2), 4, 7, 6;
+		return 3;
+	case 20143:  // Lower Level Sweep - Solid Iron Piece x6, Burnt Part x5, Alice's Apron x5
+		setarray getarg(1), 7507, 7512, 7047;
+		setarray getarg(2), 6, 5, 5;
+		return 3;
+	case 20153:  // Gryphon Vigil - Talon of Griffon x8, Cyfar x3, Maneater Root x7
+		setarray getarg(1), 7048, 7053, 1033;
+		setarray getarg(2), 8, 3, 7;
+		return 3;
+	case 20154:  // Dragon Pack Dispersal - Dragon Scale x7, Dragon Canine x5, Dragon Skin x5
+		setarray getarg(1), 1036, 1035, 7123;
+		setarray getarg(2), 7, 5, 5;
+		return 3;
+	case 20163:  // New World Cornus Survey - Mystic Horn x10, Solid Shell x4, Sharp Leaf x6
+		setarray getarg(1), 6023, 943, 7100;
+		setarray getarg(2), 10, 4, 6;
+		return 3;
+	case 20164:  // Naga Border Patrol - Shining Scale x7, Stiff Horn x6, Brown Root x4
+		setarray getarg(1), 954, 7008, 7188;
+		setarray getarg(2), 7, 6, 4;
+		return 3;
+	case 20173:  // Abbey Bell Silencing - Old White Cloth x6, Skull x8, Monster's Feed x8
+		setarray getarg(1), 7751, 7005, 528;
+		setarray getarg(2), 6, 8, 8;
+		return 3;
+	case 20174:  // Sanctum Sweep - Clattering Skull x9, Skel-Bone x6, Torn Magic Book x3
+		setarray getarg(1), 7752, 932, 7117;
+		setarray getarg(2), 9, 6, 3;
+		return 3;
+	case 20183:  // Volcanic Salamander Hunt - Burning Heart x9, Burning Hair x4, Live Coal x4
+		setarray getarg(1), 7097, 7122, 7098;
+		setarray getarg(2), 9, 4, 4;
+		return 3;
+	case 20184:  // Lava Golem Firebreak - Sticky Poison x9, Maneater Blossom x4, Jubilee x3
+		setarray getarg(1), 7565, 1032, 7312;
+		setarray getarg(2), 9, 4, 3;
+		return 3;
+	case 20192:  // What the Tower Remembers - Worn Out Page x8, Topaz x2, Pearl x2
+		setarray getarg(1), 1097, 728, 722;
+		setarray getarg(2), 8, 2, 2;
+		return 3;
+	case 20193:  // Aldebaran Last Letters - Ruby x3, Garnet x3, Red Feather x2
+		setarray getarg(1), 723, 718, 7440;
+		setarray getarg(2), 3, 3, 2;
+		return 3;
+	case 20202:  // Underground Prison Cleanup - Worn-out Prison Uniform x10, Manacles x5, Cyfar x5
+		setarray getarg(1), 1099, 1098, 7053;
+		setarray getarg(2), 10, 5, 5;
+		return 3;
+	case 20203:  // Terra Gloria - Bear's Footskin x13, Garlet x4, Clover x10
+		setarray getarg(1), 948, 910, 705;
+		setarray getarg(2), 13, 4, 10;
+		return 3;
+	case 20212:  // Sages Legacy - Brigan x7, Solid Iron Piece x4, Smoke Powder x3
+		setarray getarg(1), 7054, 7507, 6214;
+		setarray getarg(2), 7, 4, 3;
+		return 3;
+	case 20213:  // Tartaros Dive - Handcuffs x5, Research Chart x5, Blood Thirst x2
+		setarray getarg(1), 7345, 7347, 6470;
+		setarray getarg(2), 5, 5, 2;
+		return 3;
+	case 20222:  // The Dead You Failed - Armor Piece of Dullahan x9, Ectoplasm x5, Bat Cage x5
+		setarray getarg(1), 7210, 7220, 7214;
+		setarray getarg(2), 9, 5, 5;
+		return 3;
+	case 20223:  // Banquet Hall Procession - Decomposed Rope x10, Spool x5, Red Muffler x4
+		setarray getarg(1), 7218, 7217, 7216;
+		setarray getarg(2), 10, 5, 4;
+		return 3;
+	case 20232:  // Beyond the Veil - Rotten Bandage x10, Scale Shell x6, Grit x6
+		setarray getarg(1), 930, 936, 1056;
+		setarray getarg(2), 10, 6, 6;
+		return 3;
+	}
+
+	return 0;
+}
+
+// The contract's name, for progress displays that have only its id.
+function	script	DM_HuntName	{
+	switch (getarg(0)) {
+	case 20002: return "Contract: Cellar Vermin";
+	case 20003: return "Field Contract: Rockers and Rumors";
+	case 20008: return "Mushroom Ring Patrol";
+	case 20009: return "Bone Tag Turn-In";
+	case 20014: return "Caravan Water Debt";
+	case 20015: return "Ant Hell Survey";
+	case 20016: return "Sphinx Night Watch";
+	case 20020: return "Tower Apprentice Drills";
+	case 20021: return "Orc Village Bounty";
+	case 20022: return "Argiope Silk Run";
+	case 20027: return "Byalan Tide Contract";
+	case 20028: return "Sunken Ship Manifest";
+	case 20103: return "Harpy Weather Log";
+	case 20104: return "Juperos Parts Requisition";
+	case 20105: return "Norgroad Heat Index";
+	case 20113: return "Factory Whistle Shift";
+	case 20114: return "Metaling Scrap Drive";
+	case 20115: return "Mine Dust Medicine";
+	case 20122: return "Outer Garrison";
+	case 20123: return "Fallen Choir";
+	case 20132: return "Ice Core Samples";
+	case 20133: return "Hollow Blessings";
+	case 20142: return "Lab Infiltration";
+	case 20143: return "Lower Level Sweep";
+	case 20153: return "Gryphon Vigil";
+	case 20154: return "Dragon Pack Dispersal";
+	case 20163: return "New World Cornus Survey";
+	case 20164: return "Naga Border Patrol";
+	case 20173: return "Abbey Bell Silencing";
+	case 20174: return "Sanctum Sweep";
+	case 20183: return "Volcanic Salamander Hunt";
+	case 20184: return "Lava Golem Firebreak";
+	case 20192: return "What the Tower Remembers";
+	case 20193: return "Aldebaran Last Letters";
+	case 20202: return "Underground Prison Cleanup";
+	case 20203: return "Terra Gloria";
+	case 20212: return "Sages Legacy";
+	case 20213: return "Tartaros Dive";
+	case 20222: return "The Dead You Failed";
+	case 20223: return "Banquet Hall Procession";
+	case 20232: return "Beyond the Veil";
+	}
+
+	return "";
+}

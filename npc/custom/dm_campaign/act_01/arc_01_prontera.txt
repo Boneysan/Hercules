@@ -14,8 +14,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20001 Omens at the Fountain        (arc tracker)
-//=   20002 Contract: Cellar Vermin      (Tarou x10)
-//=   20003 Field Contract: Rockers...   (Rocker x15)
+//=   20002 Contract: Cellar Vermin (Rat Tail x7, Single Cell x7, Worm Peeling x3)
+//=   20003 Field Contract: Rockers... (Grasshopper's Leg x10, Animal Skin x10, Rocker Doll x3)
 //=   20004 The Trembling Ground         (story)
 //=   20005 The Goat-Headed Sign         (Deviruchi MVP)
 //=   20006 South Gate Soup Line         (reserved / story)
@@ -126,15 +126,16 @@ S_SwearIn:
 	callfunc("DM_InstanceQuestStart", 20003);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Omens at the Fountain]^000000");
-	callfunc("DM_PartyMes", "^3355FFContract: Cellar Vermin - cull 10 Tarou in the Culvert.^000000");
-	callfunc("DM_PartyMes", "^3355FFField Contract: cull 15 Rockers in the Prontera fields.^000000");
+	callfunc("DM_PartyMes", "^3355FFContract: Cellar Vermin - proof out of the Culvert: " + callfunc("DM_HuntBrief", 20002) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFField Contract: Rockers and Rumors - proof off the Prontera fields: " + callfunc("DM_HuntBrief", 20003) + ".^000000");
 	callfunc("DM_PartyMes", "^3355FFOld Tibbets keeps the sluice-gates by the Culvert. Talk to him before you go down.^000000");
 	close();
 
 S_Contracts:
 	// Settle any completed hunting contracts.
 	.@paid = 0;
-	if (questprogress(20002) == 1 && questprogress(20002, HUNTING) == 2) {
+	if (questprogress(20002) == 1 && callfunc("DM_HuntReady", 20002)) {
+		callfunc("DM_HuntCollect", 20002);
 		callfunc("DM_InstanceQuestComplete", 20002);
 		callfunc("DM_PartyExp", 4000, 1500);
 		callfunc("DM_GivePartyZeny", 2000);
@@ -143,7 +144,8 @@ S_Contracts:
 		callfunc("DM_PartyMes", "Cellar's a little cleaner. 2,000 zeny, and the ledger likes you.");
 		next();
 	}
-	if (questprogress(20003) == 1 && questprogress(20003, HUNTING) == 2) {
+	if (questprogress(20003) == 1 && callfunc("DM_HuntReady", 20003)) {
+		callfunc("DM_HuntCollect", 20003);
 		callfunc("DM_InstanceQuestComplete", 20003);
 		callfunc("DM_PartyExp", 4500, 1800);
 		callfunc("DM_GivePartyZeny", 2000);
@@ -185,6 +187,7 @@ S_Contracts:
 	} else {
 		callfunc("DM_PartyMes", "Cellar Vermin and the field contract are still open. Close them both, then we'll talk about the part the cathedral pretends isn't happening.");
 	}
+	callfunc("DM_HuntStanding", 20002, 20003);
 	close();
 }
 

@@ -9,8 +9,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20161 The Wound With a Keeper    (arc tracker / Naght Sieger)
-//=   20163 New World Cornus Survey    (Cornus x20)
-//=   20164 Naga Border Patrol        (Naga x20)
+//=   20163 New World Cornus Survey (Mystic Horn x10, Solid Shell x4, Sharp Leaf x6)
+//=   20164 Naga Border Patrol (Shining Scale x7, Stiff Horn x6, Brown Root x4)
 //=   20165 The Vance Proposal        (Captain Vance)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -85,13 +85,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20164);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Wound With a Keeper]^000000");
-	callfunc("DM_PartyMes", "^3355FFNew World Cornus Survey - clear 20 Cornus overgrowth near the rift anchor.^000000");
-	callfunc("DM_PartyMes", "^3355FFNaga Border Patrol - engage 20 Naga along the border corridor.^000000");
+	callfunc("DM_PartyMes", "^3355FFNew World Cornus Survey - cut back at the rift anchor: " + callfunc("DM_HuntBrief", 20163) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFNaga Border Patrol - off the border corridor: " + callfunc("DM_HuntBrief", 20164) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20163) == 1 && questprogress(20163, HUNTING) == 2) {
+	if (questprogress(20163) == 1 && callfunc("DM_HuntReady", 20163)) {
+		callfunc("DM_HuntCollect", 20163);
 		callfunc("DM_InstanceQuestComplete", 20163);
 		callfunc("DM_PartyExp", 340000, 165000);
 		callfunc("DM_GivePartyZeny", 28000);
@@ -116,7 +117,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20164) == 1 && questprogress(20164, HUNTING) == 2) {
+	if (questprogress(20164) == 1 && callfunc("DM_HuntReady", 20164)) {
+		callfunc("DM_HuntCollect", 20164);
 		callfunc("DM_InstanceQuestComplete", 20164);
 		callfunc("DM_PartyExp", 360000, 175000);
 		callfunc("DM_GivePartyZeny", 30000);
@@ -195,6 +197,7 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Naga Border Patrol is still open. The border corridor is hostile.");
 	else
 		callfunc("DM_PartyMes", "The approaches are clear. Vance is at the anchor perimeter.");
+	callfunc("DM_HuntStanding", 20163, 20164);
 	close();
 }
 

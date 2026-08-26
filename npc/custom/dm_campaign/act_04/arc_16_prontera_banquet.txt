@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20201 The Royal Banquet           (arc tracker / Bijou)
-//=   20202 Underground Prison Cleanup  (Disguise x20)
-//=   20203 Terra Gloria                (Bloody Murderer x20)
+//=   20202 Underground Prison Cleanup (Worn-out Prison Uniform x10, Manacles x5, Cyfar x5)
+//=   20203 Terra Gloria (Bear's Footskin x13, Garlet x4, Clover x10)
 //=   20204 Royal House Audience Rounds (Matron Rina)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -89,13 +89,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20203);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Royal Banquet]^000000");
-	callfunc("DM_PartyMes", "^3355FFUnderground Prison Cleanup - clear 20 Disguise from the prison corridors.^000000");
-	callfunc("DM_PartyMes", "^3355FFTerra Gloria - eliminate 20 Bloody Murderer from the deeper prison levels.^000000");
+	callfunc("DM_PartyMes", "^3355FFUnderground Prison Cleanup - off the prison corridors: " + callfunc("DM_HuntBrief", 20202) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFTerra Gloria - for the banquet table: " + callfunc("DM_HuntBrief", 20203) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20202) == 1 && questprogress(20202, HUNTING) == 2) {
+	if (questprogress(20202) == 1 && callfunc("DM_HuntReady", 20202)) {
+		callfunc("DM_HuntCollect", 20202);
 		callfunc("DM_InstanceQuestComplete", 20202);
 		callfunc("DM_PartyExp", 520000, 260000);
 		callfunc("DM_GivePartyZeny", 42000);
@@ -120,7 +121,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20203) == 1 && questprogress(20203, HUNTING) == 2) {
+	if (questprogress(20203) == 1 && callfunc("DM_HuntReady", 20203)) {
+		callfunc("DM_HuntCollect", 20203);
 		callfunc("DM_InstanceQuestComplete", 20203);
 		callfunc("DM_PartyExp", 540000, 270000);
 		callfunc("DM_GivePartyZeny", 44000);
@@ -197,6 +199,7 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Terra Gloria is still open. Bloody Murderer in the deeper levels.");
 	else
 		callfunc("DM_PartyMes", "Both done. Matron Rina is in the east wing of prt_q.");
+	callfunc("DM_HuntStanding", 20202, 20203);
 	close();
 }
 

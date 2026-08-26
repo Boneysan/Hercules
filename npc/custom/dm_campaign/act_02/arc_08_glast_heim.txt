@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20121 A Kingdom Unmade           (arc tracker / Dark Lord)
-//=   20122 Outer Garrison             (Raydric x20)
-//=   20123 Fallen Choir               (Wraith x20)
+//=   20122 Outer Garrison (Brigan x8, Worn Out Page x8, Reins x9)
+//=   20123 Fallen Choir (Fabric x9, Zargon x8, Skull x6)
 //=   20124 The Weight of Faith        (Brother Manfred)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -82,13 +82,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20123);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: A Kingdom Unmade]^000000");
-	callfunc("DM_PartyMes", "^3355FFOuter Garrison - clear 20 Raydric from the outer walls.^000000");
-	callfunc("DM_PartyMes", "^3355FFFallen Choir - silence 20 Wraith in the abbey passages.^000000");
+	callfunc("DM_PartyMes", "^3355FFOuter Garrison - off the dead on the outer walls: " + callfunc("DM_HuntBrief", 20122) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFFallen Choir - out of the abbey passages: " + callfunc("DM_HuntBrief", 20123) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20122) == 1 && questprogress(20122, HUNTING) == 2) {
+	if (questprogress(20122) == 1 && callfunc("DM_HuntReady", 20122)) {
+		callfunc("DM_HuntCollect", 20122);
 		callfunc("DM_InstanceQuestComplete", 20122);
 		callfunc("DM_PartyExp", 240000, 115000);
 		callfunc("DM_GivePartyZeny", 20000);
@@ -113,7 +114,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20123) == 1 && questprogress(20123, HUNTING) == 2) {
+	if (questprogress(20123) == 1 && callfunc("DM_HuntReady", 20123)) {
+		callfunc("DM_HuntCollect", 20123);
 		callfunc("DM_InstanceQuestComplete", 20123);
 		callfunc("DM_PartyExp", 260000, 125000);
 		callfunc("DM_GivePartyZeny", 22000);
@@ -178,6 +180,7 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "The fallen choir is still open. Wraith in the abbey passages.");
 	else
 		callfunc("DM_PartyMes", "The contracts are done. Manfred waits at the cathedral steps.");
+	callfunc("DM_HuntStanding", 20122, 20123);
 	close();
 }
 

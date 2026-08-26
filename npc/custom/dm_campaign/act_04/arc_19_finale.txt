@@ -11,7 +11,7 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20231 Where Thanatos Stood     (arc tracker / Surt)
-//=   20232 Beyond the Veil          (Khalitzburg x15)
+//=   20232 Beyond the Veil (Rotten Bandage x10, Scale Shell x6, Grit x6)
 //=   20233 The Choice He Never Had  (Loki / final audience)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -106,17 +106,19 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20232);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Where Thanatos Stood]^000000");
-	callfunc("DM_PartyMes", "^3355FFBeyond the Veil - quiet 15 Khalitzburg in the ruins of Morroc. Then return to Loki.^000000");
+	callfunc("DM_PartyMes", "^3355FFBeyond the Veil - out of the ruins of Morroc: " + callfunc("DM_HuntBrief", 20232) + ". Then return to Loki.^000000");
 	close();
 
 S_Progress:
-	if (questprogress(20232) == 1 && questprogress(20232, HUNTING) < 2) {
+	if (questprogress(20232) == 1 && !callfunc("DM_HuntReady", 20232)) {
 		callfunc("DM_PartyMes", "[Loki The Voice]");
 		callfunc("DM_PartyMes", "The Khalitzburg are still in the ruins. They have been here for three hundred years. A few more minutes is fine. Take your time.");
+		callfunc("DM_HuntStanding", 20232);
 		close();
 	}
 
-	if (questprogress(20232) == 1 && questprogress(20232, HUNTING) == 2) {
+	if (questprogress(20232) == 1 && callfunc("DM_HuntReady", 20232)) {
+		callfunc("DM_HuntCollect", 20232);
 		callfunc("DM_InstanceQuestComplete", 20232);
 		callfunc("DM_PartyExp", 600000, 300000);
 		callsub(S_FinalAudience);

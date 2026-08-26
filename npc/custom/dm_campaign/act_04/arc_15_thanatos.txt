@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20191 The Five Doors of a Dead Hero  (arc tracker / Thanatos)
-//=   20192 What the Tower Remembers       (Hylozoist x15)
-//=   20193 Aldebaran Last Letters         (Lude x15)
+//=   20192 What the Tower Remembers (Worn Out Page x8, Topaz x2, Pearl x2)
+//=   20193 Aldebaran Last Letters (Ruby x3, Garnet x3, Red Feather x2)
 //=   20194 The Method's Price             (Scholar Pratt)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -90,13 +90,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20193);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Five Doors of a Dead Hero]^000000");
-	callfunc("DM_PartyMes", "^3355FFWhat the Tower Remembers - disperse 15 Hylozoist. They hold fragments of the original memory.^000000");
-	callfunc("DM_PartyMes", "^3355FFAldebaran Last Letters - silence 15 Lude. Ghosts of scholars who became trapped in the echo.^000000");
+	callfunc("DM_PartyMes", "^3355FFWhat the Tower Remembers - carried down from the Tower's upper floors: " + callfunc("DM_HuntBrief", 20192) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFAldebaran Last Letters - off the scholar levels: " + callfunc("DM_HuntBrief", 20193) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20192) == 1 && questprogress(20192, HUNTING) == 2) {
+	if (questprogress(20192) == 1 && callfunc("DM_HuntReady", 20192)) {
+		callfunc("DM_HuntCollect", 20192);
 		callfunc("DM_InstanceQuestComplete", 20192);
 		callfunc("DM_PartyExp", 500000, 250000);
 		callfunc("DM_GivePartyZeny", 40000);
@@ -121,7 +122,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20193) == 1 && questprogress(20193, HUNTING) == 2) {
+	if (questprogress(20193) == 1 && callfunc("DM_HuntReady", 20193)) {
+		callfunc("DM_HuntCollect", 20193);
 		callfunc("DM_InstanceQuestComplete", 20193);
 		callfunc("DM_PartyExp", 500000, 250000);
 		callfunc("DM_GivePartyZeny", 40000);
@@ -186,6 +188,7 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Aldebaran Last Letters is still open. The Lude in the scholar levels.");
 	else
 		callfunc("DM_PartyMes", "Both done. Pratt is on the seventh floor.");
+	callfunc("DM_HuntStanding", 20192, 20193);
 	close();
 }
 

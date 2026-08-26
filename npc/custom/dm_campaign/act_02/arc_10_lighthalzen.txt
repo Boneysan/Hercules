@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20141 The Heroes They Made        (arc tracker / Kiel D-01)
-//=   20142 Lab Infiltration            (Hunter Fly x20)
-//=   20143 Lower Level Sweep           (Aliot x20)
+//=   20142 Lab Infiltration (Handcuffs x4, Research Chart x7, Used Iron Plate x6)
+//=   20143 Lower Level Sweep (Solid Iron Piece x6, Burnt Part x5, Alice's Apron x5)
 //=   20144 Echo's Protocol             (Director Reise)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -96,13 +96,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20143);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Heroes They Made]^000000");
-	callfunc("DM_PartyMes", "^3355FFLab Infiltration - disable 20 Hunter Fly security drones in the upper lab.^000000");
-	callfunc("DM_PartyMes", "^3355FFLower Level Sweep - clear 20 Aliot units from the lower lab.^000000");
+	callfunc("DM_PartyMes", "^3355FFLab Infiltration - lifted out of the upper lab: " + callfunc("DM_HuntBrief", 20142) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFLower Level Sweep - pulled out of the lower lab: " + callfunc("DM_HuntBrief", 20143) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20142) == 1 && questprogress(20142, HUNTING) == 2) {
+	if (questprogress(20142) == 1 && callfunc("DM_HuntReady", 20142)) {
+		callfunc("DM_HuntCollect", 20142);
 		callfunc("DM_InstanceQuestComplete", 20142);
 		callfunc("DM_PartyExp", 280000, 135000);
 		callfunc("DM_GivePartyZeny", 24000);
@@ -127,7 +128,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20143) == 1 && questprogress(20143, HUNTING) == 2) {
+	if (questprogress(20143) == 1 && callfunc("DM_HuntReady", 20143)) {
+		callfunc("DM_HuntCollect", 20143);
 		callfunc("DM_InstanceQuestComplete", 20143);
 		callfunc("DM_PartyExp", 300000, 145000);
 		callfunc("DM_GivePartyZeny", 25000);
@@ -211,6 +213,7 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Lower Level Sweep is still open. Aliot units in the lower lab.");
 	else
 		callfunc("DM_PartyMes", "The path is clear. Director Reise is the next problem.");
+	callfunc("DM_HuntStanding", 20142, 20143);
 	close();
 }
 

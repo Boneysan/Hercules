@@ -13,9 +13,9 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20019 The City Above the Beast   (arc tracker)
-//=   20020 Tower Apprentice Drills    (Poison Spore x20)
-//=   20021 Orc Village Bounty         (Orc Warrior x20)
-//=   20022 Argiope Silk Run           (Argiope x20)
+//=   20020 Tower Apprentice Drills (Poison Spore x13, Sticky Mucus x9, Solid Shell x9)
+//=   20021 Orc Village Bounty (Orcish Voucher x13, Cyfar x8, Milk x8)
+//=   20022 Argiope Silk Run (Bug Leg x9, Cobweb x13, Maneater Blossom x13)
 //=   20023 The Vault That Prays       (Baphomet)
 //=   20024 The Pilgrim's Offer        (story)
 //===========================================================
@@ -94,14 +94,15 @@ S_StartArc:
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 401);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The City Above the Beast]^000000");
-	callfunc("DM_PartyMes", "^3355FFTower Apprentice Drills - clear 20 Poison Spores from Geffen's training route.^000000");
-	callfunc("DM_PartyMes", "^3355FFOrc Village Bounty - break 20 Orc Warriors at the village edge.^000000");
-	callfunc("DM_PartyMes", "^3355FFArgiope Silk Run - gather black silk evidence from 20 Argiope.^000000");
+	callfunc("DM_PartyMes", "^3355FFTower Apprentice Drills - off Geffen's training route: " + callfunc("DM_HuntBrief", 20020) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFOrc Village Bounty - taken at the village edge: " + callfunc("DM_HuntBrief", 20021) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFArgiope Silk Run - cut from the Mjolnir spider woods: " + callfunc("DM_HuntBrief", 20022) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20020) == 1 && questprogress(20020, HUNTING) == 2) {
+	if (questprogress(20020) == 1 && callfunc("DM_HuntReady", 20020)) {
+		callfunc("DM_HuntCollect", 20020);
 		callfunc("DM_InstanceQuestComplete", 20020);
 		callfunc("DM_PartyExp", 38000, 17000);
 		callfunc("DM_GivePartyZeny", 5500);
@@ -131,7 +132,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20021) == 1 && questprogress(20021, HUNTING) == 2) {
+	if (questprogress(20021) == 1 && callfunc("DM_HuntReady", 20021)) {
+		callfunc("DM_HuntCollect", 20021);
 		callfunc("DM_InstanceQuestComplete", 20021);
 		callfunc("DM_PartyExp", 52000, 23000);
 		callfunc("DM_GivePartyZeny", 6500);
@@ -161,7 +163,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20022) == 1 && questprogress(20022, HUNTING) == 2) {
+	if (questprogress(20022) == 1 && callfunc("DM_HuntReady", 20022)) {
+		callfunc("DM_HuntCollect", 20022);
 		callfunc("DM_InstanceQuestComplete", 20022);
 		callfunc("DM_PartyExp", 62000, 28000);
 		callfunc("DM_GivePartyZeny", 8000);
@@ -215,6 +218,7 @@ S_TurnIns:
 
 	callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
 	callfunc("DM_PartyMes", "Bring back the chalk sigil, orc banner, and black silk. Geffen's problem is hiding in its chores.");
+	callfunc("DM_HuntStanding", 20020, 20021, 20022);
 	close();
 }
 

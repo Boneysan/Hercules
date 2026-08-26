@@ -21,6 +21,17 @@ if [ ! -x ./map-server ]; then
     exit 1
 fi
 
+# Data checks first - they are fast, and they catch the class of defect a
+# clean script load cannot see: a contract pointed at a monster that spawns
+# nowhere, an item that does not exist, or generated files that have drifted
+# from db/dm_hunt_db.json.
+echo "Checking hunting-contract data ..."
+if ! ./tools/gen-hunts.py --check; then
+    echo
+    echo "FAIL - hunting contract data is stale or invalid."
+    exit 1
+fi
+
 LOG="$(mktemp)"
 trap 'rm -f "$LOG"' EXIT
 

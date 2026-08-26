@@ -10,9 +10,9 @@
 //= Quests (db/quest_db.conf):
 //=   20111 The Unit That Wouldn't Stay Dead  (arc tracker / RSX)
 //=   20112 Whose Side the Smoke Is On        (strike resolution)
-//=   20113 Factory Whistle Shift             (Roween x20)
-//=   20114 Metaling Scrap Drive              (Metaling x20)
-//=   20115 Mine Dust Medicine                (Zipper Bear x15)
+//=   20113 Factory Whistle Shift (Old Pick x6, Mould Powder x6, Single Cell x6)
+//=   20114 Metaling Scrap Drive (Flexible Tube x10, Jubilee x6, Mole Claw x6)
+//=   20115 Mine Dust Medicine (Gun Powder x3, Crystal Fragment x4, Dark Crystal Fragment x4)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
 //=   dm_arc07_started, dm_arc07_strike_supported,
@@ -85,14 +85,15 @@ S_Introduction:
 	callfunc("DM_InstanceQuestStart", 20115);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Unit That Wouldn't Stay Dead]^000000");
-	callfunc("DM_PartyMes", "^3355FFFactory Whistle Shift - clear 20 Roween from the Einbroch fields.^000000");
-	callfunc("DM_PartyMes", "^3355FFMetaling Scrap Drive - recover material from 20 Metaling.^000000");
-	callfunc("DM_PartyMes", "^3355FFMine Dust Medicine - gather pelts from 15 Zipper Bear in the first mine.^000000");
+	callfunc("DM_PartyMes", "^3355FFFactory Whistle Shift - carried out of the first Einbroch mine: " + callfunc("DM_HuntBrief", 20113) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFMetaling Scrap Drive - scrap off the Einbroch fields: " + callfunc("DM_HuntBrief", 20114) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFMine Dust Medicine - cut out of the Einbroch mine seams: " + callfunc("DM_HuntBrief", 20115) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20113) == 1 && questprogress(20113, HUNTING) == 2) {
+	if (questprogress(20113) == 1 && callfunc("DM_HuntReady", 20113)) {
+		callfunc("DM_HuntCollect", 20113);
 		callfunc("DM_InstanceQuestComplete", 20113);
 		callfunc("DM_PartyExp", 200000, 95000);
 		callfunc("DM_GivePartyZeny", 16000);
@@ -118,7 +119,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20114) == 1 && questprogress(20114, HUNTING) == 2) {
+	if (questprogress(20114) == 1 && callfunc("DM_HuntReady", 20114)) {
+		callfunc("DM_HuntCollect", 20114);
 		callfunc("DM_InstanceQuestComplete", 20114);
 		callfunc("DM_PartyExp", 200000, 95000);
 		callfunc("DM_GivePartyZeny", 16000);
@@ -144,7 +146,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20115) == 1 && questprogress(20115, HUNTING) == 2) {
+	if (questprogress(20115) == 1 && callfunc("DM_HuntReady", 20115)) {
+		callfunc("DM_HuntCollect", 20115);
 		callfunc("DM_InstanceQuestComplete", 20115);
 		callfunc("DM_PartyExp", 150000, 70000);
 		callfunc("DM_GivePartyZeny", 12000);
@@ -215,6 +218,7 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Mine Dust Medicine is still open. Zipper Bears on the first mine level.");
 	else
 		callfunc("DM_PartyMes", "Finish the field contracts. Then we talk about what matters.");
+	callfunc("DM_HuntStanding", 20113, 20114, 20115);
 	close();
 }
 

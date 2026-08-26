@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20151 When Heaven Turns          (arc tracker / Randgris)
-//=   20153 Gryphon Vigil              (Gryphon x20)
-//=   20154 Dragon Pack Dispersal      (Ferus x20)
+//=   20153 Gryphon Vigil (Talon of Griffon x8, Cyfar x3, Maneater Root x7)
+//=   20154 Dragon Pack Dispersal (Dragon Scale x7, Dragon Canine x5, Dragon Skin x5)
 //=   20155 The Zealot's Testimony     (Zealot Bjorn)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -91,13 +91,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20154);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: When Heaven Turns]^000000");
-	callfunc("DM_PartyMes", "^3355FFGryphon Vigil - clear 20 Gryphon from the temple approach.^000000");
-	callfunc("DM_PartyMes", "^3355FFDragon Pack Dispersal - drive back 20 Ferus from the lower approach.^000000");
+	callfunc("DM_PartyMes", "^3355FFGryphon Vigil - off the temple approach: " + callfunc("DM_HuntBrief", 20153) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFDragon Pack Dispersal - off the pack on the lower approach: " + callfunc("DM_HuntBrief", 20154) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20153) == 1 && questprogress(20153, HUNTING) == 2) {
+	if (questprogress(20153) == 1 && callfunc("DM_HuntReady", 20153)) {
+		callfunc("DM_HuntCollect", 20153);
 		callfunc("DM_InstanceQuestComplete", 20153);
 		callfunc("DM_PartyExp", 300000, 145000);
 		callfunc("DM_GivePartyZeny", 25000);
@@ -122,7 +123,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20154) == 1 && questprogress(20154, HUNTING) == 2) {
+	if (questprogress(20154) == 1 && callfunc("DM_HuntReady", 20154)) {
+		callfunc("DM_HuntCollect", 20154);
 		callfunc("DM_InstanceQuestComplete", 20154);
 		callfunc("DM_PartyExp", 300000, 145000);
 		callfunc("DM_GivePartyZeny", 25000);
@@ -199,6 +201,7 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Dragon Pack Dispersal is still open. Ferus in the lower slopes.");
 	else
 		callfunc("DM_PartyMes", "The approaches are clear. Find Bjorn at the temple gate.");
+	callfunc("DM_HuntStanding", 20153, 20154);
 	close();
 }
 

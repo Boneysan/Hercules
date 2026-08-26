@@ -1,0 +1,237 @@
+{
+  "_comment": [
+    "Seal Cascade hunting-contract master data. NOT loaded by the server.",
+    "",
+    "This is the single source of truth for the campaign's hunting layer. It is",
+    "the build input for tools/gen-hunts.py, which emits three artifacts:",
+    "  1. the Drops: blocks in db/quest_db.conf",
+    "  2. npc/custom/dm_campaign/shared/dm_hunts.txt (the script-side table)",
+    "  3. korangar/src/world/library/campaign_quests.tsv (the client quest log)",
+    "Run 'tools/gen-hunts.py --check' to verify the three are in sync.",
+    "",
+    "'budget' is the intended number of monster kills for the whole contract.",
+    "The generator derives each Drops: Rate from budget and count; do not hand-",
+    "edit rates. Quest drops are a bonus ON TOP of the monster's natural drop",
+    "(src/map/quest.c:335) and roll per party member in range (src/map/mob.c:3046).",
+    "",
+    "Items are ordinary tradeable RO drops on purpose: a contract can be filled",
+    "by hunting, by buying, or by a party pooling what it already has."
+  ],
+  "quests": [
+    { "id": 20002, "arc": 1, "name": "Contract: Cellar Vermin", "zone": "prt_sewb1-3", "budget": 18,
+      "items": [ { "mob": 1175, "item": "Rat_Tail" },
+                 { "mob": 1161, "item": "Single_Cell" },
+                 { "mob": 1051, "item": "Worm_Peelings" } ] },
+
+    { "id": 20003, "arc": 1, "name": "Field Contract: Rockers and Rumors", "zone": "prt_fild07", "budget": 26,
+      "items": [ { "mob": 1052, "item": "Grasshoppers_Leg" },
+                 { "mob": 1167, "item": "Animals_Skin" },
+                 { "mob": 1088, "item": "Grasshopper_Doll" } ] },
+
+    { "id": 20008, "arc": 2, "name": "Mushroom Ring Patrol", "zone": "pay_fild02/06", "budget": 35,
+      "items": [ { "mob": 1014, "item": "Mushroom_Spore" },
+                 { "mob": 1024, "item": "Pointed_Scale" },
+                 { "mob": 1080, "item": "Green_Herb" } ] },
+
+    { "id": 20009, "arc": 2, "name": "Bone Tag Turn-In", "zone": "pay_dun00", "budget": 26,
+      "items": [ { "mob": 1076, "item": "Skel_Bone", "weight": 2.0 },
+                 { "mob": 1015, "item": "Decayed_Nail" },
+                 { "mob": 1031, "item": "Sticky_Mucus" } ] },
+
+    { "id": 20014, "arc": 3, "name": "Caravan Water Debt", "zone": "moc_fild01/02", "budget": 35,
+      "items": [ { "mob": 1055, "item": "Cactus_Needle" },
+                 { "mob": 1019, "item": "Bill_Of_Birds" },
+                 { "mob": 1047, "item": "Empty_Bottle" } ] },
+
+    { "id": 20015, "arc": 3, "name": "Ant Hell Survey", "zone": "anthell01", "budget": 26,
+      "items": [ { "mob": 1097, "item": "Shell" },
+                 { "mob": 1095, "item": "Worm_Peelings" },
+                 { "mob": 1121, "item": "Elder_Pixies_Beard" } ] },
+
+    { "id": 20016, "arc": 3, "name": "Sphinx Night Watch", "zone": "in_sphinx1/2", "budget": 35,
+      "items": [ { "mob": 1178, "item": "Iron_Ore" },
+                 { "mob": 1111, "item": "Wing_Of_Red_Bat" },
+                 { "mob": 1146, "item": "Animals_Skin" } ] },
+
+    { "id": 20020, "arc": 4, "name": "Tower Apprentice Drills", "zone": "gef_dun00", "budget": 35,
+      "items": [ { "mob": 1077, "item": "Poison_Spore" },
+                 { "mob": 1031, "item": "Sticky_Mucus" },
+                 { "mob": 1035, "item": "Solid_Shell" } ] },
+
+    { "id": 20021, "arc": 4, "name": "Orc Village Bounty", "zone": "gef_fild03/10", "budget": 35,
+      "items": [ { "mob": 1023, "item": "Orcish_Voucher" },
+                 { "mob": 1273, "item": "Cyfar" },
+                 { "mob": 1686, "item": "Milk" } ] },
+
+    { "id": 20022, "arc": 4, "name": "Argiope Silk Run", "zone": "mjolnir_11", "budget": 35,
+      "items": [ { "mob": 1099, "item": "Short_Leg" },
+                 { "mob": 1100, "item": "Spiderweb" },
+                 { "mob": 1118, "item": "Blossom_Of_Maneater" } ] },
+
+    { "id": 20027, "arc": 5, "name": "Byalan Tide Contract", "zone": "iz_dun03", "budget": 44,
+      "items": [ { "mob": 1045, "item": "Gill" },
+                 { "mob": 1069, "item": "Sharp_Scale" },
+                 { "mob": 1068, "item": "Tentacle" } ] },
+
+    { "id": 20028, "arc": 5, "name": "Sunken Ship Manifest", "zone": "treasure01/02", "budget": 35,
+      "items": [ { "mob": 1071, "item": "Skel_Bone" },
+                 { "mob": 1070, "item": "Worm_Peelings" },
+                 { "mob": 1179, "item": "Transparent_Cloth" } ] },
+
+    { "id": 20103, "arc": 6, "name": "Harpy Weather Log", "zone": "yuno_fild03/04", "budget": 35,
+      "items": [ { "mob": 1376, "item": "Harpys_Feather", "weight": 2.0 },
+                 { "mob": 1372, "item": "Goats_Horn" },
+                 { "mob": 1368, "item": "Blossom_Of_Maneater" } ] },
+
+    { "id": 20104, "arc": 6, "name": "Juperos Parts Requisition", "zone": "juperos_01/jupe_core", "budget": 35,
+      "items": [ { "mob": 1676, "item": "Screw" },
+                 { "mob": 1670, "item": "Old_Steel_Plate" },
+                 { "mob": 1685, "item": "Broken_Steel_Piece" } ] },
+
+    { "id": 20105, "arc": 6, "name": "Norgroad Heat Index", "zone": "yuno_fild03", "budget": 35,
+      "retarget": "1030 Anacondaq (ra_fild, Rachel) -> yuno_fild Sleeper/Goat/Harpy: Arc 6 is Yuno",
+      "items": [ { "mob": 1386, "item": "Sand_Lump" },
+                 { "mob": 1386, "item": "Great_Nature" },
+                 { "mob": 1372, "item": "Empty_Bottle" } ] },
+
+    { "id": 20113, "arc": 7, "name": "Factory Whistle Shift", "zone": "ein_dun01", "budget": 35,
+      "retarget": "1782 Roween (ra_fild, Rachel) -> ein_dun01 Pitman/Noxious/Porcellio: Arc 7 is Einbroch",
+      "items": [ { "mob": 1616, "item": "Old_Pick" },
+                 { "mob": 1620, "item": "Mould_Powder" },
+                 { "mob": 1619, "item": "Single_Cell" } ] },
+
+    { "id": 20114, "arc": 7, "name": "Metaling Scrap Drive", "zone": "ein_fild06/07", "budget": 35,
+      "items": [ { "mob": 1613, "item": "Tube", "weight": 2.0 },
+                 { "mob": 1619, "item": "Jubilee" },
+                 { "mob": 1628, "item": "Nail_Of_Mole" } ] },
+
+    { "id": 20115, "arc": 7, "name": "Mine Dust Medicine", "zone": "ein_dun01/02", "budget": 26,
+      "retarget": "1417 Zipper Bear (gon_dun01, Kunlun) -> ein_dun Pitman/Mineral/Obsidian: Arc 7 is Einbroch",
+      "items": [ { "mob": 1616, "item": "Gun_Powder" },
+                 { "mob": 1614, "item": "Fragment_Of_Crystal" },
+                 { "mob": 1615, "item": "Dark_Crystal_Fragment" } ] },
+
+    { "id": 20122, "arc": 8, "name": "Outer Garrison", "zone": "gl_knt01/02", "budget": 35,
+      "items": [ { "mob": 1163, "item": "Brigan" },
+                 { "mob": 1195, "item": "Worn_Out_Page" },
+                 { "mob": 1219, "item": "Reins" } ] },
+
+    { "id": 20123, "arc": 8, "name": "Fallen Choir", "zone": "gl_chyard/gl_church", "budget": 35,
+      "items": [ { "mob": 1192, "item": "Transparent_Cloth" },
+                 { "mob": 1263, "item": "Zargon" },
+                 { "mob": 1198, "item": "Skull" } ] },
+
+    { "id": 20132, "arc": 9, "name": "Ice Core Samples", "zone": "ice_dun02/03", "budget": 26,
+      "items": [ { "mob": 1777, "item": "Ice_Heart", "weight": 2.0 },
+                 { "mob": 1776, "item": "Ice_Piece" },
+                 { "mob": 1778, "item": "Cold_Ice" } ] },
+
+    { "id": 20133, "arc": 9, "name": "Hollow Blessings", "zone": "ice_dun02", "budget": 35,
+      "items": [ { "mob": 1778, "item": "Ice_Fragment" },
+                 { "mob": 1775, "item": "Crystal_Blue" },
+                 { "mob": 1789, "item": "Ice_Crystal" } ] },
+
+    { "id": 20142, "arc": 10, "name": "Lab Infiltration", "zone": "lhz_dun01/02", "budget": 35,
+      "retarget": "1035 Hunter Fly (gef_dun, Geffen) -> lhz_dun Whikebain/Kavac/Removal: Arc 10 is Lighthalzen",
+      "items": [ { "mob": 1653, "item": "Armlet_Of_Prisoner" },
+                 { "mob": 1656, "item": "Lab_Staff_Record", "weight": 2.0 },
+                 { "mob": 1682, "item": "Old_Steel_Plate" } ] },
+
+    { "id": 20143, "arc": 10, "name": "Lower Level Sweep", "zone": "kh_dun01/02", "budget": 35,
+      "items": [ { "mob": 1736, "item": "Sturdy_Iron_Piece" },
+                 { "mob": 1735, "item": "Burnt_Parts" },
+                 { "mob": 1275, "item": "Alices_Apron" } ] },
+
+    { "id": 20153, "arc": 11, "name": "Gryphon Vigil", "zone": "hu_fild02", "budget": 35,
+      "items": [ { "mob": 1259, "item": "Talon_Of_Griffin", "weight": 2.0 },
+                 { "mob": 1715, "item": "Cyfar" },
+                 { "mob": 1368, "item": "Root_Of_Maneater" } ] },
+
+    { "id": 20154, "arc": 11, "name": "Dragon Pack Dispersal", "zone": "abyss_01/02/03", "budget": 35,
+      "items": [ { "mob": 1714, "item": "Dragon_Scale", "weight": 2.0 },
+                 { "mob": 1713, "item": "Dragon_Canine" },
+                 { "mob": 1720, "item": "Dragons_Skin" } ] },
+
+    { "id": 20163, "arc": 12, "name": "New World Cornus Survey", "zone": "spl_fild01/bif_fild01", "budget": 35,
+      "items": [ { "mob": 1992, "item": "Mystic_Horn", "weight": 2.0 },
+                 { "mob": 1994, "item": "Solid_Shell" },
+                 { "mob": 2015, "item": "Sharp_Leaf" } ] },
+
+    { "id": 20164, "arc": 12, "name": "Naga Border Patrol", "zone": "spl_fild01/03", "budget": 35,
+      "items": [ { "mob": 1993, "item": "Shining_Scales", "weight": 2.0 },
+                 { "mob": 1991, "item": "Stiff_Horn" },
+                 { "mob": 2015, "item": "Browny_Root" } ] },
+
+    { "id": 20173, "arc": 13, "name": "Abbey Bell Silencing", "zone": "abbey01", "budget": 35,
+      "retarget": "1868 G_BANSHEE (no spawns, no drops, Exp 0) -> 1867 Banshee: the real one",
+      "items": [ { "mob": 1867, "item": "Old_White_Cloth" },
+                 { "mob": 1869, "item": "Skull" },
+                 { "mob": 1866, "item": "Monsters_Feed" } ] },
+
+    { "id": 20174, "arc": 13, "name": "Sanctum Sweep", "zone": "abbey01/02", "budget": 35,
+      "items": [ { "mob": 1864, "item": "Clattering_Skull", "weight": 2.0 },
+                 { "mob": 1865, "item": "Skel_Bone" },
+                 { "mob": 1870, "item": "Rent_Spell_Book" } ] },
+
+    { "id": 20183, "arc": 14, "name": "Volcanic Salamander Hunt", "zone": "thor_v01/02", "budget": 35,
+      "items": [ { "mob": 1831, "item": "Burning_Heart", "weight": 2.0 },
+                 { "mob": 1833, "item": "Hot_Hair" },
+                 { "mob": 1837, "item": "Live_Coal" } ] },
+
+    { "id": 20184, "arc": 14, "name": "Lava Golem Firebreak", "zone": "ve_fild03/07", "budget": 35,
+      "retarget": "1366 Lava Golem (mag_dun01, off yuno_fild) -> ve_fild Muscipular/Drosera/Stapo: Arc 14 is Veins. Deliberately NOT the volcano's fire drops - Arc 14's other contract (20183) is open at the same time and owns those.",
+      "items": [ { "mob": 1780, "item": "Sticky_Poison", "weight": 2.0 },
+                 { "mob": 1781, "item": "Blossom_Of_Maneater" },
+                 { "mob": 1784, "item": "Jubilee" } ] },
+
+    { "id": 20192, "arc": 15, "name": "What the Tower Remembers", "zone": "tha_t07/08", "budget": 26,
+      "retarget": "1510 Hylozoist (nif_fild, Niflheim) -> tha_t Deathword/Observation/Shelter: Arc 15 is Thanatos Tower",
+      "items": [ { "mob": 1698, "item": "Worn_Out_Page", "weight": 2.0 },
+                 { "mob": 1700, "item": "Golden_Jewel" },
+                 { "mob": 1701, "item": "Scarlet_Jewel" } ] },
+
+    { "id": 20193, "arc": 15, "name": "Aldebaran Last Letters", "zone": "tha_t08/09/11", "budget": 26,
+      "retarget": "1509 Lude (nif_fild, Niflheim) -> tha_t Retribution/Solace: Arc 15 is Thanatos Tower",
+      "items": [ { "mob": 1702, "item": "Cardinal_Jewel" },
+                 { "mob": 1703, "item": "Dark_Red_Jewel" },
+                 { "mob": 1701, "item": "Red_Feather" } ] },
+
+    { "id": 20202, "arc": 16, "name": "Underground Prison Cleanup", "zone": "gl_prison1", "budget": 35,
+      "retarget": "1506 Disguise (nif_fild01, Niflheim) -> gl_prison Zombie Prisoner/Injustice/Rybio: Arc 16's prison",
+      "items": [ { "mob": 1197, "item": "Worn_Out_Prison_Uniform", "weight": 2.0 },
+                 { "mob": 1196, "item": "Manacles" },
+                 { "mob": 1257, "item": "Cyfar" } ] },
+
+    { "id": 20203, "arc": 16, "name": "Terra Gloria", "zone": "prt_maze02/prt_fild08", "budget": 35,
+      "retarget": "1507 Bloody Murderer (nif_fild02, Niflheim) -> Prontera-side mobs: Arc 16 is Prontera",
+      "items": [ { "mob": 1060, "item": "Bears_Foot" },
+                 { "mob": 1031, "item": "Garlet" },
+                 { "mob": 1063, "item": "Clover" } ] },
+
+    { "id": 20212, "arc": 17, "name": "Sages Legacy", "zone": "kh_dun01/kh_kiehl01", "budget": 35,
+      "items": [ { "mob": 1737, "item": "Brigan" },
+                 { "mob": 1738, "item": "Sturdy_Iron_Piece" },
+                 { "mob": 1735, "item": "Smoke_Powder" } ] },
+
+    { "id": 20213, "arc": 17, "name": "Tartaros Dive", "zone": "lhz_dun04", "budget": 26,
+      "items": [ { "mob": 2223, "item": "Armlet_Of_Prisoner" },
+                 { "mob": 2224, "item": "Lab_Staff_Record" },
+                 { "mob": 2221, "item": "Blood_Thirst" } ] },
+
+    { "id": 20222, "arc": 18, "name": "The Dead You Failed", "zone": "nif_fild01/02", "budget": 26,
+      "items": [ { "mob": 1504, "item": "Dullahan_Armor", "weight": 2.0 },
+                 { "mob": 1508, "item": "Ectoplasm" },
+                 { "mob": 1505, "item": "Bat_Cage" } ] },
+
+    { "id": 20223, "arc": 18, "name": "Banquet Hall Procession", "zone": "nif_fild01/02", "budget": 26,
+      "items": [ { "mob": 1503, "item": "Rotten_Rope", "weight": 2.0 },
+                 { "mob": 1510, "item": "Spool" },
+                 { "mob": 1506, "item": "Red_Scarf" } ] },
+
+    { "id": 20232, "arc": 19, "name": "Beyond the Veil", "zone": "moc_pryd04/moc_fild16", "budget": 26,
+      "retarget": "1132 Khalitzburg (gl_knt, Glast Heim) -> Morroc pyramid/desert mobs: Arc 19 is the Morroc ruins",
+      "items": [ { "mob": 1041, "item": "Rotten_Bandage" },
+                 { "mob": 1029, "item": "Scales_Shell" },
+                 { "mob": 1165, "item": "Grit" } ] }
+  ]
+}

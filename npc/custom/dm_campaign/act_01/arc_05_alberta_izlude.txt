@@ -15,8 +15,8 @@
 //= Quests (db/quest_db.conf):
 //=   20025 Tides and Trade             (arc tracker)
 //=   20026 Refugee Ferry Rotation      (story support)
-//=   20027 Byalan Tide Contract        (Marc x25)
-//=   20028 Sunken Ship Manifest        (Pirate Skeleton x20)
+//=   20027 Byalan Tide Contract (Gill x16, Sharp Scale x16, Tentacle x11)
+//=   20028 Sunken Ship Manifest (Skel-Bone x6, Worm Peeling x9, Fabric x9)
 //=   20029 Cargo of Souls              (side reveal)
 //=   20030 What Turned Over in the Deep (Tao Gunka)
 //===========================================================
@@ -100,8 +100,8 @@ S_StartArc:
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Tides and Trade]^000000");
 	callfunc("DM_PartyMes", "^3355FFRefugee Ferry Rotation - return to Mara after choosing who the Saltmother carries first.^000000");
-	callfunc("DM_PartyMes", "^3355FFByalan Tide Contract - clear 25 Marc from the tide route.^000000");
-	callfunc("DM_PartyMes", "^3355FFSunken Ship Manifest - break 20 Pirate Skeletons and recover manifest pages.^000000");
+	callfunc("DM_PartyMes", "^3355FFByalan Tide Contract - hauled up off the tide route: " + callfunc("DM_HuntBrief", 20027) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFSunken Ship Manifest - salvaged from the sunken ship: " + callfunc("DM_HuntBrief", 20028) + ".^000000");
 	close();
 
 S_TurnIns:
@@ -140,7 +140,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20027) == 1 && questprogress(20027, HUNTING) == 2) {
+	if (questprogress(20027) == 1 && callfunc("DM_HuntReady", 20027)) {
+		callfunc("DM_HuntCollect", 20027);
 		callfunc("DM_InstanceQuestComplete", 20027);
 		callfunc("DM_PartyExp", 70000, 32000);
 		callfunc("DM_GivePartyZeny", 8500);
@@ -172,7 +173,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20028) == 1 && questprogress(20028, HUNTING) == 2) {
+	if (questprogress(20028) == 1 && callfunc("DM_HuntReady", 20028)) {
+		callfunc("DM_HuntCollect", 20028);
 		callfunc("DM_InstanceQuestComplete", 20028);
 		callfunc("DM_PartyExp", 76000, 35000);
 		callfunc("DM_GivePartyZeny", 9000);
@@ -242,6 +244,7 @@ S_TurnIns:
 
 	callfunc("DM_PartyMes", "[Captain Mara]");
 	callfunc("DM_PartyMes", "Ferry the living, clear Byalan, and pull pages from the Sunken Ship. Brode's route is written in all three.");
+	callfunc("DM_HuntStanding", 20027, 20028);
 	close();
 }
 
