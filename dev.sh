@@ -1,14 +1,20 @@
 #!/bin/sh
 # dev.sh — build/run helper for this fork's Hercules tree.
 #
-# Exists to kill two traps that have each cost a session:
+# Exists to kill three traps that have each cost a session:
 #   1. `make map` is NOT a target here (only `map_sql`), and it fails with
 #      "No rule to make target" — a message containing no "error", so it slips
 #      through a grepped build log and you test a stale binary. `build` checks
-#      the binary's mtime, not the build log.
+#      each binary's mtime, not the build log.
 #   2. Server stdout used to be appended to one log, so `head`/early `tail`
 #      showed stale shutdown errors from previous runs. `start` opens a fresh
 #      timestamped log every time.
+#   3. `build` used to run `make map_sql` ALONE, because this fork's deltas
+#      mostly live in src/map. That silently left login/char/api stale and
+#      still printed OK. Found 2026-09-02: the 2026-08-18 security remediations
+#      touched src/login, src/char and src/api, and the running servers had
+#      never contained them — the binaries predated the fix by eleven minutes
+#      and nothing said so. `build` now makes all four and checks all four.
 #
 # Usage: ./dev.sh { build | start | wait | stop | restart | log }
 
@@ -17,6 +23,8 @@ set -e
 cd "$(dirname "$0")"
 
 M_SRV=map-server
+# server:source-dir. src/common is checked for all four on top of these.
+SERVERS="login-server:login char-server:char map-server:map api-server:api"
 LOG_DIR=log
 LATEST=$LOG_DIR/server-latest.log
 # The map-server prints this only after all maps are loaded — the real
@@ -41,28 +49,52 @@ mtime() {
 
 case $1 in
 'build')
-	before=$(mtime $M_SRV)
-	# `map_sql`, never `map` — see the header.
-	make map_sql || {
-		echo "!! make map_sql FAILED (exit $?)" >&2
+	# ALL FOUR, not just the map-server — see trap 3 in the header. `sql` is
+	# the target that covers login_sql/char_sql/map_sql/api_sql; the bare
+	# per-server names without `_sql` do not exist.
+	for pair in $SERVERS; do
+		srv=${pair%%:*}
+		eval "before_$(echo "$srv" | tr - _)=$(mtime "$srv")"
+	done
+
+	make sql || {
+		echo "!! make sql FAILED (exit $?)" >&2
 		exit 1
 	}
-	after=$(mtime $M_SRV)
-	# An unchanged mtime is only a problem if a source file is newer than the
-	# binary — otherwise there was genuinely nothing to do, and crying wolf
-	# every no-op build would train us to ignore this check.
-	stale=$(find src -name '*.[ch]' -newer $M_SRV 2>/dev/null | head -1)
-	if [ "$before" = "$after" ] && [ -n "$stale" ]; then
-		echo "" >&2
-		echo "!! BUILD PRODUCED NOTHING — $M_SRV was not relinked," >&2
-		echo "!! yet $stale is newer than it. The binary is STALE." >&2
-		echo "!! Do not conclude a source change 'does not work'." >&2
-		exit 1
-	fi
-	if [ "$before" = "$after" ]; then
-		echo "OK: nothing to rebuild; $M_SRV is up to date."
+
+	rebuilt=0
+	failed=0
+	for pair in $SERVERS; do
+		srv=${pair%%:*}
+		dir=${pair##*:}
+		var=$(echo "$srv" | tr - _)
+		eval "before=\$before_$var"
+		after=$(mtime "$srv")
+
+		# An unchanged mtime is only a problem if a source file that server
+		# actually compiles is newer than the binary — otherwise there was
+		# genuinely nothing to do, and crying wolf on every no-op build would
+		# train us to ignore this check. src/common counts for all four.
+		stale=$(find "src/$dir" src/common -name '*.[ch]' -newer "$srv" 2>/dev/null | head -1)
+
+		if [ "$before" = "$after" ] && [ -n "$stale" ]; then
+			echo "" >&2
+			echo "!! BUILD PRODUCED NOTHING — $srv was not relinked," >&2
+			echo "!! yet $stale is newer than it. The binary is STALE." >&2
+			echo "!! Do not conclude a source change 'does not work'." >&2
+			failed=1
+		elif [ "$before" != "$after" ]; then
+			echo "OK: $srv relinked"
+			rebuilt=$((rebuilt + 1))
+		fi
+	done
+
+	[ "$failed" -eq 0 ] || exit 1
+
+	if [ "$rebuilt" -eq 0 ]; then
+		echo "OK: nothing to rebuild; all four servers are up to date."
 	else
-		echo "OK: $M_SRV relinked -> $(ls -la $M_SRV)"
+		echo "OK: $rebuilt of 4 servers relinked."
 	fi
 	;;
 
@@ -219,7 +251,7 @@ case $1 in
 *)
 	echo "Usage: ./dev.sh { build | start | wait | stop | restart | snapshot | restore | log [n] }"
 	echo ""
-	echo "  build    make map_sql, then FAIL LOUDLY if map-server was not relinked"
+	echo "  build    make sql (all four servers), FAIL LOUDLY on any stale binary"
 	echo "  start    fresh timestamped log (never appended), returns immediately"
 	echo "  wait     block until the map-server is actually ready"
 	echo "  snapshot save the whole DB (character state) to log/db-snapshot.sql"
