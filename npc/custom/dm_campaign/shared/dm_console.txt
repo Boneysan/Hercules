@@ -637,6 +637,25 @@ S_Reset:
 		dispbottom("[DM] Warning: clears all 19 arcs for every online party member. Cannot be undone.");
 		return;
 	}
+	// Hercules kills a script that spends more than script_config.check_gotocount
+	// (2048) gotos in one run, and every callfunc AND its return spends one. A
+	// full reset is far past that: per member, 19 arc-clears plus 136
+	// DM_ClearFlag calls, each of which now also calls DM_ValidFlagName -- and
+	// then 90 quest ids, three functions deep, once per online member.
+	//
+	// It crossed the line quietly. The reset was fine when the campaign was
+	// smaller, and the validation the security pass added to DM_ClearFlag is
+	// what tipped it: the map-server logs "run_script: infinity loop !" and
+	// abandons the script, so the flags are half cleared and the DM sees no
+	// message at all -- the command simply does nothing and says nothing.
+	//
+	// freeloop is the sanctioned escape hatch for a script that legitimately
+	// does this much work. Safe here because the work is BOUNDED by
+	// construction: 19 arcs, a fixed list of 90 quest ids, and however many
+	// members are online. There is no input that makes this loop forever.
+	// Turned back off before returning so the guard covers everything after.
+	freeloop(true);
+
 	.@party_id = getcharid(CHAR_ID_PARTY);
 	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
 	if (.@party_id > 0) {
@@ -688,6 +707,7 @@ S_Reset:
 		setd("$dm_inst_" + .@party_id, 0);
 	$dm_mode = 0;
 	$dm_active_party = 0;
+	freeloop(false);
 	dispbottom("[DM] Campaign reset complete for " + .@cleared + " member(s). All arcs cleared, mode off.");
 	return;
 
