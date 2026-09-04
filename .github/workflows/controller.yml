@@ -25,6 +25,13 @@ jobs:
   # whole workflow at startup.
   codeql:
     if: ${{ !failure() && !cancelled() }}
+    # A called workflow cannot request more than its caller grants, and
+    # codeql-analysis.yml needs `security-events: write` to upload results. The
+    # caller has to hand it down explicitly.
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     uses: ./.github/workflows/codeql-analysis.yml
   tools:
     if: ${{ !failure() && !cancelled() }}
