@@ -34,7 +34,12 @@ jobs:
         run: |
           ./tools/ci/retry.sh apt-get update
           ./tools/ci/retry.sh apt-get install -y -qq $INSTALL_PACKAGES $DEBIAN_COMMON_PACKAGES
-          pip3 install --upgrade pip sqlfluff --break-system-packages
+          # Not `--upgrade pip`: this runs in a debian:unstable container where
+          # pip was installed by dpkg, so it has no RECORD file and pip cannot
+          # uninstall it -- "Cannot uninstall pip ... no RECORD file was found".
+          # That failed the step and, through `needs:`, skipped every build job
+          # behind it. sqlfluff is the only thing this step actually needs.
+          pip3 install sqlfluff --break-system-packages
 
       - name: check sql syntax
         run: |
