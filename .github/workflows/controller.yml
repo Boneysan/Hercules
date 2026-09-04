@@ -19,16 +19,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  hwsapibot:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-    uses: ./.github/workflows/hwsapibot.yml
-    secrets: inherit
+  # `hwsapibot` is upstream's build-stats reporter. It is gated to pushes on
+  # `master`, which this fork does not have, so it could never run here -- and
+  # it was failing every run at startup regardless, because GitHub validates
+  # every `uses:` target when creating a run. Dropped rather than carried as a
+  # permanently-skipped job that can still break the workflow.
   codeql:
-    needs: hwsapibot
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/codeql-analysis.yml
   tools:
-    needs: hwsapibot
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/tools.yml
   build:
