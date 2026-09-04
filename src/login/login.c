@@ -1153,8 +1153,41 @@ static int login_mmo_auth(struct login_session_data *sd, bool isServer)
 
 	len = strnlen(sd->userid, NAME_LENGTH);
 
-	// Account creation with _M/_F
+	// Account creation with _create (fork) or _M/_F (upstream)
 	if (login->config->new_account_flag) {
+		// FORK DELTA: a sex-less creation suffix.
+		//
+		// Upstream's _M/_F does two jobs with one suffix: it signals "create
+		// this account" and it sets the account's sex. Since PACKETVER
+		// 20151001 the client picks sex per character (CH_MAKE_CHAR carries
+		// it, see char_parse_char_create_new_char), so the account's sex is
+		// vestigial -- and asking a friend to answer it just to register is a
+		// question the game no longer needs answered.
+		//
+		// _M/_F is left working: it is what every RO guide on the internet
+		// says, and the shipped packs document it.
+		//
+		// The stored sex is 'M', not 'S': 'S' marks a server account and is
+		// not a value a human login should carry. Nothing reads it for a
+		// character that sets its own.
+		static const char create_suffix[] = "_create";
+		const int create_suffix_len = (int)(sizeof(create_suffix) - 1);
+
+		if (len > create_suffix_len && sd->passwd[0] != '\0' && // valid user and password lengths
+			sd->passwdenc == PWENC_NONE && // unencoded password
+			strcasecmp(sd->userid + len - create_suffix_len, create_suffix) == 0) // _create suffix
+		{
+			int result;
+
+			// remove the _create suffix
+			len -= create_suffix_len;
+			sd->userid[len] = '\0';
+
+			result = login->mmo_auth_new(sd->userid, sd->passwd, 'M', ip);
+			if( result != -1 )
+				return result;// Failed to make account. [Skotlex].
+		}
+
 		if (len > 2 && sd->passwd[0] != '\0' && // valid user and password lengths
 			sd->passwdenc == PWENC_NONE && // unencoded password
 			sd->userid[len-2] == '_' && memchr("FfMm", sd->userid[len-1], 4)) // _M/_F suffix
