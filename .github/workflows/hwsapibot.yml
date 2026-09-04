@@ -5,11 +5,21 @@ on:
 
 env:
   INSTALL_PACKAGES: make gcc zlib1g-dev libpcre3-dev git libmariadbclient-dev-compat doxygen perl libxml-simple-perl libxml-parser-perl bc curl
-  BUILDSTATS_API_KEY: ${{ secrets.BUILDSTATS_API_KEY }}
-  GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
 
 jobs:
   hwsapi:
+    # The `secrets` context is not available in workflow-level `env` -- only
+    # inside a job or a step. Referencing it up there makes this file fail
+    # validation, and `controller.yml` reaches it through `uses:`, so GitHub
+    # validated it while creating every run and killed the whole workflow at
+    # startup: no job created, and no error beyond "this run likely failed
+    # because of a workflow file issue".
+    #
+    # That took the fork's entire CI down over a job gated to pushes on master,
+    # which never runs here at all.
+    env:
+      BUILDSTATS_API_KEY: ${{ secrets.BUILDSTATS_API_KEY }}
+      GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
     # `ubuntu-24.04`, not `ubuntu:24.04`. A runner label is not a Docker image
     # tag, and the colon form is not a label GitHub knows.
     #
