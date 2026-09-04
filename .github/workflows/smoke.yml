@@ -1,0 +1,15 @@
+# Minimal workflow, added to answer one question: does *anything* run on this
+# fork? `controller.yml` has failed at startup on every push since Actions were
+# enabled, with no job created and no error beyond "workflow file issue", and
+# every workflow here parses as valid YAML. If this runs and controller does
+# not, the fault is in controller's reusable-workflow graph rather than in the
+# repository.
+name: smoke
+
+on: [push, workflow_dispatch]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "actions work on this fork"
