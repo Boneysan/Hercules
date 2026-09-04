@@ -19,7 +19,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # BISECT: reduced to one called workflow to find which of them fails
-  # validation. Restored once the culprit is known.
+  # BISECT step 2: everything except codeql.
   tools:
     uses: ./.github/workflows/tools.yml
+  build:
+    needs: tools
+    if: ${{ !failure() && !cancelled() }}
+    uses: ./.github/workflows/build.yml
+  gccsnapshot_test:
+    needs: build
+    if: ${{ !failure() && !cancelled() }}
+    uses: ./.github/workflows/gccsnapshot_test.yml
+  mariadb:
+    needs: build
+    if: ${{ !failure() && !cancelled() }}
+    uses: ./.github/workflows/mariadb.yml
