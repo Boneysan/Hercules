@@ -10,7 +10,16 @@ env:
 
 jobs:
   hwsapi:
-    runs-on: ubuntu:24.04
+    # `ubuntu-24.04`, not `ubuntu:24.04`. A runner label is not a Docker image
+    # tag, and the colon form is not a label GitHub knows.
+    #
+    # This is load-bearing well beyond this job. `controller.yml` reaches it
+    # through `uses:`, and GitHub validates every `uses:` target when it creates
+    # the run -- including ones whose `if` will skip them, which this one always
+    # is off master. So the typo failed the entire workflow at startup, before a
+    # single job began, with only "this run likely failed because of a workflow
+    # file issue" to go on.
+    runs-on: ubuntu-24.04
     concurrency:
       group: hwsapibot
       cancel-in-progress: true

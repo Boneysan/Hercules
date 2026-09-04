@@ -1,6 +1,22 @@
 name: controller
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  # Weekly, so the fork keeps getting built even in quiet weeks -- advisories
+  # and toolchain drift land against code that has not changed.
+  #
+  # NOTE: GitHub reads `schedule` ONLY from the default branch (`stable` here).
+  # While this sits on an agent branch it will never fire, no matter how the
+  # cron is written. The same trap cost the paired korangar repo a scheduled
+  # integration run that had never once executed.
+  schedule:
+    - cron: "41 9 * * 1"
+
+# Never let a scheduled run pile up on a slow week.
+concurrency:
+  group: controller-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   hwsapibot:
