@@ -5305,7 +5305,23 @@ struct PACKET_ZC_SKILL_FAIL_REASON {
 } __attribute__((packed));
 DEFINE_PACKET_HEADER(ZC_SKILL_FAIL_REASON, 0x0efe);
 
+// Fork feature: send SP alongside HP to party members, so the party window can
+// show both. It selects packet 0x0bab, whose length is only declared in the
+// 2021+ length tables (packets2021_len_*.h, packets2022_len_zero.h).
+//
+// Gated on the packetver for that reason. It used to be defined
+// unconditionally, which forced the 0x0bab branch below at every packetver --
+// fine for this server, which configures 20220406, and a hard compile failure
+// anywhere older:
+//
+//   packetsmacro.h:28: error: 'PACKET_LEN_0x0bab' undeclared here
+//
+// That is exactly what CodeQL's autobuild hit, since it configures with the
+// tree default of 20190605 (mmo.h). Below the threshold the code now takes the
+// same `#elif PACKETVER >= 20100119` branch upstream does.
+#if PACKETVER >= 20210504 || PACKETVER_ZERO_NUM >= 20210504
 #define KORANGAR_PARTY_SP_TO_GROUPM 1
+#endif
 
 #if PACKETVER_ZERO_NUM >= 20210504 || defined(KORANGAR_PARTY_SP_TO_GROUPM)
 struct PACKET_ZC_NOTIFY_HP_TO_GROUPM {
