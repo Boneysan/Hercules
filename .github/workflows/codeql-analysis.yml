@@ -12,11 +12,17 @@ jobs:
       matrix:
         language: ['c', 'python']
 
-    # github.head_ref will stop previous runs in the same PR (if in a PR)
-    # github.run_id is a fallback when outside a PR (e.g. every merge in master will run, and previous won't stop)
-    concurrency:
-      group: codeql-${{ github.head_ref || github.run_id }}_${{ matrix.language }}
-      cancel-in-progress: true
+    # No job-level `concurrency` here. It used to group on
+    # `..._${{ matrix.language }}`, and the `matrix` context is NOT available in
+    # `jobs.<id>.concurrency` -- concurrency is resolved before the matrix
+    # expands. That made this file fail validation, and because `controller.yml`
+    # reaches it through `uses:`, GitHub validated it while creating every run
+    # and killed the entire workflow at startup: no jobs, and no error beyond
+    # "this run likely failed because of a workflow file issue".
+    #
+    # Dropping the matrix from the group is not an alternative -- the two
+    # language legs would then share a group and cancel each other. The caller
+    # carries workflow-level concurrency instead.
 
     permissions:
       security-events: write

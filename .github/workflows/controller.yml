@@ -19,8 +19,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # BISECT step 2: everything except codeql.
+  # `hwsapibot` is upstream's build-stats reporter, gated to pushes on `master`
+  # -- a branch this fork does not have -- so it could never run here. Dropped
+  # rather than carried as a permanently-skipped job that can still fail the
+  # whole workflow at startup.
+  codeql:
+    if: ${{ !failure() && !cancelled() }}
+    uses: ./.github/workflows/codeql-analysis.yml
   tools:
+    if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/tools.yml
   build:
     needs: tools
