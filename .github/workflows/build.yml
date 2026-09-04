@@ -21,7 +21,11 @@ jobs:
         CLIENT_TYPE: ["", "--enable-packetver-re", "--enable-packetver-zero"]
         HTTPLIB: ["", "--with-http_parser=llhttp"]
         SANITIZER: [""]
-        PACKET_VERSION: ["--enable-packetver=20100105", "--enable-packetver=20171018"]
+        # 20220406 added: it is what this server actually configures, and it was
+        # not covered by any job here. The other two are upstream's older
+        # baselines and stay -- they are what caught the fork define that only
+        # compiled at our own packetver.
+        PACKET_VERSION: ["--enable-packetver=20100105", "--enable-packetver=20171018", "--enable-packetver=20220406"]
         LTO: ["", "--enable-lto"]
         exclude:
           - PACKET_VERSION: "--enable-packetver=20100105"
