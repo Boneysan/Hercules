@@ -6710,6 +6710,16 @@ static void status_set_viewdata(struct block_list *bl, int class_)
 			}
 			sd->vd.class = class_;
 			clif->get_weapon_view(sd, &sd->vd.weapon, &sd->vd.shield);
+			// Korangar fork: re-derive the broadcast ammunition here, exactly as
+			// weapon and shield are re-derived above. The `else` branch below
+			// memcpy's a whole view_data over sd->vd when a player is disguised
+			// as a mob or NPC, which zeroes vd->ammo; un-disguising comes back
+			// through *this* branch, so without this line the value would stay
+			// zero forever and every observer would draw that player's arrows as
+			// the generic one. See LOOK_AMMO in map.h.
+			sd->vd.ammo = (sd->equip_index[EQI_AMMO] >= 0)
+				? sd->status.inventory[sd->equip_index[EQI_AMMO]].nameid
+				: 0;
 			sd->vd.head_top = sd->status.look.head_top;
 			sd->vd.head_mid = sd->status.look.head_mid;
 			sd->vd.head_bottom = sd->status.look.head_bottom;
@@ -10256,6 +10266,15 @@ static int status_get_val_flag(enum sc_type type)
 	PRAGMA_GCC46(GCC diagnostic push)
 	PRAGMA_GCC46(GCC diagnostic ignored "-Wswitch-enum")
 	switch (type) {
+		// Korangar fork: the three Sage elemental fields all share one status
+		// icon (SI_GROUNDMAGIC), so the client cannot tell them apart or show
+		// what they grant without their values. val1 is the skill level and
+		// val2 the computed bonus (Watk/Matk, deluge_eff[] HP%, Flee).
+		case SC_VOLCANO:
+		case SC_DELUGE:
+		case SC_VIOLENTGALE:
+			val_flag |= 1 | 2;
+			break;
 		case SC_CLAN_INFO:
 			val_flag |= 1 | 2;
 			break;

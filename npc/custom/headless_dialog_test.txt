@@ -1,0 +1,34 @@
+//===== Hercules Script ======================================
+//= Headless Dialogue Test Helper NPC
+//============================================================
+
+prontera,160,200,4	script	Dialogue Test NPC	4_F_01,{
+	mes "[Dialogue Test NPC]";
+	mes "Hello! I am a helper NPC for headless client testing.";
+	next;
+	mes "Select a test scenario:";
+	switch(select("Linear Dialogue", "Number Input", "String Input", "Dialogue Warp")) {
+		case 1:
+			mes "You chose Linear Dialogue.";
+			next;
+			mes "This is the next screen.";
+			close;
+		case 2:
+			mes "Please input a number:";
+			next;
+			input(.@num);
+			mes "You entered number: " + .@num;
+			close;
+		case 3:
+			mes "Please input a string:";
+			next;
+			input(.@str$);
+			mes "You entered string: " + .@str$;
+			close;
+		case 4:
+			mes "Warping you to payon...";
+			close2;
+			warp "payon",150,150;
+			end;
+	}
+}

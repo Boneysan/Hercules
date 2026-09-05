@@ -423,6 +423,46 @@ typedef enum useskill_fail_cause { // clif_skill_fail
 } useskill_fail_cause;
 
 /**
+ * Korangar fork addition: the runtime reason behind a `USESKILL_FAIL_LEVEL`.
+ *
+ * Hercules reports a great many outcomes as cause 0 because `useskill_fail_cause`
+ * has no code for them — Gravity never assigned one. Static preconditions are
+ * recoverable from `skill_db.conf` and need nothing here; these are the ones only
+ * the server knows as it decides, so they ride `ZC_SKILL_FAIL_REASON` (0x0efe).
+ *
+ * A separate enum on purpose. `useskill_fail_cause` is Gravity's numbering, and
+ * adding values to it would collide with a future official cause.
+ *
+ * Append only, and keep it in step with Korangar's `SkillFailReason`.
+ */
+enum skill_fail_reason {
+	SKILLFAILREASON_NONE = 0,
+	/// No valid ensemble partner in range (`unit.c`, `skill.c` for Benedictio).
+	SKILLFAILREASON_ENSEMBLE_PARTNER = 1,
+	/// Benedictio wants two flanking Acolyte-class helpers, not one partner.
+	SKILLFAILREASON_BENEDICTIO_HELPERS = 2,
+	/// The caster is not in a party.
+	SKILLFAILREASON_NO_PARTY = 3,
+	/// Redemptio's splash reached no dead party member.
+	SKILLFAILREASON_NO_ONE_IN_RANGE = 4,
+	/// Redemptio spends 1% of base and job experience, and there is not enough.
+	SKILLFAILREASON_NOT_ENOUGH_EXPERIENCE = 5,
+	/// The target resisted the roll, or is immune (Stone Curse, charms).
+	SKILLFAILREASON_TARGET_RESISTED = 6,
+	/// Steal Coin found nothing to take.
+	SKILLFAILREASON_NOTHING_TO_STEAL = 7,
+	/// `SC_KYOMU` suppressed the skill (5% per level).
+	SKILLFAILREASON_SUPPRESSED_BY_KYOMU = 8,
+	/// The target cannot be affected at all (boss, wrong race), as opposed to
+	/// having won a roll. Only worth distinguishing because this packet can.
+	SKILLFAILREASON_TARGET_IMMUNE = 9,
+	/// Hermode must be cast beside a warp portal. Only reachable while
+	/// `battle_config.hermode_requires_warp` is on, but kept unconditionally so
+	/// the numbering never depends on a config value.
+	SKILLFAILREASON_NEEDS_WARP_PORTAL = 10,
+};
+
+/**
  * Used to answer CZ_PC_BUY_CASH_POINT_ITEM (clif_parse_cashshop_buy)
  **/
 enum cashshop_error {
@@ -1091,6 +1131,7 @@ struct clif_interface {
 	int (*outsight) (struct block_list *bl,va_list ap);
 	void (*skillcastcancel) (struct block_list* bl);
 	void (*skill_fail) (struct map_session_data *sd, uint16 skill_id, enum useskill_fail_cause cause, int btype, int32 item_id);
+	void (*skill_fail_reason) (struct map_session_data *sd, uint16 skill_id, enum skill_fail_reason reason);
 	void (*skill_cooldown) (struct map_session_data *sd, uint16 skill_id, unsigned int duration);
 	void (*skill_memomessage) (struct map_session_data* sd, int type);
 	void (*skill_mapinfomessage) (struct map_session_data *sd, int type);
@@ -1583,6 +1624,8 @@ struct clif_interface {
 	void (*pTradeCancel) (int fd,struct map_session_data *sd);
 	void (*pTradeCommit) (int fd,struct map_session_data *sd);
 	void (*pStopAttack) (int fd,struct map_session_data *sd);
+	/// Korangar fork addition (0x0F00) — see clif_parse_CancelCast.
+	void (*pCancelCast) (int fd,struct map_session_data *sd);
 	void (*pPutItemToCart) (int fd,struct map_session_data *sd);
 	void (*pGetItemFromCart) (int fd,struct map_session_data *sd);
 	void (*pRemoveOption) (int fd,struct map_session_data *sd);

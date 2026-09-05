@@ -323,7 +323,7 @@ static void login_fromchar_parse_auth(int fd, int id, const char *const ip)
 	uint32 login_id1 = RFIFOL(fd,6);
 	uint32 login_id2 = RFIFOL(fd,10);
 	uint8 sex = RFIFOB(fd,14);
-	//uint32 ip_ = ntohl(RFIFOL(fd,15));
+	uint32 ip_ = ntohl(RFIFOL(fd,15));
 	int request_id = RFIFOL(fd,19);
 	RFIFOSKIP(fd,23);
 
@@ -333,8 +333,8 @@ static void login_fromchar_parse_auth(int fd, int id, const char *const ip)
 		node->account_id == account_id &&
 		node->login_id1  == login_id1 &&
 		node->login_id2  == login_id2 &&
-		node->sex        == sex_num2str(sex) /*&&
-		node->ip         == ip_*/ )
+		node->sex        == sex_num2str(sex) &&
+		node->ip         == ip_ )
 	{// found
 		//ShowStatus("Char-server '%s': authentication of the account %d accepted (ip: %s).\n", login->dbs->server[id].name, account_id, ip);
 
@@ -1153,19 +1153,46 @@ static int login_mmo_auth(struct login_session_data *sd, bool isServer)
 
 	len = strnlen(sd->userid, NAME_LENGTH);
 
-	// Account creation with _M/_F
+	// Account creation with _create (fork). Upstream's _M/_F is gone.
 	if (login->config->new_account_flag) {
-		if (len > 2 && sd->passwd[0] != '\0' && // valid user and password lengths
+		// FORK DELTA: _create replaces upstream's _M/_F outright.
+		//
+		// Upstream's _M/_F does two jobs with one suffix: it signals "create
+		// this account" and it sets the account's sex. Since PACKETVER
+		// 20151001 the client picks sex per character (CH_MAKE_CHAR carries
+		// it, see char_parse_char_create_new_char), so the account's sex is
+		// vestigial -- and asking a friend to answer it just to register is a
+		// question the game no longer needs answered.
+		//
+		// _M/_F is removed rather than kept alongside, because two creation
+		// suffixes is one more than the group needs and they interacted badly:
+		// this branch truncates sd->userid in place, so "sam_m_create" stripped
+		// to "sam_m", matched _M/_F on the *result*, created a second account
+		// "sam", and authenticated as the one nobody asked for.
+		//
+		// Removing it does not strand anyone. _M/_F was single-use by
+		// construction: mmo_auth_new returns 1 (Incorrect Password) once the
+		// account exists, so a second "bob_m" already failed and returning
+		// players have always typed the bare name. Accounts made that way are
+		// ordinary rows and keep working.
+		//
+		// The stored sex is 'M', not 'S': 'S' marks a server account and is
+		// not a value a human login should carry. Nothing reads it for a
+		// character that sets its own.
+		static const char create_suffix[] = "_create";
+		const int create_suffix_len = (int)(sizeof(create_suffix) - 1);
+
+		if (len > create_suffix_len && sd->passwd[0] != '\0' && // valid user and password lengths
 			sd->passwdenc == PWENC_NONE && // unencoded password
-			sd->userid[len-2] == '_' && memchr("FfMm", sd->userid[len-1], 4)) // _M/_F suffix
+			strcasecmp(sd->userid + len - create_suffix_len, create_suffix) == 0) // _create suffix
 		{
 			int result;
 
-			// remove the _M/_F suffix
-			len -= 2;
+			// remove the _create suffix
+			len -= create_suffix_len;
 			sd->userid[len] = '\0';
 
-			result = login->mmo_auth_new(sd->userid, sd->passwd, TOUPPER(sd->userid[len+1]), ip);
+			result = login->mmo_auth_new(sd->userid, sd->passwd, 'M', ip);
 			if( result != -1 )
 				return result;// Failed to make account. [Skotlex].
 		}

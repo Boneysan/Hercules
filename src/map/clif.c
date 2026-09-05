@@ -3102,8 +3102,15 @@ static void clif_inventoryItems(struct map_session_data *sd, enum inventory_type
 		clif->send(&itemlist_normal, itemlist_normal.PacketLength, &sd->bl, SELF);
 	}
 
-	if( sd->equip_index[EQI_AMMO] >= 0 )
+	if( sd->equip_index[EQI_AMMO] >= 0 ) {
 		clif->arrowequip(sd,sd->equip_index[EQI_AMMO]);
+		// Korangar fork: seed the broadcast ammo on login. pc_equipitem only runs
+		// when ammo is equipped by hand, so without this a character who logs in
+		// with arrows already equipped would have vd->ammo == 0 and be drawn with
+		// the generic arrow by everyone until they re-equipped. Cosmetic; see
+		// LOOK_AMMO in map.h.
+		clif->changelook(&sd->bl, LOOK_AMMO, sd->status.inventory[sd->equip_index[EQI_AMMO]].nameid);
+	}
 
 	if( equip ) {
 		itemlist_equip.PacketType  = inventorylistequipType;
@@ -3851,9 +3858,9 @@ static void clif_updatestatus(struct map_session_data *sd, enum status_point_typ
 			pc->update_job_and_level(sd);
 			break;
 		case SP_HP:
-#if PACKETVER_ZERO_NUM >= 20210504
+#if PACKETVER_ZERO_NUM >= 20210504 || defined(KORANGAR_PARTY_SP_TO_GROUPM)
 		case SP_SP:
-#endif  // PACKETVER_ZERO_NUM >= 20210504
+#endif  // PACKETVER_ZERO_NUM >= 20210504 || KORANGAR_PARTY_SP_TO_GROUPM
 			if (map->list[sd->bl.m].hpmeter_visible)
 				clif->hpmeter(sd);
 			if (!battle_config.party_hp_mode && sd->status.party_id)
@@ -4003,8 +4010,16 @@ static void clif_changelook(struct block_list *bl, enum look type, int val)
 				//Shoes? No packet uses this....
 			break;
 			case LOOK_BODY:
-			case LOOK_FLOOR:
 				// unknown purpose
+			break;
+			// LOOK_AMMO (Korangar fork) — same value as the unused LOOK_FLOOR;
+			// see the LOOK_AMMO comment in map.h. Players only: nothing else
+			// carries ammunition, and a mob must not have a stale id broadcast
+			// for it.
+			case LOOK_AMMO:
+				if (sd == NULL)
+					return;
+				vd->ammo = val;
 			break;
 			case LOOK_ROBE:
 		#if PACKETVER < 20110111
@@ -5010,6 +5025,18 @@ static void clif_getareachar_unit(struct map_session_data *sd, struct block_list
 	else
 		clif->set_unit_idle(bl,sd,SELF);
 
+	// Korangar fork note (audit A5): these two guards, and the LOOK_ROBE one
+	// below, cannot tell an arriving observer that a value is *nothing* — a
+	// reset that happened while they were away would never be corrected.
+	//
+	// They are nonetheless SAFE, and must not be "fixed". `clif->set_unit_idle`
+	// / `set_unit_walking` ran unconditionally just above and its spawn packet
+	// carries cloth_color, body_style and robe outright, so the observer
+	// already has the truth including zero before these run.
+	//
+	// The rule: a guard of this shape can only lose an attribute the spawn
+	// packet does NOT carry. That was ammunition, and only ammunition — which
+	// is why the LOOK_AMMO re-send below is deliberately unguarded.
 	if (vd->cloth_color)
 		clif->refreshlook(&sd->bl,bl->id,LOOK_CLOTHES_COLOR,vd->cloth_color,SELF);
 	if (vd->body_style)
@@ -5028,6 +5055,18 @@ static void clif_getareachar_unit(struct map_session_data *sd, struct block_list
 				clif->sendbgemblem_single(sd->fd,tsd);
 			if (tsd->status.look.robe != 0)
 				clif->refreshlook(&sd->bl, bl->id, LOOK_ROBE, tsd->status.look.robe, SELF);
+			// Korangar fork: a look change only reaches whoever was already
+			// watching, so an archer standing here before we arrived would show
+			// no ammunition at all. Re-send it to the arriving observer.
+			//
+			// Sent even when zero, deliberately. Guarding on `vd->ammo != 0` left
+			// an observer who was out of view during an unequip with no way to
+			// learn about it: the zero broadcast never reached them, and on return
+			// the guard suppressed the correction, so they kept drawing the old
+			// ammunition. A weapon change force-unequips ammo (pc.c, gated on
+			// bow_unequip_arrow), which is exactly when a stale value would be
+			// drawn for the wrong weapon class.
+			clif->refreshlook(&sd->bl, bl->id, LOOK_AMMO, vd->ammo, SELF);
 			clif->hat_effect(bl, &sd->bl, SELF);
 		}
 			break;
@@ -5893,6 +5932,50 @@ static void clif_skill_fail(struct map_session_data *sd, uint16 skill_id, enum u
 	p->flag = 0; // 0 - failed
 	p->cause = cause;
 	WFIFOSET(fd, sizeof(struct PACKET_ZC_ACK_TOUSESKILL));
+}
+
+/**
+ * Korangar fork addition: report a cause-0 skill failure *and* say why.
+ *
+ * `useskill_fail_cause` has no code for most of the outcomes Hercules reports as
+ * `USESKILL_FAIL_LEVEL`, so a client can only tell the player to level the skill
+ * up — which is almost never the problem. This sends `ZC_SKILL_FAIL_REASON`
+ * (0x0efe) naming the runtime reason, immediately followed by the ordinary
+ * failure packet, and is a drop-in replacement at any cause-0 call site.
+ *
+ * Only *runtime* outcomes belong here. A static precondition (`State:` in
+ * skill_db) is already on disk at both ends and needs no packet.
+ *
+ * A client that does not know 0x0efe consumes it through its length table and
+ * falls back to the generic text, so this cannot break a stock client.
+ */
+static void clif_skill_fail_reason(struct map_session_data *sd, uint16 skill_id, enum skill_fail_reason reason)
+{
+	nullpo_retv(sd);
+
+	int fd = sd->fd;
+	// Mirror *every* condition under which clif_skill_fail sends nothing, so a
+	// reason is never sent without the failure it explains — the client would
+	// otherwise hold one with nothing to attach it to. None of the current call
+	// sites can be RG_SNATCHER or TF_POISON, but this is meant to be a drop-in
+	// replacement at any cause-0 site, so it must not depend on that list.
+	//
+	// The USESKILL_FAIL_SKILLINTERVAL check there needs no mirror: this always
+	// reports USESKILL_FAIL_LEVEL.
+	bool suppressed = (battle_config.display_skill_fail&1) != 0
+		|| (skill_id == RG_SNATCHER && (battle_config.display_skill_fail & 4) != 0)
+		|| (skill_id == TF_POISON && (battle_config.display_skill_fail & 8) != 0);
+
+	if (fd != 0 && !suppressed) {
+		WFIFOHEAD(fd, sizeof(struct PACKET_ZC_SKILL_FAIL_REASON));
+		struct PACKET_ZC_SKILL_FAIL_REASON *p = WFIFOP(fd, 0);
+		p->PacketType = HEADER_ZC_SKILL_FAIL_REASON;
+		p->SKID = skill_id;
+		p->reason = reason;
+		WFIFOSET(fd, sizeof(struct PACKET_ZC_SKILL_FAIL_REASON));
+	}
+
+	clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
 }
 
 /// Skill cooldown display icon (ZC_SKILL_POSTDELAY).
@@ -7495,6 +7578,16 @@ static void clif_party_invite(struct map_session_data *sd, struct map_session_da
 	if (p == NULL)
 		return;
 
+	// Korangar fork: name the inviter, which ZC_PARTY_JOIN_REQ cannot. Sent
+	// first so the client has it in hand when the invite itself arrives.
+	WFIFOHEAD(fd, sizeof(struct PACKET_ZC_PARTY_INVITE_SENDER));
+	struct PACKET_ZC_PARTY_INVITE_SENDER *sender = WFIFOP(fd, 0);
+
+	sender->PacketType = HEADER_ZC_PARTY_INVITE_SENDER;
+	sender->GRID = sd->status.party_id;
+	safestrncpy(sender->senderName, sd->status.name, NAME_LENGTH);
+	WFIFOSET(fd, sizeof(struct PACKET_ZC_PARTY_INVITE_SENDER));
+
 	WFIFOHEAD(fd, sizeof(struct PACKET_ZC_PARTY_JOIN_REQ));
 	struct PACKET_ZC_PARTY_JOIN_REQ *packet = WFIFOP(fd, 0);
 
@@ -7754,10 +7847,10 @@ static void clif_party_hp(struct map_session_data *sd)
 	p.hp = sd->battle_status.hp;
 	p.maxhp = sd->battle_status.max_hp;
 #endif
-#if PACKETVER_ZERO_NUM >= 20210504
+#if PACKETVER_ZERO_NUM >= 20210504 || defined(KORANGAR_PARTY_SP_TO_GROUPM)
 	p.sp = sd->battle_status.sp;
 	p.maxsp = sd->battle_status.max_sp;
-#endif  // PACKETVER_ZERO_NUM >= 20210504
+#endif  // PACKETVER_ZERO_NUM >= 20210504 || KORANGAR_PARTY_SP_TO_GROUPM
 	clif->send(&p, sizeof(struct PACKET_ZC_NOTIFY_HP_TO_GROUPM), &sd->bl, PARTY_AREA_WOS);
 }
 
@@ -7782,10 +7875,10 @@ static void clif_hpmeter_single(int fd, int id, unsigned int hp, unsigned int ma
 	p->hp = hp;
 	p->maxhp = maxhp;
 #endif
-#if PACKETVER_ZERO_NUM >= 20210504
+#if PACKETVER_ZERO_NUM >= 20210504 || defined(KORANGAR_PARTY_SP_TO_GROUPM)
 	p->sp = sp;
 	p->maxsp = maxsp;
-#endif  // PACKETVER_ZERO_NUM >= 20210504
+#endif  // PACKETVER_ZERO_NUM >= 20210504 || KORANGAR_PARTY_SP_TO_GROUPM
 	WFIFOSET(fd, sizeof(struct PACKET_ZC_NOTIFY_HP_TO_GROUPM));
 }
 
@@ -11185,6 +11278,18 @@ static void clif_parse_LoadEndAck(int fd, struct map_session_data *sd)
 	sd->state.dialog = 0; // Reset when warping. Client dialog will go missing.
 
 	// Character looks.
+	//
+	// Korangar fork note (audit A4): these run ~110 lines BEFORE
+	// `map->addblock` below, so their AREA broadcast walks a block list the
+	// character has not joined yet and reaches nobody. Harmless as written —
+	// weapon and shield are carried by the spawn packet, so every arriving
+	// observer gets the right values from `clif->set_unit_idle` anyway.
+	//
+	// It stops being harmless the moment a look type NOT carried by the spawn
+	// packet is added here. That is exactly how the LOOK_AMMO login seed
+	// failed: ammunition has no spawn-packet slot, so its broadcast here was
+	// the only chance and it reached no one. Re-broadcast after `clif->spawn`
+	// instead. See tools/audits/observer-parity.sh in the client repo.
 #if PACKETVER < 4
 	clif->changelook(&sd->bl, LOOK_WEAPON, sd->status.look.weapon);
 	clif->changelook(&sd->bl, LOOK_SHIELD, sd->status.look.shield);
@@ -11300,6 +11405,18 @@ static void clif_parse_LoadEndAck(int fd, struct map_session_data *sd)
 	sd->state.callshop = 0; // Reset the callshop flag if the character changes map.
 	map->addblock(&sd->bl); // Add the character to the map.
 	clif->spawn(&sd->bl); // Spawn character client side.
+
+	// Korangar fork: re-broadcast the equipped ammunition now that the character
+	// is actually on the map. The seed in clif_inventoryItems runs ~95 lines
+	// earlier, before map->addblock, so its AREA broadcast reaches nobody — an
+	// observer already standing here would draw this archer's arrows as the
+	// generic one forever. vd->ammo is already correct by now; this only re-sends
+	// it, and clif->spawn cannot carry it because LOOK_AMMO rides LOOK_FLOOR,
+	// which the spawn packet does not include. See LOOK_AMMO in map.h.
+	if (sd->equip_index[EQI_AMMO] >= 0) {
+		clif->changelook(&sd->bl, LOOK_AMMO,
+		                 sd->status.inventory[sd->equip_index[EQI_AMMO]].nameid);
+	}
 
 	clif->load_end_ack_sub_messages(sd, (sd->state.connect_new != 0), (sd->state.changemap != 0));
 
@@ -13220,6 +13337,27 @@ static void clif_parse_StopAttack(int fd, struct map_session_data *sd) __attribu
 static void clif_parse_StopAttack(int fd, struct map_session_data *sd)
 {
 	pc_stop_attack(sd);
+}
+
+static void clif_parse_CancelCast(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+/// Korangar fork addition: abort the caster's own in-progress cast on request.
+/// 0F00 (no payload)
+///
+/// Official Ragnarok has no such packet — a player cannot cancel a cast at all
+/// except through the Sage skill SA_CASTCANCEL, and cannot move while casting
+/// (unit->can_move), so there is nothing upstream to reuse. Korangar binds this
+/// to right-click / Escape because the fork is a campaign client, not a fidelity
+/// clone. Movement deliberately does NOT cancel; casting still roots.
+///
+/// Type 0 is intentional: unlike a damage interrupt (type&2) a deliberate abort
+/// must not be blocked by the skill's castcancel flag or by Phen / no_castcancel,
+/// and unlike SA_CASTCANCEL (type&1) the skill to drop is the one in ud->skill_id
+/// rather than skill_id_old. unit->skillcastcancel is a no-op when nothing is
+/// casting and broadcasts clif->skillcastcancel itself, so no reply is needed.
+/// SP is untouched because it is charged at cast *end*, not at cast begin.
+static void clif_parse_CancelCast(int fd, struct map_session_data *sd)
+{
+	unit->skillcastcancel(&sd->bl, 0);
 }
 
 static void clif_parse_PutItemToCart(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
@@ -26721,6 +26859,7 @@ void clif_defaults(void)
 	clif->outsight = clif_outsight;
 	clif->skillcastcancel = clif_skillcastcancel;
 	clif->skill_fail = clif_skill_fail;
+	clif->skill_fail_reason = clif_skill_fail_reason;
 	clif->skill_cooldown = clif_skill_cooldown;
 	clif->skill_memomessage = clif_skill_memomessage;
 	clif->skill_mapinfomessage = clif_skill_mapinfomessage;
@@ -27217,6 +27356,7 @@ void clif_defaults(void)
 	clif->pTradeCancel = clif_parse_TradeCancel;
 	clif->pTradeCommit = clif_parse_TradeCommit;
 	clif->pStopAttack = clif_parse_StopAttack;
+	clif->pCancelCast = clif_parse_CancelCast;
 	clif->pPutItemToCart = clif_parse_PutItemToCart;
 	clif->pGetItemFromCart = clif_parse_GetItemFromCart;
 	clif->pRemoveOption = clif_parse_RemoveOption;

@@ -26,6 +26,12 @@ OnInit:
 	bindatcmd("dmreset", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReset", 1, 99, 1);
 	bindatcmd("dmstatus", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStatus", 1, 99, 1);
 	bindatcmd("roll", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRoll", 0, 99, 1);
+	// Skill checks are player-facing: anyone may roll their own or help.
+	bindatcmd("check", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCheck", 0, 99, 1);
+	bindatcmd("assist", strnpcinfo(NPC_NAME_UNIQUE)+"::OnAssist", 0, 99, 1);
+	bindatcmd("dmcheck", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDMCheck", 1, 99, 1);
+	bindatcmd("dmstakes", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStakes", 1, 99, 1);
+	bindatcmd("dmenc", strnpcinfo(NPC_NAME_UNIQUE)+"::OnEnc", 1, 99, 1);
 	end;
 
 OnDM:
@@ -136,6 +142,35 @@ OnDM:
 
 	if (.@sub$ == "status") {
 		callsub(S_Status);
+		end;
+	}
+
+	if (.@sub$ == "check") {
+		callsub(S_Check, 1);
+		end;
+	}
+
+	if (.@sub$ == "stakes") {
+		callsub(S_Stakes, 1);
+		end;
+	}
+
+	if (.@sub$ == "enc" || .@sub$ == "encounter") {
+		callsub(S_Enc, 1);
+		end;
+	}
+
+	if (.@sub$ == "stealth") {
+		.@dc = atoi(@dm_atcmd_p$[1]);
+		if (.@dc <= 0)
+			.@dc = 15;
+		callfunc("DM_StealthScene", .@dc);
+		end;
+	}
+
+	if (.@sub$ == "wake") {
+		callfunc("DM_StealthWake", 0);
+		dispbottom("[Stealth] Everything is awake again.");
 		end;
 	}
 
@@ -275,6 +310,58 @@ OnStatus:
 	callsub(S_Status);
 	end;
 
+OnCheck:
+	// @check <tag|stat> <dc>
+	if (.@atcmd_numparameters < 2) {
+		dispbottom("[Check] Usage: @check <tag|stat> <dc>   (e.g. @check stealth 15)");
+		dispbottom("[Check] Stats: str agi vit int dex luk. Tags: force intimidate carry");
+		dispbottom("  break grapple acrobatics balance stealth reflex escape");
+		dispbottom("  endure resist hold concentrate");
+		dispbottom("  lore arcana appraise medicine navigate reason recall");
+		dispbottom("  perceive sleight traps craft aim deceive lockpick");
+		dispbottom("  haggle charm gamble scrounge omen");
+		end;
+	}
+	callfunc("DM_CheckRoll", .@atcmd_parameters$[0], atoi(.@atcmd_parameters$[1]));
+	end;
+
+OnAssist:
+	// @assist <player> <tag|stat>
+	if (.@atcmd_numparameters < 2) {
+		dispbottom("[Check] Usage: @assist <player> <tag|stat>");
+		dispbottom("[Check] You roll the same tag at DC 10. Success gives them +2 (max +4).");
+		end;
+	}
+	callfunc("DM_CheckAssist", .@atcmd_parameters$[0], .@atcmd_parameters$[1]);
+	end;
+
+OnEnc:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	deletearray @dm_atcmd_p$[0], 128;
+	copyarray @dm_atcmd_p$[0], .@atcmd_parameters$[0], .@atcmd_numparameters;
+	@dm_atcmd_n = .@atcmd_numparameters;
+	callsub(S_Enc, 0);
+	end;
+
+OnStakes:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	deletearray @dm_atcmd_p$[0], 128;
+	copyarray @dm_atcmd_p$[0], .@atcmd_parameters$[0], .@atcmd_numparameters;
+	@dm_atcmd_n = .@atcmd_numparameters;
+	callsub(S_Stakes, 0);
+	end;
+
+OnDMCheck:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	deletearray @dm_atcmd_p$[0], 128;
+	copyarray @dm_atcmd_p$[0], .@atcmd_parameters$[0], .@atcmd_numparameters;
+	@dm_atcmd_n = .@atcmd_numparameters;
+	callsub(S_Check, 0);
+	end;
+
 OnRoll:
 	.@input$ = "";
 	.@hidden = 0;
@@ -322,12 +409,21 @@ OnRoll:
 	.@sides = 20;
 	.@mod = 0;
 
-	if (sscanf(.@input$, "%dd%d+%d", .@num, .@sides, .@mod) >= 3) {
-	} else if (sscanf(.@input$, "%dd%d-%d", .@num, .@sides, .@mod) >= 3) {
+	// Pick the format by the modifier sign actually present: sscanf on a
+	// modifier-less input against "%dd%d+%d" leaks a spurious modifier
+	// instead of failing (found by the headless dm-roll-bounds scenario).
+	if (compare(.@input$, "+")) {
+		if (sscanf(.@input$, "%dd%d+%d", .@num, .@sides, .@mod) < 3) {
+			dispbottom("[DM] Usage: @roll [hidden] <NdX[+/-mod]> (e.g. 1d20+3)");
+			end;
+		}
+	} else if (compare(.@input$, "-")) {
+		if (sscanf(.@input$, "%dd%d-%d", .@num, .@sides, .@mod) < 3) {
+			dispbottom("[DM] Usage: @roll [hidden] <NdX[+/-mod]> (e.g. 1d20+3)");
+			end;
+		}
 		.@mod = -.@mod;
-	} else if (sscanf(.@input$, "%dd%d", .@num, .@sides) >= 2) {
-		.@mod = 0;
-	} else {
+	} else if (sscanf(.@input$, "%dd%d", .@num, .@sides) < 2) {
 		dispbottom("[DM] Usage: @roll [hidden] <NdX[+/-mod]> (e.g. 1d20+3)");
 		end;
 	}
@@ -387,6 +483,11 @@ S_Help:
 	dispbottom("[DM] @dm mode <on|off>");
 	dispbottom("[DM] @dm reward [arc] [tier] [preview|dryrun|1]");
 	dispbottom("[DM] @roll [hidden] <NdX[+/-mod]> | @roll fudge <total> [note]");
+	dispbottom("[DM] @dm check <player|me|party> <tag|stat> <dc> [dm_flag]");
+	dispbottom("[DM] @dm stakes <success> | <failure>   (say the price first)");
+	dispbottom("[DM] @dmenc list | info <name> | spawn <name> [ambush|line|scatter]");
+	dispbottom("[DM] @dm stealth [dc]   (default 15) | @dm wake");
+	dispbottom("[DM] Players: @check <tag|stat> <dc> and @assist <player> <tag>");
 	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
 	dispbottom("[DM] @dm quest <start|complete|erase> <quest_id>   (current party)");
 	dispbottom("[DM] @dm beat                 (menu: location/NPC/story tracking)");
@@ -403,6 +504,131 @@ S_Help:
 	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmstatus, @dmreset");
 	return;
 
+S_Enc:
+	// @dmenc list | info <name> | spawn <name> [formation]
+	.@offset = getarg(0, 0);
+	.@action$ = strtolower(@dm_atcmd_p$[.@offset]);
+
+	if (.@action$ == "" || .@action$ == "list") {
+		callfunc("DM_EncList");
+		return;
+	}
+	if (.@action$ == "info") {
+		if (@dm_atcmd_p$[.@offset + 1] == "") {
+			dispbottom("[Enc] Usage: @dmenc info <name>");
+			return;
+		}
+		callfunc("DM_EncInfo", @dm_atcmd_p$[.@offset + 1]);
+		return;
+	}
+	if (.@action$ == "spawn") {
+		if (@dm_atcmd_p$[.@offset + 1] == "") {
+			dispbottom("[Enc] Usage: @dmenc spawn <name> [ambush|line|scatter]");
+			return;
+		}
+		callfunc("DM_EncSpawn", @dm_atcmd_p$[.@offset + 1], @dm_atcmd_p$[.@offset + 2]);
+		return;
+	}
+
+	dispbottom("[Enc] Unknown action: " + .@action$);
+	callfunc("DM_EncList");
+	return;
+
+S_Stakes:
+	// @dm stakes <success text> | <failure text>
+	// Announced BEFORE the check. A roll whose price nobody knows is just a
+	// number; naming both outcomes first is the cheapest way to make a check
+	// matter at the table.
+	.@offset = getarg(0, 0);
+	.@text$ = "";
+	for (.@i = .@offset; .@i < @dm_atcmd_n; ++.@i)
+		.@text$ += (.@i > .@offset ? " " : "") + @dm_atcmd_p$[.@i];
+
+	if (.@text$ == "") {
+		dispbottom("[DM] Usage: @dm stakes <what success means> | <what failure means>");
+		dispbottom("[DM] Announced to the map before you call the check.");
+		return;
+	}
+
+	.@bar = 0;
+	.@len = getstrlen(.@text$);
+	for (.@i = 0; .@i < .@len; ++.@i) {
+		if (substr(.@text$, .@i, .@i) == "|") {
+			.@bar = .@i;
+			break;
+		}
+	}
+
+	if (.@bar > 0) {
+		// substr() is inclusive at both ends, so bar-1 / bar+1 split cleanly.
+		.@win$ = substr(.@text$, 0, .@bar - 1);
+		.@lose$ = substr(.@text$, .@bar + 1, .@len - 1);
+		mapannounce strcharinfo(PC_MAP), "[Stakes] On success: " + .@win$, bc_map, 0x88FF88;
+		mapannounce strcharinfo(PC_MAP), "[Stakes] On failure: " + .@lose$, bc_map, 0xFF8844;
+	} else {
+		mapannounce strcharinfo(PC_MAP), "[Stakes] " + .@text$, bc_map, 0xFFCC33;
+	}
+	return;
+
+S_Check:
+	// @dm check <who> <tag|stat> <dc> [flag]
+	// who = a character name, "me", or "party".
+	.@offset = getarg(0, 0);
+	.@who$  = @dm_atcmd_p$[.@offset];
+	.@tag$  = @dm_atcmd_p$[.@offset + 1];
+	.@dc    = atoi(@dm_atcmd_p$[.@offset + 2]);
+	.@flag$ = @dm_atcmd_p$[.@offset + 3];
+
+	if (.@who$ == "" || .@tag$ == "" || .@dc <= 0) {
+		dispbottom("[DM] Usage: @dm check <player|me|party> <tag|stat> <dc> [dm_flag]");
+		dispbottom("[DM] The flag, if given, is set party-wide on any success.");
+		callfunc("DM_CheckDCHelp");
+		return;
+	}
+	if (.@flag$ != "" && !callfunc("DM_ValidFlagName", .@flag$)) {
+		dispbottom("[DM] Not a valid flag name: " + .@flag$ + " (must start dm_)");
+		return;
+	}
+
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+	.@ok = 0;
+
+	if (strtolower(.@who$) == "party") {
+		.@ok = callfunc("DM_CheckParty", .@tag$, .@dc);
+	} else if (strtolower(.@who$) == "me") {
+		.@band = callfunc("DM_CheckRoll", .@tag$, .@dc);
+		if (.@band == -2)
+			return;
+		.@ok = (.@band >= 1);
+	} else {
+		.@aid = getcharid(CHAR_ID_ACCOUNT, .@who$);
+		if (.@aid <= 0) {
+			dispbottom("[DM] No online character named '" + .@who$ + "'.");
+			return;
+		}
+		if (!attachrid(.@aid)) {
+			dispbottom("[DM] Could not attach to '" + .@who$ + "'.");
+			return;
+		}
+		.@band = callfunc("DM_CheckRoll", .@tag$, .@dc);
+		detachrid();
+		attachrid(.@origin);
+		if (.@band == -2)
+			return;
+		.@ok = (.@band >= 1);
+	}
+
+	if (.@flag$ == "")
+		return;
+
+	if (.@ok) {
+		callfunc("DM_PartySetFlag", .@flag$, 1);
+		dispbottom("[DM] " + .@flag$ + " set party-wide on the successful check.");
+	} else {
+		dispbottom("[DM] Check failed; " + .@flag$ + " left unset.");
+	}
+	return;
+
 S_Reset:
 	.@offset = getarg(0, 0);
 	.@confirm$ = @dm_atcmd_p$[.@offset];
@@ -411,6 +637,25 @@ S_Reset:
 		dispbottom("[DM] Warning: clears all 19 arcs for every online party member. Cannot be undone.");
 		return;
 	}
+	// Hercules kills a script that spends more than script_config.check_gotocount
+	// (2048) gotos in one run, and every callfunc AND its return spends one. A
+	// full reset is far past that: per member, 19 arc-clears plus 136
+	// DM_ClearFlag calls, each of which now also calls DM_ValidFlagName -- and
+	// then 90 quest ids, three functions deep, once per online member.
+	//
+	// It crossed the line quietly. The reset was fine when the campaign was
+	// smaller, and the validation the security pass added to DM_ClearFlag is
+	// what tipped it: the map-server logs "run_script: infinity loop !" and
+	// abandons the script, so the flags are half cleared and the DM sees no
+	// message at all -- the command simply does nothing and says nothing.
+	//
+	// freeloop is the sanctioned escape hatch for a script that legitimately
+	// does this much work. Safe here because the work is BOUNDED by
+	// construction: 19 arcs, a fixed list of 90 quest ids, and however many
+	// members are online. There is no input that makes this loop forever.
+	// Turned back off before returning so the guard covers everything after.
+	freeloop(true);
+
 	.@party_id = getcharid(CHAR_ID_PARTY);
 	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
 	if (.@party_id > 0) {
@@ -462,6 +707,7 @@ S_Reset:
 		setd("$dm_inst_" + .@party_id, 0);
 	$dm_mode = 0;
 	$dm_active_party = 0;
+	freeloop(false);
 	dispbottom("[DM] Campaign reset complete for " + .@cleared + " member(s). All arcs cleared, mode off.");
 	return;
 
@@ -508,6 +754,10 @@ S_Exp:
 		dispbottom("[DM] Example: @dm exp 50000 20000");
 		return;
 	}
+	if (.@base > 2000000)
+		.@base = 2000000;
+	if (.@job > 2000000)
+		.@job = 2000000;
 
 	.@given = callfunc("DM_PartyExp", .@base, .@job);
 	dispbottom("[DM] Granted " + .@base + " base / " + .@job + " job EXP to " + .@given + " party member(s).");
@@ -517,14 +767,21 @@ S_Mode:
 	.@offset = getarg(0, 0);
 	.@action$ = @dm_atcmd_p$[.@offset];
 	if (.@action$ == "on") {
+		.@party = getcharid(CHAR_ID_PARTY);
+		if (.@party <= 0) {
+			dispbottom("[DM] Form a party before enabling a campaign session.");
+			dispbottom("[DM] A session with no party would unlock the campaign for every solo player.");
+			return;
+		}
 		$dm_mode = 1;
-		$dm_active_party = getcharid(CHAR_ID_PARTY);
+		$dm_active_party = .@party;
 		dispbottom("[DM] DnD mode enabled. MVP spawns will be suppressed.");
 		dispbottom("[DM] Campaign NPCs are active for party " + $dm_active_party + ".");
 		mapannounce "prontera", "A campaign session has begun. Check the Session Board near the fountain.", bc_map, 0xFFAA33;
 		return;
 	}
 	if (.@action$ == "off") {
+		callfunc("DM_ClearPartyGrants", $dm_active_party);
 		$dm_mode = 0;
 		$dm_active_party = 0;
 		dispbottom("[DM] DnD mode disabled. MVP spawns will resume naturally.");
@@ -628,6 +885,10 @@ S_Warp:
 		dispbottom("[DM] Usage: @dm warp <map> [x] [y]");
 		return;
 	}
+	if (!callfunc("DM_IsCampaignMap", .@map$)) {
+		dispbottom("[DM] Map '" + .@map$ + "' is not on the campaign warp list.");
+		return;
+	}
 
 	.@moved = callfunc("DM_WarpParty", .@map$, .@x, .@y, getcharid(CHAR_ID_PARTY));
 	dispbottom("[DM] Warped " + .@moved + " party member(s) to " + .@map$ + ".");
@@ -652,6 +913,10 @@ S_Instance:
 		.@src$ = @dm_atcmd_p$[.@offset + 1];
 		if (.@src$ == "") {
 			dispbottom("[DM] Usage: @dm instance start <source_map> [x] [y] [label]");
+			return;
+		}
+		if (!callfunc("DM_IsCampaignMap", .@src$)) {
+			dispbottom("[DM] Map '" + .@src$ + "' is not on the campaign instance list.");
 			return;
 		}
 		.@x = atoi(@dm_atcmd_p$[.@offset + 2]);
@@ -799,6 +1064,10 @@ S_Flag:
 		dispbottom("[DM] Usage: @dmflag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
 		return;
 	}
+	if (!callfunc("DM_ValidFlagName", .@flag$)) {
+		dispbottom("[DM] Flag names must match dm_[A-Za-z0-9_]+.");
+		return;
+	}
 
 	if (.@action$ == "get") {
 		dispbottom("[DM] " + .@flag$ + " = " + callfunc("DM_GetFlag", .@flag$));
@@ -828,6 +1097,10 @@ S_Quest:
 
 	if (.@quest_id <= 0) {
 		dispbottom("[DM] Usage: @dmquest <start|complete|erase> <quest_id>");
+		return;
+	}
+	if (!callfunc("DM_IsCampaignQuest", .@quest_id)) {
+		dispbottom("[DM] Quest " + .@quest_id + " is outside the campaign range (20001-20233).");
 		return;
 	}
 
@@ -865,6 +1138,8 @@ S_Spawn:
 
 	if (.@count <= 0)
 		.@count = 1;
+	if (.@count > 20)
+		.@count = 20;
 	if (.@name$ == "")
 		.@name$ = "--ja--";
 

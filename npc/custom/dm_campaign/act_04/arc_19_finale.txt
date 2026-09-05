@@ -11,7 +11,7 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20231 Where Thanatos Stood     (arc tracker / Surt)
-//=   20232 Beyond the Veil          (Khalitzburg x15)
+//=   20232 Beyond the Veil (Rotten Bandage x10, Scale Shell x6, Grit x6)
 //=   20233 The Choice He Never Had  (Loki / final audience)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -23,7 +23,7 @@
 
 // ── Loki The Voice — The Observer ─────────────────────────────────────────
 moc_ruins,150,150,5	script	Loki The Voice#dm	4_M_04,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (dm_campaign_complete) {
 		callfunc("DM_PartyMes", "[Loki The Voice]");
 		callfunc("DM_PartyMes", "The choice was made. The seal is different now. I watched you understand what that meant while you were doing it. That was the part I did not predict.");
@@ -106,17 +106,19 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20232);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Where Thanatos Stood]^000000");
-	callfunc("DM_PartyMes", "^3355FFBeyond the Veil - quiet 15 Khalitzburg in the ruins of Morroc. Then return to Loki.^000000");
+	callfunc("DM_PartyMes", "^3355FFBeyond the Veil - out of the ruins of Morroc: " + callfunc("DM_HuntBrief", 20232) + ". Then return to Loki.^000000");
 	close();
 
 S_Progress:
-	if (questprogress(20232) == 1 && questprogress(20232, HUNTING) < 2) {
+	if (questprogress(20232) == 1 && !callfunc("DM_HuntReady", 20232)) {
 		callfunc("DM_PartyMes", "[Loki The Voice]");
 		callfunc("DM_PartyMes", "The Khalitzburg are still in the ruins. They have been here for three hundred years. A few more minutes is fine. Take your time.");
+		callfunc("DM_HuntStanding", 20232);
 		close();
 	}
 
-	if (questprogress(20232) == 1 && questprogress(20232, HUNTING) == 2) {
+	if (questprogress(20232) == 1 && callfunc("DM_HuntReady", 20232)) {
+		callfunc("DM_HuntCollect", 20232);
 		callfunc("DM_InstanceQuestComplete", 20232);
 		callfunc("DM_PartyExp", 600000, 300000);
 		callsub(S_FinalAudience);
@@ -146,6 +148,168 @@ S_FinalAudience:
 		callfunc("DM_PartyMes", "Cassell. The Seal's Warden. The first thread in what became this. He was not wrong about what the seal was. He was wrong about whether it could be maintained indefinitely by suppression alone. Everything since Cassell has been the proof that he was wrong.");
 		next();
 	}
+
+	// ── The road behind you (Act I readback) ──────────────────────────────
+	// Act I records a great many small choices — mercy, salvage, Cassell's
+	// catechism — that nothing downstream used to consult. Loki accounts for
+	// them here in the campaign's own terms: not "well done", but who paid,
+	// because the party is about to decide who pays for the next seal.
+	// Grouped into pages so ten threads do not cost ten clicks.
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "Before you decide who carries the next seal, I want to account for who carried this one. You made most of those decisions early, before you knew they were part of anything. Those are the ones that tell me what you will do here.");
+	next();
+
+	// Why you took the work at all (Arc 1, Quartermaster Wynne).
+	if (dm_arc01_hero_type) {
+		callfunc("DM_PartyMes", "[Loki]");
+		if (dm_arc01_hero_type == 1)
+			callfunc("DM_PartyMes", "You told Quartermaster Wynne you came to help the city. Everyone says that at intake. You are the first party I have watched who was still doing it by Niflheim.");
+		else if (dm_arc01_hero_type == 2)
+			callfunc("DM_PartyMes", "You asked Wynne what the work paid. Notice that nothing in front of you now has a price attached to it. You went past the point where anyone was paying and you did not stop to remark on it.");
+		else
+			callfunc("DM_PartyMes", "You told Wynne to point you at the monsters. She did. The monsters turned out to be a maintenance schedule three hundred years overdue. I am not certain that is worse.");
+		next();
+	}
+
+	// Payon (Arc 2). The grove fork is the finale's fourth option in miniature:
+	// Sun-Hwa is made the anchor without being told the price. Loki says so.
+	if (dm_arc02_voss_killed || dm_arc02_voss_spared) {
+		callfunc("DM_PartyMes", "[Loki]");
+		if (dm_arc02_voss_killed)
+			callfunc("DM_PartyMes", "Scholar Voss died in the grove telling you that people are a storage medium. He believed it. The argument you are about to have with yourselves is that same argument, and he lost it badly.");
+		else
+			callfunc("DM_PartyMes", "You let Voss walk out of the grove. He is still writing. Cassell's people always are. What he has written since Payon is less certain than what he wrote before it, and I count that as your doing.");
+		next();
+	}
+	if (dm_arc02_grove_burned) {
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "You burned the grove. It was the fastest way to end the harvest, and it ended what was in there without asking it anything first. Fast and final. Hold on to how that felt — one of the five is exactly that.");
+		next();
+	} else if (dm_arc02_grove_restored) {
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "You laid the Moonlight Flower to rest instead of burning the grove. Slower. It required somebody to stand in the middle of it and mean it.");
+		next();
+		if (dm_arc02_sunhwa_marked) {
+			callfunc("DM_PartyMes", "[Loki]");
+			callfunc("DM_PartyMes", "Sun-Hwa carried that rite alone, because nobody had helped her with the ancestor first. She is marked. She will be marked for the rest of her life, and nobody told her the price before she agreed to it.");
+			next();
+			callfunc("DM_PartyMes", "[Loki]");
+			callfunc("DM_PartyMes", "You have already seen what it costs to make one person the anchor without telling them. You saw it in Payon, in your first month. I want you to remember Sun-Hwa when you hear the fourth option.");
+			next();
+		}
+	}
+
+	// The people who taught you, and the one you ruined (Arcs 4-5).
+	.@said = 0;
+	if (dm_arc04_doran_taught) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); .@said = 1; }
+		callfunc("DM_PartyMes", "Archmagus Doran taught you instead of fighting you. Geffen holds perhaps four people capable of that. He is the only one anybody thought to ask.");
+	} else if (dm_arc04_doran_fought) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); .@said = 1; }
+		callfunc("DM_PartyMes", "You fought Doran. He recovered. He also stopped explaining things to strangers, which has cost every party since more than it cost you.");
+	}
+	if (dm_arc05_mara_network) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); .@said = 1; }
+		callfunc("DM_PartyMes", "Captain Mara gave you her crew and her name on the water. Smugglers are careful about whose name they say kindly.");
+	} else if (dm_arc05_mara_pragmatic) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); .@said = 1; }
+		callfunc("DM_PartyMes", "You used Mara and did not pretend otherwise. She respected it. She did not offer you the crew.");
+	}
+	if (dm_arc05_brode_enemy) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); .@said = 1; }
+		callfunc("DM_PartyMes", "Brode is ruined and blames you accurately. He is not a threat. He is a reminder that you have been willing to end someone's living over cargo that was never on his conscience.");
+	}
+	if (.@said)
+		next();
+
+	// Who you carried. One page, whichever threads fired.
+	.@said = 0;
+	if (dm_arc03_refugees_protected) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "The people you stood over, in the order you found them:"); .@said = 1; }
+		callfunc("DM_PartyMes", "The Morroc refugees. Still in Morroc. The city never thanked them for staying, and they stayed.");
+	}
+	if (dm_arc04_elsbeth_protected) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "The people you stood over, in the order you found them:"); .@said = 1; }
+		callfunc("DM_PartyMes", "Elsbeth, under Geffen. She kept working. People who have been protected once tend to.");
+	} else if (dm_arc04_elsbeth_hurt) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "The people you stood over, in the order you found them:"); .@said = 1; }
+		callfunc("DM_PartyMes", "Elsbeth was hurt under Geffen. She did not blame you. I am telling you because she did not, and someone should.");
+	}
+	if (dm_arc05_divers_rescued) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "The people you stood over, in the order you found them:"); .@said = 1; }
+		callfunc("DM_PartyMes", "The Byalan divers came back up. That was not the efficient choice at the time.");
+	}
+	if (dm_arc05_refugees_freed) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "The people you stood over, in the order you found them:"); .@said = 1; }
+		callfunc("DM_PartyMes", "The hold at Izlude was opened. Brode's manifest is still short and he is still angry about it.");
+	}
+	if (dm_arc05_sabra_refugees_safe) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "The people you stood over, in the order you found them:"); .@said = 1; }
+		callfunc("DM_PartyMes", "Sabra's people were fed. It cost you a rotation you needed. I watched you decide that it did not matter.");
+	} else if (dm_arc05_sabra_refugees_starved) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "The people you stood over, in the order you found them:"); .@said = 1; }
+		callfunc("DM_PartyMes", "Sabra's people starved in the hold while the manifest was argued over. You are about to decide who carries a seal for three centuries. I want that decision made by people who remember the hold.");
+	}
+	if (.@said)
+		next();
+
+	// What you took, and what you gave back.
+	.@said = 0;
+	if (dm_arc03_osiris_looted) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "And the ledger of what you took and what you gave back:"); .@said = 1; }
+		callfunc("DM_PartyMes", "Osiris's court was stripped. The gold spent the way gold does. The court is still awake.");
+	}
+	if (dm_arc03_funeral_mask) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "And the ledger of what you took and what you gave back:"); .@said = 1; }
+		callfunc("DM_PartyMes", "You kept the funeral mask. Morroc buries its dead in those. Somebody in that tomb is uncovered now.");
+	}
+	if (dm_arc05_relics_surrendered) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "And the ledger of what you took and what you gave back:"); .@said = 1; }
+		callfunc("DM_PartyMes", "You surrendered the relic crates instead of selling them. Nobody was watching. I was, but nobody who could pay you.");
+	}
+	if (dm_arc05_records_returned) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "And the ledger of what you took and what you gave back:"); .@said = 1; }
+		callfunc("DM_PartyMes", "The Alberta records went back to the families they belonged to. Small. It is the kind of thing that decides what the next three centuries feel like to live in.");
+	}
+	if (dm_arc04_city_dimmed) {
+		if (!.@said) { callfunc("DM_PartyMes", "[Loki]"); callfunc("DM_PartyMes", "And the ledger of what you took and what you gave back:"); .@said = 1; }
+		callfunc("DM_PartyMes", "You dimmed Geffen to starve the seal under it. The city complained for a season and is still standing. Suppression buys time. It has never bought anything else.");
+	}
+	if (.@said)
+		next();
+
+	// Cassell's catechism — the campaign's one standing temptation.
+	if (dm_arc04_catechism_choice) {
+		callfunc("DM_PartyMes", "[Loki]");
+		if (dm_arc04_catechism_choice == 3) {
+			callfunc("DM_PartyMes", "You took Cassell's catechism. You can read a seal. That is why you understood the Tower when Pratt explained it, and why Varmundt's frequency meant anything to you at all.");
+			if (dm_catechism_tally > 1) {
+				next();
+				callfunc("DM_PartyMes", "[Loki]");
+				callfunc("DM_PartyMes", "You went back for more of it. " + dm_catechism_tally + " times. Cassell told you your friends would ask why you needed the language. Nobody asked. I am asking now, and you do not have to answer me — only to have an answer before you choose.");
+			}
+		} else if (dm_arc04_catechism_choice == 2) {
+			callfunc("DM_PartyMes", "You refused Cassell's catechism and kept listening anyway. A detective's heresy, he called it. It is also how every one of these seals was found before it broke.");
+			if (dm_arc04_tamper_sense) {
+				next();
+				callfunc("DM_PartyMes", "[Loki]");
+				callfunc("DM_PartyMes", "You have known which seals were touched since Geffen. You never said so out loud. I noticed that you never said so out loud.");
+			}
+		} else {
+			callfunc("DM_PartyMes", "You refused Cassell's catechism outright. Clean hands. You then opened every door he was talking about by force, which he predicted, and which he found funny.");
+		}
+		next();
+	}
+
+	// Who shows up. The turnout counter Act I has been keeping.
+	if (dm_arc19_ally_turnout > 0) {
+		callfunc("DM_PartyMes", "[Loki]");
+		if (dm_arc19_ally_turnout == 1)
+			callfunc("DM_PartyMes", "One group owes you their passage and knows it. One is not many. It is also not none, and Thanatos had none.");
+		else
+			callfunc("DM_PartyMes", "" + dm_arc19_ally_turnout + " separate groups owe you their passage and know it. Thanatos did this alone because there was nobody who would have come. That is the whole difference between his options and yours.");
+		next();
+	}
 	callfunc("DM_PartyMes", "[Loki]");
 	callfunc("DM_PartyMes", "There are five ways to close the cascade. You have done the work to make all five possible. Only you have done enough of that work to know which one is right.");
 	next();
@@ -157,7 +321,7 @@ S_FinalAudience:
 }
 
 // ── The Ash Vacuum Rift Set-piece ─────────────────────────────────────────
-moc_fild22,150,150,0	script	The Ash Vacuum Rift#dm	HIDDEN_NPC,{
+moc_fild22,170,140,0	script	The Ash Vacuum Rift#dm	HIDDEN_NPC,{
 	end;
 
 OnRiftStart:
@@ -179,30 +343,33 @@ OnRiftStop:
 
 OnTimer8000:
 	mapannounce 'rift_map$, "[Ash Vacuum Rift] The cascade hammers against the old seal.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	callfunc("DM_HazardArea", 'rift_map$, 170, 140, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	end;
 
 OnTimer16000:
 	mapannounce 'rift_map$, "[Ash Vacuum Rift] A pressure wave rolls out from Surt's focal point.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	callfunc("DM_HazardArea", 'rift_map$, 170, 140, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	end;
 
 OnTimer24000:
 	mapannounce 'rift_map$, "[Ash Vacuum Rift] The old lock flexes and nearly gives way.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	callfunc("DM_HazardArea", 'rift_map$, 170, 140, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	end;
 
 OnTimer32000:
 	mapannounce 'rift_map$, "[Ash Vacuum Rift] The rift spends its last violent surge.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'rift_map$, 150, 150, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
+	callfunc("DM_HazardArea", 'rift_map$, 170, 140, 10, 'rift_damage, 'rift_status, 'rift_status_ms, 'rift_party_id);
 	stopnpctimer;
 	end;
 
 OnSurtDead:
 	stopnpctimer;
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc19_surt", .@party))
+		end;
 	callfunc("DM_InstanceQuestComplete", 20231);
 	callfunc("DM_InstanceSetFlag", "dm_arc19_surt_defeated", 1);
-	callfunc("DM_PartyExp", 5000000, 3000000);
+	callfunc("DM_PartyExp", 5000000, 3000000, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1902);
 	if (dm_arc18_himmelmez_bargained)
 		instance_announce(instance_id(), "^3355FF[DM] Surt disperses. The focal point closes. From Niflheim, Himmelmez says nothing — but the dead stop walking north for the first time in three years.^000000", bc_all);
@@ -214,8 +381,8 @@ OnSurtDead:
 }
 
 // ── The Central Choice — The Five Paths ───────────────────────────────────
-moc_fild22,155,150,5	script	The Central Choice#dm	4_M_05,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+moc_fild22,175,140,5	script	The Central Choice#dm	4_M_05,{
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (dm_campaign_complete) {
 		callfunc("DM_PartyMes", "[The Central Choice]");
 		callfunc("DM_PartyMes", "The choice was made. The seal is different now.");
@@ -265,7 +432,8 @@ moc_fild22,155,150,5	script	The Central Choice#dm	4_M_05,{
 	callfunc("DM_PartyMes", "^FF6600[DM] The Seal Cascade ends. The party has shaped the fate of Midgard.^000000");
 	callfunc("DM_InstanceQuestComplete", 20233);
 	callfunc("DM_InstanceSetFlag", "dm_campaign_complete", 1);
-	callfunc("DM_PartyExp", 1000000, 500000);
+	if (callfunc("DM_ClaimGrant", "arc19_finale"))
+		callfunc("DM_PartyExp", 1000000, 500000);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1999);
 	announce("[DM] The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", bc_all, 0xFF6600);
 	close();

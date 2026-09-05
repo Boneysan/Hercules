@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20171 The Council of the Drowned  (arc tracker / Beelzebub)
-//=   20173 Abbey Bell Silencing        (Banshee x20)
-//=   20174 Sanctum Sweep               (Zombie Slaughter x20)
+//=   20173 Abbey Bell Silencing (Old White Cloth x6, Skull x8, Monster's Feed x8)
+//=   20174 Sanctum Sweep (Clattering Skull x9, Skel-Bone x6, Torn Magic Book x3)
 //=   20175 The Broker's Terms          (Broker Carrion)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -21,7 +21,7 @@
 
 // ── Father Quill the Doorkeeper — The Last Ward ────────────────────────────
 nameless_i,100,100,5	script	Father Quill#dm	4_M_04,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20171) == 2) {
 		callfunc("DM_PartyMes", "[Father Quill]");
 		if (dm_arc13_carrion_bribed)
@@ -92,13 +92,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20174);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Council of the Drowned]^000000");
-	callfunc("DM_PartyMes", "^3355FFAbbey Bell Silencing - silence 20 Banshee in the outer passages.^000000");
-	callfunc("DM_PartyMes", "^3355FFSanctum Sweep - clear 20 Zombie Slaughter from the inner sanctum.^000000");
+	callfunc("DM_PartyMes", "^3355FFAbbey Bell Silencing - out of the outer passages: " + callfunc("DM_HuntBrief", 20173) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFSanctum Sweep - cleared out of the inner sanctum: " + callfunc("DM_HuntBrief", 20174) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20173) == 1 && questprogress(20173, HUNTING) == 2) {
+	if (questprogress(20173) == 1 && callfunc("DM_HuntReady", 20173)) {
+		callfunc("DM_HuntCollect", 20173);
 		callfunc("DM_InstanceQuestComplete", 20173);
 		callfunc("DM_PartyExp", 380000, 185000);
 		callfunc("DM_GivePartyZeny", 32000);
@@ -123,7 +124,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20174) == 1 && questprogress(20174, HUNTING) == 2) {
+	if (questprogress(20174) == 1 && callfunc("DM_HuntReady", 20174)) {
+		callfunc("DM_HuntCollect", 20174);
 		callfunc("DM_InstanceQuestComplete", 20174);
 		callfunc("DM_PartyExp", 390000, 190000);
 		callfunc("DM_GivePartyZeny", 33000);
@@ -203,12 +205,13 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Sanctum Sweep is still open. Zombie Slaughter in the inner sanctum.");
 	else
 		callfunc("DM_PartyMes", "The passages are clear. Carrion waits at the inner gate.");
+	callfunc("DM_HuntStanding", 20173, 20174);
 	close();
 }
 
 // ── The Broker Carrion — The Deal That Shouldn't Be Tempting ───────────────
 nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc13_started) {
 		callfunc("DM_PartyMes", "[The Broker Carrion]");
 		callfunc("DM_PartyMes", "Not yet. Come back when you have seen what Father Quill is protecting.");
@@ -305,6 +308,9 @@ abbey03,150,150,0	script	Beelzebub Sanctum#dm	HIDDEN_NPC,{
 	end;
 
 OnBeelzebubDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc13_beelzebub", .@party))
+		end;
 	killmonster strnpcinfo(NPC_MAP), "Beelzebub Sanctum#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20171);
 	callfunc("DM_InstanceSetFlag", "dm_arc13_beelzebub_killed", 1);

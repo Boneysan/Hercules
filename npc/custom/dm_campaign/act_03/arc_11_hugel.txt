@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20151 When Heaven Turns          (arc tracker / Randgris)
-//=   20153 Gryphon Vigil              (Gryphon x20)
-//=   20154 Dragon Pack Dispersal      (Ferus x20)
+//=   20153 Gryphon Vigil (Talon of Griffon x8, Cyfar x3, Maneater Root x7)
+//=   20154 Dragon Pack Dispersal (Dragon Scale x7, Dragon Canine x5, Dragon Skin x5)
 //=   20155 The Zealot's Testimony     (Zealot Bjorn)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -21,7 +21,7 @@
 
 // ── Priest Eadric — The Faithful Witness ───────────────────────────────────
 hugel,100,100,5	script	Priest Eadric#dm	4_M_01,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20151) == 2) {
 		callfunc("DM_PartyMes", "[Priest Eadric]");
 		if (dm_arc11_bjorn_joined)
@@ -91,13 +91,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20154);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: When Heaven Turns]^000000");
-	callfunc("DM_PartyMes", "^3355FFGryphon Vigil - clear 20 Gryphon from the temple approach.^000000");
-	callfunc("DM_PartyMes", "^3355FFDragon Pack Dispersal - drive back 20 Ferus from the lower approach.^000000");
+	callfunc("DM_PartyMes", "^3355FFGryphon Vigil - off the temple approach: " + callfunc("DM_HuntBrief", 20153) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFDragon Pack Dispersal - off the pack on the lower approach: " + callfunc("DM_HuntBrief", 20154) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20153) == 1 && questprogress(20153, HUNTING) == 2) {
+	if (questprogress(20153) == 1 && callfunc("DM_HuntReady", 20153)) {
+		callfunc("DM_HuntCollect", 20153);
 		callfunc("DM_InstanceQuestComplete", 20153);
 		callfunc("DM_PartyExp", 300000, 145000);
 		callfunc("DM_GivePartyZeny", 25000);
@@ -122,7 +123,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20154) == 1 && questprogress(20154, HUNTING) == 2) {
+	if (questprogress(20154) == 1 && callfunc("DM_HuntReady", 20154)) {
+		callfunc("DM_HuntCollect", 20154);
 		callfunc("DM_InstanceQuestComplete", 20154);
 		callfunc("DM_PartyExp", 300000, 145000);
 		callfunc("DM_GivePartyZeny", 25000);
@@ -199,12 +201,13 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Dragon Pack Dispersal is still open. Ferus in the lower slopes.");
 	else
 		callfunc("DM_PartyMes", "The approaches are clear. Find Bjorn at the temple gate.");
+	callfunc("DM_HuntStanding", 20153, 20154);
 	close();
 }
 
 // ── Zealot Bjorn — The Man Who Was Right for the Wrong Reasons ─────────────
 hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc11_started) {
 		callfunc("DM_PartyMes", "[Zealot Bjorn]");
 		callfunc("DM_PartyMes", "Midgard sleeps. The reckoning approaches and no one watches the horizon.");
@@ -288,6 +291,9 @@ abyss_03,150,150,0	script	Valkyrie Hall#dm	HIDDEN_NPC,{
 	end;
 
 OnRandgrisDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc11_randgris", .@party))
+		end;
 	killmonster strnpcinfo(NPC_MAP), "Valkyrie Hall#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20151);
 	callfunc("DM_InstanceSetFlag", "dm_arc11_randgris_killed", 1);

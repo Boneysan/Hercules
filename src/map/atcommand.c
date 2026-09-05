@@ -1168,6 +1168,94 @@ ACMD(heal)
 	return true;
 }
 
+/**
+ * Looks an item up by display name, Aegis name or numeric ID.
+ */
+static struct item_data *atcommand_item_search(const char *name)
+{
+	struct item_data *item_data;
+	char *end;
+	long nameid;
+
+	nullpo_retr(NULL, name);
+
+	if ((item_data = itemdb->search_name(name)) != NULL)
+		return item_data;
+
+	// Only a string that is entirely numeric may be read as an ID. atoi() would
+	// take "1770 500" for item 1770 and swallow the quantity along with it.
+	nameid = strtol(name, &end, 10);
+	if (end == name || *end != '\0')
+		return NULL;
+
+	return itemdb->exists((int)nameid);
+}
+
+/**
+ * Resolves "<item name> [number]..." where an unquoted name may itself contain
+ * spaces, as `Iron Arrow 500` does.
+ *
+ * A trailing number cannot simply be assumed to be the first numeric argument:
+ * plenty of items have a display name ending in a digit ("Vesper Core 01").
+ * So the longest name that actually resolves wins - the whole argument string
+ * is tried first, then trailing integers are peeled off one at a time, at most
+ * max_numbers of them.
+ *
+ * @param message     the command's argument string.
+ * @param name        receives the name that matched, or the fully peeled
+ *                    candidate if none did.
+ * @param name_size   size of the name buffer.
+ * @param numbers     receives the peeled integers in argument order. Entries
+ *                    the player omitted keep the caller's defaults.
+ * @param max_numbers how many trailing integers this command accepts.
+ * @param peeled_out  if not NULL, receives how many integers were peeled.
+ * @return the matched item, or NULL if no split resolves.
+ */
+static struct item_data *atcommand_item_parse(const char *message, char *name, size_t name_size, int *numbers, int max_numbers, int *peeled_out)
+{
+	int peeled[16];
+	int count = 0;
+	int i;
+	char *tail;
+
+	nullpo_retr(NULL, message);
+	nullpo_retr(NULL, name);
+	nullpo_retr(NULL, numbers);
+	Assert_retr(NULL, max_numbers >= 0 && max_numbers <= ARRAYLENGTH(peeled));
+
+	safestrncpy(name, message, name_size);
+	for (tail = name + strlen(name); tail > name && ISSPACE(*(tail - 1)); --tail)
+		*(tail - 1) = '\0';
+
+	for (;;) {
+		struct item_data *item_data = atcommand_item_search(name);
+		char *end;
+		long value;
+
+		if (item_data != NULL) {
+			// The integers came off right to left, so hand them back reversed.
+			for (i = 0; i < count; i++)
+				numbers[count - 1 - i] = peeled[i];
+			if (peeled_out != NULL)
+				*peeled_out = count;
+			return item_data;
+		}
+
+		if (count == max_numbers)
+			return NULL;
+		if ((tail = strrchr(name, ' ')) == NULL)
+			return NULL;
+
+		value = strtol(tail + 1, &end, 10);
+		if (end == tail + 1 || *end != '\0')
+			return NULL; // The tail is part of a name that did not resolve.
+
+		peeled[count++] = (int)value;
+		for (*tail = '\0'; tail > name && ISSPACE(*(tail - 1)); --tail)
+			*(tail - 1) = '\0';
+	}
+}
+
 /*==========================================
  * @item command (usage: @item <name/id_of_item> <quantity>) (modified by [Yor] for pet_egg)
  * @itembound command (usage: @itembound <name/id_of_item> <quantity> <bound type>) (revised by [Mhalicot])
@@ -1179,34 +1267,35 @@ ACMD(item)
 	struct item item_tmp;
 	struct item_data *item_data;
 	int get_count, i;
+	bool is_bound = (strcmpi(info->command, "itembound") == 0);
+	int numbers[2] = { 0, 0 }; // quantity, bound type
 
 	memset(item_name, '\0', sizeof(item_name));
 
-	if (!strcmpi(info->command, "itembound") && (!*message || (
-		sscanf(message, "\"%99[^\"]\" %12d %12d", item_name, &number, &bound) < 1 &&
-		sscanf(message, "%99s %12d %12d", item_name, &number, &bound) < 1
-		))) {
-		clif->message(fd, msg_fd(fd, MSGTBL_ITEMBOUND_USAGE)); // Please enter an item name or ID (usage: @itembound <item name/ID> <quantity> <bound_type>).
-		return false;
-	} else if (!*message
-		|| (sscanf(message, "\"%99[^\"]\" %12d", item_name, &number) < 1
-			&& sscanf(message, "%99s %12d", item_name, &number) < 1
-			)) {
-		clif->message(fd, msg_fd(fd, MSGTBL_ITEM_ENTER_NAME_OR_ID)); // Please enter an item name or ID (usage: @item <item name/ID> <quantity>).
+	if (!*message) {
+		// Please enter an item name or ID (usage: @item[bound] <item name/ID> <quantity> [<bound_type>]).
+		clif->message(fd, msg_fd(fd, is_bound ? MSGTBL_ITEMBOUND_USAGE : MSGTBL_ITEM_ENTER_NAME_OR_ID));
 		return false;
 	}
+
+	if (sscanf(message, "\"%99[^\"]\" %12d %12d", item_name, &numbers[0], &numbers[1]) >= 1)
+		item_data = atcommand_item_search(item_name);
+	else
+		item_data = atcommand_item_parse(message, item_name, sizeof(item_name), numbers, is_bound ? 2 : 1, NULL);
+
+	number = numbers[0];
+	if (is_bound)
+		bound = numbers[1];
 
 	if (number <= 0)
 		number = 1;
 
-	if ((item_data = itemdb->search_name(item_name)) == NULL &&
-		(item_data = itemdb->exists(atoi(item_name))) == NULL)
-	{
+	if (item_data == NULL) {
 		clif->message(fd, msg_fd(fd, MSGTBL_INVALID_ITEMID_NAME)); // Invalid item ID or name.
 		return false;
 	}
 
-	if (!strcmpi(info->command, "itembound")) {
+	if (is_bound) {
 		if (!(bound >= IBT_MIN && bound <= IBT_MAX)) {
 			clif->message(fd, msg_fd(fd, MSGTBL_ITEMBOUND_INVALID_TYPE)); // Invalid bound type
 			return false;
@@ -1269,38 +1358,62 @@ ACMD(item2)
 	struct item item_tmp;
 	struct item_data *item_data;
 	char item_name[100];
-	int item_id, number = 0, bound = 0;
-	int identify = 1, refine_level = 0, attr = ATTR_NONE;
-	int c1 = 0, c2 = 0, c3 = 0, c4 = 0;
+	int item_id, number, bound;
+	int identify, refine_level, attr;
+	int c1, c2, c3, c4;
+	bool is_bound = (strcmpi(info->command, "itembound2") == 0);
+	// quantity, identify flag, refine, attribute, card1-4, bound type
+	int numbers[9] = { 0, 1, 0, ATTR_NONE, 0, 0, 0, 0, 0 };
+	int peeled = 0;
 
 	memset(item_name, '\0', sizeof(item_name));
 
-	if (!strcmpi(info->command, "itembound2") && (!*message || (
-		sscanf(message, "\"%99[^\"]\" %12d %12d %12d %12d %12d %12d %12d %12d %12d", item_name, &number, &identify, &refine_level, &attr, &c1, &c2, &c3, &c4, &bound) < 10 &&
-		sscanf(message, "%99s %12d %12d %12d %12d %12d %12d %12d %12d %12d", item_name, &number, &identify, &refine_level, &attr, &c1, &c2, &c3, &c4, &bound) < 10))) {
+	if (!*message) {
+		if (is_bound) {
+			clif->message(fd, msg_fd(fd, MSGTBL_ITEMBOUND2_USAGE)); // Please enter all parameters (usage: @itembound2 <item name/ID> <quantity>
+			clif->message(fd, msg_fd(fd, MSGTBL_ITEMBOUND_USAGE2)); //   <identify_flag> <refine> <attribute> <card1> <card2> <card3> <card4> <bound_type>).
+		} else {
+			clif->message(fd, msg_fd(fd, MSGTBL_ITEM2_ENTER_ALL_PARAM)); // Please enter all parameters (usage: @item2 <item name/ID> <quantity>
+			clif->message(fd, msg_fd(fd, MSGTBL_ITEM2_PARAMETERS)); //   <identify_flag> <refine> <attribute> <card1> <card2> <card3> <card4>).
+		}
+		return false;
+	}
+
+	if ((peeled = sscanf(message, "\"%99[^\"]\" %12d %12d %12d %12d %12d %12d %12d %12d %12d", item_name, &numbers[0], &numbers[1],
+			&numbers[2], &numbers[3], &numbers[4], &numbers[5], &numbers[6], &numbers[7], &numbers[8])) >= 1) {
+		item_data = atcommand_item_search(item_name);
+		peeled--; // The name is not one of the numeric arguments.
+	} else {
+		item_data = atcommand_item_parse(message, item_name, sizeof(item_name), numbers, is_bound ? 9 : 8, &peeled);
+	}
+
+	// @itembound2 still requires every parameter, since the bound type is last.
+	if (is_bound && peeled < 9) {
 		clif->message(fd, msg_fd(fd, MSGTBL_ITEMBOUND2_USAGE)); // Please enter all parameters (usage: @itembound2 <item name/ID> <quantity>
 		clif->message(fd, msg_fd(fd, MSGTBL_ITEMBOUND_USAGE2)); //   <identify_flag> <refine> <attribute> <card1> <card2> <card3> <card4> <bound_type>).
 		return false;
-	} else if (!*message
-		|| (sscanf(message, "\"%99[^\"]\" %12d %12d %12d %12d %12d %12d %12d %12d", item_name, &number, &identify, &refine_level, &attr, &c1, &c2, &c3, &c4) < 1
-			&& sscanf(message, "%99s %12d %12d %12d %12d %12d %12d %12d %12d", item_name, &number, &identify, &refine_level, &attr, &c1, &c2, &c3, &c4) < 1
-			)) {
-		clif->message(fd, msg_fd(fd, MSGTBL_ITEM2_ENTER_ALL_PARAM)); // Please enter all parameters (usage: @item2 <item name/ID> <quantity>
-		clif->message(fd, msg_fd(fd, MSGTBL_ITEM2_PARAMETERS)); //   <identify_flag> <refine> <attribute> <card1> <card2> <card3> <card4>).
-		return false;
 	}
+
+	number = numbers[0];
+	identify = numbers[1];
+	refine_level = numbers[2];
+	attr = numbers[3];
+	c1 = numbers[4];
+	c2 = numbers[5];
+	c3 = numbers[6];
+	c4 = numbers[7];
+	bound = numbers[8];
 
 	if (number <= 0)
 		number = 1;
 
-	if (!strcmpi(info->command, "itembound2") && !(bound >= IBT_MIN && bound <= IBT_MAX)) {
+	if (is_bound && !(bound >= IBT_MIN && bound <= IBT_MAX)) {
 		clif->message(fd, msg_fd(fd, MSGTBL_ITEMBOUND_INVALID_TYPE)); // Invalid bound type
 		return false;
 	}
 
 	item_id = 0;
-	if ((item_data = itemdb->search_name(item_name)) != NULL ||
-		(item_data = itemdb->exists(atoi(item_name))) != NULL)
+	if (item_data != NULL)
 		item_id = item_data->nameid;
 
 	if (item_id > 500) {

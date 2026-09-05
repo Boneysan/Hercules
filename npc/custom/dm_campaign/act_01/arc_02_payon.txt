@@ -14,8 +14,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20007 The Sleeping Forest       (arc tracker)
-//=   20008 Mushroom Ring Patrol      (Spore x20)
-//=   20009 Bone Tag Turn-In          (Skeleton x15)
+//=   20008 Mushroom Ring Patrol (Mushroom Spore x13, Pointed Scale x9, Green Herb x10)
+//=   20009 Bone Tag Turn-In (Skel-Bone x4, Decayed Nail x7, Sticky Mucus x5)
 //=   20010 Lanterns for the Lost     (story branch)
 //=   20011 The Emptied Graves        (investigation)
 //=   20012 What the Ancestors Won't Say (Moonlight Flower)
@@ -31,7 +31,7 @@
 
 // Sun-Hwa - shrine-medium and Arc 2 quest-giver
 payon,181,104,4	script	Sun-Hwa#dm	4_F_THAISHAMAN,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20012) == 2) {
 		callfunc("DM_PartyMes", "[Sun-Hwa]");
 		if (dm_arc02_grove_restored)
@@ -99,13 +99,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20009);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Sleeping Forest]^000000");
-	callfunc("DM_PartyMes", "^3355FFMushroom Ring Patrol - cull 20 Spores near Payon.^000000");
-	callfunc("DM_PartyMes", "^3355FFBone Tag Turn-In - cull 15 Skeletons in Payon Cave F1.^000000");
+	callfunc("DM_PartyMes", "^3355FFMushroom Ring Patrol - gathered from the woods around Payon: " + callfunc("DM_HuntBrief", 20008) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFBone Tag Turn-In - carried up out of Payon Cave F1: " + callfunc("DM_HuntBrief", 20009) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20008) == 1 && questprogress(20008, HUNTING) == 2) {
+	if (questprogress(20008) == 1 && callfunc("DM_HuntReady", 20008)) {
+		callfunc("DM_HuntCollect", 20008);
 		callfunc("DM_InstanceQuestComplete", 20008);
 		callfunc("DM_PartyExp", 7000, 2800);
 		callfunc("DM_GivePartyZeny", 2500);
@@ -133,7 +134,8 @@ S_TurnIns:
 		}
 		next();
 	}
-	if (questprogress(20009) == 1 && questprogress(20009, HUNTING) == 2) {
+	if (questprogress(20009) == 1 && callfunc("DM_HuntReady", 20009)) {
+		callfunc("DM_HuntCollect", 20009);
 		callfunc("DM_InstanceQuestComplete", 20009);
 		callfunc("DM_PartyExp", 9000, 3500);
 		callfunc("DM_GivePartyZeny", 3000);
@@ -265,12 +267,13 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "The cave points down. If you can, sever the conduits before you strike the Flower.");
 	else
 		callfunc("DM_PartyMes", "Clear the rings, gather the bone tags, and come back before the incense burns blue again.");
+	callfunc("DM_HuntStanding", 20008, 20009);
 	close();
 }
 
 // Scholar Voss - human villain and Moonlight Flower set-piece
 pay_dun04,120,115,4	script	Scholar Voss#dm	4_M_SCIENCE,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20012) != 1) {
 		if (questprogress(20012) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*The grove is bruised but quiet. Voss's neat chalk circles are scuffed into useless dust.*^000000");
@@ -377,6 +380,9 @@ OnAddKilled:
 	end;
 
 OnMoonlightDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc02_moonlight", .@party))
+		end;
 	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Scholar Voss#dm::OnAddKilled";

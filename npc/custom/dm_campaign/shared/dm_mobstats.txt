@@ -1,0 +1,65 @@
+//===== Seal Cascade Campaign ================================
+//= Encounter mob stats — GENERATED, DO NOT EDIT BY HAND
+//===== Description: =========================================
+//= Regenerate with ./tools/gen-encounter-stats.py after changing
+//= the encounter table or mob_db. ./tools/gen-encounter-stats.py
+//= --check fails if this file has drifted.
+//=
+//= DPS is mean hit x attacks per second, computed from Attack and
+//= AttackDelay in db/re/mob_db.conf. It is NOT the PhysDPS field
+//= in korangar/docs/bestiary.json, which discards AttackDelay and
+//= therefore rates a 140ms attacker the same as an 1816ms one.
+//=
+//= EHP is hp * (1 + Def/100) — a rough durability ordering, not a
+//= damage simulation.
+//===========================================================
+
+// DM_MobStat(<mob id>, <field>)
+//   0 name  1 level  2 hp  3 ehp  4 dps  5 is_mvp
+function	script	DM_MobStat	{
+	.@id = getarg(0);
+	.@f = getarg(1);
+
+	if (.@id == 1109)
+		setarray .@s$[0], "Deviruchi", "93", "8912", "15329", "336", "0";
+	else if (.@id == 1132)
+		setarray .@s$[0], "Khalitzburg", "118", "23986", "53968", "1258", "0";
+	else if (.@id == 1163)
+		setarray .@s$[0], "Raydric", "115", "18408", "34791", "605", "0";
+	else if (.@id == 1175)
+		setarray .@s$[0], "Tarou", "22", "420", "517", "22", "0";
+	else if (.@id == 1178)
+		setarray .@s$[0], "Zerom", "70", "2687", "5186", "103", "0";
+	else if (.@id == 1192)
+		setarray .@s$[0], "Wraith", "77", "5168", "9302", "118", "0";
+	else if (.@id == 1268)
+		setarray .@s$[0], "Bloody Knight", "116", "68500", "152070", "871", "0";
+	else if (.@id == 1297)
+		setarray .@s$[0], "Ancient Mummy", "114", "27157", "52413", "333", "0";
+	else if (.@id == 1735)
+		setarray .@s$[0], "Alicel", "115", "18000", "37620", "625", "0";
+	else if (.@id == 1736)
+		setarray .@s$[0], "Aliot", "112", "15669", "32278", "440", "0";
+	else if (.@id == 1737)
+		setarray .@s$[0], "Aliza", "112", "14450", "28611", "430", "0";
+	else if (.@id == 1754)
+		setarray .@s$[0], "Skeggiold", "131", "53290", "98586", "1060", "0";
+	else if (.@id == 1761)
+		setarray .@s$[0], "Skogul", "126", "34240", "58893", "1016", "0";
+	else if (.@id == 1833)
+		setarray .@s$[0], "Kasa", "135", "70128", "143061", "1132", "0";
+	else if (.@id == 1836)
+		setarray .@s$[0], "Magmaring", "110", "13079", "37929", "314", "0";
+	else if (.@id == 1837)
+		setarray .@s$[0], "Imp", "129", "36830", "57455", "998", "0";
+	else if (.@id == 1864)
+		setarray .@s$[0], "Zombie Slaughter", "124", "40440", "80880", "967", "0";
+	else if (.@id == 1868)
+		setarray .@s$[0], "Banshee", "130", "48666", "84192", "1270", "0";
+	else if (.@id == 1870)
+		setarray .@s$[0], "Necromancer", "133", "91304", "167999", "651", "0";
+	else
+		return "";
+
+	return .@s$[.@f];
+}

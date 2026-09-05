@@ -11,8 +11,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20211 Illusion Investigation    (arc tracker / Amdarais)
-//=   20212 Sages Legacy              (Aliza x20)
-//=   20213 Tartaros Dive             (Celia x15)
+//=   20212 Sages Legacy (Brigan x7, Solid Iron Piece x4, Smoke Powder x3)
+//=   20213 Tartaros Dive (Handcuffs x5, Research Chart x5, Blood Thirst x2)
 //=   20214 Biosphere Sample Rotation (The Administrator)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -23,7 +23,7 @@
 
 // ── Doctor Mira Tressa — The Archaeologist ─────────────────────────────────
 ba_in01,100,100,5	script	Doctor Mira Tressa#dm	4_F_03,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20211) == 2) {
 		callfunc("DM_PartyMes", "[Doctor Mira Tressa]");
 		if (dm_arc17_admin_running)
@@ -90,13 +90,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20213);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Illusion Investigation]^000000");
-	callfunc("DM_PartyMes", "^3355FFSages Legacy - contain 20 Aliza escaped from the outer lab sections.^000000");
-	callfunc("DM_PartyMes", "^3355FFTartaros Dive - disable 15 Celia security constructs in the inner corridors.^000000");
+	callfunc("DM_PartyMes", "^3355FFSages Legacy - out of the outer lab sections: " + callfunc("DM_HuntBrief", 20212) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFTartaros Dive - out of the inner corridors: " + callfunc("DM_HuntBrief", 20213) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20212) == 1 && questprogress(20212, HUNTING) == 2) {
+	if (questprogress(20212) == 1 && callfunc("DM_HuntReady", 20212)) {
+		callfunc("DM_HuntCollect", 20212);
 		callfunc("DM_InstanceQuestComplete", 20212);
 		callfunc("DM_PartyExp", 530000, 265000);
 		callfunc("DM_GivePartyZeny", 43000);
@@ -121,7 +122,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20213) == 1 && questprogress(20213, HUNTING) == 2) {
+	if (questprogress(20213) == 1 && callfunc("DM_HuntReady", 20213)) {
+		callfunc("DM_HuntCollect", 20213);
 		callfunc("DM_InstanceQuestComplete", 20213);
 		callfunc("DM_PartyExp", 560000, 280000);
 		callfunc("DM_GivePartyZeny", 45000);
@@ -186,12 +188,13 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Tartaros Dive is still open. Celia constructs in the inner corridors.");
 	else
 		callfunc("DM_PartyMes", "Both done. The Administrator's terminal is in ba_pw03.");
+	callfunc("DM_HuntStanding", 20212, 20213);
 	close();
 }
 
 // ── The Administrator — The System That Outlived Its Designer ─────────────
 ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc17_started) {
 		callfunc("DM_PartyMes", "[The Administrator]");
 		callfunc("DM_PartyMes", "Unauthorized access detected. State purpose.");
@@ -283,6 +286,9 @@ ba_pw03,150,150,0	script	Biosphere Core#dm	HIDDEN_NPC,{
 	end;
 
 OnBetaDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc17_beta", .@party))
+		end;
 	callfunc("DM_InstanceQuestComplete", 20211);
 	callfunc("DM_InstanceSetFlag", "dm_arc17_beta_killed", 1);
 	callfunc("DM_PartyExp", 2000000, 1000000);

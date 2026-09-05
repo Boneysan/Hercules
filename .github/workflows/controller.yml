@@ -1,32 +1,45 @@
 name: controller
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  # Weekly, so the fork keeps getting built even in quiet weeks -- advisories
+  # and toolchain drift land against code that has not changed.
+  #
+  # NOTE: GitHub reads `schedule` ONLY from the default branch (`stable` here).
+  # While this sits on an agent branch it will never fire, no matter how the
+  # cron is written. The same trap cost the paired korangar repo a scheduled
+  # integration run that had never once executed.
+  schedule:
+    - cron: "41 9 * * 1"
+
+# Never let a scheduled run pile up on a slow week.
+concurrency:
+  group: controller-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  hwsapibot:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-    uses: ./.github/workflows/hwsapibot.yml
-    secrets: inherit
+  # `hwsapibot` is upstream's build-stats reporter, gated to pushes on `master`
+  # -- a branch this fork does not have -- so it could never run here. Dropped
+  # rather than carried as a permanently-skipped job that can still fail the
+  # whole workflow at startup.
   codeql:
-    needs: hwsapibot
     if: ${{ !failure() && !cancelled() }}
+    # A called workflow cannot request more than its caller grants, and
+    # codeql-analysis.yml needs `security-events: write` to upload results. The
+    # caller has to hand it down explicitly.
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     uses: ./.github/workflows/codeql-analysis.yml
   tools:
-    needs: hwsapibot
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/tools.yml
   build:
     needs: tools
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/build.yml
-#  clang_test:
-#    needs: build
-#    if: ${{ !failure() && !cancelled() }}
-#    uses: ./.github/workflows/clang_test.yml
-#  gcc_test:
-#    needs: build
-#    if: ${{ !failure() && !cancelled() }}
-#    uses: ./.github/workflows/gcc_test.yml
   gccsnapshot_test:
     needs: build
     if: ${{ !failure() && !cancelled() }}
@@ -35,19 +48,3 @@ jobs:
     needs: build
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/mariadb.yml
-#  mysql:
-#    needs: build
-#    if: ${{ !failure() && !cancelled() }}
-#    uses: ./.github/workflows/mysql.yml
-#  macos_latest:
-#    needs: build
-#    if: ${{ !failure() && !cancelled() }}
-#    uses: ./.github/workflows/macos_latest.yml
-#  macos_m1:
-#    needs: build
-#    if: ${{ !failure() && !cancelled() }}
-#    uses: ./.github/workflows/macos_m1.yml
-#  windows:
-#    needs: build
-#    if: ${{ !failure() && !cancelled() }}
-#    uses: ./.github/workflows/windows.yml

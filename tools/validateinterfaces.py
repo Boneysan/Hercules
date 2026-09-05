@@ -36,6 +36,14 @@ ignoreMethods = (
     "map_zone_mf_cache_add",
     "mob_parse_dbrow_cap_value",
     "clif_calc_delay",
+    # Fork-local static helpers. They are private to their .c file and are not
+    # interface methods, but their names start with an interface prefix, which
+    # is all this check looks at -- the same reason `mob_parse_dbrow_cap_value`
+    # and `map_bl_list_expand` are listed above.
+    "atcommand_item_search",
+    "atcommand_item_parse",
+    "mob_dm_mode_should_suppress",
+    "mob_dm_mode_delay_spawn",
 )
 
 # need fix all this names, or add them to ignoreMethods

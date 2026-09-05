@@ -10334,6 +10334,10 @@ static int pc_equipitem(struct map_session_data *sd, int n, int req_pos)
 	if (pos == EQP_AMMO) {
 		clif->arrowequip(sd, n);
 		clif->arrow_fail(sd, 3);
+		// Korangar fork: arrowequip only reaches the wearer, so tell everyone
+		// nearby too — otherwise a remote archer's arrows can only ever be drawn
+		// as the generic one. Cosmetic; see LOOK_AMMO in map.h.
+		clif->changelook(&sd->bl, LOOK_AMMO, sd->status.inventory[n].nameid);
 	} else {
 		clif->equipitemack(sd, n, pos, EIA_SUCCESS);
 	}
@@ -10528,6 +10532,11 @@ static int pc_unequipitem(struct map_session_data *sd, int n, int flag)
 
 	pc->unequipitem_pos(sd, n, pos);
 	clif->unequipitemack(sd, n, pos, UIA_SUCCESS);
+
+	// Korangar fork: clear the broadcast ammo so onlookers stop drawing the old
+	// arrow. Paired with the LOOK_AMMO broadcast in pc_equipitem.
+	if ((pos & EQP_AMMO) != 0)
+		clif->changelook(&sd->bl, LOOK_AMMO, 0);
 
 	status_change_end(&sd->bl, SC_HEAT_BARREL, INVALID_TIMER);
 	if ((pos & EQP_ARMS) != 0 && sd->weapontype1 == W_FIST && sd->weapontype2 == W_FIST

@@ -12,6 +12,146 @@ function	script	DM_RequireDM	{
 	return 0;
 }
 
+// Session is active only when a real party owns it. Party 0 used to match
+// every unpartied player (0 == 0) and unlocked the campaign for the whole map.
+function	script	DM_SessionAllows	{
+	return $dm_mode && $dm_active_party > 0 && getcharid(CHAR_ID_PARTY) == $dm_active_party;
+}
+
+function	script	DM_SessionParty	{
+	if ($dm_mode && $dm_active_party > 0)
+		return $dm_active_party;
+	return getcharid(CHAR_ID_PARTY);
+}
+
+// Hercules treats $ inside a quoted string as a variable, so a regex $
+// anchor cannot be written. Walk the name instead.
+function	script	DM_IsIdentChar	{
+	.@c$ = getarg(0);
+	if (.@c$ == "_")
+		return 1;
+	if (.@c$ >= "0" && .@c$ <= "9")
+		return 1;
+	if (.@c$ >= "A" && .@c$ <= "Z")
+		return 1;
+	if (.@c$ >= "a" && .@c$ <= "z")
+		return 1;
+	return 0;
+}
+
+function	script	DM_ValidFlagName	{
+	.@flag$ = getarg(0);
+	.@len = getstrlen(.@flag$);
+	if (.@len < 4)
+		return 0;
+	if (substr(.@flag$, 0, 2) != "dm_")
+		return 0;
+	for (.@i = 3; .@i < .@len; ++.@i) {
+		if (!callfunc("DM_IsIdentChar", substr(.@flag$, .@i, .@i)))
+			return 0;
+	}
+	return 1;
+}
+
+function	script	DM_ValidGrantKey	{
+	.@key$ = getarg(0);
+	.@len = getstrlen(.@key$);
+	if (.@len < 1)
+		return 0;
+	for (.@i = 0; .@i < .@len; ++.@i) {
+		if (!callfunc("DM_IsIdentChar", substr(.@key$, .@i, .@i)))
+			return 0;
+	}
+	return 1;
+}
+
+// Party-scoped "already paid" latch. Set before the grant. Returns 1 the first
+// time this party claims the key, 0 afterwards. Cleared when @dmmode turns off.
+function	script	DM_ClaimGrant	{
+	.@key$ = getarg(0);
+	.@party_id = getarg(1, callfunc("DM_SessionParty"));
+
+	if (!callfunc("DM_ValidGrantKey", .@key$))
+		return 0;
+	if (.@party_id <= 0)
+		return 0;
+
+	.@var$ = "$dm_paid_" + .@party_id + "_" + .@key$;
+	if (getd(.@var$))
+		return 0;
+	setd(.@var$, 1);
+	return 1;
+}
+
+function	script	DM_ClearPartyGrants	{
+	.@party_id = getarg(0, $dm_active_party);
+	if (.@party_id <= 0)
+		return 0;
+	// query_sql is unused in campaign scripts; drop matching $dm_paid_* vars
+	// by walking the well-known grant keys instead of enumerating the VM.
+	setarray .@keys$[0],
+		"sigil_ring", "arc01_deviruchi",
+		"arc02_moonlight",
+		"arc03_osiris", "arc03_amon",
+		"arc04_baphomet", "arc04_doppel",
+		"arc05_tao", "arc05_crew",
+		"arc06_krenn_zeny", "arc06_mistress",
+		"arc07_rsx",
+		"arc08_darklord",
+		"arc09_gloom",
+		"arc10_kiel",
+		"arc11_randgris",
+		"arc12_naght",
+		"arc13_beelzebub",
+		"arc14_ifrit",
+		"arc15_thanatos",
+		"arc16_bijou",
+		"arc17_beta",
+		"arc19_surt", "arc19_finale";
+	.@n = getarraysize(.@keys$);
+	for (.@i = 0; .@i < .@n; ++.@i)
+		setd("$dm_paid_" + .@party_id + "_" + .@keys$[.@i], 0);
+	return 1;
+}
+
+function	script	DM_IsCampaignQuest	{
+	.@quest_id = getarg(0);
+	return .@quest_id >= 20001 && .@quest_id <= 20233;
+}
+
+function	script	DM_IsCampaignMap	{
+	.@map$ = getarg(0);
+	if (.@map$ == "")
+		return 0;
+	// Towns the campaign actually uses, plus the set-piece maps. Not every
+	// official map — @dminstance start prontera used to clone Kafras and shops.
+	setarray .@maps$[0],
+		"prontera", "prt_sewb4", "prt_fild08",
+		"payon", "pay_arche", "pay_dun04",
+		"morocc", "moc_ruins", "moc_pryd06", "moc_fild16", "moc_fild22",
+		"geffen", "gef_dun02", "gef_fild10",
+		"alberta", "izlude", "iz_dun04",
+		"yuno", "yuno_fild07", "juperos_01",
+		"einbroch", "einbech", "ein_dun02",
+		"glast_01", "gl_cas02", "gl_chyard",
+		"rachel", "ra_san05", "ra_temple",
+		"lighthalzen", "lhz_dun03", "lhz_in01",
+		"hugel", "odin_tem03",
+		"splendide", "mid_camp", "man_fild01",
+		"nameless_n", "abbey03",
+		"veins", "thor_v03",
+		"thana_step", "tha_t12",
+		"prt_cas", "prt_lib",
+		"ba_in01", "ba_maison",
+		"niflheim", "nif_fild02";
+	.@n = getarraysize(.@maps$);
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		if (.@maps$[.@i] == .@map$)
+			return 1;
+	}
+	return 0;
+}
+
 function	script	DM_CurrentParty	{
 	return getcharid(CHAR_ID_PARTY);
 }
@@ -119,9 +259,12 @@ function	script	DM_TriggerEvent	{
 
 	.@party_id = getcharid(CHAR_ID_PARTY);
 	if (.@party_id > 0) {
-		.@iid = getd("$dm_inst_" + .@party_id);
-		if (.@iid > 0) {
-			.@inst_npc$ = instance_npcname(.@npc$, .@iid);
+		.@stored = getd("$dm_inst_" + .@party_id);
+		if (.@stored > 0) {
+			// Storage is iid + 1 so instance 0 is trackable. instance_npcname
+			// wants the real id; passing the stored value fired the next
+			// party's clone (or a missing dup_1_* on the first instance).
+			.@inst_npc$ = instance_npcname(.@npc$, .@stored - 1);
 			if (.@inst_npc$ != "")
 				.@npc$ = .@inst_npc$;
 		}

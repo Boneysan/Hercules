@@ -7766,6 +7766,7 @@ static const struct config_data_old battle_data[] = {
 	{ "view_range_rate",                    &battle_config.view_range_rate,                 100,    0,      INT_MAX,        },
 	{ "chase_range_rate",                   &battle_config.chase_range_rate,                100,    0,      INT_MAX,        },
 	{ "gtb_sc_immunity",                    &battle_config.gtb_sc_immunity,                 50,     0,      INT_MAX,        },
+	{ "hermode_requires_warp",              &battle_config.hermode_requires_warp,           0,      0,      1,              },
 	{ "guild_max_castles",                  &battle_config.guild_max_castles,               0,      0,      INT_MAX,        },
 	{ "guild_skill_relog_delay",            &battle_config.guild_skill_relog_delay,         0,      0,      2,              },
 	{ "emergency_call",                     &battle_config.emergency_call,                  11,     0,      31,             },

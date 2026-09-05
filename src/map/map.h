@@ -802,6 +802,22 @@ enum look {
 #endif
 };
 
+/// Korangar fork addition: broadcast the wearer's equipped ammunition item id
+/// so remote archers' arrows can be drawn as the ammo they actually loaded.
+///
+/// This reuses `LOOK_FLOOR`, one of the two slots Hercules marks "unknown
+/// purpose" and never sends (see the dead `case` in `clif_changelook`), rather
+/// than adding a packet or an enum value:
+///
+/// - `0x0F00` is exactly `MAX_PACKET_DB`, so there is no id left for a new
+///   packet without resizing `packets->db`.
+/// - A new `enum look` member would raise `LOOK_MAX`, which is
+///   `MAX_STYLIST_TYPE` (`map/stylist.h`), silently resizing stylist storage.
+///
+/// The official client ignores this look type; only the Korangar client reads
+/// it. Cosmetic only.
+#define LOOK_AMMO LOOK_FLOOR
+
 // used by map_setcell()
 typedef enum {
 	CELL_WALKABLE,

@@ -13,16 +13,16 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20019 The City Above the Beast   (arc tracker)
-//=   20020 Tower Apprentice Drills    (Poison Spore x20)
-//=   20021 Orc Village Bounty         (Orc Warrior x20)
-//=   20022 Argiope Silk Run           (Argiope x20)
+//=   20020 Tower Apprentice Drills (Poison Spore x13, Sticky Mucus x9, Solid Shell x9)
+//=   20021 Orc Village Bounty (Orcish Voucher x13, Cyfar x8, Milk x8)
+//=   20022 Argiope Silk Run (Bug Leg x9, Cobweb x13, Maneater Blossom x13)
 //=   20023 The Vault That Prays       (Baphomet)
 //=   20024 The Pilgrim's Offer        (story)
 //===========================================================
 
 // Apprentice Elsbeth - Geffen ally and Arc 4 support handler
 geffen,120,100,4	script	Apprentice Elsbeth#dm	4_F_01,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20024) == 2) {
 		callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
 		if (dm_arc04_seal_reinforced)
@@ -94,14 +94,15 @@ S_StartArc:
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 401);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The City Above the Beast]^000000");
-	callfunc("DM_PartyMes", "^3355FFTower Apprentice Drills - clear 20 Poison Spores from Geffen's training route.^000000");
-	callfunc("DM_PartyMes", "^3355FFOrc Village Bounty - break 20 Orc Warriors at the village edge.^000000");
-	callfunc("DM_PartyMes", "^3355FFArgiope Silk Run - gather black silk evidence from 20 Argiope.^000000");
+	callfunc("DM_PartyMes", "^3355FFTower Apprentice Drills - off Geffen's training route: " + callfunc("DM_HuntBrief", 20020) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFOrc Village Bounty - taken at the village edge: " + callfunc("DM_HuntBrief", 20021) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFArgiope Silk Run - cut from the Mjolnir spider woods: " + callfunc("DM_HuntBrief", 20022) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20020) == 1 && questprogress(20020, HUNTING) == 2) {
+	if (questprogress(20020) == 1 && callfunc("DM_HuntReady", 20020)) {
+		callfunc("DM_HuntCollect", 20020);
 		callfunc("DM_InstanceQuestComplete", 20020);
 		callfunc("DM_PartyExp", 38000, 17000);
 		callfunc("DM_GivePartyZeny", 5500);
@@ -131,7 +132,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20021) == 1 && questprogress(20021, HUNTING) == 2) {
+	if (questprogress(20021) == 1 && callfunc("DM_HuntReady", 20021)) {
+		callfunc("DM_HuntCollect", 20021);
 		callfunc("DM_InstanceQuestComplete", 20021);
 		callfunc("DM_PartyExp", 52000, 23000);
 		callfunc("DM_GivePartyZeny", 6500);
@@ -161,7 +163,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20022) == 1 && questprogress(20022, HUNTING) == 2) {
+	if (questprogress(20022) == 1 && callfunc("DM_HuntReady", 20022)) {
+		callfunc("DM_HuntCollect", 20022);
 		callfunc("DM_InstanceQuestComplete", 20022);
 		callfunc("DM_PartyExp", 62000, 28000);
 		callfunc("DM_GivePartyZeny", 8000);
@@ -215,12 +218,13 @@ S_TurnIns:
 
 	callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
 	callfunc("DM_PartyMes", "Bring back the chalk sigil, orc banner, and black silk. Geffen's problem is hiding in its chores.");
+	callfunc("DM_HuntStanding", 20020, 20021, 20022);
 	close();
 }
 
 // Archmagus Doran - human villain and lower-vault gate
 gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20023) != 1) {
 		if (questprogress(20023) == 2) {
 			callfunc("DM_PartyMes", "[Archmagus Doran]");
@@ -282,7 +286,7 @@ OnInit:
 
 // Baphomet's Seal - main Geffen set-piece
 gef_dun02,214,212,4	script	Baphomet's Seal#dm	4_ENERGY_RED,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20023) != 1) {
 		if (questprogress(20023) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*The cracked keystone still hums where the beast struck it.*^000000");
@@ -362,6 +366,9 @@ OnDoppelDead:
 	end;
 
 OnBaphometDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc04_baphomet", .@party))
+		end;
 	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Baphomet's Seal#dm::OnAddDead";
@@ -383,7 +390,7 @@ OnInit:
 
 // Brother Cassell - the Pilgrim's Offer
 gef_dun02,218,210,4	script	Brother Cassell#dm04	4_M_MONK,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20024) == 2) {
 		callfunc("DM_PartyMes", "[Brother Cassell]");
 		callfunc("DM_PartyMes", "You have already chosen what to do with a key when the door begs to stay closed.");
@@ -475,7 +482,7 @@ OnTimer15000:
 
 // ── Vault Outer Seal Puzzle ────────────────────────────────────────────────
 gef_dun02,219,212,4	script	East Seal Glyph#dm	4_ENERGY_WHITE,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
 		callfunc("DM_PartyMes", "[East Glyph]");
 		callfunc("DM_PartyMes", "The glyph burns with a steady blue light.");
@@ -497,7 +504,7 @@ gef_dun02,219,212,4	script	East Seal Glyph#dm	4_ENERGY_WHITE,{
 }
 
 gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
 		callfunc("DM_PartyMes", "[North Glyph]");
 		callfunc("DM_PartyMes", "The glyph burns with a steady blue light.");
@@ -519,7 +526,7 @@ gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
 }
 
 gef_dun02,209,212,4	script	West Seal Glyph#dm	4_ENERGY_WHITE,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
 		callfunc("DM_PartyMes", "[West Glyph]");
 		callfunc("DM_PartyMes", "The glyph burns with a steady blue light.");

@@ -27,10 +27,13 @@ function	script	DM_InstanceStart	{
 		return -2;
 	}
 
-	// One live instance per party for this tool.
+	// One live instance per party for this tool. Instance ids start at 0,
+	// so the record stores id + 1 (0 = none) — storing the raw id made the
+	// first instance after a server boot untrackable (found by the headless
+	// dm-instance-lifecycle scenario).
 	.@existing = getd("$dm_inst_" + .@party_id);
 	if (.@existing > 0) {
-		dispbottom("[DM] Instance: party already has a live instance (id " + .@existing + "). End it first.");
+		dispbottom("[DM] Instance: party already has a live instance (id " + (.@existing - 1) + "). End it first.");
 		return -4;
 	}
 
@@ -49,10 +52,13 @@ function	script	DM_InstanceStart	{
 
 	instance_init(.@iid);
 	instance_set_timeout(14400, 1800, .@iid);  // 4h alive, 30m idle
-	setd("$dm_inst_" + .@party_id, .@iid);
+	setd("$dm_inst_" + .@party_id, .@iid + 1);
 
-	instance_warpall(.@map$, .@x, .@y, .@iid);
-	dispbottom("[DM] Instance up: " + .@map$ + " (id " + .@iid + "). Party warped in.");
+	// instance_warpall only moves players already standing on the instance's
+	// maps, which is never the case right after creation (found by the
+	// headless dm-instance-lifecycle scenario). Warp the party explicitly.
+	.@moved = callfunc("DM_WarpParty", .@map$, .@x, .@y, .@party_id);
+	dispbottom("[DM] Instance up: " + .@map$ + " (id " + .@iid + "). Warped " + .@moved + " party member(s) in.");
 	return .@iid;
 }
 
@@ -64,11 +70,12 @@ function	script	DM_InstanceEnd	{
 		return 0;
 	}
 
-	.@iid = getd("$dm_inst_" + .@party_id);
-	if (.@iid <= 0) {
+	.@stored = getd("$dm_inst_" + .@party_id);
+	if (.@stored <= 0) {
 		dispbottom("[DM] Instance: party has no live instance on record.");
 		return 0;
 	}
+	.@iid = .@stored - 1;
 
 	instance_destroy(.@iid);
 	setd("$dm_inst_" + .@party_id, 0);

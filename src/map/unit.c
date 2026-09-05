@@ -1564,7 +1564,7 @@ static int unit_skilluse_id2(struct block_list *src, int target_id, uint16 skill
 		static const int ensemble_range = 1;
 #endif
 		if ((skill->get_inf2(skill_id)&INF2_ENSEMBLE_SKILL) && skill->check_pc_partner(sd, skill_id, &skill_lv, ensemble_range, 0) < 1) {
-			clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+			clif->skill_fail_reason(sd, skill_id, SKILLFAILREASON_ENSEMBLE_PARTNER);
 			return 0;
 		}
 

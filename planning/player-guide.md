@@ -7,6 +7,11 @@ to know to connect, create a character, and jump into a session.
 
 ## Getting Connected
 
+> **GM note (2026-08-12):** friends get the Korangar pack from a private Google
+> Drive folder, not the 2019 official client. How to build and share that pack
+> is [korangar/docs/plans/friends-distribution.md](../../korangar/docs/plans/friends-distribution.md).
+> Rewrite this section when the first pack ships. The steps below are stale.
+
 ### The Client
 
 You'll need the Ragnarok Online client, version **2019-06-05**. If you don't

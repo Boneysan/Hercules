@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20141 The Heroes They Made        (arc tracker / Kiel D-01)
-//=   20142 Lab Infiltration            (Hunter Fly x20)
-//=   20143 Lower Level Sweep           (Aliot x20)
+//=   20142 Lab Infiltration (Handcuffs x4, Research Chart x7, Used Iron Plate x6)
+//=   20143 Lower Level Sweep (Solid Iron Piece x6, Burnt Part x5, Alice's Apron x5)
 //=   20144 Echo's Protocol             (Director Reise)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -22,7 +22,7 @@
 
 // ── Doctor Sabine Reuter — The Whistleblower ───────────────────────────────
 lighthalzen,120,120,5	script	Doctor Sabine Reuter#dm	4_F_05,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20141) == 2) {
 		callfunc("DM_PartyMes", "[Doctor Reuter]");
 		if (dm_arc10_echo_freed)
@@ -96,13 +96,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20143);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Heroes They Made]^000000");
-	callfunc("DM_PartyMes", "^3355FFLab Infiltration - disable 20 Hunter Fly security drones in the upper lab.^000000");
-	callfunc("DM_PartyMes", "^3355FFLower Level Sweep - clear 20 Aliot units from the lower lab.^000000");
+	callfunc("DM_PartyMes", "^3355FFLab Infiltration - lifted out of the upper lab: " + callfunc("DM_HuntBrief", 20142) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFLower Level Sweep - pulled out of the lower lab: " + callfunc("DM_HuntBrief", 20143) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20142) == 1 && questprogress(20142, HUNTING) == 2) {
+	if (questprogress(20142) == 1 && callfunc("DM_HuntReady", 20142)) {
+		callfunc("DM_HuntCollect", 20142);
 		callfunc("DM_InstanceQuestComplete", 20142);
 		callfunc("DM_PartyExp", 280000, 135000);
 		callfunc("DM_GivePartyZeny", 24000);
@@ -127,7 +128,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20143) == 1 && questprogress(20143, HUNTING) == 2) {
+	if (questprogress(20143) == 1 && callfunc("DM_HuntReady", 20143)) {
+		callfunc("DM_HuntCollect", 20143);
 		callfunc("DM_InstanceQuestComplete", 20143);
 		callfunc("DM_PartyExp", 300000, 145000);
 		callfunc("DM_GivePartyZeny", 25000);
@@ -211,12 +213,13 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Lower Level Sweep is still open. Aliot units in the lower lab.");
 	else
 		callfunc("DM_PartyMes", "The path is clear. Director Reise is the next problem.");
+	callfunc("DM_HuntStanding", 20142, 20143);
 	close();
 }
 
 // ── Director Hallan Reise — The Architect ──────────────────────────────────
 lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc10_started) {
 		callfunc("DM_PartyMes", "[Director Reise]");
 		callfunc("DM_PartyMes", "Lighthalzen's executive facilities are not open to the public.");
@@ -304,6 +307,9 @@ lhz_dun04,150,150,0	script	Kiel Core#dm	HIDDEN_NPC,{
 	end;
 
 OnKielDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc10_kiel", .@party))
+		end;
 	callfunc("DM_InstanceQuestComplete", 20141);
 	callfunc("DM_InstanceSetFlag", "dm_arc10_kiel_killed", 1);
 	callfunc("DM_InstanceSetFlag", "dm_act02_complete", 1);

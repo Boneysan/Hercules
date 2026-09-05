@@ -929,6 +929,12 @@ typedef enum sc_type {
 	SC_BASILICA_BUFF, // Renewal version of Basilica, where it is an ATK/MATK buff.
 	SC_ASSUMPTIO_BUFF, // Renewal version of Assumptio
 
+	// Korangar fork: Land Protector suppresses ground magic but grants nothing
+	// to the people standing in it, so nothing tells a player why their spells
+	// stopped working. Purely informational — no CalcFlags, no mechanical
+	// effect; it exists to carry an icon and the field's remaining duration.
+	SC_LANDPROTECTOR,
+
 #ifndef SC_MAX
 	SC_MAX, //Automatically updated max, used in for's to check we are within bounds.
 #endif

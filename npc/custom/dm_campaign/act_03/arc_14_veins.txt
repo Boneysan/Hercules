@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20181 The Herald in the Magma    (arc tracker / Ifrit)
-//=   20183 Volcanic Salamander Hunt   (Salamander x20)
-//=   20184 Lava Golem Firebreak       (Lava Golem x20)
+//=   20183 Volcanic Salamander Hunt (Burning Heart x9, Burning Hair x4, Live Coal x4)
+//=   20184 Lava Golem Firebreak (Sticky Poison x9, Maneater Blossom x4, Jubilee x3)
 //=   20185 The Prelate's Silence      (Prelate Hesma)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -22,7 +22,7 @@
 
 // ── Foreman Dunmar — The Man With Miners ───────────────────────────────────
 veins,100,100,5	script	Foreman Dunmar#dm	4_M_06,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20181) == 2) {
 		callfunc("DM_PartyMes", "[Foreman Dunmar]");
 		callfunc("DM_PartyMes", "Ifrit is gone. The tunnels are cooler. Not cool — cooler. My people are alive. That is what I wanted from this.");
@@ -89,13 +89,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20184);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Herald in the Magma]^000000");
-	callfunc("DM_PartyMes", "^3355FFVolcanic Salamander Hunt - clear 20 Salamander from the working shafts.^000000");
-	callfunc("DM_PartyMes", "^3355FFLava Golem Firebreak - break through 20 Lava Golem on the evacuation route.^000000");
+	callfunc("DM_PartyMes", "^3355FFVolcanic Salamander Hunt - out of the working shafts: " + callfunc("DM_HuntBrief", 20183) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFLava Golem Firebreak - off the Veins evacuation route: " + callfunc("DM_HuntBrief", 20184) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20183) == 1 && questprogress(20183, HUNTING) == 2) {
+	if (questprogress(20183) == 1 && callfunc("DM_HuntReady", 20183)) {
+		callfunc("DM_HuntCollect", 20183);
 		callfunc("DM_InstanceQuestComplete", 20183);
 		callfunc("DM_PartyExp", 420000, 200000);
 		callfunc("DM_GivePartyZeny", 35000);
@@ -120,7 +121,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20184) == 1 && questprogress(20184, HUNTING) == 2) {
+	if (questprogress(20184) == 1 && callfunc("DM_HuntReady", 20184)) {
+		callfunc("DM_HuntCollect", 20184);
 		callfunc("DM_InstanceQuestComplete", 20184);
 		callfunc("DM_PartyExp", 440000, 210000);
 		callfunc("DM_GivePartyZeny", 37000);
@@ -185,12 +187,13 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Lava Golem Firebreak is still open. The evacuation route is blocked.");
 	else
 		callfunc("DM_PartyMes", "Both contracts done. Hesma is the last obstacle. Temple of Fire, south of the city.");
+	callfunc("DM_HuntStanding", 20183, 20184);
 	close();
 }
 
 // ── Prelate Hesma — The Silence Before the Fire ────────────────────────────
 veins,110,100,5	script	Prelate Hesma#dm	4_M_06,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc14_started) {
 		callfunc("DM_PartyMes", "[Prelate Hesma]");
 		callfunc("DM_PartyMes", "Veins's sacred fires are a place of peace and reflection. Please respect the sanctity of the grounds.");
@@ -316,6 +319,9 @@ OnTimer40000:
 	end;
 
 OnIfritDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc14_ifrit", .@party))
+		end;
 	stopnpctimer;
 	callfunc("DM_InstanceQuestComplete", 20181);
 	callfunc("DM_InstanceSetFlag", "dm_arc14_ifrit_killed", 1);

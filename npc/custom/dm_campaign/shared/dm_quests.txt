@@ -97,7 +97,7 @@ function	script	DM_PartyApplyFlag	{
 	.@party_id = getarg(2, getcharid(CHAR_ID_PARTY));
 	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
 
-	if (.@flag$ == "")
+	if (!callfunc("DM_ValidFlagName", .@flag$))
 		return 0;
 
 	if (.@party_id <= 0) {
@@ -138,4 +138,104 @@ function	script	DM_InstanceSetFlag	{
 
 function	script	DM_InstanceClearFlag	{
 	return callfunc("DM_PartyClearFlag", getarg(0), getarg(1, getcharid(CHAR_ID_PARTY)));
+}
+
+// ---------------------------------------------------------------------------
+// Hunting contracts.
+//
+// A contract is filled by handing in items, not by a kill counter. The item
+// list lives in the generated dm_hunts.txt table (see tools/gen-hunts.py);
+// these helpers are the only thing the arc scripts should call.
+//
+// Items are per-character, so the ledger and the hand-in both act on the
+// player actually talking to the NPC. Quest credit and payment stay
+// party-wide, which is what makes a party pool its drops before turning in.
+// ---------------------------------------------------------------------------
+
+// Does the attached character hold everything this contract asks for?
+function	script	DM_HuntReady	{
+	.@quest_id = getarg(0);
+	.@n = callfunc("DM_HuntSpec", .@quest_id, .@item, .@need);
+
+	if (.@n <= 0)
+		return 0;
+
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		if (countitem(.@item[.@i]) < .@need[.@i])
+			return 0;
+	}
+	return 1;
+}
+
+// Take the contract's items from the attached character. Returns 0 without
+// removing anything if they are short, so a partial hand-in can never eat
+// items and leave the contract open.
+function	script	DM_HuntCollect	{
+	.@quest_id = getarg(0);
+	.@n = callfunc("DM_HuntSpec", .@quest_id, .@item, .@need);
+
+	if (.@n <= 0)
+		return 0;
+	if (!callfunc("DM_HuntReady", .@quest_id))
+		return 0;
+
+	for (.@i = 0; .@i < .@n; ++.@i)
+		delitem(.@item[.@i], .@need[.@i]);
+
+	return 1;
+}
+
+// Print the contract's ledger into the open dialogue: what it wants, what the
+// talking character is carrying. This is the only progress display the game
+// has for a hunt, so it is worth being plain rather than clever.
+function	script	DM_HuntLedger	{
+	.@quest_id = getarg(0);
+	.@n = callfunc("DM_HuntSpec", .@quest_id, .@item, .@need);
+
+	if (.@n <= 0)
+		return 0;
+
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		.@have = countitem(.@item[.@i]);
+		if (.@have >= .@need[.@i])
+			mes("  ^008000" + getitemname(.@item[.@i]) + " " + .@have + " / " + .@need[.@i] + "^000000");
+		else
+			mes("  " + getitemname(.@item[.@i]) + " ^777777" + .@have + " / " + .@need[.@i] + "^000000");
+	}
+	return .@n;
+}
+
+// The one-line summary an arc uses when it offers a contract.
+function	script	DM_HuntBrief	{
+	.@quest_id = getarg(0);
+	.@n = callfunc("DM_HuntSpec", .@quest_id, .@item, .@need);
+	.@brief$ = "";
+
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		if (.@i > 0)
+			.@brief$ += ", ";
+		.@brief$ += .@need[.@i] + " " + getitemname(.@item[.@i]);
+	}
+	return .@brief$;
+}
+
+// Print the ledger for every contract in the argument list that the attached
+// character is still carrying. Arc turn-in NPCs call this once, so "what do I
+// still owe you" is answered in the same breath as the reminder line.
+function	script	DM_HuntStanding	{
+	.@shown = 0;
+
+	for (.@a = 0; .@a < getargcount(); ++.@a) {
+		.@quest_id = getarg(.@a);
+		if (.@quest_id <= 0 || questprogress(.@quest_id) != 1)
+			continue;
+		if (.@shown == 0) {
+			mes(" ");
+			mes("^777777Still owed:^000000");
+		}
+		mes("^3355FF" + callfunc("DM_HuntName", .@quest_id) + "^000000");
+		callfunc("DM_HuntLedger", .@quest_id);
+		++.@shown;
+	}
+	return .@shown;
 }

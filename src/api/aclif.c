@@ -752,14 +752,25 @@ static bool aclif_decode_post_headers(int fd, struct api_session_data *sd)
 			return false;
 		}
 		char *token = NULL;
-		if (!aclif->get_post_header_data_str(sd, POST_AUTH_TOKEN, &token, NULL)) {
+		uint32 token_size = 0;
+		if (!aclif->get_post_header_data_str(sd, POST_AUTH_TOKEN, &token, &token_size)) {
 			ShowError("Http request without AuthToken %d\n", fd);
 			return false;
 		}
-
-		if (memcmp(login_data->auth_token, token, AUTH_TOKEN_SIZE) != 0) {
-			ShowError("Wrong auth token %d: '%s'\n", fd, token);
+		if (token_size != AUTH_TOKEN_SIZE) {
+			ShowError("Wrong auth token size %d: %u\n", fd, token_size);
 			return false;
+		}
+
+		{
+			unsigned char diff = 0;
+			int i;
+			for (i = 0; i < AUTH_TOKEN_SIZE; ++i)
+				diff |= (unsigned char)login_data->auth_token[i] ^ (unsigned char)token[i];
+			if (diff != 0) {
+				ShowError("Wrong auth token %d\n", fd);
+				return false;
+			}
 		}
 
 		HANDLE_HEADER(AUTH_TOKEN);

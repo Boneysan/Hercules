@@ -6985,67 +6985,67 @@ You can't use skill because you have exceeded the number Ancilla possession limi
 	MSG_USESKILL_FAIL_ANCILLA_NUMOVER = 0x575,
 /*20171018 to latest
 성수가 필요합니다.
-Unable to use the skill to exceed the number of Ancilla.
+Holy water is required.
 */
 	MSG_USESKILL_FAIL_HOLYWATER = 0x576,
 /*20171018 to latest
 안실라가 필요합니다.
-Holy water is required.
+Ancilla is required.
 */
 	MSG_USESKILL_FAIL_ANCILLA = 0x577,
 /*20171018 to latest
 일정거리 내에 중복될 수 없습니다.
-Ancilla is required.
+Cannot be duplicated within a certain distance.
 */
 	MSG_USESKILL_FAIL_DUPLICATE_RANGEIN = 0x578,
 /*20171018 to latest
 이 스킬을 사용하기 위해서는 다른 스킬이 필요합니다.
-Cannot be duplicated within a certain distance.
+This skill requires other skills to be used.
 */
 	MSG_USESKILL_FAIL_NEED_OTHER_SKILL = 0x579,
 /*20171018 to latest
 이 맵에서는 채팅을 할 수 없습니다.
-This skill requires other skills to be used.
+Chat is not allowed in this map
 */
 	MSG_NO_CHATTING = 0x57a,
 /*20171018 to latest
 3시간이 지났습니다.
-Chat is not allowed in this map
+3 hours have passed.
 */
 	MSG_VET_3HOUR = 0x57b,
 /*20171018 to latest
 5시간이 지났습니다.
-3 hours have passed.
+5 hours have passed.
 */
 	MSG_VET_5HOUR = 0x57c,
 /*20171018 to latest
 게임가드 초기화 에러 또는 구버전의 게임가드 파일입니다. 게임가드 셋업파일을 다시 설치하고 게임을 실행해 보시기 바랍니다.
-5 hours have passed.
+Game guard initialization error or previous version game guard file is installed. Please re-install the setup file and try again
 */
 	MSG_NPGAMEMON_ERROR_GAMEGUARD = 0x57d,
 /*20171018 to latest
 ini 파일이 없거나 변조되었습니다. 게임가드 셋업파일을 설치하면 해결 할 수 있습니다.
-Game guard initialization error or previous version game guard file is installed. Please re-install the setup file and try again
+Either ini file is missing or altered. Install game guard setup file to fix the problem
 */
 	MSG_NPGMUP_ERROR_PARAM = 0x57e,
 /*20171018 to latest
 게임가드와 충돌 프로그램이 발견되었습니다.
-Either ini file is missing or altered. Install game guard setup file to fix the problem
+There is a program found that conflicts with game guard
 */
 	MSG_NPGG_ERROR_COLLISION = 0x57f,
 /*20171018 to latest
 잘못된 클라이언트입니다. 정상적인 클라이언트를 실행하여 주십시요.
-There is a program found that conflicts with game guard
+Incorrect client. Please run a normal client
 */
 	MSG_PROOF_ERROR = 0x580,
 /*20171018 to latest
 모바일 인증을 받아주시기 바랍니다.
-Incorrect client. Please run a normal client
+Thank you to accept mobile authentication.
 */
 	MSG_MOBILE_LOCKSERVER = 0x581,
 /*20171018 to latest
 모바일 인증에 실패하였습니다.
-Thank you to accept mobile authentication.
+Mobile authentication has failed.
 */
 	MSG_FAILED_MOBILE_LOCKSERVER = 0x582,
 /*20171018 to latest
@@ -9295,12 +9295,12 @@ Exceeded total free cash
 	MSG_BUY_CASH_FAIL2 = 0x744,
 /*20171018 to latest
  설정한 내용이 [SaveData_ExMacro%d]에 저장됩니다.
-%d seconds left until you can use
+Content has been saved in [SaveData_ExMacro%d]
 */
 	MSG_MACRO_SAVE_DATA = 0x745,
 /*20171018 to latest
 약 %d 초 후에 사용할 수 있습니다
-Content has been saved in [SaveData_ExMacro%d]
+%d seconds left until you can use
 */
 	MSG_ITEM_REUSE_LIMIT_SECOND = 0x746,
 /*20171018 to latest

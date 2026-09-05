@@ -144,6 +144,92 @@ static int imageparser_read_gif_func(GifFileType *gif, GifByteType *buf, int len
 	return len;
 }
 
+// Walk the GIF structure without allocating rasters. Rejects oversized
+// logical screens, frame rectangles, and frame counts before giflib sees them.
+static bool imageparser_precheck_gif_emblem(const uint8 *buf, uint64 len)
+{
+	if (len < 13)
+		return false;
+	if (memcmp(buf, "GIF87a", 6) != 0 && memcmp(buf, "GIF89a", 6) != 0)
+		return false;
+
+	const int want_w = extraconf->emblems->guild_emblem_width;
+	const int want_h = extraconf->emblems->guild_emblem_height;
+	const int sw = (int)buf[6] | ((int)buf[7] << 8);
+	const int sh = (int)buf[8] | ((int)buf[9] << 8);
+	if (sw != want_w || sh != want_h)
+		return false;
+
+	uint64 pos = 13;
+	if (buf[10] & 0x80) {
+		const uint64 gct = 3ull * (1ull << ((buf[10] & 7) + 1));
+		if (pos + gct > len)
+			return false;
+		pos += gct;
+	}
+
+	int frames = 0;
+	const int max_frames = extraconf->emblems->max_guild_emblem_frames;
+	while (pos < len) {
+		const uint8 intro = buf[pos++];
+		if (intro == 0x3B)
+			break;
+		if (intro == 0x21) {
+			if (pos >= len)
+				return false;
+			pos++; /* label */
+			while (pos < len) {
+				const uint8 sz = buf[pos++];
+				if (sz == 0)
+					break;
+				if (pos + sz > len)
+					return false;
+				pos += sz;
+			}
+			continue;
+		}
+		if (intro != 0x2C)
+			return false;
+		if (pos + 9 > len)
+			return false;
+		const int left = (int)buf[pos] | ((int)buf[pos + 1] << 8);
+		const int top = (int)buf[pos + 2] | ((int)buf[pos + 3] << 8);
+		const int w = (int)buf[pos + 4] | ((int)buf[pos + 5] << 8);
+		const int h = (int)buf[pos + 6] | ((int)buf[pos + 7] << 8);
+		const uint8 ip = buf[pos + 8];
+		pos += 9;
+		if (w <= 0 || h <= 0 || w > want_w || h > want_h)
+			return false;
+		if (left < 0 || top < 0 || left + w > want_w || top + h > want_h)
+			return false;
+		if (ip & 0x80) {
+			const uint64 lct = 3ull * (1ull << ((ip & 7) + 1));
+			if (pos + lct > len)
+				return false;
+			pos += lct;
+		}
+		if (pos >= len)
+			return false;
+		pos++; /* LZW min code size */
+		while (pos < len) {
+			const uint8 sz = buf[pos++];
+			if (sz == 0)
+				break;
+			if (pos + sz > len)
+				return false;
+			pos += sz;
+		}
+		frames++;
+		if (frames > max_frames)
+			return false;
+	}
+	if (frames < extraconf->emblems->min_guild_emblem_frames)
+		return false;
+	if (frames > max_frames)
+		return false;
+	return true;
+}
+
 static bool imageparser_validate_gif_emblem(const char *emblem, uint64 emblem_len)
 {
 	nullpo_retr(false, emblem);
@@ -161,6 +247,13 @@ static bool imageparser_validate_gif_emblem(const char *emblem, uint64 emblem_le
 	    (memcmp(emblem + 3, "87a", 3) != 0 && memcmp(emblem + 3, "89a", 3) != 0)) {
 #ifdef DEBUG_ERRORS
 		ShowError("Error: Unknown gif image header\n");
+#endif
+		return false;
+	}
+
+	if (!imageparser_precheck_gif_emblem((const uint8 *)emblem, emblem_len)) {
+#ifdef DEBUG_ERRORS
+		ShowError("Error: Gif emblem failed dimension/frame precheck\n");
 #endif
 		return false;
 	}

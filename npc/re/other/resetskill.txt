@@ -124,7 +124,7 @@ izlude,127,175,3	script	Hypnotist#novice	4_F_TELEPORTER,{
 			mes "safely keep all of your goods.";
 			close;
 		}
-		if (BaseLevel >= 50 && (Class == Job_Taekwon || Class == Job_Gunslinger || Class == Job_Ninja)) {
+		if (BaseLevel >= 50) {
 			mes "[Hypnotist]";
 			mes "I'm sorry, but characters";
 			mes "with Base Levels higher";

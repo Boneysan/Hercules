@@ -14,16 +14,16 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20013 Sand and Whispers          (arc tracker)
-//=   20014 Caravan Water Debt         (Muka x20)
-//=   20015 Ant Hell Survey            (Ant Egg x15)
-//=   20016 Sphinx Night Watch         (Zerom x20)
+//=   20014 Caravan Water Debt (Cactus Needle x13, Bill of Birds x13, Empty Bottle x4)
+//=   20015 Ant Hell Survey (Shell x3, Worm Peeling x10, Elder Pixie's Moustache x6)
+//=   20016 Sphinx Night Watch (Iron Ore x3, Wing of Red Bat x10, Animal Skin x9)
 //=   20017 What the Desert Spat Up    (Osiris)
 //=   20018 The King Beneath           (Amon Ra)
 //===========================================================
 
 // Rashid - tomb-guide and Arc 3 quest-giver
 morocc,159,97,4	script	Rashid the Guide#dm	4_M_ORIENT02,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20018) == 2) {
 		callfunc("DM_PartyMes", "[Rashid]");
 		if (dm_arc03_rashid_mocked)
@@ -95,14 +95,15 @@ S_StartArc:
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 301);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Sand and Whispers]^000000");
-	callfunc("DM_PartyMes", "^3355FFCaravan Water Debt - cull 20 Muka along Sograt's water routes.^000000");
-	callfunc("DM_PartyMes", "^3355FFAnt Hell Survey - break 15 Ant Eggs and bring back amber-sand samples.^000000");
-	callfunc("DM_PartyMes", "^3355FFSphinx Night Watch - cull 20 Zerom in the Sphinx.^000000");
+	callfunc("DM_PartyMes", "^3355FFCaravan Water Debt - off the bodies along Sograt's water routes: " + callfunc("DM_HuntBrief", 20014) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFAnt Hell Survey - dug out of the Ant Hell galleries: " + callfunc("DM_HuntBrief", 20015) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFSphinx Night Watch - stripped off the dead in the Sphinx: " + callfunc("DM_HuntBrief", 20016) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20014) == 1 && questprogress(20014, HUNTING) == 2) {
+	if (questprogress(20014) == 1 && callfunc("DM_HuntReady", 20014)) {
+		callfunc("DM_HuntCollect", 20014);
 		callfunc("DM_InstanceQuestComplete", 20014);
 		callfunc("DM_PartyExp", 16000, 7000);
 		callfunc("DM_GivePartyZeny", 3500);
@@ -132,7 +133,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20015) == 1 && questprogress(20015, HUNTING) == 2) {
+	if (questprogress(20015) == 1 && callfunc("DM_HuntReady", 20015)) {
+		callfunc("DM_HuntCollect", 20015);
 		callfunc("DM_InstanceQuestComplete", 20015);
 		callfunc("DM_PartyExp", 22000, 9000);
 		callfunc("DM_GivePartyZeny", 4500);
@@ -161,7 +163,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20016) == 1 && questprogress(20016, HUNTING) == 2) {
+	if (questprogress(20016) == 1 && callfunc("DM_HuntReady", 20016)) {
+		callfunc("DM_HuntCollect", 20016);
 		callfunc("DM_InstanceQuestComplete", 20016);
 		callfunc("DM_PartyExp", 30000, 12000);
 		callfunc("DM_GivePartyZeny", 5500);
@@ -235,12 +238,13 @@ S_TurnIns:
 
 	callfunc("DM_PartyMes", "[Rashid]");
 	callfunc("DM_PartyMes", "Clear the water route, survey Ant Hell, and watch the Sphinx. The desert is trying to tell you what the tombs already know.");
+	callfunc("DM_HuntStanding", 20014, 20015, 20016);
 	close();
 }
 
 // Mother Sabra - relief mission leader and human villain
 moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc03_started) {
 		callfunc("DM_PartyMes", "[Mother Sabra]");
 		callfunc("DM_PartyMes", "If you need water, take water. If you need a sermon, I have no strength left for one.");
@@ -273,6 +277,8 @@ moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_deal", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc03_refugees_protected", 1);
+		// Counts toward the finale turnout Loki reads back (arc_19_finale.txt).
+		callfunc("DM_InstanceSetFlag", "dm_arc19_ally_turnout", dm_arc19_ally_turnout + 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_exposed", 0);
 		callfunc("DM_PartyMes", "[Mother Sabra]");
 		callfunc("DM_PartyMes", "Guarantee their safety and I abandon the shaft. Not the cause. The shaft.");
@@ -295,7 +301,7 @@ moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
 
 // Osiris - side tomb-court set-piece
 moc_pryd04,100,92,4	script	Osiris's Court#dm	4_M_NFDEADMAN,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20017) != 1) {
 		if (questprogress(20017) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*The sand-drowned court is still. A gold mask lies warm only in memory.*^000000");
@@ -338,6 +344,9 @@ OnCourtDead:
 	end;
 
 OnOsirisDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc03_osiris", .@party))
+		end;
 	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Osiris's Court#dm::OnCourtDead";
@@ -357,7 +366,7 @@ OnInit:
 
 // Amon Ra - main Pyramid set-piece
 moc_pryd06,102,85,4	script	Amon Ra's Lid#dm	4_M_CRU_HEAD,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20018) != 1) {
 		if (questprogress(20018) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*Behind the throne, the cult-cut shaft remains sealed. It breathes cold air from far below.*^000000");
@@ -418,6 +427,9 @@ OnAddDead:
 	end;
 
 OnAmonDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc03_amon", .@party))
+		end;
 	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
 	killmonster .@map$, "Amon Ra's Lid#dm::OnAddDead";

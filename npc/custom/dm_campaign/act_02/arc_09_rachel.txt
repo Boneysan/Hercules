@@ -10,8 +10,8 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20131 The Bleeding Blessing       (arc tracker / Gloom)
-//=   20132 Ice Core Samples            (Ice Titan x15)
-//=   20133 Hollow Blessings            (Snowier x20)
+//=   20132 Ice Core Samples (Glacial Heart x9, Ice Cubic x2, Cold Ice x2)
+//=   20133 Hollow Blessings (Ice Piece x3, Crystal Blue x2, Ice Crystal x3)
 //=   20134 The Prelate's Record        (Karsh confrontation)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
@@ -21,7 +21,7 @@
 
 // ── Acolyte Naima — The Believer Who Looked Too Closely ────────────────────
 rachel,120,120,5	script	Acolyte Naima#dm	4_F_04,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20131) == 2) {
 		callfunc("DM_PartyMes", "[Acolyte Naima]");
 		if (dm_arc09_karsh_exposed)
@@ -89,13 +89,14 @@ S_StartArc:
 	callfunc("DM_InstanceQuestStart", 20133);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Bleeding Blessing]^000000");
-	callfunc("DM_PartyMes", "^3355FFIce Core Samples - gather resonance data from 15 Ice Titan in the deep ice.^000000");
-	callfunc("DM_PartyMes", "^3355FFHollow Blessings - document dimensional bleed in 20 Snowier near the outer sanctum.^000000");
+	callfunc("DM_PartyMes", "^3355FFIce Core Samples - cored out of the deep ice: " + callfunc("DM_HuntBrief", 20132) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFHollow Blessings - off the ice around the outer sanctum: " + callfunc("DM_HuntBrief", 20133) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20132) == 1 && questprogress(20132, HUNTING) == 2) {
+	if (questprogress(20132) == 1 && callfunc("DM_HuntReady", 20132)) {
+		callfunc("DM_HuntCollect", 20132);
 		callfunc("DM_InstanceQuestComplete", 20132);
 		callfunc("DM_PartyExp", 250000, 120000);
 		callfunc("DM_GivePartyZeny", 20000);
@@ -121,7 +122,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20133) == 1 && questprogress(20133, HUNTING) == 2) {
+	if (questprogress(20133) == 1 && callfunc("DM_HuntReady", 20133)) {
+		callfunc("DM_HuntCollect", 20133);
 		callfunc("DM_InstanceQuestComplete", 20133);
 		callfunc("DM_PartyExp", 270000, 130000);
 		callfunc("DM_GivePartyZeny", 22000);
@@ -210,12 +212,13 @@ S_TurnIns:
 		callfunc("DM_PartyMes", "Hollow Blessings is still open. Snowier in the outer sanctum.");
 	else
 		callfunc("DM_PartyMes", "The data is waiting. Come back when you have both contracts.");
+	callfunc("DM_HuntStanding", 20132, 20133);
 	close();
 }
 
 // ── High Prelate Karsh — The Church's Secret Keeper ────────────────────────
 rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc09_started) {
 		callfunc("DM_PartyMes", "[High Prelate Karsh]");
 		callfunc("DM_PartyMes", "The Sanctuary is not a public venue. Present credentials or leave.");
@@ -308,6 +311,9 @@ ice_dun03,150,150,0	script	Ice Bleed Site#dm	HIDDEN_NPC,{
 	end;
 
 OnGloomDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc09_gloom", .@party))
+		end;
 	callfunc("DM_InstanceQuestComplete", 20131);
 	callfunc("DM_InstanceSetFlag", "dm_arc09_gloom_killed", 1);
 	callfunc("DM_PartyExp", 800000, 450000);

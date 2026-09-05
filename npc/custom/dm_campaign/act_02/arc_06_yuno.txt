@@ -11,8 +11,9 @@
 //= Quests (db/quest_db.conf):
 //=   20101 The Heart That Holds the City  (arc tracker / Mistress)
 //=   20102 The Number Nobody Wants        (Vahl's crisis document)
-//=   20103 Harpy Weather Log              (Harpy x20)
-//=   20104 Juperos Parts Requisition      (Venatu x20)
+//=   20103 Harpy Weather Log (Harpy Feather x12, Antelope Horn x6, Maneater Blossom x7)
+//=   20104 Juperos Parts Requisition (Rusty Screw x5, Used Iron Plate x5, Metal Fragment x8)
+//=   20105 Norgroad Heat Index (Sand Clump x8, Great Nature x5, Empty Bottle x8)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
 //=   dm_arc06_started, dm_arc06_vahl_trust,
@@ -22,7 +23,7 @@
 
 // ── Doctor Ingrid Vahl — Yuno Atmospheric Researcher ───────────────────────
 yuno,155,185,5	script	Doctor Ingrid Vahl#dm	4_F_02,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20101) == 2) {
 		callfunc("DM_PartyMes", "[Doctor Vahl]");
 		if (dm_arc06_mistress_killed)
@@ -87,20 +88,23 @@ S_StartArc:
 	}
 	next();
 	callfunc("DM_PartyMes", "[Vahl]");
-	callfunc("DM_PartyMes", "Help me gather field evidence. Harpy weather logs from the sky migration, and Venatu components from the Juperos ruins. Then I can finish the report and we see what Krenn does with it.");
+	callfunc("DM_PartyMes", "Help me gather field evidence. Harpy weather logs from the sky migration, Venatu components from the Juperos ruins, and ground samples off the plateau for the heat index. Then I can finish the report and we see what Krenn does with it.");
 	callfunc("DM_InstanceSetFlag", "dm_arc06_started", 1);
 	callfunc("DM_InstanceQuestStart", 20101);
 	callfunc("DM_InstanceQuestStart", 20103);
 	callfunc("DM_InstanceQuestStart", 20104);
+	callfunc("DM_InstanceQuestStart", 20105);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Heart That Holds the City]^000000");
-	callfunc("DM_PartyMes", "^3355FFHarpy Weather Log - gather migration data from 20 Harpy in the Yuno fields.^000000");
-	callfunc("DM_PartyMes", "^3355FFJuperos Parts Requisition - recover 20 Venatu components from the Juperos ruins.^000000");
+	callfunc("DM_PartyMes", "^3355FFHarpy Weather Log - field evidence off the Yuno plateau: " + callfunc("DM_HuntBrief", 20103) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFJuperos Parts Requisition - salvaged from the Juperos ruins: " + callfunc("DM_HuntBrief", 20104) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFNorgroad Heat Index - ground samples off the Yuno plateau: " + callfunc("DM_HuntBrief", 20105) + ".^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20103) == 1 && questprogress(20103, HUNTING) == 2) {
+	if (questprogress(20103) == 1 && callfunc("DM_HuntReady", 20103)) {
+		callfunc("DM_HuntCollect", 20103);
 		callfunc("DM_InstanceQuestComplete", 20103);
 		callfunc("DM_PartyExp", 180000, 85000);
 		callfunc("DM_GivePartyZeny", 15000);
@@ -126,7 +130,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20104) == 1 && questprogress(20104, HUNTING) == 2) {
+	if (questprogress(20104) == 1 && callfunc("DM_HuntReady", 20104)) {
+		callfunc("DM_HuntCollect", 20104);
 		callfunc("DM_InstanceQuestComplete", 20104);
 		callfunc("DM_PartyExp", 220000, 105000);
 		callfunc("DM_GivePartyZeny", 18000);
@@ -157,9 +162,20 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20103) == 2 && questprogress(20104) == 2 && questprogress(20102) == 0) {
+	if (questprogress(20105) == 1 && callfunc("DM_HuntReady", 20105)) {
+		callfunc("DM_HuntCollect", 20105);
+		callfunc("DM_InstanceQuestComplete", 20105);
+		callfunc("DM_PartyExp", 200000, 95000);
+		callfunc("DM_GivePartyZeny", 16000);
+		.@paid = 1;
 		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "Both datasets are in. The report is written: resonance divergence, migration anomaly, and a timeline the Republic will not enjoy.");
+		callfunc("DM_PartyMes", "Ground samples. The plateau is two degrees warmer than the same month last year, and the warmth is not coming from the sun - it is coming from underneath. The Republic will want that read as weather. It is not weather.");
+		next();
+	}
+
+	if (questprogress(20103) == 2 && questprogress(20104) == 2 && questprogress(20105) == 2 && questprogress(20102) == 0) {
+		callfunc("DM_PartyMes", "[Vahl]");
+		callfunc("DM_PartyMes", "All three datasets are in. The report is written: resonance divergence, migration anomaly, ground temperature, and a timeline the Republic will not enjoy.");
 		next();
 		callfunc("DM_PartyMes", "[Vahl]");
 		callfunc("DM_PartyMes", "I am calling it The Number Nobody Wants. Krenn has to either sign the transmission or formally bury it. Either way it ends his comfortable suppression.");
@@ -207,25 +223,28 @@ S_TurnIns:
 
 	if (.@paid) {
 		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "Bring back both sets of field data. The report writes itself after that.");
+		callfunc("DM_PartyMes", "Bring back all three sets of field data. The report writes itself after that.");
 		close();
 	}
 
 	callfunc("DM_PartyMes", "[Vahl]");
-	if (questprogress(20103) == 1 && questprogress(20104) == 1)
-		callfunc("DM_PartyMes", "The Harpy logs and the Juperos parts are both still open. The shard readings do not improve while we wait.");
+	if (questprogress(20103) == 1 && questprogress(20104) == 1 && questprogress(20105) == 1)
+		callfunc("DM_PartyMes", "All three field sets are still open. The shard readings do not improve while we wait.");
 	else if (questprogress(20103) == 1)
 		callfunc("DM_PartyMes", "The Harpy migration contract is still open. They are banking south from the outer fields.");
 	else if (questprogress(20104) == 1)
 		callfunc("DM_PartyMes", "The Juperos parts requisition is still open. The Venatu down there know what they are guarding.");
+	else if (questprogress(20105) == 1)
+		callfunc("DM_PartyMes", "The heat index is still short. The plateau sand holds the reading better than any instrument I own.");
 	else
-		callfunc("DM_PartyMes", "Finish both contracts and come back. The number is waiting.");
+		callfunc("DM_PartyMes", "Finish the contracts and come back. The number is waiting.");
+	callfunc("DM_HuntStanding", 20103, 20104, 20105);
 	close();
 }
 
 // ── Director Aldous Krenn — The Republic's Money ───────────────────────
 yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
-	if (!$dm_mode || getcharid(CHAR_ID_PARTY) != $dm_active_party) { close; }
+	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc06_started) {
 		callfunc("DM_PartyMes", "[Director Krenn]");
 		callfunc("DM_PartyMes", "The Research Bureau handles appointments. I handle approvals. You require neither.");
@@ -269,7 +288,8 @@ yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_bribed", 1);
-		callfunc("DM_GivePartyZeny", 25000);
+		if (callfunc("DM_ClaimGrant", "arc06_krenn_zeny"))
+			callfunc("DM_GivePartyZeny", 25000);
 		callfunc("DM_PartyMes", "[Krenn]");
 		callfunc("DM_PartyMes", "Now you are speaking the Republic's language. Twenty-five thousand zeny. Consider it a retainer for services rendered in the public interest.");
 		next();
@@ -293,9 +313,12 @@ juperos_01,150,150,0	script	Juperos Vault#dm	HIDDEN_NPC,{
 	end;
 
 OnMistressDead:
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc06_mistress", .@party))
+		end;
 	callfunc("DM_InstanceQuestComplete", 20101);
 	callfunc("DM_InstanceSetFlag", "dm_arc06_mistress_killed", 1);
-	callfunc("DM_PartyExp", 500000, 300000);
+	callfunc("DM_PartyExp", 500000, 300000, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 699);
 	instance_announce(instance_id(), "^3355FF[DM] Mistress falls. The Ymir fragment shudders, but the city above holds... for now.^000000", bc_all);
 	sleep(2000);

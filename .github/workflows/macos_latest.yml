@@ -17,11 +17,24 @@ jobs:
     strategy:
       matrix:
         CC: [clang]
-        RENEWAL: ["", "--disable-renewal"]
+        # Renewal only. This fork's campaign content is renewal -- the hunting
+        # contracts drop renewal items from renewal mobs (Bio Lab's Randal and
+        # Chen, dropping Blood Thirst, which exists in db/re/item_db.conf and
+        # nowhere else) -- so a pre-renewal build fails on data, not on code:
+        #
+        #   quest_read_db_sub: Invalid ItemId (6470 ...) for quest (20213)
+        #
+        # Swapping the item would not help; the mobs are renewal too. A job that
+        # asserts something the fork has deliberately chosen not to support is
+        # not signal, it is a permanently red square that hides real failures.
+        RENEWAL: [""]
         CLIENT_TYPE: ["", "--enable-packetver-re", "--enable-packetver-zero"]
         HTTPLIB: ["", "--with-http_parser=llhttp"]
         SANITIZER: ["--disable-manager", "--disable-manager --enable-sanitize=full"]
-        PACKET_VERSION: ["--enable-packetver=20221024", "--enable-packetver=20130724"]
+        # 20220406 is what this server is configured with, so it is the one
+        # combination whose failure would actually take the game down. It was
+        # not covered before.
+        PACKET_VERSION: ["--enable-packetver=20221024", "--enable-packetver=20220406", "--enable-packetver=20130724"]
         include:
           # Empty CLASSIC_AUTOSPELL_LIST for every other flow
           - CLASSIC_AUTOSPELL_LIST: ""
