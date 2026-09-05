@@ -1153,9 +1153,9 @@ static int login_mmo_auth(struct login_session_data *sd, bool isServer)
 
 	len = strnlen(sd->userid, NAME_LENGTH);
 
-	// Account creation with _create (fork) or _M/_F (upstream)
+	// Account creation with _create (fork). Upstream's _M/_F is gone.
 	if (login->config->new_account_flag) {
-		// FORK DELTA: a sex-less creation suffix.
+		// FORK DELTA: _create replaces upstream's _M/_F outright.
 		//
 		// Upstream's _M/_F does two jobs with one suffix: it signals "create
 		// this account" and it sets the account's sex. Since PACKETVER
@@ -1164,8 +1164,17 @@ static int login_mmo_auth(struct login_session_data *sd, bool isServer)
 		// vestigial -- and asking a friend to answer it just to register is a
 		// question the game no longer needs answered.
 		//
-		// _M/_F is left working: it is what every RO guide on the internet
-		// says, and the shipped packs document it.
+		// _M/_F is removed rather than kept alongside, because two creation
+		// suffixes is one more than the group needs and they interacted badly:
+		// this branch truncates sd->userid in place, so "sam_m_create" stripped
+		// to "sam_m", matched _M/_F on the *result*, created a second account
+		// "sam", and authenticated as the one nobody asked for.
+		//
+		// Removing it does not strand anyone. _M/_F was single-use by
+		// construction: mmo_auth_new returns 1 (Incorrect Password) once the
+		// account exists, so a second "bob_m" already failed and returning
+		// players have always typed the bare name. Accounts made that way are
+		// ordinary rows and keep working.
 		//
 		// The stored sex is 'M', not 'S': 'S' marks a server account and is
 		// not a value a human login should carry. Nothing reads it for a
@@ -1184,21 +1193,6 @@ static int login_mmo_auth(struct login_session_data *sd, bool isServer)
 			sd->userid[len] = '\0';
 
 			result = login->mmo_auth_new(sd->userid, sd->passwd, 'M', ip);
-			if( result != -1 )
-				return result;// Failed to make account. [Skotlex].
-		}
-
-		if (len > 2 && sd->passwd[0] != '\0' && // valid user and password lengths
-			sd->passwdenc == PWENC_NONE && // unencoded password
-			sd->userid[len-2] == '_' && memchr("FfMm", sd->userid[len-1], 4)) // _M/_F suffix
-		{
-			int result;
-
-			// remove the _M/_F suffix
-			len -= 2;
-			sd->userid[len] = '\0';
-
-			result = login->mmo_auth_new(sd->userid, sd->passwd, TOUPPER(sd->userid[len+1]), ip);
 			if( result != -1 )
 				return result;// Failed to make account. [Skotlex].
 		}
