@@ -597,6 +597,26 @@ static int intif_party_changemap(struct map_session_data *sd, int online)
 	return 1;
 }
 
+/// Tell the char-server the member's current class and level so a later
+/// party-info reload does not revive the job they had when they joined.
+static int intif_party_job_and_level(struct map_session_data *sd)
+{
+	if (intif->CheckForCharServer())
+		return 0;
+	if (!sd || !sd->status.party_id)
+		return 0;
+
+	WFIFOHEAD(inter_fd, 18);
+	WFIFOW(inter_fd, 0) = 0x302a;
+	WFIFOL(inter_fd, 2) = sd->status.party_id;
+	WFIFOL(inter_fd, 6) = sd->status.account_id;
+	WFIFOL(inter_fd, 10) = sd->status.char_id;
+	WFIFOW(inter_fd, 14) = sd->status.class;
+	WFIFOW(inter_fd, 16) = sd->status.base_level;
+	WFIFOSET(inter_fd, 18);
+	return 1;
+}
+
 // Request breaking party
 static int intif_break_party(int party_id)
 {
@@ -3068,6 +3088,7 @@ void intif_defaults(void)
 	intif->request_agency_join_party = intif_request_agency_join_party;
 
 	intif->pAgencyJoinResult = intif_parse_agency_joinResult;
+	intif->party_job_and_level = intif_party_job_and_level;
 
 	intif->final = intif_final;
 }
