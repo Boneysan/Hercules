@@ -22,7 +22,7 @@
 //===========================================================
 
 // Captain Mara - ally, ferry captain, and Arc 5 quest-giver
-alberta,183,151,4	script	Captain Mara#dm	4_F_01,{
+alberta,184,150,4	script	Captain Mara#dm	4_F_01,{
 	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20030) == 2) {
 		callfunc("DM_PartyMes", "[Captain Mara]");
@@ -42,6 +42,7 @@ alberta,183,151,4	script	Captain Mara#dm	4_F_01,{
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20025, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -68,12 +69,10 @@ S_StartArc:
 	callfunc("DM_PartyMes", "[Captain Mara]");
 	callfunc("DM_PartyMes", "Brode owns the blind spots between Izlude and Alberta. I know them because I used to sail them.");
 	next();
-	switch (select("We're here to stop smuggling, not refugees.", "Just point us at Brode.", "Stay out of our way, smuggler.")) {
+	switch (select("We're here to stop smuggling, not refugees.", "Just point us at Brode.", "Stay out of our way, smuggler.", "We need to discuss this.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_trust", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_mara_network", 1);
-		// Counts toward the finale turnout Loki reads back (arc_19_finale.txt).
-		callfunc("DM_InstanceSetFlag", "dm_arc19_ally_turnout", dm_arc19_ally_turnout + 1);
 		callfunc("DM_PartyMes", "[Captain Mara]");
 		callfunc("DM_PartyMes", "Good. Then my crew is yours, and every honest deckhand I know hears your name kindly.");
 		break;
@@ -87,6 +86,8 @@ S_StartArc:
 		callfunc("DM_PartyMes", "[Captain Mara]");
 		callfunc("DM_PartyMes", "I've heard worse from better sailors. You get directions, not shelter.");
 		break;
+	case 4:
+		close();
 	}
 	next();
 	callfunc("DM_PartyMes", "[Captain Mara]");
@@ -94,49 +95,17 @@ S_StartArc:
 	callfunc("DM_InstanceSetFlag", "dm_arc05_started", 1);
 	callfunc("DM_InstanceQuestStart", 20025);
 	callfunc("DM_InstanceQuestStart", 20026);
-	callfunc("DM_InstanceQuestStart", 20027);
-	callfunc("DM_InstanceQuestStart", 20028);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 501);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Tides and Trade]^000000");
-	callfunc("DM_PartyMes", "^3355FFRefugee Ferry Rotation - return to Mara after choosing who the Saltmother carries first.^000000");
-	callfunc("DM_PartyMes", "^3355FFByalan Tide Contract - hauled up off the tide route: " + callfunc("DM_HuntBrief", 20027) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFSunken Ship Manifest - salvaged from the sunken ship: " + callfunc("DM_HuntBrief", 20028) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFTwo ferry departures at the pier. Two diver sites. Then Brode's hold. Optional hunts pay; they do not open the lock.^000000");
 	close();
 
 S_TurnIns:
 	.@paid = 0;
 	if (questprogress(20026) == 1) {
 		callfunc("DM_PartyMes", "[Captain Mara]");
-		callfunc("DM_PartyMes", "The Saltmother has one clean rotation before Brode's men notice. Who gets deck space?");
-		next();
-		switch (select("Move people.", "Move supplies.", "Move spies under watch.", "Decide later.")) {
-		case 1:
-			callfunc("DM_InstanceSetFlag", "dm_arc05_ferry_choice", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc05_refugees_moved", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc19_ally_turnout", dm_arc19_ally_turnout + 1);
-			callfunc("DM_PartyMes", "[Captain Mara]");
-			callfunc("DM_PartyMes", "People first. Ships were invented for that before merchants got clever.");
-			break;
-		case 2:
-			callfunc("DM_InstanceSetFlag", "dm_arc05_ferry_choice", 2);
-			callfunc("DM_InstanceSetFlag", "dm_arc05_supplies_moved", 1);
-			callfunc("DM_PartyMes", "[Captain Mara]");
-			callfunc("DM_PartyMes", "Food and medicine. Not noble, not selfish. Necessary.");
-			break;
-		case 3:
-			callfunc("DM_InstanceSetFlag", "dm_arc05_ferry_choice", 3);
-			callfunc("DM_InstanceSetFlag", "dm_arc05_spies_moved", 1);
-			callfunc("DM_PartyMes", "[Captain Mara]");
-			callfunc("DM_PartyMes", "Spies under watch. Fine. If one of them cuts a throat, it will not be mine first.");
-			break;
-		case 4:
-			close();
-		}
-		callfunc("DM_InstanceQuestComplete", 20026);
-		callfunc("DM_PartyExp", 45000, 20000);
-		callfunc("DM_GivePartyZeny", 6000);
-		.@paid = 1;
+		callfunc("DM_PartyMes", "The pier handles departures. I will not pretend a conversation is a sailing. Go to the Saltmother's plank.");
 		next();
 	}
 
@@ -158,8 +127,6 @@ S_TurnIns:
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc05_byalan_choice", 2);
 			callfunc("DM_InstanceSetFlag", "dm_arc05_divers_rescued", 1);
-			// Counts toward the finale turnout Loki reads back (arc_19_finale.txt).
-			callfunc("DM_InstanceSetFlag", "dm_arc19_ally_turnout", dm_arc19_ally_turnout + 1);
 			callfunc("DM_PartyMes", "[Captain Mara]");
 			callfunc("DM_PartyMes", "Those divers will drink to your names until memory improves them.");
 			break;
@@ -204,7 +171,7 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20027) == 2 && questprogress(20028) == 2 && questprogress(20029) == 0) {
+	if (dm_arc05_departures_used >= 1 && questprogress(20029) == 0) {
 		callfunc("DM_PartyMes", "[Captain Mara]");
 		callfunc("DM_PartyMes", "Brode has one hold listed as ballast. Ballast does not knock back.");
 		next();
@@ -236,16 +203,27 @@ S_TurnIns:
 		}
 	}
 
-	if (.@paid) {
+	switch (select("How is the investigation?", "Take a field contract.", "That's all.")) {
+	case 1:
 		callfunc("DM_PartyMes", "[Captain Mara]");
-		callfunc("DM_PartyMes", "The port work is done. Now we open the locked hold.");
+		callfunc("DM_PartyMes", callfunc("DM_Act01BoardLine"));
+		callfunc("DM_HuntStanding", 20027, 20028);
+		close();
+	case 2:
+		next();
+		switch (select("Byalan Tide Contract.", "Sunken Ship Manifest.", "Neither.")) {
+		case 1:
+			if (questprogress(20027) == 0) callfunc("DM_InstanceQuestStart", 20027);
+			close();
+		case 2:
+			if (questprogress(20028) == 0) callfunc("DM_InstanceQuestStart", 20028);
+			close();
+		case 3:
+			close();
+		}
+	case 3:
 		close();
 	}
-
-	callfunc("DM_PartyMes", "[Captain Mara]");
-	callfunc("DM_PartyMes", "Ferry the living, clear Byalan, and pull pages from the Sunken Ship. Brode's route is written in all three.");
-	callfunc("DM_HuntStanding", 20027, 20028);
-	close();
 }
 
 // Smuggler-Baron Brode - logistics villain
@@ -270,10 +248,24 @@ alberta,101,65,4	script	Smuggler-Baron Brode#dm	4_M_03,{
 		close();
 	}
 
+	if (dm_arc05_departures_used < 1) {
+		callfunc("DM_PartyMes", "[Brode]");
+		callfunc("DM_PartyMes", "The Saltmother hasn't even left. Come back when a departure is on the water. I don't sell ledgers to tourists.");
+		close();
+	}
 	callfunc("DM_PartyMes", "[Brode]");
 	callfunc("DM_PartyMes", "People keep saying cult like that changes the bill of lading. I ship freight. Freight pays.");
 	next();
-	switch (select("You're trafficking people for a death-cult.", "We'll outbid the cult for the ledger.", "Talk, or we sink everything you own.")) {
+	if (dm_arc05_manifest_taken) {
+		callfunc("DM_PartyMes", "[Brode]");
+		callfunc("DM_PartyMes", "You already bought or stole the paper. Stop shopping.");
+		close();
+	}
+	if (!callfunc("DM_SceneClaim", "arc05_brode")) {
+		callfunc("DM_SceneFail", "arc05_brode");
+		close();
+	}
+	switch (select("You're trafficking people for a death-cult.", "We'll outbid the cult for the ledger.", "Talk, or we sink everything you own.", "We need to discuss this.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_ruined", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_brode_enemy", 1);
@@ -295,15 +287,20 @@ alberta,101,65,4	script	Smuggler-Baron Brode#dm	4_M_03,{
 		callfunc("DM_PartyMes", "[Brode]");
 		callfunc("DM_PartyMes", "Fine. Gray courier. Northern account. Yuno money. Now stop looking at my ships like kindling.");
 		break;
+	case 4:
+		callfunc("DM_SceneRelease", "arc05_brode");
+		close();
 	}
 	callfunc("DM_InstanceSetFlag", "dm_arc05_cassell_courier_drop", 1);
 	callfunc("DM_InstanceQuestStart", 20029);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 525);
 	next();
 	callfunc("DM_PartyMes", "^3355FF*Brode's Manifest lists ports and dates forward into places you have not yet visited.*^000000");
+	callfunc("DM_SceneRelease", "arc05_brode");
 	close();
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20029, 1;
 	end;
@@ -325,19 +322,37 @@ treasure01,153,160,4	script	Exempt Hold#dm	4_TREASURE_BOX,{
 		close();
 	}
 
+	if (!callfunc("DM_SceneClaim", "arc05_hold")) {
+		callfunc("DM_SceneFail", "arc05_hold");
+		close();
+	}
 	callfunc("DM_PartyMes", "^3355FF*The manifest lists this hold as ballast. Ballast does not breathe, pray, or knock back.*^000000");
 	next();
-	switch (select("Crack the hold quietly.", "Break it open loudly.")) {
+	if (!callfunc("DM_Arc05QuietTools"))
+		callfunc("DM_PartyMes", "^777777Quiet needs Mara's picks, a diver's prybar, or the informant's stamp. You do not have them yet.*^000000");
+	next();
+	switch (select("Crack the hold quietly (tools, fewer blades).", "Break it open loudly (everyone hears).", "We need to discuss this.")) {
 	case 1:
+		if (!callfunc("DM_Arc05QuietTools")) {
+			callfunc("DM_PartyMes", "^3355FF*The exemption lock laughs at bare hands. Walk the pier or the Byalan lines, or go loud.*^000000");
+			callfunc("DM_SceneRelease", "arc05_hold");
+			close();
+		}
 		callfunc("DM_InstanceSetFlag", "dm_arc05_hold_quiet", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc05_hold_loud", 0);
 		callfunc("DM_PartyMes", "^3355FF*The lock gives with a soft click. Mara's cover survives another hour.*^000000");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_hold_loud", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc05_hold_quiet", 0);
 		callfunc("DM_PartyMes", "^3355FF*The door breaks. Every hired blade on the route hears it.*^000000");
 		break;
+	case 3:
+		callfunc("DM_SceneRelease", "arc05_hold");
+		close();
 	}
 	next();
+	callfunc("DM_SceneTouch", "arc05_hold");
 
 	if (dm_arc03_sabra_deal) {
 		callfunc("DM_InstanceSetFlag", "dm_arc05_sabra_refugees_safe", 1);
@@ -353,18 +368,34 @@ treasure01,153,160,4	script	Exempt Hold#dm	4_TREASURE_BOX,{
 	.@map$ = strnpcinfo(NPC_MAP);
 	getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
 	'boss_up = 1;
+	.@self$ = strnpcinfo(NPC_NAME);
+	callfunc("DM_EncStart", "arc05_hold", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnCrewDead", .@self$ + "::OnCrewDead", .@self$);
 	mapannounce .@map$, "[Cargo of Souls] Brode's sealed hold opens. His crew tries to close it with blood.", bc_map, 0xFFAA33;
-	areamonster .@map$, .@x - 6, .@y - 6, .@x + 6, .@y + 6, "Brode's Knife", 1071, 6, "Exempt Hold#dm::OnCrewDead";
-	areamonster .@map$, .@x - 6, .@y - 6, .@x + 6, .@y + 6, "Cargo Hydra", 1068, 4, "Exempt Hold#dm::OnCrewDead";
+	.@knives = 2;
+	.@hydras = 1;
+	if (dm_arc05_hold_loud) {
+		.@knives = 6;
+		.@hydras = 4;
+	}
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Brode's Knife", 1071,
+		.@self$ + "::OnCrewDead", 58, 100, .@knives, 6);
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Cargo Hydra", 1068,
+		.@self$ + "::OnCrewDead", 58, 100, .@hydras, 6);
 	close();
 
 OnCrewDead:
-	.@left = mobcount(strnpcinfo(NPC_MAP), "Exempt Hold#dm::OnCrewDead");
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnCrewDead");
 	if (.@left > 0)
 		end;
-	.@party = callfunc("DM_SessionParty");
-	if (!callfunc("DM_ClaimGrant", "arc05_crew", .@party))
+	if (!callfunc("DM_EncOnDeath", "arc05_hold"))
 		end;
+	.@party = getd("$dm_enc_p_arc05_hold");
+	if (.@party <= 0)
+		end;
+	if (!callfunc("DM_ClaimGrant", "arc05_crew", .@party)) {
+		callfunc("DM_EncCleanup", "arc05_hold");
+		end;
+	}
 
 	'boss_up = 0;
 	callfunc("DM_InstanceQuestComplete", 20029);
@@ -377,6 +408,7 @@ OnCrewDead:
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20029, 1;
 	end;
@@ -398,34 +430,37 @@ tur_dun04,99,93,4	script	Deep Trench Wake#dm	4_ENERGY_BLUE,{
 		close();
 	}
 
+	if (!callfunc("DM_SceneClaim", "arc05_tao")) {
+		callfunc("DM_SceneFail", "arc05_tao");
+		close();
+	}
 	callfunc("DM_PartyMes", "^3355FF*Below the shelf, the water turns like a sleeping island rolling in its dream. Brode's dumped crates are wedged into the trench.*^000000");
 	next();
-	switch (select("Recover and neutralize the relic crates.", "Ignore the crates and meet the beast.")) {
+	switch (select("Recover crates, then surrender them after.", "Recover crates and keep them for leverage.", "Leave the crates. Meet the beast.", "We need to discuss this.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_relic_crates_recovered", 1);
-		callfunc("DM_PartyMes", "^3355FF*The crate-seals come loose still cold. The beast loses the rhythm feeding its rage.*^000000");
-		break;
-	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc05_relic_crates_ignored", 1);
-		callfunc("DM_PartyMes", "^3355FF*The crates keep pulsing below you. The deep answers with teeth.*^000000");
-		break;
-	}
-	next();
-	switch (select("Surrender the relics after the fight.", "Keep the relics for leverage.")) {
-	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc05_relics_surrendered", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_relics_kept", 0);
-		callfunc("DM_PartyMes", "^3355FF*The crown will study the crate-seals. The crown will also remember who touched them first.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*The crate-seals come loose still cold. After the fight they go to the crown.*^000000");
 		break;
 	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc05_relic_crates_recovered", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_relics_kept", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc05_relics_surrendered", 0);
 		if (dm_arc04_pilgrim_catechism)
 			callfunc("DM_InstanceSetFlag", "dm_catechism_tally", dm_catechism_tally + 1);
 		callfunc("DM_PartyMes", "^3355FF*You keep the same cargo Brode trafficked. The difference is motive. For now.*^000000");
 		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc05_relic_crates_ignored", 1);
+		callfunc("DM_PartyMes", "^3355FF*The crates keep pulsing below you. The deep answers with teeth.*^000000");
+		break;
+	case 4:
+		callfunc("DM_SceneRelease", "arc05_tao");
+		close();
 	}
 	next();
+	callfunc("DM_SceneTouch", "arc05_tao");
 
 	.@map$ = strnpcinfo(NPC_MAP);
 	getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
@@ -442,38 +477,245 @@ tur_dun04,99,93,4	script	Deep Trench Wake#dm	4_ENERGY_BLUE,{
 		.@adds = 1;
 
 	'boss_up = 1;
+	.@self$ = strnpcinfo(NPC_NAME);
+	callfunc("DM_EncStart", "arc05_tao", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnTaoDead", .@self$ + "::OnSideDead", .@self$);
 	mapannounce .@map$, "[Deep Trench Wake] Tao Gunka rises from the disturbed deep. Act I ends under black water.", bc_map, 0xFFAA33;
-	monster .@map$, .@x, .@y, "Tao Gunka", 1583, 1, "Deep Trench Wake#dm::OnTaoDead";
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Tao Gunka", 1583,
+		.@self$ + "::OnTaoDead", 58, 100, 1, 0);
 	if (!dm_arc05_relic_crates_recovered)
-		monster .@map$, .@x + 3, .@y + 3, "Drake", 1112, 1, "Deep Trench Wake#dm::OnSideDead";
+		callfunc("DM_EncMonster", .@map$, .@x + 3, .@y + 3, "Drake", 1112,
+			.@self$ + "::OnSideDead", 58, 100, 1, 0);
 	if (dm_arc05_hold_loud || dm_arc05_relics_kept)
-		monster .@map$, .@x - 3, .@y - 3, "Kraken", 2202, 1, "Deep Trench Wake#dm::OnSideDead";
-	areamonster .@map$, .@x - 6, .@y - 6, .@x + 6, .@y + 6, "Trench Wake", 1045, .@adds, "Deep Trench Wake#dm::OnSideDead";
+		callfunc("DM_EncMonster", .@map$, .@x - 3, .@y - 3, "Kraken", 2202,
+			.@self$ + "::OnSideDead", 58, 100, 1, 0);
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Trench Wake", 1045,
+		.@self$ + "::OnSideDead", 58, 100, .@adds, 6);
 	close();
 
 OnSideDead:
 	end;
 
 OnTaoDead:
-	.@party = callfunc("DM_SessionParty");
-	if (!callfunc("DM_ClaimGrant", "arc05_tao", .@party))
+	if (!callfunc("DM_EncOnDeath", "arc05_tao"))
 		end;
+	.@party = getd("$dm_enc_p_arc05_tao");
+	if (.@party <= 0)
+		end;
+	if (!callfunc("DM_ClaimGrant", "arc05_tao", .@party)) {
+		callfunc("DM_EncCleanup", "arc05_tao");
+		end;
+	}
 	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
-	killmonster .@map$, "Deep Trench Wake#dm::OnSideDead";
-	callfunc("DM_InstanceQuestComplete", 20030);
-	callfunc("DM_InstanceQuestComplete", 20025);
+	killmonster .@map$, strnpcinfo(NPC_NAME)+"::OnSideDead";
 	callfunc("DM_InstanceSetFlag", "dm_arc05_sodden_crate_seal", 1);
-	callfunc("DM_InstanceSetFlag", "dm_act01_complete", 1);
-	callfunc("DM_PartyExp", 280000, 125000);
+	callfunc("DM_PartyExp", 112000, 50000, .@party);
 	callfunc("DM_GivePartyZeny", 22000);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 599);
+	callfunc("DM_Arc05Complete", .@party);
 	mapannounce .@map$, "[Deep Trench Wake] Tao Gunka falls. Brode's Manifest points north: Yuno, money, and Act II.", bc_map, 0x88CCFF;
 	dispbottom "[Seal Cascade] Act I complete. The cascade is not a rumor anymore. It is a route.";
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20030, 1;
+	end;
+}
+
+alberta,201,151,4	script	Saltmother Plank#dm	4W_SAILOR,{
+	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!dm_arc05_started) {
+		callfunc("DM_PartyMes", "[Bosun]");
+		callfunc("DM_PartyMes", "Guild paper first. Mara at the dock, 184, 150.");
+		close();
+	}
+	if (dm_arc05_departures_used >= 1) {
+		callfunc("DM_PartyMes", "[Bosun]");
+		callfunc("DM_PartyMes", "First boat's gone. Salvage skiff is south of Paul if you still have a conscience.");
+		close();
+	}
+	if (!callfunc("DM_SceneClaim", "arc05_ferry")) {
+		callfunc("DM_SceneFail", "arc05_ferry");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Bosun]");
+	callfunc("DM_PartyMes", "First departure. People, grain, or the clerk who saw Brode's exemption stamp. You cannot take all three tonight.");
+	next();
+	switch (select("People first.", "Supplies first.", "Escort the informant.", "We need to discuss this.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc05_ferry_choice", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc05_refugees_moved", 1);
+		callfunc("DM_PartyMes", "^3355FF*Families board. Grain stays on the quay. The clerk hides.*^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc05_ferry_choice", 2);
+		callfunc("DM_InstanceSetFlag", "dm_arc05_supplies_moved", 1);
+		callfunc("DM_PartyMes", "^3355FF*Sacks go. People wait. Nobody starves who was going to live tonight - yet.*^000000");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc05_ferry_choice", 3);
+		callfunc("DM_InstanceSetFlag", "dm_arc05_spies_moved", 1);
+		callfunc("DM_PartyMes", "^3355FF*The clerk has Brode's stamp in a sleeve. Quiet tools for the hold, if you live to use them.*^000000");
+		break;
+	case 4:
+		callfunc("DM_SceneRelease", "arc05_ferry");
+		close();
+	}
+	callfunc("DM_InstanceSetFlag", "dm_arc05_departures_used", 1);
+	if (questprogress(20026) == 0)
+		callfunc("DM_InstanceQuestStart", 20026);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 526);
+	callfunc("DM_SceneRelease", "arc05_ferry");
+	callfunc("DM_PartyMes", "^3355FF[First departure used. The salvage skiff can take what you left. Brode will talk once a boat is on the water.]^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+alberta,196,147,4	script	Salvage Skiff#dm	4_M_04,{
+	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!dm_arc05_started) { close; }
+	if (dm_arc05_departures_used < 1) {
+		callfunc("DM_PartyMes", "[Skiff-hand]");
+		callfunc("DM_PartyMes", "Saltmother first. West of here, at the plank.");
+		close();
+	}
+	if (dm_arc05_departures_used >= 2) {
+		callfunc("DM_PartyMes", "[Skiff-hand]");
+		callfunc("DM_PartyMes", "Both boats are out. Harbor's quieter. Not empty.");
+		close();
+	}
+	if (!callfunc("DM_SceneClaim", "arc05_skiff")) {
+		callfunc("DM_SceneFail", "arc05_skiff");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Skiff-hand]");
+	callfunc("DM_PartyMes", "What you didn't take is still on the quay. Second trip costs time. Brode's dock-watch will log it. Nobody invisibly starves.");
+	next();
+	switch (select("Salvage the rest.", "Leave it.", "We need to discuss this.")) {
+	case 1:
+		if (dm_arc05_ferry_choice == 1)
+			callfunc("DM_InstanceSetFlag", "dm_arc05_supplies_moved", 1);
+		else if (dm_arc05_ferry_choice == 2)
+			callfunc("DM_InstanceSetFlag", "dm_arc05_refugees_moved", 1);
+		else {
+			callfunc("DM_InstanceSetFlag", "dm_arc05_refugees_moved", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc05_supplies_moved", 1);
+		}
+		callfunc("DM_InstanceSetFlag", "dm_arc05_departures_used", 2);
+		callfunc("DM_InstanceQuestComplete", 20026);
+		if (callfunc("DM_ClaimGrant", "arc05_ferry"))
+			callfunc("DM_PartyExp", 45000, 20000);
+		callfunc("DM_PartyMes", "^3355FF*The second boat leaves heavy. Brode's clerks mark the extra trip. The quay is empty of the living cargo.*^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc05_departures_used", 2);
+		callfunc("DM_InstanceQuestComplete", 20026);
+		if (callfunc("DM_ClaimGrant", "arc05_ferry"))
+			callfunc("DM_PartyExp", 45000, 20000);
+		callfunc("DM_PartyMes", "^3355FF*You leave the remainder. That is also a choice. 20026 closes.*^000000");
+		break;
+	case 3:
+		callfunc("DM_SceneRelease", "arc05_skiff");
+		close();
+	}
+	callfunc("DM_SceneRelease", "arc05_skiff");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+iz_dun01,248,250,4	script	West Diver Line#dm	4_M_SEAMAN,{
+	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!dm_arc05_started) {
+		callfunc("DM_PartyMes", "[Diver]");
+		callfunc("DM_PartyMes", "Mara sent you? Then she hasn't. Swim up.");
+		close();
+	}
+	if (dm_arc05_diver_mask & 1) {
+		callfunc("DM_PartyMes", "[Diver]");
+		callfunc("DM_PartyMes", "West line's up. East line is the other hole.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Diver]");
+	callfunc("DM_PartyMes", "Line fouled on a crate that hums. Cut us free and we owe you a prybar.");
+	next();
+	if (select("Cut them free.", "Later.") == 2) close();
+	callfunc("DM_InstanceSetFlag", "dm_arc05_diver_mask", dm_arc05_diver_mask | 1);
+	callfunc("DM_InstanceSetFlag", "dm_arc05_diver_groups_saved", dm_arc05_diver_groups_saved + 1);
+	if (dm_arc05_diver_groups_saved >= 2) {
+		callfunc("DM_InstanceSetFlag", "dm_arc05_divers_rescued", 1);
+		if (callfunc("DM_ClaimGrant", "arc05_divers"))
+			callfunc("DM_PartyExp", 70000, 32000);
+		callfunc("DM_PartyMes", "^3355FF[Both diver groups saved. Quiet tools for the hold.]^000000");
+	} else
+		callfunc("DM_PartyMes", "^3355FF[West divers saved. One group still fouled to the east.]^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+iz_dun01,48,42,4	script	East Diver Line#dm	4_M_SEAMAN,{
+	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!dm_arc05_started) {
+		callfunc("DM_PartyMes", "[Diver]");
+		callfunc("DM_PartyMes", "Not a tour.");
+		close();
+	}
+	if (dm_arc05_diver_mask & 2) {
+		callfunc("DM_PartyMes", "[Diver]");
+		callfunc("DM_PartyMes", "East line's up. West if you haven't.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Diver]");
+	callfunc("DM_PartyMes", "Same crates. Same hum. Cut the line.");
+	next();
+	if (select("Cut them free.", "Later.") == 2) close();
+	callfunc("DM_InstanceSetFlag", "dm_arc05_diver_mask", dm_arc05_diver_mask | 2);
+	callfunc("DM_InstanceSetFlag", "dm_arc05_diver_groups_saved", dm_arc05_diver_groups_saved + 1);
+	if (dm_arc05_diver_groups_saved >= 2) {
+		callfunc("DM_InstanceSetFlag", "dm_arc05_divers_rescued", 1);
+		if (callfunc("DM_ClaimGrant", "arc05_divers"))
+			callfunc("DM_PartyExp", 70000, 32000);
+		callfunc("DM_PartyMes", "^3355FF[Both diver groups saved. Quiet tools for the hold.]^000000");
+	} else
+		callfunc("DM_PartyMes", "^3355FF[East divers saved. One group still fouled to the west.]^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+alberta,186,148,4	script	Harbor Survivor#dm	4_F_01,{
+	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!dm_arc05_started) { close; }
+	if (questprogress(20029) != 2 && dm_arc05_departures_used < 1) {
+		callfunc("DM_PartyMes", "[Harbor]");
+		callfunc("DM_PartyMes", "Waiting for a boat that has not left.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Harbor]");
+	if (dm_arc05_sabra_refugees_safe || (dm_arc03_relief_secured && dm_arc05_refugees_freed))
+		callfunc("DM_PartyMes", "We ate. We slept above decks. If you need a crew later, you have names.");
+	else if (dm_arc05_sabra_refugees_starved)
+		callfunc("DM_PartyMes", "Justice looked cleaner from shore. We are alive. That is the whole thanks.");
+	else if (dm_arc05_diver_groups_saved >= 1)
+		callfunc("DM_PartyMes", "The divers drink to you. The hold still stinks.");
+	else if (dm_arc05_departures_used >= 1)
+		callfunc("DM_PartyMes", "A boat left. Some of us were on it. That is not nothing.");
+	else
+		callfunc("DM_PartyMes", "The quay remembers who walked it.");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
 	end;
 }

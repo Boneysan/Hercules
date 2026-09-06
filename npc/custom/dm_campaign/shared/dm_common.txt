@@ -90,11 +90,11 @@ function	script	DM_ClearPartyGrants	{
 	// query_sql is unused in campaign scripts; drop matching $dm_paid_* vars
 	// by walking the well-known grant keys instead of enumerating the VM.
 	setarray .@keys$[0],
-		"sigil_ring", "arc01_deviruchi",
-		"arc02_moonlight",
-		"arc03_osiris", "arc03_amon",
-		"arc04_baphomet", "arc04_doppel",
-		"arc05_tao", "arc05_crew",
+		"sigil_ring", "arc01_deviruchi", "arc01_clues", "arc01_prepared", "arc01_rescue",
+		"arc02_moonlight", "arc02_memorials", "arc02_conduits", "arc02_lanterns", "arc02_graves",
+		"arc03_osiris", "arc03_amon", "arc03_survey", "arc03_relief",
+		"arc04_baphomet", "arc04_doppel", "arc04_glyphs",
+		"arc05_tao", "arc05_crew", "arc05_ferry", "arc05_divers",
 		"arc06_krenn_zeny", "arc06_mistress",
 		"arc07_rsx",
 		"arc08_darklord",
@@ -126,11 +126,11 @@ function	script	DM_IsCampaignMap	{
 	// Towns the campaign actually uses, plus the set-piece maps. Not every
 	// official map — @dminstance start prontera used to clone Kafras and shops.
 	setarray .@maps$[0],
-		"prontera", "prt_sewb4", "prt_fild08",
+		"prontera", "prt_sewb1", "prt_sewb4", "prt_fild08",
 		"payon", "pay_arche", "pay_dun04",
-		"morocc", "moc_ruins", "moc_pryd06", "moc_fild16", "moc_fild22",
+		"morocc", "moc_ruins", "moc_pryd01", "moc_pryd04", "moc_pryd06", "moc_fild01", "moc_fild16", "moc_fild22",
 		"geffen", "gef_dun02", "gef_fild10",
-		"alberta", "izlude", "iz_dun04",
+		"alberta", "izlude", "iz_dun01", "iz_dun04", "treasure01", "tur_dun04",
 		"yuno", "yuno_fild07", "juperos_01",
 		"einbroch", "einbech", "ein_dun02",
 		"glast_01", "gl_cas02", "gl_chyard",

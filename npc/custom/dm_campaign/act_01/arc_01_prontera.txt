@@ -1,81 +1,55 @@
 //===== Seal Cascade Campaign ================================
 //= Act I, Arc 1 - Omens at the Fountain (Prontera)
-//===== By: ==================================================
-//= Seal Cascade DM tooling
-//===== Description: =========================================
-//= Original Act I entry arc for the Seal Cascade campaign.
-//= Town-hub NPCs (Quartermaster Wynne, a refugee mother, and
-//= Tibbets the sluice-keeper) drive the guild loop and set the
-//= story flags. Deacon Holt runs the Listening Chamber set-piece
-//= (the Deviruchi MVP) in the deepest Culvert, prt_sewb4.
-//=
-//= Companion DM tooling lives in npc/custom/dm_campaign/shared/
-//= (@dm flag / reward / story / spawn / cleanup).
-//=
-//= Quests (db/quest_db.conf):
-//=   20001 Omens at the Fountain        (arc tracker)
-//=   20002 Contract: Cellar Vermin (Rat Tail x7, Single Cell x7, Worm Peeling x3)
-//=   20003 Field Contract: Rockers... (Grasshopper's Leg x10, Animal Skin x10, Rocker Doll x3)
-//=   20004 The Trembling Ground         (story)
-//=   20005 The Goat-Headed Sign         (Deviruchi MVP)
-//=   20006 South Gate Soup Line         (reserved / story)
-//=
-//= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc01_started, dm_arc01_hero_type,
-//=   dm_arc01_refugees_helped, dm_arc01_tibbets_befriended,
-//=   dm_arc01_holt_spared, dm_arc01_holt_killed,
-//=   dm_arc01_sigil_ring_obtained
+//= Investigate the humming water. Optional hunts. Real rescue,
+//= real drain, real binding. Close 20001 when the chamber is done.
 //===========================================================
 
-// ── Session Board — always-visible onboarding notice near the fountain ─────
 prontera,155,185,5	script	Session Board#dm	4_BOARD3,{
 	if (callfunc("DM_SessionAllows")) {
-		// Find which arc the party is on: first in-progress, else last complete.
-		setarray .@q[0], 20001, 20007, 20013, 20019, 20025, 20101, 20111, 20121, 20131, 20141, 20151, 20161, 20171, 20181, 20191, 20201, 20211, 20221, 20231;
-		.@current_arc = 0;
-		for (.@i = 0; .@i < 19; ++.@i) {
-			.@p = questprogress(.@q[.@i]);
-			if (.@p == 1) { .@current_arc = .@i + 1; break; }
-			if (.@p == 2)  .@current_arc = .@i + 1;
-		}
 		callfunc("DM_PartyMes", "[Session Board]");
 		callfunc("DM_PartyMes", "A campaign session is underway.");
-		if (.@current_arc > 0)
-			callfunc("DM_PartyMes", "Your party is currently on Arc " + .@current_arc + " of 19.");
-		else
-			callfunc("DM_PartyMes", "No arc has been started yet. Await the Dungeon Master's signal.");
+		callfunc("DM_PartyMes", callfunc("DM_Act01BoardLine"));
 		next();
 		callfunc("DM_PartyMes", "[Session Board]");
-		callfunc("DM_PartyMes", "Look for the Quartermaster near the fountain when you're ready to begin.");
+		callfunc("DM_PartyMes", "Optional bounties pay coin. They do not open the chamber.");
 		close();
 	}
 	if ($dm_mode) {
 		callfunc("DM_PartyMes", "[Session Board]");
-		callfunc("DM_PartyMes", "A private session is in progress.");
-		next();
-		callfunc("DM_PartyMes", "[Session Board]");
-		callfunc("DM_PartyMes", "Check with the GM to be added to the active party.");
+		callfunc("DM_PartyMes", "A private session is in progress. Ask the GM to join the active party.");
 		close();
 	}
 	callfunc("DM_PartyMes", "[Session Board]");
-	callfunc("DM_PartyMes", "The Adventurers' Guild is open for business.");
-	next();
-	callfunc("DM_PartyMes", "[Session Board]");
-	callfunc("DM_PartyMes", "Speak to a GM to arrange a campaign session. Form a party before the session starts.");
+	callfunc("DM_PartyMes", "The Adventurers' Guild is open. Form a party, then speak to a GM.");
 	close();
 }
 
-// ── Quartermaster Wynne — Adventurers' Guild handler ───────────────────────
 prontera,156,191,5	script	Quartermaster Wynne#dm	4_F_01,{
 	if (!callfunc("DM_SessionAllows")) { close; }
-	if (questprogress(20005) == 2) {
+
+	// Legacy: chamber done, tracker still open.
+	if (questprogress(20005) == 2 && questprogress(20001) == 1)
+		callfunc("DM_Arc01Complete");
+
+	if (questprogress(20001) == 2) {
 		callfunc("DM_PartyMes", "[Quartermaster Wynne]");
 		callfunc("DM_PartyMes", "You went down where the deacons wouldn't. The ledger remembers that.");
 		next();
+		if (dm_arc01_sigil_ring_obtained && countitem(50001) == 0) {
+			callfunc("DM_PartyMes", "[Wynne]");
+			callfunc("DM_PartyMes", "You lost the ring. I can attune another. It will still get colder.");
+			next();
+			if (select("Replace the Sigil Ring.", "Not now.") == 1) {
+				callfunc("DM_GivePartyItem", 50001, 1);
+				callfunc("DM_PartyMes", "^3355FF[Sigil Ring restored.]^000000");
+			}
+			close();
+		}
 		callfunc("DM_PartyMes", "[Wynne]");
-		callfunc("DM_PartyMes", "Rest while you can. The south road's thick with refugees, and a Payon hunter swears the forest up there won't let its dead sleep.");
+		callfunc("DM_PartyMes", "Rest while you can. Payon swears the forest won't let its dead sleep. Sun-Hwa keeps the shrine: payon, 181, 104.");
 		close();
 	}
+
 	if (!dm_arc01_started) {
 		callsub(S_SwearIn);
 		end;
@@ -84,55 +58,61 @@ prontera,156,191,5	script	Quartermaster Wynne#dm	4_F_01,{
 	end;
 
 OnInit:
-	questinfo QTYPE_QUEST, 1; // Marker color 1 (yellow)
+	callfunc("DM_AssertWalk");
+	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20001, 0;
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20001, 1;
 	end;
 
 S_SwearIn:
+	if (!callfunc("DM_SceneClaim", "arc01_wynne_start")) {
+		callfunc("DM_SceneFail", "arc01_wynne_start");
+		close();
+	}
 	callfunc("DM_PartyMes", "[Quartermaster Wynne]");
 	callfunc("DM_PartyMes", "Next. Name, class, and who to notify when you don't come back.");
 	next();
 	callfunc("DM_PartyMes", "[Wynne]");
 	callfunc("DM_PartyMes", "I'm Quartermaster Wynne. This is the Adventurers' Guild. We don't do glory here - we do pest control.");
 	next();
-	switch (select("We're here to help the city.", "What's the pay like?", "Just point us to the monsters.")) {
+	switch (select("We're here to help the city.", "What's the pay like?", "Just point us to the monsters.", "We need to discuss this.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc01_hero_type", 1);
 		callfunc("DM_PartyMes", "[Wynne]");
-		callfunc("DM_PartyMes", "Good. The city needs helping. Specifically, the Culvert needs helping - it's overflowing with Tarou and worse.");
+		callfunc("DM_PartyMes", "Good. The city needs helping. The Culvert first. And the humming the cathedral pretends it cannot hear.");
 		break;
 	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc01_hero_type", 2);
 		callfunc("DM_PartyMes", "[Wynne]");
-		callfunc("DM_PartyMes", "Better than farming, worse than dying. You get paid per bounty. Kill the vermin, bring proof, get coin.");
+		callfunc("DM_PartyMes", "Better than farming, worse than dying. Optional bounties pay. The unofficial job pays in answers.");
 		break;
 	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc01_hero_type", 3);
 		callfunc("DM_PartyMes", "[Wynne]");
-		callfunc("DM_PartyMes", "Eager. I had another eager party last week - I'm mailing their boots back to their mothers today. Try to keep yours on.");
+		callfunc("DM_PartyMes", "Eager. I mailed another eager party's boots home last week. Keep yours on.");
 		break;
+	case 4:
+		callfunc("DM_SceneRelease", "arc01_wynne_start");
+		close();
 	}
 	next();
 	callfunc("DM_PartyMes", "[Wynne]");
-	callfunc("DM_PartyMes", "Take these contracts. The city guard says the Culvert is just Plankton and Tarou, but the refugees from the south say the ground down there is... humming.");
+	callfunc("DM_PartyMes", "The fountain throws clean water. The south road does not. Start with people, not proof.");
 	next();
 	callfunc("DM_PartyMes", "[Wynne]");
-	callfunc("DM_PartyMes", "Be smart. It pays. It's also a bad idea. Both things are true. Sign here.");
+	callfunc("DM_PartyMes", "Tibbets keeps the sluice by the Culvert. A mother at the south gate is missing a girl. Something in the upper Culvert is painted in what is not paint.");
 	callfunc("DM_InstanceSetFlag", "dm_arc01_started", 1);
 	callfunc("DM_InstanceQuestStart", 20001);
-	callfunc("DM_InstanceQuestStart", 20002);
-	callfunc("DM_InstanceQuestStart", 20003);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 101);
+	callfunc("DM_SceneRelease", "arc01_wynne_start");
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Omens at the Fountain]^000000");
-	callfunc("DM_PartyMes", "^3355FFContract: Cellar Vermin - proof out of the Culvert: " + callfunc("DM_HuntBrief", 20002) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFField Contract: Rockers and Rumors - proof off the Prontera fields: " + callfunc("DM_HuntBrief", 20003) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFOld Tibbets keeps the sluice-gates by the Culvert. Talk to him before you go down.^000000");
+	callfunc("DM_PartyMes", "^3355FFFollow the humming water. Ask Tibbets, the mother at the south gate, or inspect the painted sluice in the upper Culvert.^000000");
+	callfunc("DM_PartyMes", "^777777Field contracts are optional. Ask if you want extra coin.^000000");
 	close();
 
 S_Contracts:
-	// Settle any completed hunting contracts.
 	.@paid = 0;
 	if (questprogress(20002) == 1 && callfunc("DM_HuntReady", 20002)) {
 		callfunc("DM_HuntCollect", 20002);
@@ -141,7 +121,7 @@ S_Contracts:
 		callfunc("DM_GivePartyZeny", 2000);
 		.@paid = 1;
 		callfunc("DM_PartyMes", "[Wynne]");
-		callfunc("DM_PartyMes", "Cellar's a little cleaner. 2,000 zeny, and the ledger likes you.");
+		callfunc("DM_PartyMes", "Cellar's a little cleaner. 2,000 zeny. Optional work still counts.");
 		next();
 	}
 	if (questprogress(20003) == 1 && callfunc("DM_HuntReady", 20003)) {
@@ -151,173 +131,404 @@ S_Contracts:
 		callfunc("DM_GivePartyZeny", 2000);
 		.@paid = 1;
 		callfunc("DM_PartyMes", "[Wynne]");
-		callfunc("DM_PartyMes", "Fields are quieter. Another 2,000. And you brought back rumors with the proof - good.");
+		callfunc("DM_PartyMes", "Fields are quieter. Another 2,000. The dolls are a rare bounty, not a key.");
 		next();
 	}
 
-	// Main quest gate: both contracts done -> hand the unofficial job.
-	if (questprogress(20002) == 2 && questprogress(20003) == 2 && questprogress(20005) == 0) {
+	if (questprogress(20005) == 2) {
+		callfunc("DM_Arc01Complete");
 		callfunc("DM_PartyMes", "[Wynne]");
-		callfunc("DM_PartyMes", "You've earned a contract I didn't post. Unofficial. The cathedral won't act, the palace won't look - but adventurers can go where deacons won't. Down.");
-		next();
+		callfunc("DM_PartyMes", "The chamber is quiet. The ring will get colder. Payon next: Sun-Hwa at the shrine.");
+		close();
+	}
+
+	if (questprogress(20005) == 0 && callfunc("DM_Arc01ChamberReady")) {
 		callfunc("DM_PartyMes", "[Wynne]");
-		callfunc("DM_PartyMes", "Someone's painting goat-headed sigils on the sluice walls in something that isn't paint. Follow the paint. Tell me what's making it.");
+		callfunc("DM_PartyMes", "You've got two signs. That's more than the cathedral asked for. Unofficial job: follow the paint to the lowest chamber.");
 		next();
 		switch (select("We'll find the source.", "Not yet.")) {
 		case 1:
 			callfunc("DM_InstanceQuestStart", 20005);
+			callfunc("DM_PartyApplyFlag", "dm_story_beat", 108);
 			callfunc("DM_PartyMes", "^3355FF[Quest started: The Goat-Headed Sign]^000000");
-			callfunc("DM_PartyMes", "^3355FFSee Tibbets, then descend to the lowest Culvert chamber.^000000");
+			callfunc("DM_PartyMes", "^3355FFLowest Culvert. Optional: drain the tide-wheel. Optional: speak Hlin at the binding stone before Holt goes hostile.^000000");
 			close();
 		case 2:
 			close();
 		}
 	}
 
-	if (.@paid) {
+	switch (select("How is the investigation?", "Take a field contract.", "That's all.")) {
+	case 1:
 		callfunc("DM_PartyMes", "[Wynne]");
-		callfunc("DM_PartyMes", "Come back when both contracts are closed and I'll have something the guard won't touch.");
+		callfunc("DM_PartyMes", callfunc("DM_Act01BoardLine"));
+		if (callfunc("DM_Arc01Clues") > 0)
+			callfunc("DM_PartyMes", "Signs found: " + callfunc("DM_Arc01Clues") + " of 3 (paint, Mira, Tibbets).");
+		callfunc("DM_HuntStanding", 20002, 20003);
+		close();
+	case 2:
+		callsub(S_OfferHunts);
+		end;
+	case 3:
+		if (.@paid) {
+			callfunc("DM_PartyMes", "[Wynne]");
+			callfunc("DM_PartyMes", "Come back when the water has a name.");
+		}
 		close();
 	}
 
-	// Status / nudges.
+S_OfferHunts:
 	callfunc("DM_PartyMes", "[Wynne]");
-	if (questprogress(20005) == 1) {
-		callfunc("DM_PartyMes", "The paint leads down, not up. Tibbets knows the way. Whatever's making those sigils is in the lowest chamber.");
-	} else {
-		callfunc("DM_PartyMes", "Cellar Vermin and the field contract are still open. Close them both, then we'll talk about the part the cathedral pretends isn't happening.");
+	callfunc("DM_PartyMes", "Optional. Coin, not keys.");
+	next();
+	switch (select("Cellar Vermin (Culvert).", "Rockers and Rumors (fields; Vocal dolls are rare).", "Neither.")) {
+	case 1:
+		if (questprogress(20002) == 0) {
+			callfunc("DM_InstanceQuestStart", 20002);
+			callfunc("DM_PartyMes", "^3355FF[Optional: Cellar Vermin - " + callfunc("DM_HuntBrief", 20002) + "]^000000");
+		} else
+			callfunc("DM_PartyMes", "You already have that one.");
+		close();
+	case 2:
+		if (questprogress(20003) == 0) {
+			callfunc("DM_InstanceQuestStart", 20003);
+			callfunc("DM_PartyMes", "^3355FF[Optional: Rockers and Rumors - " + callfunc("DM_HuntBrief", 20003) + "]^000000");
+			callfunc("DM_PartyMes", "^777777The dolls drop from Vocal. Do not wait on one rare spawn to save a child.^000000");
+		} else
+			callfunc("DM_PartyMes", "You already have that one.");
+		close();
+	case 3:
+		close();
 	}
-	callfunc("DM_HuntStanding", 20002, 20003);
-	close();
 }
 
-// ── Frightened Mother — The Trembling Ground (south gate) ──────────────────
 prontera,156,40,3	script	Frightened Mother#dm	4_F_01,{
 	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc01_started) {
 		callfunc("DM_PartyMes", "[Frightened Mother]");
-		callfunc("DM_PartyMes", "Please... the guild handles this sort of thing. Talk to Quartermaster Wynne at the fountain first. They'll vouch for you.");
+		callfunc("DM_PartyMes", "Please... the guild handles this. Wynne at the fountain first.");
 		close();
 	}
 	if (questprogress(20004) == 2) {
 		callfunc("DM_PartyMes", "[Frightened Mother]");
-		if (dm_arc01_refugees_helped)
-			callfunc("DM_PartyMes", "Bless you for bringing her home gentle. If those poor souls in the robes ever lay down their arms, it'll be because someone treated us like people.");
+		if (dm_arc01_rescue_route == 1)
+			callfunc("DM_PartyMes", "You walked Mira home like she was a person. If those robes ever lay down their arms, it will be because of that.");
+		else if (dm_arc01_rescue_route == 3)
+			callfunc("DM_PartyMes", "You made the bread-man look her in the eye. She still sleeps. I do not.");
 		else
-			callfunc("DM_PartyMes", "The guard swept the camp after you spoke. Maybe it was right. The others scattered, though... toward the very thing you'll find below.");
+			callfunc("DM_PartyMes", "The guard swept the camp. Maybe it was right. The others ran toward the thing you'll find below.");
 		close();
 	}
 	if (questprogress(20004) == 0) {
 		callfunc("DM_PartyMes", "[Frightened Mother]");
-		callfunc("DM_PartyMes", "We came up the south road from Morroc. We sleep outside the walls - the buildings *remember* the shaking.");
+		callfunc("DM_PartyMes", "We came up the south road from Morroc. The buildings remember the shaking, so we sleep outside.");
 		next();
 		callfunc("DM_PartyMes", "[Frightened Mother]");
-		callfunc("DM_PartyMes", "My girl wandered off after the 'bread-man' - a gray almsman who feeds the lost ones. Toward the Culvert grate. Please, find her.");
+		callfunc("DM_PartyMes", "My girl Mira followed the 'bread-man' - a gray almsman. The soup line by this gate. Please find her. I cannot.");
 		next();
-		switch (select("We'll find her.", "Stay safe. We'll look.")) {
+		switch (select("We'll find Mira.", "Stay here. We'll look.", "Later.")) {
 		case 1:
 		case 2:
 			callfunc("DM_InstanceQuestStart", 20004);
 			callfunc("DM_PartyMes", "^3355FF[Quest started: The Trembling Ground]^000000");
-			callfunc("DM_PartyMes", "^3355FFFollow the child's drawings into the upper Culvert.^000000");
+			callfunc("DM_PartyMes", "^3355FFFind Mira at the south-gate soup line. Do not finish this conversation instead of looking.^000000");
+			close();
+		case 3:
 			close();
 		}
 	}
-	// In progress: resolve with the gut-twist choice.
-	callfunc("DM_PartyMes", "^3355FF*You find the girl safe at a soup line - run by the gray almsman's friend, Deacon Holt. Her crayon drawings have slowly given the 'bread-man' a face: gray robe, kind eyes, a goat-headed ring.*^000000");
-	next();
-	callfunc("DM_PartyMes", "[You]");
-	callfunc("DM_PartyMes", "She's safe. But the people feeding her are the same ones painting the sigils. What now?");
-	next();
-	switch (select("Bring her home quietly.", "Report the soup line to the city guard.")) {
-	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc01_refugees_helped", 1);
-		callfunc("DM_InstanceQuestComplete", 20004);
-		callfunc("DM_PartyExp", 3000, 1200);
-		callfunc("DM_GivePartyZeny", 1500);
-		callfunc("DM_PartyMes", "^3355FF*You walk the girl back to her mother. The refugees mark your faces as friends - half of them will not raise a hand against you below.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[The Trembling Ground complete.]^000000");
-		close();
-	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc01_refugees_helped", 0);
-		callfunc("DM_InstanceQuestComplete", 20004);
-		callfunc("DM_PartyExp", 3000, 1200);
-		callfunc("DM_GivePartyZeny", 2500);
-		callfunc("DM_PartyMes", "^3355FF*The guard sweeps the camp. You collect a tidy bounty - but the terrified refugees scatter into the cult's arms. The chamber below will be more crowded for it.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[The Trembling Ground complete.]^000000");
+	if (!dm_arc01_child_found) {
+		callfunc("DM_PartyMes", "[Frightened Mother]");
+		callfunc("DM_PartyMes", "She's at the soup line. Gray pot. Gray man. I will not pretend she's home until you have seen her.");
 		close();
 	}
+	if (!callfunc("DM_SceneClaim", "arc01_rescue")) {
+		callfunc("DM_SceneFail", "arc01_rescue");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Frightened Mother]");
+	callfunc("DM_PartyMes", "You found her. The people feeding her wear the same gray as the paint. What now?");
+	next();
+	callfunc("DM_PartyMes", "^777777A quiet walk home guides civilians away from the chamber. A guarded report brings the watch - and more frightened recruits below. Confronting the organizer with Mira present names the harm without a sweep.^000000");
+	next();
+	switch (select("Walk Mira home quietly.", "Guard the camp, then report Holt.", "Confront the organizer with Mira present.", "We need to discuss this.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc01_rescue_route", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_refugees_helped", 1);
+		callfunc("DM_InstanceSetFlag", "dm_mira_lives", 1);
+		callfunc("DM_InstanceQuestComplete", 20004);
+		if (callfunc("DM_ClaimGrant", "arc01_rescue"))
+			callfunc("DM_PartyExp", 3000, 1200);
+		callfunc("DM_GivePartyZeny", 1500);
+		callfunc("DM_PartyMes", "^3355FF*You walk Mira home. Named refugees will not raise a hand in the chamber.*^000000");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc01_rescue_route", 2);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_refugees_helped", 0);
+		callfunc("DM_InstanceSetFlag", "dm_mira_lives", 1);
+		callfunc("DM_InstanceQuestComplete", 20004);
+		if (callfunc("DM_ClaimGrant", "arc01_rescue"))
+			callfunc("DM_PartyExp", 3000, 1200);
+		callfunc("DM_GivePartyZeny", 1500);
+		callfunc("DM_PartyMes", "^3355FF*The watch comes. Mira is safe. Others scatter toward Holt. The chamber will be more crowded.*^000000");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc01_rescue_route", 3);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_refugees_helped", 1);
+		callfunc("DM_InstanceSetFlag", "dm_mira_lives", 1);
+		callfunc("DM_InstanceQuestComplete", 20004);
+		if (callfunc("DM_ClaimGrant", "arc01_rescue"))
+			callfunc("DM_PartyExp", 3000, 1200);
+		callfunc("DM_GivePartyZeny", 1500);
+		callfunc("DM_PartyMes", "^3355FF*Mira names the bread-man. The organizer cannot smile it away. One recruit lays down a ladle instead of a knife.*^000000");
+		break;
+	case 4:
+		callfunc("DM_SceneRelease", "arc01_rescue");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF[The Trembling Ground complete.]^000000");
+	callfunc("DM_SceneRelease", "arc01_rescue");
+	close();
 
 OnInit:
-	questinfo QTYPE_QUEST, 1;
-	setquestinfo QINFO_QUEST, 20004, 0;
-	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20004, 1;
+	callfunc("DM_AssertWalk");
 	end;
 }
 
-// ── Tibbets the Sluice-Keeper — Culvert guide ──────────────────────────────
+prontera,150,37,3	script	Mira#dm	4_F_KID2,{
+	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!dm_arc01_started) {
+		callfunc("DM_PartyMes", "[Girl]");
+		callfunc("DM_PartyMes", "The bread-man said not to talk to guildies.");
+		close();
+	}
+	if (dm_arc01_child_found) {
+		callfunc("DM_PartyMes", "[Mira]");
+		if (questprogress(20004) == 2)
+			callfunc("DM_PartyMes", "Mama said I can keep the crayon. I drew the ring. It has a goat.");
+		else
+			callfunc("DM_PartyMes", "I told you. Tell Mama. She thinks I got lost on purpose.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Girl]");
+	callfunc("DM_PartyMes", "I'm Mira. The bread-man has kind eyes. He has a ring like a goat. He said the water is a song if you listen.");
+	next();
+	callfunc("DM_PartyMes", "[Mira]");
+	callfunc("DM_PartyMes", "I drew him on the sluice. Gray robe. The paint smells like pennies. Don't tell him I said pennies. He likes hymns.");
+	callfunc("DM_InstanceSetFlag", "dm_arc01_child_found", 1);
+	callfunc("DM_InstanceSetFlag", "dm_arc01_clue_mask", dm_arc01_clue_mask | 2);
+	callfunc("DM_InstanceQuestStart", 20006);
+	callfunc("DM_InstanceQuestComplete", 20006);
+	callfunc("DM_Arc01PayClues");
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 105);
+	next();
+	callfunc("DM_PartyMes", "^3355FF[Mira is found. South Gate Soup Line complete.]^000000");
+	callfunc("DM_PartyMes", "^3355FFTake that back to her mother. The drawings name Holt. The ring names Cassell.^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	questinfo QTYPE_QUEST, 1;
+	setquestinfo QINFO_QUEST, 20006, 0;
+	questinfo QTYPE_QUEST2, 1;
+	setquestinfo QINFO_QUEST, 20006, 1;
+	end;
+}
+
+prontera,146,34,5	script	Soup-Line Organizer#dm	4_M_02,{
+	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!dm_arc01_started) { close; }
+	callfunc("DM_PartyMes", "[Organizer]");
+	if (dm_arc01_rescue_route == 3)
+		callfunc("DM_PartyMes", "The child talks. Fine. Charity is still charity.");
+	else
+		callfunc("DM_PartyMes", "Bread is bread. The guild can count rats. We count mouths.");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+prt_sewb1,135,240,4	script	Painted Sluice#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!dm_arc01_started) {
+		callfunc("DM_PartyMes", "^3355FF*The grate hums. You have no guild paper. Wynne would want a name on a ledger first.*^000000");
+		close();
+	}
+	if (dm_arc01_clue_mask & 1) {
+		callfunc("DM_PartyMes", "^3355FF*Crayon goat-head, copper-smell paint, a child's hand. You already have this sign.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*Someone painted a goat's head on the sluice in something that isn't paint. Under it, a crayon drawing: gray robe, kind eyes, a ring.*^000000");
+	next();
+	callfunc("DM_PartyMes", "^3355FF*The water vibrates when you touch the iron. The hum leads down, not out.*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc01_clue_mask", dm_arc01_clue_mask | 1);
+	callfunc("DM_Arc01PayClues");
+	next();
+	callfunc("DM_PartyMes", "^3355FF[Clue: painted sluice. Tibbets or Mira can supply the second sign.]^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
 prontera,146,193,5	script	Tibbets the Keeper#dm	1_M_SIZ,{
 	if (!callfunc("DM_SessionAllows")) { close; }
 	if (!dm_arc01_started) {
 		callfunc("DM_PartyMes", "[Tibbets]");
-		callfunc("DM_PartyMes", "Eh? Guild business is up at the fountain, friend. Wynne's the one with the ledger.");
+		callfunc("DM_PartyMes", "Guild business is up at the fountain. Wynne's the one with the ledger.");
 		close();
 	}
-	if (dm_arc01_tibbets_befriended) {
+	if (dm_arc01_chamber_drained) {
 		callfunc("DM_PartyMes", "[Tibbets]");
-		callfunc("DM_PartyMes", "You've the tide-wheel key. Drain the lowest chamber before you face what's chained down there - dry footing, and their wards short right out.");
+		callfunc("DM_PartyMes", "You used the wheel. Dry stone. Their wards hate dry stone. Go.");
+		close();
+	}
+	if (dm_arc01_key_access) {
+		callfunc("DM_PartyMes", "[Tibbets]");
+		callfunc("DM_PartyMes", "You've the tide-wheel. Lowest chamber, approach cell, not Holt's feet. Drain it before you talk to a holy man in the muck.");
 		close();
 	}
 	callfunc("DM_PartyMes", "[Tibbets]");
-	callfunc("DM_PartyMes", "(holding a lantern, jumping at shadows) Guildies? Thank the gods. I told the Cathedral! They just keep painting those... things on the walls!");
+	callfunc("DM_PartyMes", "(lantern, jumping) Guildies? I told the Cathedral. They keep painting those... things.");
 	next();
-	switch (select("Who is 'they', and what are they painting?", "We'll clear them out. Stay behind us.", "Out of the way, grandfather.")) {
+	switch (select("Who is 'they', and what are they painting?", "We'll clear them. Stay behind us.", "Out of the way, grandfather.", "Later.")) {
 	case 1:
 		callfunc("DM_PartyMes", "[Tibbets]");
-		callfunc("DM_PartyMes", "People in robes. They come down at night and paint goat-heads on the sluice gates. But it ain't paint - it smells like copper, and the water *vibrates* when they chant.");
+		callfunc("DM_PartyMes", "Robes. Goat-heads on the gates. Ain't paint - copper smell, and the water vibrates when they chant.");
 		next();
 		callfunc("DM_PartyMes", "[Tibbets]");
-		callfunc("DM_PartyMes", "There's a gray almsman comes and goes through the side-grate. Polite. Gave me bread. And a priest - Deacon Holt, a holy man of Odin, down in the muck. Why would a holy man be in the muck?");
+		callfunc("DM_PartyMes", "Gray almsman through the side-grate. Polite. Bread. And Deacon Holt, a holy man of Odin, in the muck. Why?");
 		next();
 		callfunc("DM_PartyMes", "[Tibbets]");
-		callfunc("DM_PartyMes", "You took the time to ask an old man. Here - the tide-wheel key. The lowest chamber floods and drains on it. Drain it, and you'll reach the thing on dry footing.");
+		callfunc("DM_PartyMes", "You asked. Here. Tide-wheel. Drain the lowest chamber. I will not go down with you.");
 		callfunc("DM_InstanceSetFlag", "dm_arc01_tibbets_befriended", 1);
-		callfunc("DM_PartyMes", "^3355FF[Tibbets gives you the tide-wheel key. The Listening Chamber can be drained.]^000000");
+		callfunc("DM_InstanceSetFlag", "dm_arc01_key_access", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_clue_mask", dm_arc01_clue_mask | 4);
+		callfunc("DM_Arc01PayClues");
+		callfunc("DM_PartyMes", "^3355FF[Tibbets trusts you with the wheel. Friendship makes the drain easier. It does not drain the chamber for you.]^000000");
 		close();
 	case 2:
-		if (questprogress(20002) == 2) {
+		if (questprogress(20002) == 2 || callfunc("DM_Arc01Clues") >= 1) {
 			callfunc("DM_PartyMes", "[Tibbets]");
-			callfunc("DM_PartyMes", "You already cleared the upper runs - you're no greenhorn. All right. Take the tide-wheel key; drain the lowest chamber before you fight.");
+			callfunc("DM_PartyMes", "You've done more than talk. All right. Wheel's yours. Drain it yourself.");
 			callfunc("DM_InstanceSetFlag", "dm_arc01_tibbets_befriended", 1);
-			callfunc("DM_PartyMes", "^3355FF[Tibbets gives you the tide-wheel key. The Listening Chamber can be drained.]^000000");
+			callfunc("DM_InstanceSetFlag", "dm_arc01_key_access", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc01_clue_mask", dm_arc01_clue_mask | 4);
+			callfunc("DM_Arc01PayClues");
 			close();
 		}
 		callfunc("DM_PartyMes", "[Tibbets]");
-		callfunc("DM_PartyMes", "All business, eh? Prove you can handle the upper Culvert first - close that Cellar Vermin contract - and I'll trust you with the tide-wheel key.");
+		callfunc("DM_PartyMes", "Prove you can hear a sluice, or close a cellar contract, and I'll trust you with a wheel that floods a chapel.");
 		close();
 	case 3:
 		callfunc("DM_PartyMes", "[Tibbets]");
-		callfunc("DM_PartyMes", "(clamming up) ...Gladly. Don't go to the lowest chamber. It's not just rats down there anymore.");
+		callfunc("DM_PartyMes", "(clamming up) Gladly. Don't go to the lowest chamber. It's not just rats.");
+		close();
+	case 4:
 		close();
 	}
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20005, 1;
 	end;
 }
 
-// ── Deacon Holt — The Listening Chamber set-piece (Deviruchi MVP) ───────────
-prt_sewb4,103,100,4	script	Deacon Holt#dm	1_M_PASTOR,{
+prt_sewb4,103,88,4	script	Tide-Wheel#dm	4_ENERGY_BLUE,{
+	if (!callfunc("DM_SessionAllows")) { close; }
+	if (dm_arc01_chamber_drained) {
+		callfunc("DM_PartyMes", "^3355FF*The wheel is locked open. The slab is dry. The hum is thinner.*^000000");
+		close();
+	}
+	if (!dm_arc01_key_access) {
+		callfunc("DM_PartyMes", "^3355FF*A tide-wheel. The catch is stiff. Tibbets would call this a key problem, not a prayer problem. You can still force it - it will fight back.*^000000");
+		next();
+		switch (select("Force the catch.", "Leave it.")) {
+		case 1:
+			if (callfunc("DM_CheckRoll", "force", 15) || callfunc("DM_IsDM")) {
+				callfunc("DM_InstanceSetFlag", "dm_arc01_key_access", 1);
+				callfunc("DM_PartyMes", "^3355FF*Iron yields. You have access. The chamber is still flooded.*^000000");
+			} else {
+				callfunc("DM_PartyMes", "^3355FF*The catch bites. A pulse of cold water. Try again, or ask Tibbets.*^000000");
+			}
+			close();
+		case 2:
+			close();
+		}
+	}
+	if (!callfunc("DM_SceneClaim", "arc01_drain")) {
+		callfunc("DM_SceneFail", "arc01_drain");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The wheel turns against the hum. Drain the Listening Chamber?*^000000");
+	next();
+	switch (select("Drain it.", "Not yet.")) {
+	case 1:
+		.@dc = 12;
+		if (dm_arc01_tibbets_befriended)
+			.@dc = 10;
+		if (callfunc("DM_CheckRoll", "craft", .@dc) || dm_arc01_tibbets_befriended || callfunc("DM_IsDM")) {
+			callfunc("DM_InstanceSetFlag", "dm_arc01_chamber_drained", 1);
+			callfunc("DM_Arc01PayPrepared");
+			callfunc("DM_PartyMes", "^3355FF*Water falls. Wards spit. One reinforcement wave will not arrive.*^000000");
+			mapannounce strnpcinfo(NPC_MAP), "[Listening Chamber] The tide-wheel opens. The slab goes dry.", bc_map, 0x88CCFF;
+		} else {
+			callfunc("DM_PulseWarn", strnpcinfo(NPC_MAP), 103, 88, 3, "The wheel slips. Cold water. Repair it and try again.");
+			callfunc("DM_PartyMes", "^3355FF*The wheel slips. A short flood. Repair it and try again. It does not lock forever.*^000000");
+		}
+		break;
+	case 2:
+		break;
+	}
+	callfunc("DM_SceneRelease", "arc01_drain");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+prt_sewb4,112,100,4	script	Binding Stone#dm	4_ENERGY_BLUE,{
+	if (!callfunc("DM_SessionAllows")) { close; }
+	if (dm_arc01_binding_applied) {
+		callfunc("DM_PartyMes", "^3355FF*Hlin is already on the stone. The conduit is thinner for it.*^000000");
+		close();
+	}
+	if (questprogress(20005) != 1) {
+		callfunc("DM_PartyMes", "^3355FF*A cracked binding-stone. You don't have the unofficial job yet.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*Holt's chalk: a prison-prayer. The word is Hlin if someone told you, or if you can read a starving ward.*^000000");
+	next();
+	switch (select("Speak Hlin.", "Leave it.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc01_binding_applied", 1);
+		callfunc("DM_Arc01PayPrepared");
+		callfunc("DM_PartyMes", "^3355FF*The word takes. The chain drinks less. The Deviruchi will starve a little before it fights.*^000000");
+		mapannounce strnpcinfo(NPC_MAP), "[Listening Chamber] The binding-word holds. The conduit thins.", bc_map, 0x88CCFF;
+		close();
+	case 2:
+		close();
+	}
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+prt_sewb4,104,99,4	script	Deacon Holt#dm	1_M_PASTOR,{
 	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20005) != 1) {
 		if (questprogress(20005) == 2) {
-			callfunc("DM_PartyMes", "^3355FF*The cracked slab is dark and silent. Whatever listened here is gone - for now.*^000000");
+			callfunc("DM_PartyMes", "^3355FF*The cracked slab is dark. Whatever listened here is gone - for now.*^000000");
 			close();
 		}
 		callfunc("DM_PartyMes", "[Deacon Holt]");
-		callfunc("DM_PartyMes", "This is no place for you. Go back to the surface... please. Speak to the guild first.");
+		callfunc("DM_PartyMes", "This is no place for you. Speak to the guild first.");
 		close();
 	}
 	if ('boss_up) {
@@ -326,105 +537,151 @@ prt_sewb4,103,100,4	script	Deacon Holt#dm	1_M_PASTOR,{
 		close();
 	}
 
-	// ── Cutscene ──
-	callfunc("DM_PartyMes", "^3355FF*A Deviruchi is chained to a cracked slab carved with a huge goat's head, screeching. Deacon Holt paints the sigil in something dark. A gray-robed man watches, calm, from the shadows.*^000000");
+	if (!callfunc("DM_SceneClaim", "arc01_holt")) {
+		if (callfunc("DM_SceneJoin", "arc01_holt")) {
+			callfunc("DM_PartyMes", "^777777You stand with the party. Let the speaker finish.^000000");
+			close();
+		}
+		callfunc("DM_SceneFail", "arc01_holt");
+		close();
+	}
+
+	callfunc("DM_PartyMes", "^3355FF*A Deviruchi is chained to a cracked goat-head slab. Deacon Holt paints in something dark. A gray-robed man watches from the shadows.*^000000");
 	next();
 	callfunc("DM_PartyMes", "[Deacon Holt]");
 	callfunc("DM_PartyMes", "You can't stop it! The seal is humming! The roots of the world are rotting, and we are only trying to listen!");
 	next();
-	switch (select("You're killing innocent people, Holt. End this.", "Who's paying you? What's the goal?", "Enough talking. We're putting that demon down.")) {
+	switch (select("You're killing people, Holt. End this.", "Who's paying you?", "We're putting that demon down.", "We need to discuss this.")) {
 	case 1:
 		callfunc("DM_PartyMes", "[Brother Cassell]");
-		callfunc("DM_PartyMes", "(stepping forward, voice like calm water) He isn't killing them, friend. He is letting them wake up. The world is a wound bandaged too tight. I only loosen the dressing.");
+		callfunc("DM_PartyMes", "(calm water) He isn't killing them. He is letting them wake. The world is a wound bandaged too tight.");
 		break;
 	case 2:
 		callfunc("DM_PartyMes", "[Brother Cassell]");
-		callfunc("DM_PartyMes", "A Voice. It pays in certainty. The gods locked our history away. We are simply turning the key.");
+		callfunc("DM_PartyMes", "A Voice. It pays in certainty. The gods locked our history away. We are turning the key.");
 		break;
 	case 3:
 		callfunc("DM_PartyMes", "[Deacon Holt]");
-		callfunc("DM_PartyMes", "(drawing a rusted mace) No! The Deviruchi is the conduit - you'll deafen us!");
+		callfunc("DM_PartyMes", "(rusted mace) No! The Deviruchi is the conduit - you'll deafen us!");
 		break;
+	case 4:
+		callfunc("DM_SceneRelease", "arc01_holt");
+		close();
 	}
 	next();
 	callfunc("DM_PartyMes", "[Brother Cassell]");
 	callfunc("DM_PartyMes", "The seal is already weakening. You are too late to be heroes today.");
 	next();
-	callfunc("DM_PartyMes", "^3355FF*Cassell drops a smoke bomb and slips through a side-grate. He leaves behind a small silver ring stamped with a goat's head.*^000000");
-	if (callfunc("DM_ClaimGrant", "sigil_ring") && countitem(50001) == 0) {
+	callfunc("DM_PartyMes", "^3355FF*Cassell drops smoke and slips the side-grate. A small silver ring stamped with a goat's head hits the wet stone.*^000000");
+	if (callfunc("DM_ClaimGrant", "sigil_ring")) {
 		callfunc("DM_GivePartyItem", 50001, 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc01_sigil_ring_obtained", 1);
-		callfunc("DM_PartyMes", "^3355FF[You obtained the Sigil Ring - it radiates a faint, growing cold.]^000000");
+		callfunc("DM_PartyMes", "^3355FF[Each of you attunes a Sigil Ring. It radiates a faint, growing cold.]^000000");
 	}
 	next();
 
-	// ── Spare / kill Holt fork (mercy only available if refugees were helped) ──
-	if (dm_arc01_refugees_helped) {
-		switch (select("Holt - you're being used. Stop, and you live.", "You summoned a demon under a city. You'll answer for it.")) {
-		case 1:
-			callfunc("DM_InstanceSetFlag", "dm_arc01_holt_spared", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc01_holt_killed", 0);
-			callfunc("DM_PartyMes", "[Deacon Holt]");
-			callfunc("DM_PartyMes", "...Gods forgive me. The binding-word is 'Hlin'. Unspeak it - let the thing starve. I'll tell the guild everything. I swear it.");
-			break;
-		case 2:
-			callfunc("DM_InstanceSetFlag", "dm_arc01_holt_killed", 1);
-			callfunc("DM_InstanceSetFlag", "dm_arc01_holt_spared", 0);
-			callfunc("DM_PartyMes", "[Deacon Holt]");
-			callfunc("DM_PartyMes", "Then I die guarding the conduit. Blood for the listener!");
-			break;
-		}
-	} else {
-		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_killed", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_spared", 0);
+	callfunc("DM_PartyMes", "[What do you do with Holt?]");
+	callfunc("DM_PartyMes", "Persuade. Custody. Or kill him. Mercy is a word you can try whether or not Mira likes you - her people just make it land.");
+	next();
+	switch (select("Holt - you're being used. Stop, and you live.", "You'll answer for it. Custody.", "We end this here.", "We need to discuss this.")) {
+	case 1:
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_approach", 1);
 		callfunc("DM_PartyMes", "[Deacon Holt]");
-		callfunc("DM_PartyMes", "(the cornered refugees close ranks around him) No! Protect the conduit!");
+		callfunc("DM_PartyMes", "...The binding-word is Hlin, if you haven't spoken it. I'll tell the guild everything. I swear it.");
+		break;
+	case 2:
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_approach", 2);
+		callfunc("DM_PartyMes", "[Deacon Holt]");
+		callfunc("DM_PartyMes", "Then take me after the conduit is safe. I will not leave it screaming.");
+		break;
+	case 3:
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_approach", 3);
+		callfunc("DM_PartyMes", "[Deacon Holt]");
+		callfunc("DM_PartyMes", "Then I die guarding the conduit. Blood for the listener!");
+		break;
+	case 4:
+		callfunc("DM_SceneRelease", "arc01_holt");
+		close();
 	}
 	next();
+	callfunc("DM_SceneTouch", "arc01_holt");
+	callfunc("DM_Arc01PayPrepared");
 
-	// ── Spawn the set-piece. Adds scale down with mercy/ally choices. ──
 	.@adds = 4;
-	if (dm_arc01_refugees_helped)
+	if (dm_arc01_rescue_route == 1 || dm_arc01_rescue_route == 3)
 		.@adds -= 2;
-	if (dm_arc01_tibbets_befriended)
+	if (dm_arc01_rescue_route == 2)
+		.@adds += 1;
+	if (dm_arc01_chamber_drained)
+		.@adds -= 1;
+	if (dm_arc01_binding_applied)
 		.@adds -= 1;
 	if (.@adds < 1)
 		.@adds = 1;
 
-	// Map-relative so the set-piece also runs inside a DM instance
-	// (instance_init copies this NPC into the party's private map copy).
+	.@pct = 100;
+	if (dm_arc01_binding_applied || dm_arc01_holt_approach == 1)
+		.@pct = 70;
+
 	.@map$ = strnpcinfo(NPC_MAP);
 	getmapxy(.@m$, .@hx, .@hy, UNITTYPE_NPC);
-
+	.@self$ = strnpcinfo(NPC_NAME);
+	.@boss$ = .@self$ + "::OnDeviruchiDead";
+	.@add$ = .@self$ + "::OnAddKilled";
 	'boss_up = 1;
-	if (dm_arc01_holt_spared)
+	callfunc("DM_EncStart", "arc01_holt", getcharid(CHAR_ID_PARTY), .@map$, .@boss$, .@add$, .@self$);
+
+	if (.@pct < 100)
 		mapannounce .@map$, "[The Listening Chamber] Unfed by the seal, the Deviruchi thrashes - weaker than it should be.", bc_map, 0x88CCFF;
 	else
 		mapannounce .@map$, "[The Listening Chamber] The goat-head drinks the light. The conduit screams.", bc_map, 0xFFAA33;
 
-	monster .@map$, .@hx, .@hy, "Deviruchi", DEVIRUCHI, 1, "Deacon Holt#dm::OnDeviruchiDead";
+	callfunc("DM_EncMonster", .@map$, .@hx, .@hy, "Listening Chamber Conduit", DEVIRUCHI,
+		.@boss$, 18, .@pct, 1, 0);
 	if (.@adds > 0)
-		areamonster .@map$, .@hx - 4, .@hy - 4, .@hx + 4, .@hy + 4, "Cult Familiar", FARMILIAR, .@adds, "Deacon Holt#dm::OnAddKilled";
+		callfunc("DM_EncMonster", .@map$, .@hx, .@hy, "Cult Familiar", FARMILIAR,
+			.@add$, 18, .@pct, .@adds, 4);
 	close();
 
 OnAddKilled:
 	end;
 
 OnDeviruchiDead:
+	if (!callfunc("DM_EncOnDeath", "arc01_holt"))
+		end;
 	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
-	killmonster .@map$, "Deacon Holt#dm::OnAddKilled";
-	.@party = callfunc("DM_SessionParty");
-	if (!callfunc("DM_ClaimGrant", "arc01_deviruchi", .@party))
+	killmonster .@map$, strnpcinfo(NPC_NAME)+"::OnAddKilled";
+	.@party = getd("$dm_enc_p_arc01_holt");
+	if (.@party <= 0)
 		end;
-	// Session party, not the last-hitter. A random last-hit used to take the arc.
-	callfunc("DM_PartyQuestComplete", 20005, .@party);
-	callfunc("DM_PartyExp", 60000, 25000, .@party);
+
+	if (dm_arc01_holt_approach == 1) {
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_fate", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_spared", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_killed", 0);
+	} else if (dm_arc01_holt_approach == 2) {
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_fate", 2);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_spared", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_killed", 0);
+	} else {
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_fate", 3);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_killed", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc01_holt_spared", 0);
+	}
+
+	if (!callfunc("DM_ClaimGrant", "arc01_deviruchi", .@party)) {
+		callfunc("DM_EncCleanup", "arc01_holt");
+		end;
+	}
+	callfunc("DM_PartyExp", 27500, 11300, .@party);
+	callfunc("DM_Arc01Complete", .@party);
 	mapannounce .@map$, "[The Listening Chamber] The Deviruchi falls silent. Far below, something vast shifts in its sleep.", bc_map, 0xFFAA33;
-	dispbottom "[Seal Cascade] \"The seals are weakening.\" Arc 1 complete. The Sigil Ring will grow colder near the next.";
+	dispbottom "[Seal Cascade] The seals are weakening. Arc 1 complete. Return to Wynne, then Sun-Hwa in Payon.";
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20005, 1;
 	end;

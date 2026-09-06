@@ -39,6 +39,8 @@ function	script	DM_EncFormation	{
 	.@mob   = getarg(5);
 	.@count = getarg(6);
 	.@event$ = getarg(7);
+	.@tgt = getarg(8, 0);
+	.@pct = getarg(9, 100);
 
 	if (.@count <= 0)
 		return 0;
@@ -54,20 +56,27 @@ function	script	DM_EncFormation	{
 				case 2: .@mx = .@cx; .@my = .@cy + .@r; break;
 				default: .@mx = .@cx; .@my = .@cy - .@r; break;
 			}
-			monster .@map$, .@mx, .@my, .@name$, .@mob, 1, .@event$;
+			.@gid = monster(.@map$, .@mx, .@my, .@name$, .@mob, 1, .@event$);
+			callfunc("DM_EncTune", .@gid, .@tgt, .@pct);
 		}
 		return .@count;
 	}
 
 	if (.@form$ == "line") {
 		.@start = .@cx - (.@count / 2);
-		for (.@i = 0; .@i < .@count; ++.@i)
-			monster .@map$, .@start + .@i, .@cy + 5, .@name$, .@mob, 1, .@event$;
+		for (.@i = 0; .@i < .@count; ++.@i) {
+			.@gid = monster(.@map$, .@start + .@i, .@cy + 5, .@name$, .@mob, 1, .@event$);
+			callfunc("DM_EncTune", .@gid, .@tgt, .@pct);
+		}
 		return .@count;
 	}
 
-	areamonster .@map$, .@cx - 4, .@cy - 4, .@cx + 4, .@cy + 4,
-		.@name$, .@mob, .@count, .@event$;
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		.@mx = .@cx + rand(9) - 4;
+		.@my = .@cy + rand(9) - 4;
+		.@gid = monster(.@map$, .@mx, .@my, .@name$, .@mob, 1, .@event$);
+		callfunc("DM_EncTune", .@gid, .@tgt, .@pct);
+	}
 	return .@count;
 }
 
@@ -88,6 +97,211 @@ function	script	DM_EncScale	{
 	if (.@n > 20)
 		.@n = 20;
 	return .@n;
+}
+
+// ── Party level (players only) ────────────────────────────────────────────
+// The DM is usually in the party and often level 99. Including them would
+// tune Holt to a late-game fight. Skip GM 60+ (the campaign tool floor).
+// Fills @dm_enc_plv_n / @dm_enc_plv_min / @dm_enc_plv_max as a side effect.
+function	script	DM_EncPartyLevel	{
+	.@party_id = getarg(0, callfunc("DM_SessionParty"));
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+	.@sum = 0;
+	.@n = 0;
+	.@minlv = 0;
+	.@maxlv = 0;
+
+	@dm_enc_plv_n = 0;
+	@dm_enc_plv_min = 0;
+	@dm_enc_plv_max = 0;
+
+	if (.@party_id <= 0) {
+		if (getgmlevel() >= 60)
+			return 0;
+		@dm_enc_plv_n = 1;
+		@dm_enc_plv_min = BaseLevel;
+		@dm_enc_plv_max = BaseLevel;
+		return BaseLevel;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
+			continue;
+		if (!attachrid(.@accid[.@i]))
+			continue;
+		if (getgmlevel() < 60) {
+			.@sum += BaseLevel;
+			++.@n;
+			if (.@minlv == 0 || BaseLevel < .@minlv)
+				.@minlv = BaseLevel;
+			if (BaseLevel > .@maxlv)
+				.@maxlv = BaseLevel;
+		}
+		detachrid();
+	}
+	if (.@origin)
+		attachrid(.@origin);
+
+	@dm_enc_plv_n = .@n;
+	@dm_enc_plv_min = .@minlv;
+	@dm_enc_plv_max = .@maxlv;
+	if (.@n <= 0)
+		return 0;
+	return .@sum / .@n;
+}
+
+// Expected encounter/arc level is the centre. Match the people in the room,
+// but do not drop more than 8 below the scene's contract or jump more than
+// 15 above it because one overlevelled friend is in the party.
+function	script	DM_EncTuneTarget	{
+	.@expected = getarg(0, 0);
+	.@party = callfunc("DM_EncPartyLevel");
+
+	if (.@party <= 0 && .@expected <= 0)
+		return 18;
+	if (.@party <= 0)
+		return .@expected;
+	if (.@expected <= 0)
+		return .@party;
+
+	.@tgt = .@party;
+	.@floor = .@expected - 8;
+	if (.@floor < 10)
+		.@floor = 10;
+	.@ceil = .@expected + 15;
+	if (.@tgt < .@floor)
+		.@tgt = .@floor;
+	if (.@tgt > .@ceil)
+		.@tgt = .@ceil;
+	return .@tgt;
+}
+
+function	script	DM_EncWriteStat	{
+	.@gid = getarg(0);
+	.@udt = getarg(1);
+	.@v = getarg(2);
+	.@cur = getarg(3);
+	.@tgt = getarg(4);
+	.@pct = getarg(5);
+	.@min = getarg(6, 1);
+
+	if (.@v < 0)
+		.@v = 0;
+	.@nv = .@v * .@tgt / .@cur;
+	.@nv = .@nv * .@pct / 100;
+	if (.@nv < .@min)
+		.@nv = .@min;
+	setunitdata(.@gid, .@udt, .@nv);
+	return .@nv;
+}
+
+// Dial one spawned unit to a party/arc level. Keep the sprite and skills;
+// change how fast it dies (DAMAGE_TAKEN_RATE) and how hard it hits.
+// percent 100 = as-designed; 70 = mercy/easier; 130 = had time to prepare.
+// Returns the damage-taken rate applied, or 0 if the gid is dead/invalid.
+function	script	DM_EncTune	{
+	.@gid = getarg(0);
+	.@tgt = getarg(1, 0);
+	.@pct = getarg(2, 100);
+
+	if (.@gid <= 0)
+		return 0;
+	if (.@tgt <= 0)
+		.@tgt = callfunc("DM_EncPartyLevel");
+	if (.@tgt < 1)
+		.@tgt = 18;
+	if (.@pct < 25)
+		.@pct = 25;
+	if (.@pct > 200)
+		.@pct = 200;
+
+	.@cur = getunitdata(.@gid, UDT_LEVEL);
+	if (.@cur < 1)
+		.@cur = 1;
+	if (.@tgt > .@cur)
+		.@tgt = .@cur;
+
+	// Higher rate = more of the party's damage lands. Mercy (pct < 100)
+	// raises it further. 1109 at lv93 vs target 18, pct 100 → 516.
+	.@rate = 100 * .@cur * 100 / (.@tgt * .@pct);
+	if (.@rate < 10)
+		.@rate = 10;
+	if (.@rate > 2000)
+		.@rate = 2000;
+
+	.@atkmin = getunitdata(.@gid, UDT_ATKMIN);
+	.@atkmax = getunitdata(.@gid, UDT_ATKMAX);
+	.@matkmin = getunitdata(.@gid, UDT_MATKMIN);
+	.@matkmax = getunitdata(.@gid, UDT_MATKMAX);
+	.@def = getunitdata(.@gid, UDT_DEF);
+	.@mdef = getunitdata(.@gid, UDT_MDEF);
+	.@hit = getunitdata(.@gid, UDT_HIT);
+	.@flee = getunitdata(.@gid, UDT_FLEE);
+
+	setunitdata(.@gid, UDT_LEVEL, .@tgt);
+	callfunc("DM_EncWriteStat", .@gid, UDT_ATKMIN, .@atkmin, .@cur, .@tgt, .@pct, 1);
+	callfunc("DM_EncWriteStat", .@gid, UDT_ATKMAX, .@atkmax, .@cur, .@tgt, .@pct, 1);
+	callfunc("DM_EncWriteStat", .@gid, UDT_MATKMIN, .@matkmin, .@cur, .@tgt, .@pct, 1);
+	callfunc("DM_EncWriteStat", .@gid, UDT_MATKMAX, .@matkmax, .@cur, .@tgt, .@pct, 1);
+	callfunc("DM_EncWriteStat", .@gid, UDT_DEF, .@def, .@cur, .@tgt, .@pct, 0);
+	callfunc("DM_EncWriteStat", .@gid, UDT_MDEF, .@mdef, .@cur, .@tgt, .@pct, 0);
+	callfunc("DM_EncWriteStat", .@gid, UDT_HIT, .@hit, .@cur, .@tgt, .@pct, 1);
+	callfunc("DM_EncWriteStat", .@gid, UDT_FLEE, .@flee, .@cur, .@tgt, .@pct, 1);
+	setunitdata(.@gid, UDT_DAMAGE_TAKEN_RATE, .@rate);
+	return .@rate;
+}
+
+function	script	DM_EncTuneMap	{
+	.@tgt = getarg(0, 0);
+	.@pct = getarg(1, 100);
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	if (.@tgt <= 0)
+		.@tgt = callfunc("DM_EncTuneTarget", 0);
+	.@n = getunits(BL_MOB, .@units, 0, .@map$);
+	.@tuned = 0;
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		if (callfunc("DM_EncTune", .@units[.@i], .@tgt, .@pct) > 0)
+			++.@tuned;
+	}
+	dispbottom("[Enc] Tuned " + .@tuned + " mob(s) on " + .@map$
+		+ " toward lv " + .@tgt + " at " + .@pct + "%.");
+	return .@tuned;
+}
+
+// Spawn one (or N) and tune each GID. Use this from story scripts instead of
+// raw monster()/areamonster() so the stock sprite matches the party.
+function	script	DM_EncMonster	{
+	.@map$ = getarg(0);
+	.@x = getarg(1);
+	.@y = getarg(2);
+	.@name$ = getarg(3);
+	.@id = getarg(4);
+	.@event$ = getarg(5, "");
+	.@expected = getarg(6, 0);
+	.@pct = getarg(7, 100);
+	.@n = getarg(8, 1);
+	.@spread = getarg(9, 0);
+
+	if (.@n < 1)
+		return 0;
+	.@tgt = callfunc("DM_EncTuneTarget", .@expected);
+	.@last = 0;
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		.@sx = .@x;
+		.@sy = .@y;
+		if (.@spread > 0 && .@n > 1) {
+			.@sx = .@x + rand(2 * .@spread + 1) - .@spread;
+			.@sy = .@y + rand(2 * .@spread + 1) - .@spread;
+		}
+		.@gid = monster(.@map$, .@sx, .@sy, .@name$, .@id, 1, .@event$);
+		if (.@gid > 0) {
+			callfunc("DM_EncTune", .@gid, .@tgt, .@pct);
+			.@last = .@gid;
+		}
+	}
+	return .@last;
 }
 
 // ── The encounter table ───────────────────────────────────────────────────
@@ -201,12 +415,15 @@ function	script	DM_EncSpawn	{
 	getmapxy(.@map$, .@cx, .@cy, UNITTYPE_PC);
 	.@event$ = "DM_Console::OnDMKilled";
 	.@spawned = 0;
+	.@intended = atoi(callfunc("DM_EncTable", .@name$, 11));
+	.@tgt = callfunc("DM_EncTuneTarget", .@intended);
 
 	// Elite first so it is the unit that speaks.
 	.@elite = atoi(callfunc("DM_EncTable", .@name$, 2));
 	if (.@elite > 0) {
 		.@ename$ = callfunc("DM_EncTable", .@name$, 3);
-		monster .@map$, .@cx, .@cy + 5, .@ename$, .@elite, 1, .@event$;
+		.@gid = monster(.@map$, .@cx, .@cy + 5, .@ename$, .@elite, 1, .@event$);
+		callfunc("DM_EncTune", .@gid, .@tgt, 100);
 		++.@spawned;
 	}
 
@@ -215,7 +432,7 @@ function	script	DM_EncSpawn	{
 		.@mname$ = callfunc("DM_EncTable", .@name$, 5);
 		.@mcount = callfunc("DM_EncScale", atoi(callfunc("DM_EncTable", .@name$, 6)));
 		.@spawned += callfunc("DM_EncFormation", .@form$, .@map$, .@cx, .@cy,
-			.@mname$, .@minion, .@mcount, .@event$);
+			.@mname$, .@minion, .@mcount, .@event$, .@tgt, 100);
 	}
 
 	.@caster = atoi(callfunc("DM_EncTable", .@name$, 7));
@@ -223,9 +440,13 @@ function	script	DM_EncSpawn	{
 		.@cname$ = callfunc("DM_EncTable", .@name$, 8);
 		.@ccount = callfunc("DM_EncScale", atoi(callfunc("DM_EncTable", .@name$, 9)));
 		// Casters sit behind the line, never in the ambush ring.
-		areamonster .@map$, .@cx - 2, .@cy + 7, .@cx + 2, .@cy + 9,
-			.@cname$, .@caster, .@ccount, .@event$;
-		.@spawned += .@ccount;
+		for (.@i = 0; .@i < .@ccount; ++.@i) {
+			.@mx = .@cx + rand(5) - 2;
+			.@my = .@cy + 7 + rand(3);
+			.@gid = monster(.@map$, .@mx, .@my, .@cname$, .@caster, 1, .@event$);
+			callfunc("DM_EncTune", .@gid, .@tgt, 100);
+			++.@spawned;
+		}
 	}
 
 	mapannounce .@map$, "[Encounter] " + .@label$ + " — " + .@spawned + " enemies.",
@@ -238,7 +459,8 @@ function	script	DM_EncSpawn	{
 	}
 
 	dispbottom("[Enc] " + .@label$ + ": " + .@spawned + " spawned, formation "
-		+ .@form$ + ", on " + .@map$ + ". @dm cleanup removes them.");
+		+ .@form$ + ", on " + .@map$ + ", tuned to lv " + .@tgt
+		+ ". @dm cleanup removes them.");
 	return .@spawned;
 }
 
@@ -271,6 +493,11 @@ function	script	DM_EncInfo	{
 			+ "x " + callfunc("DM_EncTable", .@name$, 8) + " (" + .@caster + ")");
 
 	dispbottom("  scaled for " + callfunc("DM_PartyOnlineCount") + " online member(s).");
+	.@intended = atoi(callfunc("DM_EncTable", .@name$, 11));
+	.@party = callfunc("DM_EncPartyLevel");
+	.@tgt = callfunc("DM_EncTuneTarget", .@intended);
+	dispbottom("  spawn will tune to lv " + .@tgt + " (party avg "
+		+ .@party + " excluding DM, intended ~" + .@intended + ").");
 	callfunc("DM_EncBudget", .@name$);
 	return 1;
 }
@@ -284,6 +511,7 @@ function	script	DM_EncList	{
 			+ ") — " + callfunc("DM_EncTable", .@name$, 0));
 	}
 	dispbottom("[Enc] @dmenc spawn <name> [ambush|line|scatter]");
+	dispbottom("[Enc] @dmenc tune [level] [percent]  (all mobs on this map; default party level, 100%)");
 	return 1;
 }
 
@@ -462,16 +690,25 @@ function	script	DM_EncPartyPower	{
 			continue;
 		if (!attachrid(.@accid[.@i]))
 			continue;
-		@dm_enc_php += MaxHp;
-		@dm_enc_pdps += callfunc("DM_AutoAttackDps");
-		.@lvsum += BaseLevel;
-		++@dm_enc_pn;
+		// Skip the DM so a level-99 GM does not inflate TTD / average level.
+		if (getgmlevel() < 60) {
+			@dm_enc_php += MaxHp;
+			@dm_enc_pdps += callfunc("DM_AutoAttackDps");
+			.@lvsum += BaseLevel;
+			++@dm_enc_pn;
+		}
 		detachrid();
 	}
 	if (.@origin)
 		attachrid(.@origin);
-	if (@dm_enc_pn > 0)
-		@dm_enc_plv = .@lvsum / @dm_enc_pn;
+	if (@dm_enc_pn <= 0) {
+		@dm_enc_php = MaxHp;
+		@dm_enc_pdps = callfunc("DM_AutoAttackDps");
+		@dm_enc_plv = BaseLevel;
+		@dm_enc_pn = 1;
+		return;
+	}
+	@dm_enc_plv = .@lvsum / @dm_enc_pn;
 	return;
 }
 

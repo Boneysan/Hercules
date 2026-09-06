@@ -1,5 +1,13 @@
 # Seal Cascade Campaign Implementation Plan
 
+**Proposed design refresh (2026-09-06):**
+[Act-by-act designer handoff](design/seal-cascade-act-redesign.md) specifies
+concrete changes for all 19 arcs, shared dependencies, save migration, ending
+eligibility, and acceptance checks. [Act I implementation plan](design/act-01-implementation-plan.md)
+turns that brief plus the [Arc 1 deep review](design/arc-01-deep-review.md) into
+build order, quest/flag IDs, helpers, and merge tests. These are proposals; the
+current implementation described below has not been replaced by that design.
+
 Source campaign notes:
 `H:\Docs\Obsidian Notes\Game Design\Ragnarok_Online\Campaign`
 

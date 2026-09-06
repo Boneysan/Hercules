@@ -32,6 +32,13 @@ if ! ./tools/gen-hunts.py --check; then
     exit 1
 fi
 
+echo "Checking Act I static rules ..."
+if ! python3 ./tools/check-act1.py; then
+    echo
+    echo "FAIL - Act I static checks."
+    exit 1
+fi
+
 LOG="$(mktemp)"
 trap 'rm -f "$LOG"' EXIT
 
@@ -49,10 +56,12 @@ ERRORS=$(grep -iE '\[Error\]' "$LOG" | grep -ivE 'MYSQL_OPT_RECONNECT' || true)
 
 LOADED=$(grep -c 'dm_campaign' "$LOG" || true)
 
-if [ -n "$ERRORS" ]; then
+WALK=$(grep -E 'DM walk:' "$LOG" || true)
+if [ -n "$ERRORS" ] || [ -n "$WALK" ]; then
     echo
     echo "FAIL — script errors detected:"
     echo "$ERRORS"
+    echo "$WALK"
     exit 1
 fi
 
