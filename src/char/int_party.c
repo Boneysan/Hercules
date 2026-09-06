@@ -687,6 +687,24 @@ static int inter_party_parse_frommap(int fd)
 	case 0x3024: mapif->parse_PartyLeave(fd, RFIFOL(fd,2), RFIFOL(fd,6), RFIFOL(fd,10)); break;
 	case 0x3025: mapif->parse_PartyChangeMap(fd, RFIFOL(fd,2), RFIFOL(fd,6), RFIFOL(fd,10), RFIFOW(fd,14), RFIFOB(fd,16), RFIFOW(fd,17)); break;
 	case 0x3026: mapif->parse_BreakParty(fd, RFIFOL(fd,2)); break;
+	case 0x302a: {
+		int party_id = RFIFOL(fd, 2);
+		int account_id = RFIFOL(fd, 6);
+		int char_id = RFIFOL(fd, 10);
+		int class_ = RFIFOW(fd, 14);
+		int lv = RFIFOW(fd, 16);
+		struct party_data *p = inter_party->fromsql(party_id);
+		int i;
+
+		if (p != NULL) {
+			ARR_FIND(0, MAX_PARTY, i, p->party.member[i].account_id == account_id && p->party.member[i].char_id == char_id);
+			if (i < MAX_PARTY) {
+				p->party.member[i].class = class_;
+				p->party.member[i].lv = lv;
+			}
+		}
+		break;
+	}
 	case 0x3029: mapif->parse_PartyLeaderChange(fd, RFIFOL(fd,2), RFIFOL(fd,6), RFIFOL(fd,10)); break;
 	default:
 		return 0;

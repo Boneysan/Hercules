@@ -12705,8 +12705,14 @@ static void pc_update_job_and_level(struct map_session_data *sd)
 		if ((p = party->search(sd->status.party_id)) != NULL) {
 			ARR_FIND(0, MAX_PARTY, i, p->party.member[i].char_id == sd->status.char_id);
 			if (i < MAX_PARTY) {
+				/* Map-server party cache kept the class from party creation and
+				 * never refreshed it, so a later ZC_GROUP_LIST (leader change,
+				 * join, relog) overwrote 0x0ABD and the roster still said Novice
+				 * after a job change. */
+				p->party.member[i].class = sd->status.class;
 				p->party.member[i].lv = sd->status.base_level;
 				clif->party_job_and_level(sd);
+				intif->party_job_and_level(sd);
 			}
 		}
 	}

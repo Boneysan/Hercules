@@ -576,6 +576,70 @@ ACMD(jumpto)
 }
 
 /*==========================================
+ * Warp to a party member. Available to every player; the target must be
+ * in your party and online. GM @jumpto can still reach anyone.
+ *------------------------------------------*/
+ACMD(partyjump)
+{
+	struct party_data *p;
+	struct map_session_data *pl_sd = NULL;
+	int i;
+
+	if (!sd->status.party_id) {
+		clif->message(fd, "You are not in a party.");
+		return false;
+	}
+
+	if (!*message) {
+		clif->message(fd, "Please enter a party member's name (usage: @partyjump <name>).");
+		return false;
+	}
+
+	if (sd->bl.m >= 0 && map->list[sd->bl.m].flag.nowarp && !pc_has_permission(sd, PC_PERM_WARP_ANYWHERE)) {
+		clif->message(fd, msg_fd(fd, MSGTBL_CANT_WARP_FROM));
+		return false;
+	}
+
+	if (pc_isdead(sd)) {
+		clif->message(fd, msg_fd(fd, MSGTBL_CANNOT_USE_WHEN_DEAD));
+		return false;
+	}
+
+	p = party->search(sd->status.party_id);
+	if (p == NULL) {
+		clif->message(fd, "You are not in a party.");
+		return false;
+	}
+
+	ARR_FIND(0, MAX_PARTY, i, p->party.member[i].account_id && strcmpi(p->party.member[i].name, message) == 0);
+	if (i == MAX_PARTY) {
+		clif->message(fd, "That character is not in your party.");
+		return false;
+	}
+
+	pl_sd = p->data[i].sd;
+	if (pl_sd == NULL) {
+		clif->message(fd, "That party member is not online.");
+		return false;
+	}
+
+	if (pl_sd->status.char_id == sd->status.char_id) {
+		clif->message(fd, "You are already with that party member.");
+		return false;
+	}
+
+	if (pl_sd->bl.m >= 0 && map->list[pl_sd->bl.m].flag.nowarpto && !pc_has_permission(sd, PC_PERM_WARP_ANYWHERE)) {
+		clif->message(fd, msg_fd(fd, MSGTBL_CANT_WARP_TO));
+		return false;
+	}
+
+	pc->setpos(sd, pl_sd->mapindex, pl_sd->bl.x, pl_sd->bl.y, CLR_TELEPORT);
+	snprintf(atcmd_output, sizeof(atcmd_output), "Jumped to %s.", pl_sd->status.name);
+	clif->message(fd, atcmd_output);
+	return true;
+}
+
+/*==========================================
  *
  *------------------------------------------*/
 ACMD(jump)
@@ -10665,6 +10729,8 @@ static void atcommand_basecommands(void)
 		ACMD_DEF2("warp", mapmove),
 		ACMD_DEF(where),
 		ACMD_DEF(jumpto),
+		ACMD_DEF(partyjump),
+		ACMD_DEF2("partygo", partyjump),
 		ACMD_DEF(jump),
 		ACMD_DEF(who),
 		ACMD_DEF2("who2", who),

@@ -218,6 +218,9 @@ struct intif_interface {
 	void (*request_agency_join_party) (int char_id, int party_id, int map_index);
 
 	void (*pAgencyJoinResult) (int fd);
+	/* Fork: persist party member class after job change (0x302a). Appended so
+	 * existing HPM offsets stay valid. */
+	int (*party_job_and_level) (struct map_session_data *sd);
 };
 
 #ifdef HERCULES_CORE
