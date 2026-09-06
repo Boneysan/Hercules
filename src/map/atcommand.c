@@ -6373,6 +6373,48 @@ ACMD(autoloot)
 }
 
 /*==========================================
+ * Automatic pickup: floor loot within a couple of cells walks into the bag
+ * without a click. On by default (battle_config autopickup_radius); this is
+ * how one player turns it off, which is why it is a group 0 command while
+ * @autoloot is not.
+ *------------------------------------------*/
+ACMD(autopickup)
+{
+	int radius;
+
+	if (*message == '\0') {
+		if (sd->state.autopickup != 0) {
+			radius = 0;
+		} else {
+			// Back on at the server's radius -- or at the game's own pickup
+			// reach, if the server default is "off".
+			radius = cap_value(battle_config.autopickup_radius, 0, 2);
+			if (radius == 0)
+				radius = 2;
+		}
+	} else {
+		if (message[0] < '0' || message[0] > '2' || message[1] != '\0') {
+			clif->message(fd, "Please use @autopickup, or @autopickup 0, 1 or 2 (squares).");
+			return false;
+		}
+		radius = message[0] - '0';
+	}
+
+	sd->state.autopickup = radius;
+
+	if (radius == 0) {
+		clif->message(fd, "Automatic pickup is off. Click items to pick them up.");
+	} else {
+		snprintf(atcmd_output, sizeof(atcmd_output),
+				"Automatic pickup is on: loot within %d square%s goes straight into your bag.",
+				radius, (radius == 1) ? "" : "s");
+		clif->message(fd, atcmd_output);
+	}
+
+	return true;
+}
+
+/*==========================================
  * @alootid
  *------------------------------------------*/
 ACMD(autolootitem)
@@ -10911,6 +10953,7 @@ static void atcommand_basecommands(void)
 		ACMD_DEF(disguiseall),
 		ACMD_DEF(changelook),
 		ACMD_DEF(autoloot),
+		ACMD_DEF(autopickup),
 		ACMD_DEF2("alootid", autolootitem),
 		ACMD_DEF(autoloottype),
 		ACMD_DEF(mobinfo),

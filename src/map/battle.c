@@ -8168,6 +8168,8 @@ static const struct config_data_old battle_data[] = {
 	{ "hit_min_limit",                      &battle_config.hit_min,                         1,      1,      INT_MAX,        },
 	{ "hit_max_limit",                      &battle_config.hit_max,                         SHRT_MAX, 1,    INT_MAX,        },
 	{ "autoloot_adjust",                    &battle_config.autoloot_adjust,                 0,      0,      1,              },
+	{ "autopickup_radius",                  &battle_config.autopickup_radius,               2,      0,      2,              },
+	{ "party_default_share",                &battle_config.party_default_share,             3,      0,      7,              },
 	{ "hom_bonus_exp_from_master",          &battle_config.hom_bonus_exp_from_master,       10,     0,      100,            },
 	{ "allowed_actions_when_dead",          &battle_config.allowed_actions_when_dead,       0,      0,      3,              },
 	{ "teleport_close_storage",             &battle_config.teleport_close_storage,          1,      0,      1,              },

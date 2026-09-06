@@ -251,6 +251,7 @@ struct map_session_data {
 		unsigned int callshop : 1; // flag to indicate that a script used callshop; on a shop
 		short pmap; // Previous map on Map Change
 		unsigned int autoloot;
+		unsigned int autopickup : 2; // Seal Cascade: pickup radius in cells, 0 = off
 		int autolootid[AUTOLOOTITEM_SIZE]; // [Zephyrus]
 		unsigned int autoloottype;
 		unsigned int autolooting : 1; //performance-saver, autolooting state for @alootid
