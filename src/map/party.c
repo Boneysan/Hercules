@@ -227,12 +227,13 @@ static void party_created(int account_id, int char_id, int fail, int party_id, c
 	if( !fail ) {
 		sd->status.party_id = party_id;
 
-		// EXP sharing has no creation flag at all, so it can only be turned on
-		// after the fact. Off by default on purpose: a high level character in
-		// the party -- the DM's, most likely -- would soak an even share and
-		// flatten everyone else's levelling. Set bit 4 of party_default_share
-		// if a table wants it anyway; the char server still refuses when the
-		// members' level spread is too wide.
+		// EXP sharing has no creation flag at all, so it can only be pushed
+		// after the fact. The hazard it carries is a high level member soaking
+		// an even share; this table's DM plays at the party's own level, so
+		// bit 4 is set and this runs. The char server still refuses when the
+		// members' level spread is wider than party_share_level
+		// (conf/common/inter-server.conf, 15 here), which is the backstop if
+		// that ever stops being true.
 		if ((battle_config.party_default_share & 4) != 0)
 			intif->party_changeoption(party_id, account_id, 1, battle_config.party_default_share & 3);
 
