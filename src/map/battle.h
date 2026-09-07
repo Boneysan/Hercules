@@ -624,6 +624,8 @@ struct Battle_Config {
 	int hit_max;
 
 	int autoloot_adjust;
+	int autopickup_radius; // Seal Cascade: cells within which floor loot is taken without clicking
+	int party_default_share; // Seal Cascade: share flags forced on for every new party (1 pickup, 2 distribution, 4 exp)
 	int allowed_actions_when_dead;
 	int teleport_close_storage;
 

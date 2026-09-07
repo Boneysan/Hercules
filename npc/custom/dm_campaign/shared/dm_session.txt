@@ -1,4 +1,9 @@
-// Seal Cascade session cleanup helpers.
+// Seal Cascade session tools: cleanup, scene claim, encounter records,
+// and Act I "this arc is actually finished" helpers.
+//
+// Scene claim stops two party members from committing the same menu.
+// Encounter records stop instance copies and @dm cleanup from awarding
+// a fight that never belonged to this party.
 
 function	script	DM_CleanupMap	{
 	.@map$ = getarg(0, callfunc("DM_CurrentMap"));
@@ -7,6 +12,371 @@ function	script	DM_CleanupMap	{
 	killmonster(.@map$, "DM_Console::OnDMBossKilled", 1);
 	killmonster(.@map$, "DM_Console::OnDMCleanup", 1);
 	@dm_hazard_ticks = 0;
+	callfunc("DM_EncSweepMap", .@map$);
 	mapannounce(.@map$, "[DM] Encounter cleanup complete.", bc_map, 0xAAAAAA);
 	return 1;
+}
+
+// ---------------------------------------------------------------------------
+// Scene claim
+//
+// Store party, owner char, and unix tick under $dm_sc_*. A claim older than
+// 60 seconds is abandoned so a disconnected speaker cannot brick the scene.
+// ---------------------------------------------------------------------------
+
+function	script	DM_SceneKeyOk	{
+	.@s$ = getarg(0);
+	.@n = getstrlen(.@s$);
+	if (.@n < 3)
+		return 0;
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		if (!callfunc("DM_IsIdentChar", substr(.@s$, .@i, .@i)))
+			return 0;
+	}
+	return 1;
+}
+
+function	script	DM_SceneRelease	{
+	.@s$ = getarg(0);
+	if (!callfunc("DM_SceneKeyOk", .@s$))
+		return 0;
+	setd("$dm_sc_p_" + .@s$, 0);
+	setd("$dm_sc_o_" + .@s$, 0);
+	setd("$dm_sc_t_" + .@s$, 0);
+	return 1;
+}
+
+function	script	DM_SceneBusy	{
+	.@s$ = getarg(0);
+	if (!callfunc("DM_SceneKeyOk", .@s$))
+		return 0;
+	.@p = getd("$dm_sc_p_" + .@s$);
+	if (.@p <= 0)
+		return 0;
+	.@tick = getd("$dm_sc_t_" + .@s$);
+	// 180s: a table can talk through a long scene. Abandoned means the
+	// owner has been gone, not that a pause to discuss should brick it.
+	if (gettimetick(2) - .@tick > 180) {
+		callfunc("DM_SceneRelease", .@s$);
+		return 0;
+	}
+	return 1;
+}
+
+function	script	DM_SceneTouch	{
+	.@s$ = getarg(0);
+	if (!callfunc("DM_SceneBusy", .@s$))
+		return 0;
+	if (getd("$dm_sc_o_" + .@s$) != getcharid(CHAR_ID_CHAR))
+		return 0;
+	setd("$dm_sc_t_" + .@s$, gettimetick(2));
+	return 1;
+}
+
+function	script	DM_SceneOwnerParty	{
+	.@s$ = getarg(0);
+	if (!callfunc("DM_SceneBusy", .@s$))
+		return 0;
+	return getd("$dm_sc_p_" + .@s$);
+}
+
+function	script	DM_SceneClaim	{
+	.@s$ = getarg(0);
+	.@party = getarg(1, getcharid(CHAR_ID_PARTY));
+	.@cid = getcharid(CHAR_ID_CHAR);
+	if (!callfunc("DM_SceneKeyOk", .@s$))
+		return 0;
+	if (.@party <= 0)
+		.@party = .@cid;
+	if (callfunc("DM_SceneBusy", .@s$)) {
+		if (getd("$dm_sc_p_" + .@s$) == .@party && getd("$dm_sc_o_" + .@s$) == .@cid) {
+			setd("$dm_sc_t_" + .@s$, gettimetick(2));
+			return 1;
+		}
+		return 0;
+	}
+	setd("$dm_sc_p_" + .@s$, .@party);
+	setd("$dm_sc_o_" + .@s$, .@cid);
+	setd("$dm_sc_t_" + .@s$, gettimetick(2));
+	return 1;
+}
+
+function	script	DM_SceneJoin	{
+	.@s$ = getarg(0);
+	.@party = getarg(1, getcharid(CHAR_ID_PARTY));
+	if (!callfunc("DM_SceneBusy", .@s$))
+		return 0;
+	if (.@party <= 0)
+		.@party = getcharid(CHAR_ID_CHAR);
+	if (getd("$dm_sc_p_" + .@s$) != .@party)
+		return 0;
+	setd("$dm_sc_t_" + .@s$, gettimetick(2));
+	return 1;
+}
+
+function	script	DM_SceneFail	{
+	.@s$ = getarg(0);
+	callfunc("DM_PartyMes", "^777777Someone in the party is already speaking this scene. Wait, or listen.^000000");
+	return 0;
+}
+
+// ---------------------------------------------------------------------------
+// Encounter record
+// ---------------------------------------------------------------------------
+
+function	script	DM_EncStart	{
+	.@s$ = getarg(0);
+	.@party = getarg(1, getcharid(CHAR_ID_PARTY));
+	.@map$ = getarg(2, strnpcinfo(NPC_MAP));
+	.@boss$ = getarg(3, "");
+	.@add$ = getarg(4, "");
+	.@npc$ = getarg(5, strnpcinfo(NPC_NAME));
+	if (!callfunc("DM_SceneKeyOk", .@s$))
+		return 0;
+	.@gen = getd("$dm_enc_g_" + .@s$) + 1;
+	setd("$dm_enc_g_" + .@s$, .@gen);
+	setd("$dm_enc_p_" + .@s$, .@party);
+	setd("$dm_enc_m_" + .@s$ + "$", .@map$);
+	setd("$dm_enc_b_" + .@s$ + "$", .@boss$);
+	setd("$dm_enc_a_" + .@s$ + "$", .@add$);
+	setd("$dm_enc_n_" + .@s$ + "$", .@npc$);
+	return .@gen;
+}
+
+function	script	DM_EncOnDeath	{
+	.@s$ = getarg(0);
+	.@party = getarg(1, getcharid(CHAR_ID_PARTY));
+	if (!callfunc("DM_SceneKeyOk", .@s$))
+		return 0;
+	if (getd("$dm_enc_g_" + .@s$) <= 0)
+		return 0;
+	if (getd("$dm_enc_p_" + .@s$) != .@party)
+		return 0;
+	return 1;
+}
+
+function	script	DM_EncCleanup	{
+	.@s$ = getarg(0);
+	if (!callfunc("DM_SceneKeyOk", .@s$))
+		return 0;
+	.@map$ = getd("$dm_enc_m_" + .@s$ + "$");
+	.@boss$ = getd("$dm_enc_b_" + .@s$ + "$");
+	.@add$ = getd("$dm_enc_a_" + .@s$ + "$");
+	.@npc$ = getd("$dm_enc_n_" + .@s$ + "$");
+	if (.@map$ != "") {
+		if (.@boss$ != "")
+			killmonster(.@map$, .@boss$, 1);
+		if (.@add$ != "")
+			killmonster(.@map$, .@add$, 1);
+	}
+	if (.@npc$ != "")
+		set getvariableofnpc('boss_up, .@npc$), 0;
+	setd("$dm_enc_p_" + .@s$, 0);
+	setd("$dm_enc_m_" + .@s$ + "$", "");
+	setd("$dm_enc_b_" + .@s$ + "$", "");
+	setd("$dm_enc_a_" + .@s$ + "$", "");
+	setd("$dm_enc_n_" + .@s$ + "$", "");
+	callfunc("DM_SceneRelease", .@s$);
+	return 1;
+}
+
+function	script	DM_EncSweepMap	{
+	.@map$ = getarg(0);
+	setarray .@scenes$[0],
+		"arc01_holt", "arc02_voss", "arc02_spirit",
+		"arc03_osiris", "arc03_amon", "arc03_ckpt_a", "arc03_ckpt_b",
+		"arc04_baphomet", "arc05_hold", "arc05_tao";
+	.@n = getarraysize(.@scenes$);
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		if (getd("$dm_enc_m_" + .@scenes$[.@i] + "$") == .@map$)
+			callfunc("DM_EncCleanup", .@scenes$[.@i]);
+	}
+	return 1;
+}
+
+// ---------------------------------------------------------------------------
+// Act I complete (idempotent quest close, no EXP)
+// ---------------------------------------------------------------------------
+
+function	script	DM_Arc01Complete	{
+	.@party = getarg(0, getcharid(CHAR_ID_PARTY));
+	callfunc("DM_EncCleanup", "arc01_holt");
+	callfunc("DM_PartyQuestComplete", 20005, .@party);
+	callfunc("DM_PartyQuestComplete", 20001, .@party);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 199, .@party);
+	return 1;
+}
+
+function	script	DM_Arc02Complete	{
+	.@party = getarg(0, getcharid(CHAR_ID_PARTY));
+	callfunc("DM_EncCleanup", "arc02_voss");
+	callfunc("DM_PartyQuestComplete", 20012, .@party);
+	callfunc("DM_PartyQuestComplete", 20007, .@party);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 299, .@party);
+	return 1;
+}
+
+function	script	DM_Arc03Complete	{
+	.@party = getarg(0, getcharid(CHAR_ID_PARTY));
+	callfunc("DM_EncCleanup", "arc03_osiris");
+	callfunc("DM_EncCleanup", "arc03_amon");
+	callfunc("DM_PartyQuestComplete", 20018, .@party);
+	callfunc("DM_PartyQuestComplete", 20013, .@party);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 399, .@party);
+	return 1;
+}
+
+function	script	DM_Arc04Complete	{
+	.@party = getarg(0, getcharid(CHAR_ID_PARTY));
+	callfunc("DM_EncCleanup", "arc04_baphomet");
+	callfunc("DM_TriggerEvent", "Vault Seal Pressure#dm", "OnPressureStop");
+	callfunc("DM_PartyQuestComplete", 20023, .@party);
+	callfunc("DM_PartyQuestComplete", 20019, .@party);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 499, .@party);
+	return 1;
+}
+
+function	script	DM_Arc05Complete	{
+	.@party = getarg(0, getcharid(CHAR_ID_PARTY));
+	callfunc("DM_EncCleanup", "arc05_hold");
+	callfunc("DM_EncCleanup", "arc05_tao");
+	callfunc("DM_PartyQuestComplete", 20030, .@party);
+	callfunc("DM_PartyQuestComplete", 20025, .@party);
+	callfunc("DM_InstanceSetFlag", "dm_act01_complete", 1);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 599, .@party);
+	return 1;
+}
+
+function	script	DM_Arc01Clues	{
+	.@m = getarg(0, dm_arc01_clue_mask);
+	.@n = 0;
+	if (.@m & 1) ++.@n;
+	if (.@m & 2) ++.@n;
+	if (.@m & 4) ++.@n;
+	return .@n;
+}
+
+function	script	DM_Arc01ChamberReady	{
+	if (callfunc("DM_Arc01Clues") >= 2)
+		return 1;
+	if ((dm_arc01_clue_mask & 3) && dm_arc01_tibbets_befriended)
+		return 1;
+	return 0;
+}
+
+function	script	DM_Act01BoardLine	{
+	if (questprogress(20001) == 1) {
+		if (questprogress(20005) == 2)
+			return "Return to Wynne at the fountain. The chamber is quiet; the ledger is not.";
+		if (questprogress(20005) == 1)
+			return "Lowest Culvert chamber (prt_sewb4). Optional: drain the tide-wheel, speak Hlin at the binding stone.";
+		if (callfunc("DM_Arc01ChamberReady"))
+			return "Ask Wynne for the unofficial job, then descend. Two signs already name the chamber.";
+		if (questprogress(20004) == 1 && !dm_arc01_child_found)
+			return "Find Mira at the south-gate soup line. The mother cannot finish this from here.";
+		return "Follow the humming water: Tibbets at the fountain, the mother at the south gate, or the painted sluice in the upper Culvert.";
+	}
+	if (questprogress(20007) == 1) {
+		if (questprogress(20012) == 1)
+			return "Payon Cave F5. Scholar Voss. Cut the grove conduits before you choose restore or burn.";
+		return "Payon shrine. Read two memorials (or a witness) before Sun-Hwa will name the grove.";
+	}
+	if (questprogress(20013) == 1) {
+		if (questprogress(20018) == 1)
+			return "Pyramid B2. Amon Ra. The lid, not the floor.";
+		if (questprogress(20017) == 1)
+			return "Pyramid F4 (moc_pryd04 91,83). Osiris holds court. Put the king down, then the lid.";
+		return "Walk the relief route with Rashid's wells. Hunts are optional. The tomb waits on the survey, not on Ant Hell.";
+	}
+	if (questprogress(20019) == 1) {
+		if (questprogress(20023) == 1)
+			return "gef_dun02 vault center. Align East, then North, then West. Each glyph says what it does.";
+		return "Geffen. Elsbeth at the square. The glyphs are the main path; the hunts are prep.";
+	}
+	if (questprogress(20025) == 1) {
+		if (questprogress(20030) == 1)
+			return "Turtle Island deep shelf. Tao Gunka. Neutralize crates if you can.";
+		if (questprogress(20029) == 1)
+			return "Brode's exempt hold. Quiet tools, or a loud fight.";
+		return "Alberta docks. Two ferry departures and two diver sites. Then the hold.";
+	}
+	if (questprogress(20025) == 2)
+		return "Act I is closed. Look north: Yuno, and whatever Krenn is hiding in the clockwork.";
+	return "Await the Dungeon Master's signal, then speak to the current hub NPC.";
+}
+
+function	script	DM_CountBits	{
+	.@m = getarg(0);
+	.@n = 0;
+	.@b = 1;
+	while (.@b > 0 && .@b <= .@m) {
+		if (.@m & .@b)
+			++.@n;
+		.@b *= 2;
+	}
+	return .@n;
+}
+
+function	script	DM_Arc01PayClues	{
+	if (!callfunc("DM_Arc01ChamberReady"))
+		return 0;
+	if (callfunc("DM_ClaimGrant", "arc01_clues"))
+		callfunc("DM_PartyExp", 20500, 8500);
+	return 1;
+}
+
+function	script	DM_Arc01PayPrepared	{
+	if (callfunc("DM_ClaimGrant", "arc01_prepared"))
+		callfunc("DM_PartyExp", 20500, 8500);
+	return 1;
+}
+
+function	script	DM_Arc02PayMemorials	{
+	if (callfunc("DM_CountBits", dm_arc02_memorial_known) < 2)
+		return 0;
+	if (callfunc("DM_ClaimGrant", "arc02_memorials"))
+		callfunc("DM_PartyExp", 36000, 15000);
+	return 1;
+}
+
+function	script	DM_Arc03PaySurvey	{
+	if ((dm_arc03_well_inspected & 3) != 3)
+		return 0;
+	if (callfunc("DM_ClaimGrant", "arc03_survey"))
+		callfunc("DM_PartyExp", 36000, 14000);
+	return 1;
+}
+
+function	script	DM_Arc05QuietTools	{
+	if (dm_arc05_mara_trust)
+		return 1;
+	if (dm_arc05_diver_groups_saved >= 1)
+		return 1;
+	if (dm_arc05_ferry_choice == 3 || dm_arc05_spies_moved)
+		return 1;
+	return 0;
+}
+
+// OnInit walk audit. Unwalkable campaign NPCs print [Error] DM walk
+// so tools/check-campaign.sh fails instead of shipping a click-through wall.
+function	script	DM_AssertWalk	{
+	getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+	if (.@m$ == "")
+		return 1;
+	if (checkcell(.@m$, .@x, .@y, cell_chkpass))
+		return 1;
+	consolemes(CONSOLEMES_ERROR, "DM walk: %s %s,%d,%d", strnpcinfo(NPC_NAME), .@m$, .@x, .@y);
+	for (.@r = 1; .@r <= 4; ++.@r) {
+		for (.@dx = -.@r; .@dx <= .@r; ++.@dx) {
+			for (.@dy = -.@r; .@dy <= .@r; ++.@dy) {
+				if (.@dx == 0 && .@dy == 0)
+					continue;
+				if (checkcell(.@m$, .@x + .@dx, .@y + .@dy, cell_chkpass)) {
+					consolemes(CONSOLEMES_ERROR, "DM walk hint: %s try %s,%d,%d", strnpcinfo(NPC_NAME), .@m$, .@x + .@dx, .@y + .@dy);
+					return 0;
+				}
+			}
+		}
+	}
+	return 0;
 }

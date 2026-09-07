@@ -101,6 +101,8 @@ OnDM:
 	}
 
 	if (.@sub$ == "cleanup") {
+		// Kills DM_Console labels AND registered Act I encounter records.
+		// No quest complete, no EXP, no false victory.
 		callfunc("DM_CleanupMap");
 		end;
 	}
@@ -157,6 +159,11 @@ OnDM:
 
 	if (.@sub$ == "enc" || .@sub$ == "encounter") {
 		callsub(S_Enc, 1);
+		end;
+	}
+
+	if (.@sub$ == "tune") {
+		callsub(S_EncTune, 1);
 		end;
 	}
 
@@ -486,6 +493,7 @@ S_Help:
 	dispbottom("[DM] @dm check <player|me|party> <tag|stat> <dc> [dm_flag]");
 	dispbottom("[DM] @dm stakes <success> | <failure>   (say the price first)");
 	dispbottom("[DM] @dmenc list | info <name> | spawn <name> [ambush|line|scatter]");
+	dispbottom("[DM] @dmenc tune [level] [percent] | @dm tune [level] [percent]");
 	dispbottom("[DM] @dm stealth [dc]   (default 15) | @dm wake");
 	dispbottom("[DM] Players: @check <tag|stat> <dc> and @assist <player> <tag>");
 	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
@@ -529,9 +537,22 @@ S_Enc:
 		callfunc("DM_EncSpawn", @dm_atcmd_p$[.@offset + 1], @dm_atcmd_p$[.@offset + 2]);
 		return;
 	}
+	if (.@action$ == "tune") {
+		callsub(S_EncTune, .@offset + 1);
+		return;
+	}
 
 	dispbottom("[Enc] Unknown action: " + .@action$);
 	callfunc("DM_EncList");
+	return;
+
+S_EncTune:
+	.@offset = getarg(0, 0);
+	.@lv = atoi(@dm_atcmd_p$[.@offset]);
+	.@pct = atoi(@dm_atcmd_p$[.@offset + 1]);
+	if (.@pct <= 0)
+		.@pct = 100;
+	callfunc("DM_EncTuneMap", .@lv, .@pct);
 	return;
 
 S_Stakes:
@@ -1144,8 +1165,15 @@ S_Spawn:
 		.@name$ = "--ja--";
 
 	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
-	areamonster(.@map$, .@x - 3, .@y - 3, .@x + 3, .@y + 3, .@name$, .@mob_id, .@count, "DM_Console::OnDMKilled");
-	dispbottom("[DM] Spawned " + .@count + " mob(s) near you on " + .@map$ + ".");
+	.@tgt = callfunc("DM_EncTuneTarget", 0);
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		.@mx = .@x + rand(7) - 3;
+		.@my = .@y + rand(7) - 3;
+		.@gid = monster(.@map$, .@mx, .@my, .@name$, .@mob_id, 1, "DM_Console::OnDMKilled");
+		callfunc("DM_EncTune", .@gid, .@tgt, 100);
+	}
+	dispbottom("[DM] Spawned " + .@count + " mob(s) near you on " + .@map$
+		+ ", tuned to lv " + .@tgt + ".");
 	return;
 
 }

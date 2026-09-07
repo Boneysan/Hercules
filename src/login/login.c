@@ -1094,8 +1094,11 @@ static int login_check_client_version(struct login_session_data *sd)
 {
 	// if check flags enabled skip version check with flags pattern present in version field
 	if (!login->config->check_client_flags || (sd->version & 0x80000000) == 0) {
-		if (login->config->check_client_version && sd->version != login->config->client_version_to_connect)
+		if (login->config->check_client_version && sd->version != login->config->client_version_to_connect) {
+			ShowNotice("Rejected '%s': pack version %u, server expects %u (download the latest Seal-Cascade zip and run Update).\n",
+					sd->userid, sd->version, login->config->client_version_to_connect);
 			return 5;
+		}
 	}
 
 	// check flags only if enabled and if client flags set to known value

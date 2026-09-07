@@ -2,18 +2,16 @@
 
 function	script	DM_HandbookMenu	{
 	mes("[GM Handbook]");
-	mes("Private role-playing cues for The Seal Cascade. Only actions labelled SEND are shown to players.");
+	mes("Private cues. SEND is the only player-visible action. Browsing never mutates.");
 	next();
-	switch (select("Arc 1 - Omens at the Fountain (full guide)", "Arcs 2-19 - Campaign Reference", "Open Beat Director", "Close")) {
+	switch (select("Arc 1 - Prontera", "Arc 2 - Payon", "Arc 3 - Morroc", "Arc 4 - Geffen", "Arc 5 - Alberta", "Open Beat Director", "Close")) {
 	case 1: callfunc("DM_HandbookArc01"); break;
-	case 2:
-		mes("[Campaign Reference]");
-		mes("Arc overview cue cards are being expanded after the Arc 1 playtest. For now, use the quest-giver dialogue for character voice and CAMPAIGN.md for branches and callbacks.");
-		next();
-		callfunc("DM_BeatMenu");
-		break;
-	case 3: callfunc("DM_BeatMenu"); break;
-	case 4: close();
+	case 2: callfunc("DM_HandbookArc02"); break;
+	case 3: callfunc("DM_HandbookArc03"); break;
+	case 4: callfunc("DM_HandbookArc04"); break;
+	case 5: callfunc("DM_HandbookArc05"); break;
+	case 6: callfunc("DM_BeatMenu"); break;
+	case 7: close();
 	}
 	return;
 }
@@ -21,20 +19,25 @@ function	script	DM_HandbookMenu	{
 function	script	DM_HandbookArc	{
 	.@arc = getarg(0, 1);
 	if (.@arc == 1) callfunc("DM_HandbookArc01");
+	else if (.@arc == 2) callfunc("DM_HandbookArc02");
+	else if (.@arc == 3) callfunc("DM_HandbookArc03");
+	else if (.@arc == 4) callfunc("DM_HandbookArc04");
+	else if (.@arc == 5) callfunc("DM_HandbookArc05");
 	else {
 		mes("[GM Handbook - Arc " + .@arc + "]");
-		mes("This arc currently uses its scripted quest-giver dialogue plus the campaign reference. Its full cue cards will follow the Arc 1 table test.");
+		mes("Use the quest-giver and CAMPAIGN.md. Act I is the reference slice.");
 		next();
-		callfunc("DM_BeatArc" + (.@arc < 10 ? "0" : "") + .@arc);
+		callfunc("DM_BeatMenu");
 	}
 	return;
 }
 
 function	script	DM_HandbookArc01	{
 	mes("[Arc 1 - Omens at the Fountain]");
-	mes("Goal: establish the Guild, Morroc's refugees, the weakening seals, Cassell, and the Sigil Ring.");
+	mes("Promise: the small people we help change what happens under the city.");
+	mes("Main path: clues (paint, Mira, Tibbets) -> unofficial job -> optional drain/binding -> Holt.");
 	next();
-	switch (select("Wynne's Guild Ledger", "The Trembling Ground", "Tibbets and the Key", "The Listening Chamber", "Arc Resolution", "Party State", "Open Arc 1 Beats", "Back")) {
+	switch (select("Wynne", "Mother / Mira / soup", "Tibbets / wheel / Hlin", "Listening Chamber", "Resolution", "Party State", "Open Arc 1 Beats", "Back")) {
 	case 1: callfunc("DM_HandbookArc01Scene", 1); break;
 	case 2: callfunc("DM_HandbookArc01Scene", 2); break;
 	case 3: callfunc("DM_HandbookArc01Scene", 3); break;
@@ -42,9 +45,9 @@ function	script	DM_HandbookArc01	{
 	case 5: callfunc("DM_HandbookArc01Scene", 5); break;
 	case 6:
 		mes("[Arc 1 Party State]");
-		mes("Started: " + dm_arc01_started + "  Refugees helped: " + dm_arc01_refugees_helped);
-		mes("Tibbets: " + dm_arc01_tibbets_befriended + "  Holt spared: " + dm_arc01_holt_spared + "  Holt killed: " + dm_arc01_holt_killed);
-		mes("Sigil Ring: " + dm_arc01_sigil_ring_obtained + "  Beat: " + dm_story_beat);
+		mes("clues=" + dm_arc01_clue_mask + " child=" + dm_arc01_child_found + " route=" + dm_arc01_rescue_route);
+		mes("key=" + dm_arc01_key_access + " drained=" + dm_arc01_chamber_drained + " binding=" + dm_arc01_binding_applied);
+		mes("approach=" + dm_arc01_holt_approach + " fate=" + dm_arc01_holt_fate + " ring=" + dm_arc01_sigil_ring_obtained);
 		next(); callfunc("DM_HandbookArc01"); break;
 	case 7: callfunc("DM_BeatArc01"); break;
 	case 8: callfunc("DM_HandbookMenu"); break;
@@ -55,42 +58,87 @@ function	script	DM_HandbookArc01	{
 function	script	DM_HandbookArc01Scene	{
 	.@scene = getarg(0);
 	if (.@scene == 1) {
-		mes("[Wynne's Guild Ledger]");
-		mes("Purpose: swear in the party and make heroism feel like dangerous municipal work.");
-		mes("Wynne: dry and practical, compassionate beneath gallows humor; never grandiose.");
+		mes("[Wynne]");
+		mes("Starts 20001 only. Optional hunts from a menu. 20005 after two clues or one clue + Tibbets.");
 		.@read$ = "Prontera's fountain throws clean water into a city pretending the southern road is not full of refugees. Wynne opens an ink-stained ledger.";
 	} else if (.@scene == 2) {
-		mes("[The Trembling Ground]");
-		mes("Purpose: humanize Morroc's refugees. The mother is exhausted and protective, not helpless.");
-		mes("Choice: quiet rescue or city guard. Helping refugees unlocks Holt's mercy route and removes encounter adds.");
-		.@read$ = "Outside Prontera's wall, frightened families sleep where they can see open sky. Someone in gray has been offering them certainty.";
+		mes("[Mother / Mira]");
+		mes("Mother cannot finish 20004 until Mira is found at the soup line. Quiet walk / report / confront. Later is safe.");
+		.@read$ = "A gray pot, a gray man, a girl with a crayon goat. The mother will not pretend the child is home until you have seen her.";
 	} else if (.@scene == 3) {
-		mes("[Tibbets and the Key]");
-		mes("Purpose: provide a local witness and reward listening with a non-combat advantage.");
-		mes("Tibbets: stubborn, observant, unimpressed by rank. Befriending him removes an encounter add.");
-		.@read$ = "The Culvert hums through the sluice wheel like a struck glass. Old Tibbets has heard its rhythm changing.";
+		mes("[Tibbets / wheel / Hlin]");
+		mes("Friendship gives the key, not the drain. Force the catch or ask him. Failed drain pulses and retries. Binding is optional starve.");
+		.@read$ = "The Culvert hums through the sluice like struck glass. Tibbets will not go down with you.";
 	} else if (.@scene == 4) {
-		mes("[The Listening Chamber]");
-		mes("Purpose: reveal the weakening seals and introduce Cassell. Holt is frightened and breathless; Cassell is calm, intimate, and certain.");
-		mes("Reveal: the Deviruchi is a listening conduit, not the cause. If refugees were helped, offer Holt mercy. Prior mercy reduces adds.");
-		.@read$ = "Wet stone, iron, and candle smoke fill the Listening Chamber. Beneath a cracked goat-headed seal, a chained demon is being used to listen.";
+		mes("[Listening Chamber]");
+		mes("Fate commits after the fight from holt_approach: spare / custody / lethal. Adds: quiet or confront -2, report +1, drain -1, binding -1, floor 1.");
+		.@read$ = "A Deviruchi is chained to a cracked goat-head slab. Cassell speaks like water and leaves through the grate.";
 	} else {
-		mes("[Arc 1 Resolution]");
-		mes("Let victory feel incomplete. Confirm party credit and point north toward Payon's sleepless dead.");
+		mes("[Resolution]");
+		mes("20001 and 20005 close together. Point to Sun-Hwa, payon 181,104.");
 		.@read$ = "The chamber falls silent. The Sigil Ring grows colder. Far below, something vast shifts once in its sleep.";
 	}
 	next();
-	mes("[Suggested Play]");
-	if (.@scene == 1) mes("Ask who should be notified if they do not return, and what kind of party they intend to be. Do not gate the campaign behind a roll.");
-	if (.@scene == 2) mes("Use Insight, Diplomacy, or Investigation if useful; accept good role-play without requiring dice.");
-	if (.@scene == 3) mes("Perception can hear the rhythm; Lore can identify a failing ward. Honest treatment needs no roll.");
-	if (.@scene == 4) mes("Insight exposes Holt's fear; Persuasion supports mercy; Lore identifies a prison-prayer.");
-	if (.@scene == 5) mes("Give the table a quiet pause before moving to rewards or the next arc.");
-	next();
-	switch (select("SEND read-aloud to current map", "Open Arc 1 Beats", "Back to Arc 1", "Close")) {
+	switch (select("SEND read-aloud to current map", "Open Arc 1 Beats", "Back", "Close")) {
 	case 1: callfunc("DM_MapStory", .@read$); dispbottom("[GM Handbook] Narration sent; no story state changed."); close();
 	case 2: callfunc("DM_BeatArc01"); break;
 	case 3: callfunc("DM_HandbookArc01"); break;
+	case 4: close();
+	}
+	return;
+}
+
+function	script	DM_HandbookArc02	{
+	mes("[Arc 2 - The Sleeping Forest]");
+	mes("Two memorials (or the family) name the grove. Cut two conduits. Restore or burn. Asking about the rite is not consent to mark Sun-Hwa.");
+	mes("Lanterns and the empty grave are walks. State: memorials=" + dm_arc02_memorial_known + " conduits=" + dm_arc02_conduits_severed + " restored=" + dm_arc02_grove_restored);
+	next();
+	switch (select("SEND shrine cue", "Open Arc 2 Beats", "Back", "Close")) {
+	case 1: callfunc("DM_MapStory", "Payon's shrine road burns blue. Names are missing from the stones. Voss calls that data."); close();
+	case 2: callfunc("DM_BeatArc02"); break;
+	case 3: callfunc("DM_HandbookMenu"); break;
+	case 4: close();
+	}
+	return;
+}
+
+function	script	DM_HandbookArc03	{
+	mes("[Arc 3 - Sand and Whispers]");
+	mes("Inspect both wells. Checkpoints are fights, not escort AI. Asking Sabra what is down there does not commit. Expose must still leave people water (south well).");
+	mes("wells=" + dm_arc03_well_inspected + " relief=" + dm_arc03_relief_secured + " sabra deal/exposed=" + dm_arc03_sabra_deal + "/" + dm_arc03_sabra_exposed);
+	next();
+	switch (select("SEND desert cue", "Open Arc 3 Beats", "Back", "Close")) {
+	case 1: callfunc("DM_MapStory", "The last wells feed tents and a shaft that does not belong to any village. Rashid will not call it a tomb until you have walked the water."); close();
+	case 2: callfunc("DM_BeatArc03"); break;
+	case 3: callfunc("DM_HandbookMenu"); break;
+	case 4: close();
+	}
+	return;
+}
+
+function	script	DM_HandbookArc04	{
+	mes("[Arc 4 - The City Above the Beast]");
+	mes("East, North, West. Each glyph says what it does. Iron works without a mage. Elsbeth can press North. Wrong order pulses and resets the attempt.");
+	mes("puzzle=" + dm_arc04_puzzle_1 + "/" + dm_arc04_puzzle_2 + "/" + dm_arc04_puzzle_3 + " dimmed=" + dm_arc04_city_dimmed + " overflow=" + dm_arc04_overflow_kept);
+	next();
+	switch (select("SEND vault cue", "Open Arc 4 Beats", "Back", "Close")) {
+	case 1: callfunc("DM_MapStory", "Geffen's tower-light is overflow from a prison that prays to stay closed. The street lamps will remember which way you turned the glyphs."); close();
+	case 2: callfunc("DM_BeatArc04"); break;
+	case 3: callfunc("DM_HandbookMenu"); break;
+	case 4: close();
+	}
+	return;
+}
+
+function	script	DM_HandbookArc05	{
+	mes("[Arc 5 - Tides and Trade]");
+	mes("Two ferry departures (plank, then skiff). Two diver lines on iz_dun01. Brode after a boat leaves. Quiet hold needs tools. Relic choice is one menu.");
+	mes("departures=" + dm_arc05_departures_used + " divers=" + dm_arc05_diver_groups_saved + " quiet/loud=" + dm_arc05_hold_quiet + "/" + dm_arc05_hold_loud);
+	next();
+	switch (select("SEND harbor cue", "Open Arc 5 Beats", "Back", "Close")) {
+	case 1: callfunc("DM_MapStory", "Alberta smells like salt, tar, and men pretending cargo has no conscience. The first boat cannot take everyone."); close();
+	case 2: callfunc("DM_BeatArc05"); break;
+	case 3: callfunc("DM_HandbookMenu"); break;
 	case 4: close();
 	}
 	return;

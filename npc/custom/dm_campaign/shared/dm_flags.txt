@@ -32,8 +32,17 @@ function	script	DM_ClearFlag	{
 
 function	script	DM_ClearArc01Flags	{
 	callfunc("DM_ClearFlag", "dm_arc01_started");
+	callfunc("DM_ClearFlag", "dm_arc01_hero_type");
+	callfunc("DM_ClearFlag", "dm_arc01_clue_mask");
+	callfunc("DM_ClearFlag", "dm_arc01_child_found");
+	callfunc("DM_ClearFlag", "dm_arc01_rescue_route");
 	callfunc("DM_ClearFlag", "dm_arc01_tibbets_befriended");
 	callfunc("DM_ClearFlag", "dm_arc01_refugees_helped");
+	callfunc("DM_ClearFlag", "dm_arc01_key_access");
+	callfunc("DM_ClearFlag", "dm_arc01_chamber_drained");
+	callfunc("DM_ClearFlag", "dm_arc01_binding_applied");
+	callfunc("DM_ClearFlag", "dm_arc01_holt_approach");
+	callfunc("DM_ClearFlag", "dm_arc01_holt_fate");
 	callfunc("DM_ClearFlag", "dm_arc01_holt_spared");
 	callfunc("DM_ClearFlag", "dm_arc01_holt_killed");
 	callfunc("DM_ClearFlag", "dm_arc01_sigil_ring_obtained");
@@ -44,12 +53,19 @@ function	script	DM_ClearArc01Flags	{
 function	script	DM_PrintArc01Flags	{
 	dispbottom("[DM] Arc 01 flags:");
 	dispbottom("  started=" + callfunc("DM_GetFlag", "dm_arc01_started")
-		+ " tibbets=" + callfunc("DM_GetFlag", "dm_arc01_tibbets_befriended")
-		+ " refugees=" + callfunc("DM_GetFlag", "dm_arc01_refugees_helped"));
-	dispbottom("  holt_spared=" + callfunc("DM_GetFlag", "dm_arc01_holt_spared")
-		+ " holt_killed=" + callfunc("DM_GetFlag", "dm_arc01_holt_killed")
-		+ " sigil_ring=" + callfunc("DM_GetFlag", "dm_arc01_sigil_ring_obtained"));
-	dispbottom("  mira_lives=" + callfunc("DM_GetFlag", "dm_mira_lives"));
+		+ " clues=" + callfunc("DM_GetFlag", "dm_arc01_clue_mask")
+		+ " child=" + callfunc("DM_GetFlag", "dm_arc01_child_found")
+		+ " route=" + callfunc("DM_GetFlag", "dm_arc01_rescue_route"));
+	dispbottom("  tibbets=" + callfunc("DM_GetFlag", "dm_arc01_tibbets_befriended")
+		+ " key=" + callfunc("DM_GetFlag", "dm_arc01_key_access")
+		+ " drained=" + callfunc("DM_GetFlag", "dm_arc01_chamber_drained")
+		+ " binding=" + callfunc("DM_GetFlag", "dm_arc01_binding_applied"));
+	dispbottom("  approach=" + callfunc("DM_GetFlag", "dm_arc01_holt_approach")
+		+ " fate=" + callfunc("DM_GetFlag", "dm_arc01_holt_fate")
+		+ " spared=" + callfunc("DM_GetFlag", "dm_arc01_holt_spared")
+		+ " killed=" + callfunc("DM_GetFlag", "dm_arc01_holt_killed"));
+	dispbottom("  refugees=" + callfunc("DM_GetFlag", "dm_arc01_refugees_helped")
+		+ " ring=" + callfunc("DM_GetFlag", "dm_arc01_sigil_ring_obtained"));
 	return 1;
 }
 
@@ -67,6 +83,12 @@ function	script	DM_ClearArc02Flags	{
 	callfunc("DM_ClearFlag", "dm_arc02_grove_restored");
 	callfunc("DM_ClearFlag", "dm_arc02_grove_burned");
 	callfunc("DM_ClearFlag", "dm_arc02_notebook_obtained");
+	callfunc("DM_ClearFlag", "dm_arc02_memorial_known");
+	callfunc("DM_ClearFlag", "dm_arc02_conduits_severed");
+	callfunc("DM_ClearFlag", "dm_arc02_conduit_a");
+	callfunc("DM_ClearFlag", "dm_arc02_conduit_b");
+	callfunc("DM_ClearFlag", "dm_arc02_voss_approach");
+	callfunc("DM_ClearFlag", "dm_arc02_lantern_mask");
 	return 1;
 }
 
@@ -85,6 +107,11 @@ function	script	DM_PrintArc02Flags	{
 		+ " restored=" + callfunc("DM_GetFlag", "dm_arc02_grove_restored")
 		+ " burned=" + callfunc("DM_GetFlag", "dm_arc02_grove_burned")
 		+ " notebook=" + callfunc("DM_GetFlag", "dm_arc02_notebook_obtained"));
+	dispbottom("  memorials=" + callfunc("DM_GetFlag", "dm_arc02_memorial_known")
+		+ " lantern_mask=" + callfunc("DM_GetFlag", "dm_arc02_lantern_mask")
+		+ " voss_approach=" + callfunc("DM_GetFlag", "dm_arc02_voss_approach")
+		+ " conduit_a=" + callfunc("DM_GetFlag", "dm_arc02_conduit_a")
+		+ " conduit_b=" + callfunc("DM_GetFlag", "dm_arc02_conduit_b"));
 	return 1;
 }
 
@@ -112,6 +139,10 @@ function	script	DM_ClearArc03Flags	{
 	callfunc("DM_ClearFlag", "dm_arc03_cult_diggers_cleared");
 	callfunc("DM_ClearFlag", "dm_arc03_lidstone_obtained");
 	callfunc("DM_ClearFlag", "dm_arc03_shaft_seen");
+	callfunc("DM_ClearFlag", "dm_arc03_relief_route");
+	callfunc("DM_ClearFlag", "dm_arc03_relief_secured");
+	callfunc("DM_ClearFlag", "dm_arc03_well_inspected");
+	callfunc("DM_ClearFlag", "dm_arc03_checkpoint_cleared");
 	return 1;
 }
 
@@ -133,6 +164,10 @@ function	script	DM_PrintArc03Flags	{
 	dispbottom("  diggers=" + callfunc("DM_GetFlag", "dm_arc03_cult_diggers_cleared")
 		+ " lidstone=" + callfunc("DM_GetFlag", "dm_arc03_lidstone_obtained")
 		+ " shaft_seen=" + callfunc("DM_GetFlag", "dm_arc03_shaft_seen"));
+	dispbottom("  wells=" + callfunc("DM_GetFlag", "dm_arc03_well_inspected")
+		+ " relief_route=" + callfunc("DM_GetFlag", "dm_arc03_relief_route")
+		+ " relief_secured=" + callfunc("DM_GetFlag", "dm_arc03_relief_secured")
+		+ " checkpoint=" + callfunc("DM_GetFlag", "dm_arc03_checkpoint_cleared"));
 	return 1;
 }
 
@@ -164,6 +199,10 @@ function	script	DM_ClearArc04Flags	{
 	callfunc("DM_ClearFlag", "dm_arc04_catechism_choice");
 	callfunc("DM_ClearFlag", "dm_arc04_pilgrim_catechism");
 	callfunc("DM_ClearFlag", "dm_arc04_tamper_sense");
+	callfunc("DM_ClearFlag", "dm_arc04_puzzle_1");
+	callfunc("DM_ClearFlag", "dm_arc04_puzzle_2");
+	callfunc("DM_ClearFlag", "dm_arc04_puzzle_3");
+	callfunc("DM_ClearFlag", "dm_arc04_configuration_committed");
 	return 1;
 }
 
@@ -188,6 +227,10 @@ function	script	DM_PrintArc04Flags	{
 		+ " elsbeth_hurt=" + callfunc("DM_GetFlag", "dm_arc04_elsbeth_hurt")
 		+ " catechism_choice=" + callfunc("DM_GetFlag", "dm_arc04_catechism_choice")
 		+ " catechism=" + callfunc("DM_GetFlag", "dm_arc04_pilgrim_catechism"));
+	dispbottom("  puzzle=" + callfunc("DM_GetFlag", "dm_arc04_puzzle_1")
+		+ "/" + callfunc("DM_GetFlag", "dm_arc04_puzzle_2")
+		+ "/" + callfunc("DM_GetFlag", "dm_arc04_puzzle_3")
+		+ " config=" + callfunc("DM_GetFlag", "dm_arc04_configuration_committed"));
 	return 1;
 }
 
@@ -225,6 +268,9 @@ function	script	DM_ClearArc05Flags	{
 	callfunc("DM_ClearFlag", "dm_arc05_relics_kept");
 	callfunc("DM_ClearFlag", "dm_arc05_sodden_crate_seal");
 	callfunc("DM_ClearFlag", "dm_act01_complete");
+	callfunc("DM_ClearFlag", "dm_arc05_departures_used");
+	callfunc("DM_ClearFlag", "dm_arc05_diver_groups_saved");
+	callfunc("DM_ClearFlag", "dm_arc05_diver_mask");
 	return 1;
 }
 
@@ -249,6 +295,9 @@ function	script	DM_PrintArc05Flags	{
 		+ " relics_kept=" + callfunc("DM_GetFlag", "dm_arc05_relics_kept")
 		+ " crate_seal=" + callfunc("DM_GetFlag", "dm_arc05_sodden_crate_seal")
 		+ " act01=" + callfunc("DM_GetFlag", "dm_act01_complete"));
+	dispbottom("  departures=" + callfunc("DM_GetFlag", "dm_arc05_departures_used")
+		+ " divers=" + callfunc("DM_GetFlag", "dm_arc05_diver_groups_saved")
+		+ " diver_mask=" + callfunc("DM_GetFlag", "dm_arc05_diver_mask"));
 	return 1;
 }
 

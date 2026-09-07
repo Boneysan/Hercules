@@ -25,6 +25,8 @@
 morocc,159,97,4	script	Rashid the Guide#dm	4_M_ORIENT02,{
 	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20018) == 2) {
+		if (questprogress(20013) == 1)
+			callfunc("DM_Arc03Complete");
 		callfunc("DM_PartyMes", "[Rashid]");
 		if (dm_arc03_rashid_mocked)
 			callfunc("DM_PartyMes", "So. You heard it too. Old fool, was I?");
@@ -45,6 +47,7 @@ morocc,159,97,4	script	Rashid the Guide#dm	4_M_ORIENT02,{
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20013, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -62,7 +65,7 @@ S_StartArc:
 	callfunc("DM_PartyMes", "[Rashid]");
 	callfunc("DM_PartyMes", "I am Rashid. I robbed these tombs before your grandparents learned fear, and I put half of it back before fear learned my name.");
 	next();
-	switch (select("Tell it your way, grandfather.", "Just the fastest way down.", "There is no demon. You are an old fool.")) {
+	switch (select("Tell it your way, grandfather.", "Just the fastest way down.", "There is no demon. You are an old fool.", "We need to discuss this.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_trust", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc03_rashid_route", 1);
@@ -83,21 +86,18 @@ S_StartArc:
 		callfunc("DM_PartyMes", "[Rashid]");
 		callfunc("DM_PartyMes", "Coin buys a map. Respect buys the warnings. You have purchased only paper.");
 		break;
+	case 4:
+		close();
 	}
 	next();
 	callfunc("DM_PartyMes", "[Rashid]");
 	callfunc("DM_PartyMes", "Start at the last wells. The relief mission feeds refugees, and someone there is digging below kindness.");
 	callfunc("DM_InstanceSetFlag", "dm_arc03_started", 1);
 	callfunc("DM_InstanceQuestStart", 20013);
-	callfunc("DM_InstanceQuestStart", 20014);
-	callfunc("DM_InstanceQuestStart", 20015);
-	callfunc("DM_InstanceQuestStart", 20016);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 301);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Sand and Whispers]^000000");
-	callfunc("DM_PartyMes", "^3355FFCaravan Water Debt - off the bodies along Sograt's water routes: " + callfunc("DM_HuntBrief", 20014) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFAnt Hell Survey - dug out of the Ant Hell galleries: " + callfunc("DM_HuntBrief", 20015) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFSphinx Night Watch - stripped off the dead in the Sphinx: " + callfunc("DM_HuntBrief", 20016) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFWalk the two wells on moc_fild01 by Sabra's tents. Optional hunts pay. They do not open the tomb.^000000");
 	close();
 
 S_TurnIns:
@@ -193,7 +193,7 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20014) == 2 && questprogress(20015) == 2 && questprogress(20017) == 0) {
+	if ((dm_arc03_well_inspected & 3) == 3 && questprogress(20017) == 0) {
 		callfunc("DM_PartyMes", "[Rashid]");
 		callfunc("DM_PartyMes", "A dead king has climbed out of the sand and started holding court. Put Osiris back before the Pyramid remembers him.");
 		next();
@@ -209,7 +209,7 @@ S_TurnIns:
 		}
 	}
 
-	if (questprogress(20016) == 2 && questprogress(20018) == 0) {
+	if ((questprogress(20017) == 2 || dm_arc03_relief_secured) && questprogress(20018) == 0) {
 		callfunc("DM_PartyMes", "[Rashid]");
 		callfunc("DM_PartyMes", "The route ends below Amon Ra. His chamber is not the bottom of the Pyramid. It is the lid.");
 		next();
@@ -230,16 +230,32 @@ S_TurnIns:
 		}
 	}
 
-	if (.@paid) {
+	switch (select("How is the investigation?", "Take a field contract.", "That's all.")) {
+	case 1:
 		callfunc("DM_PartyMes", "[Rashid]");
-		callfunc("DM_PartyMes", "The support work is done. The old kings will not wait politely.");
+		callfunc("DM_PartyMes", callfunc("DM_Act01BoardLine"));
+		callfunc("DM_HuntStanding", 20014, 20015, 20016);
+		close();
+	case 2:
+		callfunc("DM_PartyMes", "[Rashid]");
+		callfunc("DM_PartyMes", "Optional. Water still has to be walked.");
+		next();
+		switch (select("Caravan Water Debt.", "Ant Hell Survey.", "Sphinx Night Watch.", "None.")) {
+		case 1:
+			if (questprogress(20014) == 0) callfunc("DM_InstanceQuestStart", 20014);
+			close();
+		case 2:
+			if (questprogress(20015) == 0) callfunc("DM_InstanceQuestStart", 20015);
+			close();
+		case 3:
+			if (questprogress(20016) == 0) callfunc("DM_InstanceQuestStart", 20016);
+			close();
+		case 4:
+			close();
+		}
+	case 3:
 		close();
 	}
-
-	callfunc("DM_PartyMes", "[Rashid]");
-	callfunc("DM_PartyMes", "Clear the water route, survey Ant Hell, and watch the Sphinx. The desert is trying to tell you what the tombs already know.");
-	callfunc("DM_HuntStanding", 20014, 20015, 20016);
-	close();
 }
 
 // Mother Sabra - relief mission leader and human villain
@@ -265,42 +281,59 @@ moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
 	callfunc("DM_PartyMes", "[Mother Sabra]");
 	callfunc("DM_PartyMes", "I bury the children who do not survive the road. Then I feed the parents. If that makes me a monster, Morroc should have made kinder monsters.");
 	next();
-	switch (select("Your dig will wake it.", "These people need you. Walk away from the dig.", "What is really down there?")) {
+	if (dm_arc03_sabra_deal || dm_arc03_sabra_exposed) {
+		callfunc("DM_PartyMes", "[Mother Sabra]");
+		callfunc("DM_PartyMes", "You already chose. I will not let you choose twice to soothe yourself.");
+		close();
+	}
+	if (!callfunc("DM_SceneClaim", "arc03_sabra")) {
+		callfunc("DM_SceneFail", "arc03_sabra");
+		close();
+	}
+	switch (select("What is really down there?", "Expose the dig. We will open another well.", "Keep the relief. Walk away from the shaft.", "We need to discuss this.")) {
 	case 1:
+		callfunc("DM_PartyMes", "[Mother Sabra]");
+		callfunc("DM_PartyMes", "Not a demon. A wound. The gods bandaged it with seals and called the rot peace.");
+		next();
+		callfunc("DM_PartyMes", "[Mother Sabra]");
+		callfunc("DM_PartyMes", "We do not need to break one seal. We weaken all of them, and the world breathes.");
+		next();
+		callfunc("DM_PartyMes", "^777777A question. It does not close the tents or the shaft.^000000");
+		callfunc("DM_SceneRelease", "arc03_sabra");
+		close();
+	case 2:
 		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_exposed", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_deal", 0);
 		callfunc("DM_PartyMes", "[Mother Sabra]");
-		callfunc("DM_PartyMes", "Better awake and ended than this endless half-sleep, shaking us apart by inches.");
+		callfunc("DM_PartyMes", "Then tell the kingdom. If you leave the south well open and the pickets down, people still drink.");
 		next();
-		callfunc("DM_PartyMes", "^3355FF*Exposing the dig will close the mission. The refugees will scatter, some toward worse hands.*^000000");
+		callfunc("DM_PartyMes", "^3355FF*Truth is not automatically thirst. Walk the south well and both checkpoints so the tents keep water without the shaft.*^000000");
 		break;
-	case 2:
+	case 3:
 		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_deal", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc03_refugees_protected", 1);
-		// Counts toward the finale turnout Loki reads back (arc_19_finale.txt).
-		callfunc("DM_InstanceSetFlag", "dm_arc19_ally_turnout", dm_arc19_ally_turnout + 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc03_relief_secured", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_exposed", 0);
 		callfunc("DM_PartyMes", "[Mother Sabra]");
 		callfunc("DM_PartyMes", "Guarantee their safety and I abandon the shaft. Not the cause. The shaft.");
 		next();
 		callfunc("DM_PartyMes", "^3355FF*The refugees keep the tents. Sabra keeps your debt for Arc 5.*^000000");
 		break;
-	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_marked_party", 1);
-		callfunc("DM_InstanceSetFlag", "dm_arc03_sabra_revealed_cascade", 1);
-		callfunc("DM_PartyMes", "[Mother Sabra]");
-		callfunc("DM_PartyMes", "Not a demon. A wound. The gods bandaged it with seals and called the rot peace.");
-		next();
-		callfunc("DM_PartyMes", "[Mother Sabra]");
-		callfunc("DM_PartyMes", "We do not need to break one seal. We weaken all of them, and the world breathes.");
-		break;
+	case 4:
+		callfunc("DM_SceneRelease", "arc03_sabra");
+		close();
 	}
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 325);
+	callfunc("DM_SceneRelease", "arc03_sabra");
 	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
 }
 
 // Osiris - side tomb-court set-piece
-moc_pryd04,100,92,4	script	Osiris's Court#dm	4_M_NFDEADMAN,{
+moc_pryd04,91,83,4	script	Osiris's Court#dm	4_M_NFDEADMAN,{
 	if (!callfunc("DM_SessionAllows")) { close; }
 	if (questprogress(20017) != 1) {
 		if (questprogress(20017) == 2) {
@@ -317,7 +350,11 @@ moc_pryd04,100,92,4	script	Osiris's Court#dm	4_M_NFDEADMAN,{
 
 	callfunc("DM_PartyMes", "^3355FF*Cold seal-light leaks through a sand-drowned tomb-court. Osiris sits where no throne should be.*^000000");
 	next();
-	switch (select("Lay Osiris and his court to rest.", "Loot the court and leave.")) {
+	if (!callfunc("DM_SceneClaim", "arc03_osiris")) {
+		callfunc("DM_SceneFail", "arc03_osiris");
+		close();
+	}
+	switch (select("Lay Osiris and his court to rest.", "Loot the court and leave.", "We need to discuss this.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc03_osiris_restored", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc03_osiris_looted", 0);
@@ -328,37 +365,53 @@ moc_pryd04,100,92,4	script	Osiris's Court#dm	4_M_NFDEADMAN,{
 		callfunc("DM_InstanceSetFlag", "dm_arc03_osiris_restored", 0);
 		callfunc("DM_PartyMes", "^3355FF*Gold comes away easily. Rest does not.*^000000");
 		break;
+	case 3:
+		callfunc("DM_SceneRelease", "arc03_osiris");
+		close();
 	}
 	next();
+	callfunc("DM_SceneTouch", "arc03_osiris");
 
 	.@map$ = strnpcinfo(NPC_MAP);
 	getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
 	'boss_up = 1;
+	.@self$ = strnpcinfo(NPC_NAME);
+	callfunc("DM_EncStart", "arc03_osiris", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnOsirisDead", .@self$ + "::OnCourtDead", .@self$);
 	mapannounce .@map$, "[Osiris's Court] The dead king rises. His court shields him.", bc_map, 0xFFAA33;
-	areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Sand Court", 1165, 4, "Osiris's Court#dm::OnCourtDead";
-	areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Buried Knife", 1119, 2, "Osiris's Court#dm::OnCourtDead";
-	monster .@map$, .@x, .@y, "Osiris", 1038, 1, "Osiris's Court#dm::OnOsirisDead";
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Sand Court", 1165,
+		.@self$ + "::OnCourtDead", 38, 100, 4, 5);
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Buried Knife", 1119,
+		.@self$ + "::OnCourtDead", 38, 100, 2, 5);
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Osiris", 1038,
+		.@self$ + "::OnOsirisDead", 38, 100, 1, 0);
 	close();
 
 OnCourtDead:
 	end;
 
 OnOsirisDead:
-	.@party = callfunc("DM_SessionParty");
-	if (!callfunc("DM_ClaimGrant", "arc03_osiris", .@party))
+	if (!callfunc("DM_EncOnDeath", "arc03_osiris"))
 		end;
+	.@party = getd("$dm_enc_p_arc03_osiris");
+	if (.@party <= 0)
+		end;
+	if (!callfunc("DM_ClaimGrant", "arc03_osiris", .@party)) {
+		callfunc("DM_EncCleanup", "arc03_osiris");
+		end;
+	}
 	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
-	killmonster .@map$, "Osiris's Court#dm::OnCourtDead";
+	killmonster .@map$, strnpcinfo(NPC_NAME)+"::OnCourtDead";
 	callfunc("DM_InstanceQuestComplete", 20017);
 	callfunc("DM_InstanceSetFlag", "dm_arc03_funeral_mask", 1);
 	callfunc("DM_PartyExp", 90000, 38000);
 	callfunc("DM_GivePartyZeny", 9000);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 399);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 317);
 	mapannounce .@map$, "[Osiris's Court] The dead king falls. The Funeral Mask is warm with seal-light.", bc_map, 0x88CCFF;
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20017, 1;
 	end;
@@ -388,7 +441,11 @@ moc_pryd06,102,85,4	script	Amon Ra's Lid#dm	4_M_CRU_HEAD,{
 		callfunc("DM_PartyMes", "^3355FF*The floor convulses without warning. Something below is not dreaming. It is waiting.*^000000");
 	next();
 
-	switch (select("Drive off Sabra's diggers first.", "Fight through king and cult together.")) {
+	if (!callfunc("DM_SceneClaim", "arc03_amon")) {
+		callfunc("DM_SceneFail", "arc03_amon");
+		close();
+	}
+	switch (select("Drive off Sabra's diggers first.", "Fight through king and cult together.", "We need to discuss this.")) {
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc03_cult_diggers_cleared", 1);
 		callfunc("DM_PartyMes", "^3355FF*You scatter the diggers from the shaft. Amon Ra wakes with fewer voices feeding him.*^000000");
@@ -397,8 +454,12 @@ moc_pryd06,102,85,4	script	Amon Ra's Lid#dm	4_M_CRU_HEAD,{
 		callfunc("DM_InstanceSetFlag", "dm_arc03_cult_diggers_cleared", 0);
 		callfunc("DM_PartyMes", "^3355FF*The cult keeps chanting as the god-king opens his eyes.*^000000");
 		break;
+	case 3:
+		callfunc("DM_SceneRelease", "arc03_amon");
+		close();
 	}
 	next();
+	callfunc("DM_SceneTouch", "arc03_amon");
 
 	if (!dm_arc03_sabra_deal && !dm_arc03_sabra_exposed) {
 		callfunc("DM_PartyMes", "^3355FF*Sabra's choice still waits above. The shaft will not stay quiet unless someone pays for quiet.*^000000");
@@ -418,33 +479,186 @@ moc_pryd06,102,85,4	script	Amon Ra's Lid#dm	4_M_CRU_HEAD,{
 		.@adds = 1;
 
 	'boss_up = 1;
+	.@self$ = strnpcinfo(NPC_NAME);
+	callfunc("DM_EncStart", "arc03_amon", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnAmonDead", .@self$ + "::OnAddDead", .@self$);
 	mapannounce .@map$, "[Amon Ra's Lid] The tomb is only a lid. The king beneath the king wakes.", bc_map, 0xFFAA33;
-	monster .@map$, .@x, .@y, "Amon Ra", 1511, 1, "Amon Ra's Lid#dm::OnAmonDead";
-	areamonster .@map$, .@x - 5, .@y - 5, .@x + 5, .@y + 5, "Seal Digger", 1041, .@adds, "Amon Ra's Lid#dm::OnAddDead";
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Amon Ra", 1511,
+		.@self$ + "::OnAmonDead", 38, 100, 1, 0);
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Seal Digger", 1041,
+		.@self$ + "::OnAddDead", 38, 100, .@adds, 5);
 	close();
 
 OnAddDead:
 	end;
 
 OnAmonDead:
-	.@party = callfunc("DM_SessionParty");
-	if (!callfunc("DM_ClaimGrant", "arc03_amon", .@party))
+	if (!callfunc("DM_EncOnDeath", "arc03_amon"))
 		end;
+	.@party = getd("$dm_enc_p_arc03_amon");
+	if (.@party <= 0)
+		end;
+	if (!callfunc("DM_ClaimGrant", "arc03_amon", .@party)) {
+		callfunc("DM_EncCleanup", "arc03_amon");
+		end;
+	}
 	'boss_up = 0;
 	.@map$ = strnpcinfo(NPC_MAP);
-	killmonster .@map$, "Amon Ra's Lid#dm::OnAddDead";
-	callfunc("DM_InstanceQuestComplete", 20018);
+	killmonster .@map$, strnpcinfo(NPC_NAME)+"::OnAddDead";
 	callfunc("DM_InstanceSetFlag", "dm_arc03_lidstone_obtained", 1);
 	callfunc("DM_InstanceSetFlag", "dm_arc03_shaft_seen", 1);
-	callfunc("DM_PartyExp", 150000, 65000);
+	callfunc("DM_PartyExp", 60000, 25000, .@party);
 	callfunc("DM_GivePartyZeny", 14000);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 398);
+	callfunc("DM_Arc03Complete", .@party);
 	mapannounce .@map$, "[Amon Ra's Lid] Amon Ra falls. The sealed shaft stays shut, and that is the most frightening thing about it.", bc_map, 0x88CCFF;
 	dispbottom "[Seal Cascade] Arc 3 complete. The rumor is true: something vast waits under Morroc.";
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20018, 1;
+	end;
+}
+
+moc_fild01,80,52,4	script	North Relief Well#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionAllows") || !dm_arc03_started) { close; }
+	if (dm_arc03_well_inspected & 1) {
+		callfunc("DM_PartyMes", "^3355FF*This well is logged. The water is honest. The dig under the tents is not.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A working well. Refugee ropes. Under the mud: a shaft collar that does not belong to any village.*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc03_well_inspected", dm_arc03_well_inspected | 1);
+	callfunc("DM_Arc03PaySurvey");
+	if ((dm_arc03_well_inspected & 3) == 3)
+		callfunc("DM_PartyMes", "^3355FF[Both wells inspected. Rashid will name the tomb.]^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+moc_fild01,92,38,4	script	South Relief Well#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionAllows") || !dm_arc03_started) { close; }
+	if ((dm_arc03_well_inspected & 2) && dm_arc03_sabra_exposed && !dm_arc03_relief_secured) {
+		callfunc("DM_PartyMes", "^3355FF*You knock the listening collar off. The well is a public water point now. Truth, and people still drink.*^000000");
+		callfunc("DM_InstanceSetFlag", "dm_arc03_relief_secured", 1);
+		if (callfunc("DM_ClaimGrant", "arc03_relief"))
+			callfunc("DM_PartyExp", 22000, 9000);
+		close();
+	}
+	if (dm_arc03_well_inspected & 2) {
+		callfunc("DM_PartyMes", "^3355FF*The sheltered route. Longer. Safer. Still a road.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A second well, out of the wind. Manifest scraps: water, grain, and a crate marked for 'listening.'*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc03_well_inspected", dm_arc03_well_inspected | 2);
+	callfunc("DM_InstanceSetFlag", "dm_arc03_relief_route", 1);
+	callfunc("DM_Arc03PaySurvey");
+	if ((dm_arc03_well_inspected & 3) == 3)
+		callfunc("DM_PartyMes", "^3355FF[Both wells inspected. Rashid will name the tomb.]^000000");
+	if (dm_arc03_sabra_exposed && !dm_arc03_relief_secured) {
+		next();
+		callfunc("DM_PartyMes", "^3355FF*The collar can come off. That is the other well the kingdom will not dig.*^000000");
+		if (select("Open it as public water.", "Leave the collar.") == 1) {
+			callfunc("DM_InstanceSetFlag", "dm_arc03_relief_secured", 1);
+			if (callfunc("DM_ClaimGrant", "arc03_relief"))
+				callfunc("DM_PartyExp", 22000, 9000);
+		}
+	}
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+moc_fild01,100,58,4	script	Relief Checkpoint#dm	4_M_ORIENT01,{
+	if (!callfunc("DM_SessionAllows") || !dm_arc03_started) { close; }
+	if (dm_arc03_checkpoint_cleared & 1) {
+		callfunc("DM_PartyMes", "[Runner]");
+		callfunc("DM_PartyMes", "This picket is down. People got through.");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "[Runner]");
+		callfunc("DM_PartyMes", "Still fighting.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Runner]");
+	callfunc("DM_PartyMes", "North picket. No escort AI. Clear this post; the east post still waits.");
+	next();
+	if (select("Clear the picket.", "Not now.") == 2) close();
+	.@map$ = strnpcinfo(NPC_MAP);
+	getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+	.@self$ = strnpcinfo(NPC_NAME);
+	'boss_up = 1;
+	callfunc("DM_EncStart", "arc03_ckpt_a", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnPicketDead", .@self$ + "::OnPicketDead", .@self$);
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Cult Picket", 1055, .@self$ + "::OnPicketDead", 38, 100, 3, 4);
+	close();
+
+OnPicketDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnPicketDead");
+	if (.@left > 0) end;
+	if (!callfunc("DM_EncOnDeath", "arc03_ckpt_a")) end;
+	'boss_up = 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc03_checkpoint_cleared", dm_arc03_checkpoint_cleared | 1);
+	if ((dm_arc03_checkpoint_cleared & 3) == 3) {
+		callfunc("DM_InstanceSetFlag", "dm_arc03_relief_secured", 1);
+		if (callfunc("DM_ClaimGrant", "arc03_relief"))
+			callfunc("DM_PartyExp", 22000, 9000);
+		mapannounce strnpcinfo(NPC_MAP), "[Relief] Both pickets are down. Water moves.", bc_map, 0x88CCFF;
+	} else
+		mapannounce strnpcinfo(NPC_MAP), "[Relief] North picket down. The east post still waits.", bc_map, 0x88CCFF;
+	callfunc("DM_EncCleanup", "arc03_ckpt_a");
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+moc_fild01,112,48,4	script	Relief Checkpoint B#dm	4_M_ORIENT01,{
+	if (!callfunc("DM_SessionAllows") || !dm_arc03_started) { close; }
+	if (dm_arc03_checkpoint_cleared & 2) {
+		callfunc("DM_PartyMes", "[Runner]");
+		callfunc("DM_PartyMes", "East picket is down.");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "[Runner]");
+		callfunc("DM_PartyMes", "Still fighting.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Runner]");
+	callfunc("DM_PartyMes", "East picket. Same work. Different sand.");
+	next();
+	if (select("Clear the picket.", "Not now.") == 2) close();
+	.@map$ = strnpcinfo(NPC_MAP);
+	getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+	.@self$ = strnpcinfo(NPC_NAME);
+	'boss_up = 1;
+	callfunc("DM_EncStart", "arc03_ckpt_b", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnPicketDead", .@self$ + "::OnPicketDead", .@self$);
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Cult Picket", 1055, .@self$ + "::OnPicketDead", 38, 100, 3, 4);
+	close();
+
+OnPicketDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnPicketDead");
+	if (.@left > 0) end;
+	if (!callfunc("DM_EncOnDeath", "arc03_ckpt_b")) end;
+	'boss_up = 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc03_checkpoint_cleared", dm_arc03_checkpoint_cleared | 2);
+	if ((dm_arc03_checkpoint_cleared & 3) == 3) {
+		callfunc("DM_InstanceSetFlag", "dm_arc03_relief_secured", 1);
+		if (callfunc("DM_ClaimGrant", "arc03_relief"))
+			callfunc("DM_PartyExp", 22000, 9000);
+		mapannounce strnpcinfo(NPC_MAP), "[Relief] Both pickets are down. Water moves.", bc_map, 0x88CCFF;
+	} else
+		mapannounce strnpcinfo(NPC_MAP), "[Relief] East picket down. The north post still waits.", bc_map, 0x88CCFF;
+	callfunc("DM_EncCleanup", "arc03_ckpt_b");
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
 	end;
 }

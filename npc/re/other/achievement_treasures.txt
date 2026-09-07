@@ -29,8 +29,16 @@
 
 -	script	achievement_tr	FAKE_NPC,{
 	sscanf(strnpcinfo(NPC_NAME_HIDDEN), "tr%d", .@id);
-	if (!achievement_iscompleted(.@id))
+	// Seal Cascade delta: the stock reward is an item claimed from the
+	// achievement window, and korangar registers both achievement packets as
+	// no-ops -- so clicking a chest recorded the achievement, hid the chest for
+	// good and gave the player nothing they could see. DM_TreasureFound grants
+	// from here instead, which needs no client support. It returns 0 for every
+	// chest outside Act I's regions, leaving those exactly as they were.
+	if (!achievement_iscompleted(.@id)) {
 		achievement_progress(.@id, 1, 1, true);
+		callfunc("DM_TreasureFound", .@id);
+	}
 	end;
 OnInit:
 	cloakonnpc(strnpcinfo(NPC_NAME));

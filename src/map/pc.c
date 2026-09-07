@@ -1488,6 +1488,15 @@ static int pc_reg_received(struct map_session_data *sd)
 	nullpo_ret(sd);
 	sd->vars_ok = true;
 
+	// Seal Cascade: the character's own automatic-pickup choice. Stored as
+	// radius + 1, so that 0 keeps meaning "never chosen" and a deliberate OFF
+	// survives a relog instead of reading as unset and defaulting back on.
+	{
+		int stored = pc_readglobalreg(sd, script->add_variable("AUTOPICKUP"));
+
+		sd->state.autopickup = (stored > 0) ? cap_value(stored - 1, 0, 2) : cap_value(battle_config.autopickup_radius, 0, 2);
+	}
+
 	sd->change_level_2nd = pc_readglobalreg(sd,script->add_variable("jobchange_level"));
 	sd->change_level_3rd = pc_readglobalreg(sd,script->add_variable("jobchange_level_3rd"));
 	sd->die_counter = pc_readglobalreg(sd,script->add_variable("PC_DIE_COUNTER"));
@@ -1556,6 +1565,11 @@ static int pc_reg_received(struct map_session_data *sd)
 	if (sd->state.active)
 		return 0;
 	sd->state.active = 1;
+
+	// Automatic pickup is on by default, because the whole point of it is that
+	// nobody has to be told it exists. This is only the value in force until
+	// the character's registry arrives; pc_reg_received replaces it with their
+	// own stored choice, and a party overrides both (pc_autopickup_radius).
 
 	if (sd->status.party_id)
 		party->member_joined(sd);
@@ -5015,6 +5029,127 @@ static int pc_dropitem(struct map_session_data *sd, int n, int amount)
  *   0 = fail
  *   1 = success
  *------------------------------------------*/
+/**
+ * How often the automatic pickup sweep runs, in milliseconds.
+ *
+ * Fast enough that walking over a drop feels like standing on it takes it,
+ * slow enough that the work is nothing: one 5x5 block scan per player who has
+ * the feature on, and nobody else is looked at.
+ */
+#define AUTOPICKUP_INTERVAL 400
+
+/**
+ * The pickup radius actually in force for this character.
+ *
+ * A party overrides the member's own choice. Loot inside a group is shared --
+ * `party_default_share` turns both item rules on at creation -- so one member
+ * opting out does not keep anything for themselves, it only leaves drops lying
+ * on the floor for everybody. Their own setting applies again the moment they
+ * leave the party.
+ */
+int pc_autopickup_radius(const struct map_session_data *sd)
+{
+	nullpo_ret(sd);
+
+	if (sd->status.party_id != 0)
+		return cap_value(battle_config.autopickup_radius, 0, 2);
+
+	return (int)sd->state.autopickup;
+}
+
+/**
+ * Takes one floor item for a player with automatic pickup on.
+ *
+ * Called through map->foreachinarea, so bl is a BL_ITEM inside the player's
+ * pickup square. Everything that decides whether the item may be taken -- the
+ * two cell reach, the killer's reservation window, the party's share rule --
+ * already lives in pc->takeitem, the same function a mouse click goes through.
+ * This decides only whether it is worth asking.
+ */
+static int pc_autopickup_sub(struct block_list *bl, va_list ap)
+{
+	struct flooritem_data *fitem = NULL;
+	struct map_session_data *sd = va_arg(ap, struct map_session_data *);
+	struct item_data *idata = NULL;
+	int weight = 0;
+
+	nullpo_ret(bl);
+	Assert_ret(bl->type == BL_ITEM);
+	fitem = BL_UCAST(BL_ITEM, bl);
+	nullpo_ret(sd);
+
+	if (fitem->item_data.amount <= 0)
+		return 0;
+
+	// Ask only when the item would actually fit. pc->takeitem reports a full
+	// bag or an overweight character through clif->additem, and this runs more
+	// than twice a second: without these checks, standing next to a drop you
+	// cannot carry would repeat the same red error line forever.
+	idata = itemdb->exists(fitem->item_data.nameid);
+	if (idata == NULL)
+		return 0;
+
+	weight = idata->weight * fitem->item_data.amount;
+	if (weight > 0 && sd->weight + weight > sd->max_weight)
+		return 0;
+
+	switch (pc->checkadditem(sd, fitem->item_data.nameid, fitem->item_data.amount)) {
+	case ADDITEM_NEW:
+		if (pc->inventoryblank(sd) == 0)
+			return 0;
+		break;
+	case ADDITEM_OVERAMOUNT:
+		return 0;
+	default:
+		break;
+	}
+
+	return pc->takeitem(sd, fitem);
+}
+
+/**
+ * Sweeps the pickup square of one player.
+ *
+ * Returns without looking at the map for anyone who has the feature off, so
+ * the cost of the sweep is paid only by the people using it.
+ */
+static int pc_autopickup_pc(struct map_session_data *sd, va_list ap)
+{
+	int radius;
+
+	nullpo_ret(sd);
+
+	radius = pc_autopickup_radius(sd);
+	if (radius <= 0)
+		return 0;
+	if (sd->state.active == 0 || sd->state.standalone != 0 || sd->state.autotrade != 0)
+		return 0;
+	if (pc_isdead(sd) || sd->state.vending != 0 || sd->state.buyingstore != 0 || sd->state.trading != 0)
+		return 0;
+	if (sd->bl.m < 0)
+		return 0;
+	// A map that bans autoloot bans this too: it is the same act, minus the click.
+	if (map->list[sd->bl.m].flag.noautoloot != 0)
+		return 0;
+	if (pc_has_permission(sd, PC_PERM_DISABLE_PICK_UP))
+		return 0;
+
+	map->foreachinarea(pc_autopickup_sub, sd->bl.m,
+			sd->bl.x - radius, sd->bl.y - radius,
+			sd->bl.x + radius, sd->bl.y + radius,
+			BL_ITEM, sd);
+	return 1;
+}
+
+/**
+ * Automatic pickup sweep, for every player who has it on.
+ */
+static int pc_autopickup_timer(int tid, int64 tick, int id, intptr_t data)
+{
+	map->foreachpc(pc_autopickup_pc);
+	return 0;
+}
+
 static int pc_takeitem(struct map_session_data *sd, struct flooritem_data *fitem)
 {
 	int flag=0;
@@ -12927,6 +13062,12 @@ static void do_init_pc(bool minimal)
 	timer->add_func_list(pc->charm_timer, "pc_charm_timer");
 	timer->add_func_list(pc->global_expiration_timer,"pc_global_expiration_timer");
 	timer->add_func_list(pc->expiration_timer,"pc_expiration_timer");
+
+	// Registered unconditionally: autopickup_radius may be 0 while individual
+	// players still switch it on with @autopickup, and a sweep with nobody
+	// using it walks an empty list.
+	timer->add_func_list(pc_autopickup_timer, "pc_autopickup_timer");
+	timer->add_interval(timer->gettick() + AUTOPICKUP_INTERVAL, pc_autopickup_timer, 0, 0, AUTOPICKUP_INTERVAL);
 
 	timer->add(timer->gettick() + map->autosave_interval, pc->autosave, 0, 0);
 
