@@ -188,11 +188,14 @@ static int party_create(struct map_session_data *sd, const char *name, int item,
 
 	sd->party_creating = true;
 
-	// The client here never sends the share flags -- korangar has no packet for
-	// them and no window to set them in -- so a party formed on this server
-	// would keep every drop for whoever happened to touch it first. That turns
-	// automatic pickup into a race between friends rather than a group feature,
-	// so the server decides instead. party_default_share in party.conf.
+	// korangar creates every party with both share flags at zero
+	// (`create_party` sends CreatePartyPacket::new(name, 0, 0)), so a party
+	// formed here starts out keeping each drop for whoever touched it first --
+	// which turns automatic pickup into a race between friends rather than a
+	// group feature. The options CAN be changed afterwards (the client has
+	// set_party_options and a window for it), but nothing should depend on a
+	// player finding that, so the server decides the starting value instead.
+	// party_default_share in party.conf.
 	if ((battle_config.party_default_share & 1) != 0)
 		item = 1;   // any member may take a drop still reserved for a teammate
 	if ((battle_config.party_default_share & 2) != 0)
