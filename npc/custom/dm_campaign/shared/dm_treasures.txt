@@ -1,0 +1,411 @@
+//= Seal Cascade — exploration treasures =================================
+//=
+//= Hercules ships 146 hidden chests (npc/re/other/achievement_treasures.txt):
+//= a cloaked 4_TREASURE_BOX with a 5x5 hidden warp that uncloaks it for one
+//= player who has not claimed that achievement yet. Stock reward is a zeny bag
+//= claimed from the achievement window — and korangar registers both
+//= achievement packets as no-ops, so that window does not exist and the reward
+//= can never be claimed. Clicking a chest silently burned it.
+//=
+//= So the reward is granted HERE, from the chest's own click handler, which
+//= needs no client support at all. Three layers:
+//=
+//=   1. A Cartographer's Mark for the party. Spent at the table on a re-roll or
+//=      advantage for @check — exploration buys leverage in the story rather
+//=      than zeny, which is the whole direction Act I was rewritten in.
+//=   2. A field note. Act I asks players to investigate; a world that pays
+//=      attention back is the point.
+//=   3. The region's hat, once every chest in it is found. Headgear rendering
+//=      landed 2026-09-05 and no player has ever seen a hat on screen.
+//=
+//= Scope is Act I's five regions, 38 chests. `S_Locate` is the only place that
+//= knows which — widening it later is one edit. The other 108 chests keep
+//= stock behaviour: achievement recorded, nothing granted.
+//=========================================================================
+
+-	script	DM_Treasures	FAKE_NPC,{
+	end;
+
+OnInit:
+	// Player-facing: everyone reads their own notes and their party's marks.
+	bindatcmd("fieldnotes", strnpcinfo(NPC_NAME_UNIQUE)+"::OnNotes", 0, 99, 1);
+	bindatcmd("marks", strnpcinfo(NPC_NAME_UNIQUE)+"::OnMarks", 0, 99, 1);
+	// DM-facing: spend and grant.
+	bindatcmd("dmmark", strnpcinfo(NPC_NAME_UNIQUE)+"::OnDMMark", 1, 99, 1);
+	end;
+
+OnNotes:
+	callsub(S_ReadNotes);
+	end;
+
+OnMarks:
+	callsub(S_ShowMarks);
+	end;
+
+OnDMMark:
+	if (!callfunc("DM_RequireDM"))
+		end;
+
+	// bindatcmd fills .@atcmd_parameters$ in THIS scope; callsub opens a new
+	// one. Bridge before calling anything. See dm_console.txt.
+	deletearray @dm_mark_p$[0], 8;
+	copyarray @dm_mark_p$[0], .@atcmd_parameters$[0], .@atcmd_numparameters;
+	@dm_mark_n = .@atcmd_numparameters;
+
+	callsub(S_DMMark);
+	end;
+
+S_ShowMarks:
+	.@party = callfunc("DM_MarkParty");
+	.@pool = callfunc("DM_MarkPool", .@party);
+	.@own = DM_MARKS;
+
+	if (.@party > 0)
+		message strcharinfo(PC_NAME), "Cartographer's Marks — party: " + .@pool + " | banked by you alone: " + .@own;
+	else
+		message strcharinfo(PC_NAME), "Cartographer's Marks — banked by you: " + .@own + " (join a party and finds go to the shared pool).";
+	message strcharinfo(PC_NAME), "A Mark buys one re-roll, or advantage on a check the party is dreading. Ask the DM.";
+	return;
+
+S_DMMark:
+	if (@dm_mark_n < 1) {
+		message strcharinfo(PC_NAME), "@dmmark show | spend <n> | grant <n>";
+		callsub(S_ShowMarks);
+		return;
+	}
+
+	.@action$ = @dm_mark_p$[0];
+	.@amount = (@dm_mark_n > 1) ? atoi(@dm_mark_p$[1]) : 1;
+	if (.@amount < 1)
+		.@amount = 1;
+
+	.@party = callfunc("DM_MarkParty");
+	if (.@party <= 0) {
+		message strcharinfo(PC_NAME), "No party session is running, so there is no shared pool to spend from.";
+		return;
+	}
+
+	.@var$ = "$dm_marks_" + .@party;
+	.@pool = getd(.@var$);
+
+	if (.@action$ == "spend") {
+		if (.@pool < .@amount) {
+			message strcharinfo(PC_NAME), "The party has " + .@pool + " Mark(s); that is fewer than " + .@amount + ".";
+			return;
+		}
+		setd(.@var$, .@pool - .@amount);
+		callfunc("DM_PartyMes", "The party spends " + .@amount + " Cartographer's Mark(s). " + (.@pool - .@amount) + " left.");
+		return;
+	}
+
+	if (.@action$ == "grant") {
+		setd(.@var$, .@pool + .@amount);
+		callfunc("DM_PartyMes", "The party is awarded " + .@amount + " Cartographer's Mark(s). " + (.@pool + .@amount) + " in hand.");
+		return;
+	}
+
+	callsub(S_ShowMarks);
+	return;
+
+S_ReadNotes:
+	.@total = 0;
+	.@found = 0;
+	for (.@r = 0; .@r < 5; ++.@r) {
+		.@total += callfunc("DM_TreasureRegionSize", .@r);
+		.@found += callfunc("DM_TreasureCount", .@r);
+	}
+
+	mes "[Field Notes]";
+	mes "Everything you have pulled out of a roadside chest, in the order the world gave it to you.";
+	mes " ";
+	mes "Collected: ^0055FF" + .@found + "^000000 of " + .@total + ".";
+	next();
+
+	setarray .@menu$[0], "Prontera", "Geffen", "Morroc", "Payon", "Alberta and Izlude";
+	.@pick = select("Prontera:Geffen:Morroc:Payon:Alberta and Izlude:Close") - 1;
+	if (.@pick < 0 || .@pick > 4) {
+		close2();
+		return;
+	}
+
+	.@size = callfunc("DM_TreasureRegionSize", .@pick);
+	.@mask = getd("DM_NOTES_" + .@pick);
+
+	mes "[" + .@menu$[.@pick] + "]";
+	mes "^777777" + callfunc("DM_TreasureCount", .@pick) + " of " + .@size + " found.^000000";
+	mes " ";
+
+	.@any = 0;
+	for (.@i = 0; .@i < .@size; ++.@i) {
+		if (!(.@mask & (1 << .@i)))
+			continue;
+		.@any = 1;
+		mes "^0055FF" + callfunc("DM_TreasureNoteTitle", .@pick, .@i) + "^000000";
+		mes callfunc("DM_TreasureNoteText", .@pick, .@i);
+		mes " ";
+	}
+
+	if (!.@any)
+		mes "Nothing yet. The chests are off the roads, in the corners nobody walks to.";
+
+	close2();
+	return;
+}
+
+//= Which party banks a find. The DM session's party when one is running,
+//= otherwise the finder's own — a chest found between sessions still counts.
+function	script	DM_MarkParty	{
+	.@party = callfunc("DM_SessionParty");
+	if (.@party > 0)
+		return .@party;
+	return getcharid(CHAR_ID_PARTY);
+}
+
+function	script	DM_MarkPool	{
+	.@party = getarg(0);
+	if (.@party <= 0)
+		return 0;
+	return getd("$dm_marks_" + .@party);
+}
+
+//= Region and slot for an achievement id, as region * 100 + slot, or -1 for a
+//= chest outside Act I. Regions: 0 Prontera, 1 Geffen, 2 Morroc, 3 Payon,
+//= 4 Alberta/Izlude. The five odd ids at the end are the campaign's own
+//= set-piece maps — Holt's culvert, the Payon dungeon, the pyramid, the Geffen
+//= dungeon, the sunken ship — which is why they are worth pulling in.
+function	script	DM_TreasureSlot	{
+	.@id = getarg(0);
+
+	if (.@id >= 120001 && .@id <= 120010) return 0 * 100 + (.@id - 120001);
+	if (.@id == 120140) return 0 * 100 + 10;   // prt_maze03
+	if (.@id == 120141) return 0 * 100 + 11;   // prt_sewb4  — arc 1
+	if (.@id >= 120011 && .@id <= 120017) return 1 * 100 + (.@id - 120011);
+	if (.@id == 120123) return 1 * 100 + 7;    // gef_dun02  — arc 4
+	if (.@id >= 120018 && .@id <= 120023) return 2 * 100 + (.@id - 120018);
+	if (.@id == 120137) return 2 * 100 + 6;    // moc_pryd06 — arc 3
+	if (.@id >= 120024 && .@id <= 120031) return 3 * 100 + (.@id - 120024);
+	if (.@id == 120139) return 3 * 100 + 8;    // pay_dun04  — arc 2
+	if (.@id == 120131) return 4 * 100 + 0;    // iz_dun05   — arc 5
+	if (.@id == 120144) return 4 * 100 + 1;    // treasure02 — arc 5
+
+	return -1;
+}
+
+function	script	DM_TreasureRegionSize	{
+	setarray .@sizes[0], 12, 8, 7, 9, 2;
+	return .@sizes[getarg(0)];
+}
+
+function	script	DM_TreasureCount	{
+	.@region = getarg(0);
+	.@mask = getd("DM_NOTES_" + .@region);
+	.@size = callfunc("DM_TreasureRegionSize", .@region);
+	.@count = 0;
+	for (.@i = 0; .@i < .@size; ++.@i) {
+		if (.@mask & (1 << .@i))
+			++.@count;
+	}
+	return .@count;
+}
+
+function	script	DM_TreasureRegionName	{
+	setarray .@names$[0], "Prontera", "Geffen", "Morroc", "Payon", "Alberta and Izlude";
+	return .@names$[getarg(0)];
+}
+
+//= The hat each region pays out when its last chest is found. Cosmetic on
+//= purpose: a reward the rest of the party can SEE, and the first hats anyone
+//= here has worn.
+function	script	DM_TreasureRegionHat	{
+	setarray .@hats[0], 5108, 5027, 2222, 5170, 18645;
+	return .@hats[getarg(0)];
+}
+
+function	script	DM_TreasureRegionHatName	{
+	setarray .@names$[0], "Renown Detective's Cap", "Mage Hat", "Turban", "Feather Beret", "Sailor Hat";
+	return .@names$[getarg(0)];
+}
+
+//= The fiction. One note per chest, in the voice the campaign uses for
+//= evidence rather than for narration: a thing somebody left behind, and the
+//= detail about it that does not sit right. Nothing here resolves — these are
+//= the loose threads the arcs pull on.
+function	script	DM_TreasureNoteTitle	{
+	.@region = getarg(0);
+	.@index = getarg(1);
+
+	switch (.@region) {
+	case 0:
+		setarray .@t$[0],
+			"The Milestone That Moved", "Toll Ledger, Water-Stained", "A Child's Map",
+			"Complaint, Unfiled", "Sluice Key, Spare", "The Long Count",
+			"Bootprints Cast in Clay", "Humming Stones", "A Guard's Wager Book",
+			"Refugee Roll", "The Gardener's Grievance", "Holt's Requisition";
+		break;
+	case 1:
+		setarray .@t$[0],
+			"Apprentice's Practice Sheet", "Tower Rent Notice", "A Wand, Snapped Clean",
+			"Field Notes on Ley Drift", "Letter From a Rival", "Cartomancer's Discard",
+			"Warding Salt, Unused", "Vault Inventory, Amended";
+		break;
+	case 2:
+		setarray .@t$[0],
+			"Water Ration Book", "Checkpoint Sign, Repainted", "A Digger's Contract",
+			"Sand Glass, Cracked", "Relief Manifest", "A Dancer's Anklet",
+			"Rubbing From a Sealed Door";
+		break;
+	case 3:
+		setarray .@t$[0],
+			"Lantern Oil Account", "A Bow, Unstrung and Wrapped", "Grave Marker Rubbing",
+			"Hunting Permit, Revoked", "Child's Prayer Strip", "Ancestor Roll, Torn",
+			"Fletcher's Complaint", "Ferryman's Tally", "A Lantern That Will Not Light";
+		break;
+	case 4:
+		setarray .@t$[0], "Diver's Slate", "Manifest of the Sunken Ship";
+		break;
+	default:
+		return "A Water-Stained Page";
+	}
+
+	return .@t$[.@index];
+}
+
+function	script	DM_TreasureNoteText	{
+	.@region = getarg(0);
+	.@index = getarg(1);
+
+	switch (.@region) {
+	case 0:
+		setarray .@n$[0],
+			"A surveyor's peg driven twice: once in an old hand, once in a newer one, four paces west of where the first went. Somebody re-measured this road and did not write down why.",
+			"Three months of cart tolls. Every entry after the spring flood is in a different hand, and the totals stopped being added up.",
+			"Chalk on slate: the city, the river, and a spiral drawn underneath both — far more carefully than either.",
+			"A farmer's letter about a well that ran warm all winter. Never delivered. The seal is unbroken.",
+			"Iron, and older than the gate it opens. Tibbets keeps the other one and does not mention this.",
+			"Tally marks in charcoal, four hundred and some, ending mid-stroke. Whatever was being counted, the counting stopped.",
+			"Someone poured plaster into a footprint and kept the cast. It is larger than a man's, and the toes are wrong.",
+			"Three river stones, drilled and strung. Held to the ear near running water they carry the sound of something further down.",
+			"Bets on how many nights the watch would keep finding the gate open. Nobody ever collected; the book just stops.",
+			"Names, ages, and where each of them slept. Half are crossed out and written in again under different families.",
+			"Whoever cut this maze left one path that leads nowhere, then mortared a plaque over its entrance. The plaque is blank.",
+			"A list of what the chamber needed: lamp oil, rope, forty feet of chain. Signed for by a man who appears in no ledger above ground.";
+		break;
+	case 1:
+		setarray .@n$[0],
+			"The same glyph, ninety times, each one a little wrong — and one at the bottom in a steadier hand that is not the student's.",
+			"An eviction notice for non-payment, addressed to a room the tower's own register says does not exist.",
+			"Broken across the grain, which takes more force than a wand is worth. Nobody breaks one by accident.",
+			"Ley measurements taken monthly for two years, in a patient hand. The last three readings are circled and nothing follows them.",
+			"Cordial congratulations on a discovery, dated four days before the discovery was announced.",
+			"A reading deck, complete except for every card that means foundation, footing, or ground.",
+			"A full sack of warding salt bought at some expense and abandoned in a hedge. Whatever it was for, they changed their mind on the way.",
+			"Every line initialled twice. One line has been scraped out so hard the parchment gave way underneath.";
+		break;
+	case 2:
+		setarray .@n$[0],
+			"Stamped for a caravan of twelve. Nine stamps were used. The book was kept anyway, which is the strange part.",
+			"Under the fresh lettering, the old toll is legible — a third of what the sign now asks.",
+			"Payment on delivery, no questions, and a clause forbidding the bearer to describe what they lifted or where from.",
+			"Cracked, and slow because of it. Somebody kept using it regardless; the frame is worn smooth by hands.",
+			"Grain for the outer camps: signed out three times, delivered once. The two extra signatures match each other.",
+			"The bells have been taken off one at a time and kept in a pouch beside it, in order, smallest first.",
+			"Charcoal on cloth, taken from a door that has no handle. The script is not Rune-Midgard's, and the pattern repeats every seventh mark.";
+		break;
+	case 3:
+		setarray .@n$[0],
+			"The village buys twice the lantern oil it burns. The difference goes uphill, and the account simply stops asking where.",
+			"Unstrung and wrapped the way you wrap a thing you fully expect to want again.",
+			"The name on the stone has been recut. The older cut is still legible beneath it, and it is not the same name.",
+			"Revoked without reason, dated the night of the grove fire. The signature is the headman's, and it shakes.",
+			"A prayer strip, in a child's careful hand, asking that the humming under the hill be made to stop.",
+			"The tear is clean and old. Three generations are simply gone from the roll, and the paper was folded to hide it.",
+			"The grove's wood will not take glue any more. He blames the weather; his own dates say the change came first.",
+			"Night crossings are tallied in a separate column, and the separate column is always the longer one.",
+			"Full of oil, wick trimmed, flint scored by a hundred strikes. It has never once lit.";
+		break;
+	case 4:
+		setarray .@n$[0],
+			"Depth, time, and one line in a shaking hand that reads only: it is still turning.",
+			"The cargo is listed twice — once for the port, and once in a smaller hand for whoever actually paid.";
+		break;
+	default:
+		return "The ink has run past reading.";
+	}
+
+	return .@n$[.@index];
+}
+
+//= Called from the chest's click handler in
+//= npc/re/other/achievement_treasures.txt, once per character per chest,
+//= after the achievement is recorded. Returns 1 when this fork granted
+//= something, 0 for the 108 chests outside Act I.
+function	script	DM_TreasureFound	{
+	.@id = getarg(0);
+	.@slot = callfunc("DM_TreasureSlot", .@id);
+	if (.@slot < 0)
+		return 0;
+
+	.@region = .@slot / 100;
+	.@index = .@slot % 100;
+
+	// Idempotent by construction. The achievement gate upstream already fires
+	// once per character, but a hat is not something to hand out twice because
+	// an edge case we did not think of let the click through again.
+	.@mask = getd("DM_NOTES_" + .@region);
+	if (.@mask & (1 << .@index))
+		return 0;
+	setd("DM_NOTES_" + .@region, .@mask | (1 << .@index));
+
+	// The Mark goes to the party when there is one -- a chest found by one
+	// player is a gift to the table, which is the same rule the loot sharing
+	// follows. Found alone, it banks on the character.
+	.@party = callfunc("DM_MarkParty");
+	if (.@party > 0) {
+		.@var$ = "$dm_marks_" + .@party;
+		setd(.@var$, getd(.@var$) + 1);
+		.@pool = getd(.@var$);
+	} else {
+		DM_MARKS = DM_MARKS + 1;
+		.@pool = DM_MARKS;
+	}
+
+	.@found = callfunc("DM_TreasureCount", .@region);
+	.@size = callfunc("DM_TreasureRegionSize", .@region);
+	.@complete = (.@found >= .@size);
+
+	// Everything is granted BEFORE a page is shown, and certainly before any
+	// next(). A chest is one-shot -- the achievement gate above never lets it
+	// open again -- so a player who closes the window at the Next prompt, or
+	// whose client drops between pages, must not lose the reward the click
+	// already earned them. Found in testing: the hat used to be handed out on
+	// the second page, and a probe that never pressed Next left the region
+	// marked complete with no hat and no way back.
+	if (.@complete) {
+		getitem(callfunc("DM_TreasureRegionHat", .@region), 1);
+		announce strcharinfo(PC_NAME) + " has found every hidden chest in " + callfunc("DM_TreasureRegionName", .@region) + ".", bc_all;
+	}
+
+	mes "[" + callfunc("DM_TreasureNoteTitle", .@region, .@index) + "]";
+	mes callfunc("DM_TreasureNoteText", .@region, .@index);
+	mes " ";
+	if (.@party > 0)
+		mes "^0055FFA Cartographer's Mark^000000 goes to the party. The table holds " + .@pool + ".";
+	else
+		mes "^0055FFA Cartographer's Mark^000000. You are carrying " + .@pool + ".";
+	mes "^777777A Mark buys a re-roll, or advantage on a check. @marks, or ask the DM.^000000";
+
+	if (!.@complete) {
+		mes " ";
+		mes "^777777" + callfunc("DM_TreasureRegionName", .@region) + ": " + .@found + " of " + .@size + " found.^000000";
+		close2();
+		return 1;
+	}
+
+	next();
+	mes "[" + callfunc("DM_TreasureRegionName", .@region) + ", complete]";
+	mes "That was the last one. Somebody has been leaving these where only a person who wanders would find them, and you have found all of them.";
+	mes " ";
+	mes "^0055FF" + callfunc("DM_TreasureRegionHatName", .@region) + "^000000 — it is already in your bag. Wear it where the others can see it.";
+	close2();
+	return 1;
+}
