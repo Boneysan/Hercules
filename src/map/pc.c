@@ -1488,6 +1488,15 @@ static int pc_reg_received(struct map_session_data *sd)
 	nullpo_ret(sd);
 	sd->vars_ok = true;
 
+	// Seal Cascade: the character's own automatic-pickup choice. Stored as
+	// radius + 1, so that 0 keeps meaning "never chosen" and a deliberate OFF
+	// survives a relog instead of reading as unset and defaulting back on.
+	{
+		int stored = pc_readglobalreg(sd, script->add_variable("AUTOPICKUP"));
+
+		sd->state.autopickup = (stored > 0) ? cap_value(stored - 1, 0, 2) : cap_value(battle_config.autopickup_radius, 0, 2);
+	}
+
 	sd->change_level_2nd = pc_readglobalreg(sd,script->add_variable("jobchange_level"));
 	sd->change_level_3rd = pc_readglobalreg(sd,script->add_variable("jobchange_level_3rd"));
 	sd->die_counter = pc_readglobalreg(sd,script->add_variable("PC_DIE_COUNTER"));
@@ -1558,9 +1567,9 @@ static int pc_reg_received(struct map_session_data *sd)
 	sd->state.active = 1;
 
 	// Automatic pickup is on by default, because the whole point of it is that
-	// nobody has to be told it exists. @autopickup turns it off for one player;
-	// nothing persists that, so a relog returns to the server's setting.
-	sd->state.autopickup = cap_value(battle_config.autopickup_radius, 0, 2);
+	// nobody has to be told it exists. This is only the value in force until
+	// the character's registry arrives; pc_reg_received replaces it with their
+	// own stored choice, and a party overrides both (pc_autopickup_radius).
 
 	if (sd->status.party_id)
 		party->member_joined(sd);
@@ -5030,6 +5039,25 @@ static int pc_dropitem(struct map_session_data *sd, int n, int amount)
 #define AUTOPICKUP_INTERVAL 400
 
 /**
+ * The pickup radius actually in force for this character.
+ *
+ * A party overrides the member's own choice. Loot inside a group is shared --
+ * `party_default_share` turns both item rules on at creation -- so one member
+ * opting out does not keep anything for themselves, it only leaves drops lying
+ * on the floor for everybody. Their own setting applies again the moment they
+ * leave the party.
+ */
+int pc_autopickup_radius(const struct map_session_data *sd)
+{
+	nullpo_ret(sd);
+
+	if (sd->status.party_id != 0)
+		return cap_value(battle_config.autopickup_radius, 0, 2);
+
+	return (int)sd->state.autopickup;
+}
+
+/**
  * Takes one floor item for a player with automatic pickup on.
  *
  * Called through map->foreachinarea, so bl is a BL_ITEM inside the player's
@@ -5091,7 +5119,7 @@ static int pc_autopickup_pc(struct map_session_data *sd, va_list ap)
 
 	nullpo_ret(sd);
 
-	radius = (int)sd->state.autopickup;
+	radius = pc_autopickup_radius(sd);
 	if (radius <= 0)
 		return 0;
 	if (sd->state.active == 0 || sd->state.standalone != 0 || sd->state.autotrade != 0)

@@ -251,7 +251,7 @@ struct map_session_data {
 		unsigned int callshop : 1; // flag to indicate that a script used callshop; on a shop
 		short pmap; // Previous map on Map Change
 		unsigned int autoloot;
-		unsigned int autopickup : 2; // Seal Cascade: pickup radius in cells, 0 = off
+		unsigned int autopickup : 2; // Seal Cascade: the CHARACTER's own pickup radius in cells, 0 = off
 		int autolootid[AUTOLOOTITEM_SIZE]; // [Zephyrus]
 		unsigned int autoloottype;
 		unsigned int autolooting : 1; //performance-saver, autolooting state for @alootid
@@ -1305,5 +1305,16 @@ void pc_defaults(void);
 #endif // HERCULES_CORE
 
 HPShared struct pc_interface *pc;
+
+/**
+ * Seal Cascade: the pickup radius actually in force for this character.
+ *
+ * Not simply `sd->state.autopickup`: being in a party overrides the member's
+ * own choice. Loot inside a group is shared, so one member opting out would
+ * only leave drops lying on the floor for everybody. Declared here rather than
+ * added to the pc interface so the HPM hook tables do not have to be
+ * regenerated for it.
+ */
+int pc_autopickup_radius(const struct map_session_data *sd);
 
 #endif /* MAP_PC_H */
