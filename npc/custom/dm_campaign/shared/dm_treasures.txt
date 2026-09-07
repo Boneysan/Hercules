@@ -342,8 +342,20 @@ function	script	DM_TreasureNoteText	{
 function	script	DM_TreasureFound	{
 	.@id = getarg(0);
 	.@slot = callfunc("DM_TreasureSlot", .@id);
-	if (.@slot < 0)
+
+	// The 108 chests outside Act I still say something. Stock, they say nothing
+	// at all -- the reward is claimed from an achievement window this client
+	// does not have -- and a chest that opens in silence reads as a broken NPC
+	// rather than as a small find. No Mark, no note, no hat: those belong to the
+	// campaign's own ground.
+	if (.@slot < 0) {
+		mes "[A Hidden Cache]";
+		mes "Coins gone green, a candle stub, a ribbon stiff with age. Somebody stood out here long enough to bury a box, and then never came back for it.";
+		mes " ";
+		mes "^777777Recorded. The caches around Prontera, Payon, Morroc, Geffen and the Izlude coast carry field notes with them; this one is just a box.^000000";
+		close2();
 		return 0;
+	}
 
 	.@region = .@slot / 100;
 	.@index = .@slot % 100;
