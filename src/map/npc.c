@@ -2938,6 +2938,9 @@ static int npc_selllist(struct map_session_data *sd, struct itemlist *item_list)
 		if (nameid == 0 || sd->inventory_data[idx] == NULL || sd->status.inventory[idx].amount < entry->amount)
 			return 1;
 
+		if (sd->status.inventory[idx].equip != 0)
+			return 1; // Equipped items cannot be sold
+
 		if (nd->master_nd != NULL) // Script-controlled shops decide by themselves, what can be sold and at what price.
 			continue;
 
