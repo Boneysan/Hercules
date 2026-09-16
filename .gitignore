@@ -151,3 +151,4 @@ Thumbs.db
 
 # Test-suite database snapshots (./dev.sh snapshot) — live test data, 1.7M lines.
 log/db-snapshot.sql
+log/*.out

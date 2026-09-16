@@ -34,6 +34,10 @@ KORANGAR_TSV = os.path.join(ROOT, os.pardir, 'korangar', 'korangar', 'src', 'wor
                             'library', 'campaign_quests.tsv')
 KORANGAR_LOC = os.path.join(ROOT, os.pardir, 'korangar', 'korangar', 'src', 'world',
                             'library', 'campaign_quest_locations.tsv')
+KORANGAR_HUNT_OBJ = os.path.join(ROOT, os.pardir, 'korangar', 'korangar', 'src', 'world',
+                                 'library', 'hunt_objectives.tsv')
+KORANGAR_HUNT_GUIDE = os.path.join(ROOT, os.pardir, 'korangar', 'korangar', 'src', 'world',
+                                   'library', 'hunt_guidance.tsv')
 
 # Town hub who hands out / takes in contracts for each hunt arc.
 ARC_HUBS = {
@@ -334,6 +338,107 @@ def render_locations(master):
     return '\n'.join(rows) + '\n'
 
 
+def readable_area(zone):
+    mapping = {
+        'prt_sewb1-3': 'Prontera Culverts',
+        'prt_fild07': 'Prontera West Field',
+        'pay_fild02/06': 'Payon Forest',
+        'pay_dun00': 'Payon Caves',
+        'moc_fild01/02': 'Sograt Desert',
+        'anthell01': 'Ant Hell',
+        'in_sphinx1/2': 'Sphinx Dungeon',
+        'gef_dun00': 'Geffen Dungeon',
+        'gef_fild03/10': 'Orc Village',
+        'mjolnir_11': 'Mt. Mjolnir',
+        'iz_dun03': 'Byalan Island Dungeon',
+        'treasure01/02': 'Sunken Ship',
+        'yuno_fild03/04': 'Yuno Field',
+        'juperos_01/jupe_core': 'Juperos Ruins',
+        'yuno_fild03': 'El Mes Plateau',
+        'ein_dun01': 'Einbroch Mine Dungeon',
+        'ein_fild06/07': 'Einbroch Field',
+        'ein_dun01/02': 'Einbroch Mine Dungeon',
+        'gl_knt01/02': 'Glast Heim Knights',
+        'gl_chyard/gl_church': 'Glast Heim Abbey',
+        'ice_dun02/03': 'Ice Dungeon',
+        'ice_dun02': 'Ice Dungeon',
+        'lhz_dun01/02': 'Somatology Laboratory',
+        'kh_dun01/02': 'Kiel Dungeon',
+        'abyss_01/02': 'Abyss Lake',
+        'hu_fild05': 'Abyss Lake Entrance',
+        'spl_fild02': 'Splendide Field',
+        'man_fild01': 'Manuk Field',
+        'nameless_n': 'Nameless Island',
+        'abbey01/02': 'Cursed Abbey',
+        'thor_v01': 'Thor Volcano',
+        'thor_v02': 'Thor Volcano',
+        'c_tower3/4': 'Clock Tower',
+        'alde_dun02/03': 'Clock Tower Basement',
+        'prt_maze01/02': 'Labyrinth Forest',
+        'prt_prison': 'Underground Prison',
+        'sp_cor': 'Special Security Area Cor',
+        'ba_2wash': 'Bathory Underground',
+        'ba_pw02': 'Power Plant 02',
+        'ba_in01': 'Varmundt Biosphere',
+    }
+    if zone in mapping:
+        return mapping[zone]
+    return zone.replace('_', ' ').title()
+
+
+def render_hunt_objectives(master, mobs):
+    """quest_id \t name \t objective_type \t sources \t item_counts \t maps \t party_share \t turn_in"""
+    rows = ['# schema=1']
+    for quest in master['quests']:
+        qid = quest['id']
+        name = quest['name']
+        obj_type = 'Collect'
+        src_parts = []
+        item_parts = []
+        for pick in quest['items']:
+            mob_id = pick['mob']
+            mob = mobs.get(mob_id, {})
+            mname = pick.get('mob_name') or mob.get('name', 'Monster')
+            if mname.lower() == 'vocal' or mob_id == 1088:
+                rank = 'vocal'
+            elif mob.get('exp', 0) > 10000:
+                rank = 'boss'
+            else:
+                rank = 'normal'
+            src_parts.append(f'{mob_id}:{rank}:{mname}')
+            item_parts.append(f"{pick['item_id']}:{pick['count']}")
+        sources_str = ','.join(src_parts)
+        items_str = ','.join(item_parts)
+        maps_str = quest.get('zone', '').replace('/', ',')
+        party_share = 'inventory'
+        npc, _mmap, _x, _y = ARC_HUBS.get(quest.get('arc', 0), ('Quartermaster Wynne', '', 0, 0))
+        rows.append(f'{qid}\t{name}\t{obj_type}\t{sources_str}\t{items_str}\t{maps_str}\t{party_share}\t{npc}')
+    return '\n'.join(rows) + '\n'
+
+
+def render_hunt_guidance(master):
+    """quest_id \t npc \t area \t steps"""
+    rows = ['# schema=1']
+    for quest in master['quests']:
+        qid = quest['id']
+        npc, _mmap, _x, _y = ARC_HUBS.get(quest.get('arc', 0), ('Quartermaster Wynne', '', 0, 0))
+        area = readable_area(quest.get('zone', ''))
+        item_names = [p['item_name'] for p in quest['items']]
+        if len(item_names) == 1:
+            item_list_str = item_names[0]
+        elif len(item_names) == 2:
+            item_list_str = f"{item_names[0]} and {item_names[1]}"
+        else:
+            item_list_str = ", ".join(item_names[:-1]) + f", and {item_names[-1]}"
+        step1 = f"Bring {item_list_str}"
+        step2 = f"Turn in to {npc}"
+        steps = f"{step1}|{step2}"
+        rows.append(f'{qid}\t{npc}\t{area}\t{steps}')
+    # Include story guidance fixture
+    rows.append('20050\tFountain\tProntera\tSpeak to the fountain keeper')
+    return '\n'.join(rows) + '\n'
+
+
 def report(master):
     print('%-6s %-34s %6s %6s  %s' % ('id', 'contract', 'budget', 'kills', 'items'))
     for quest in master['quests']:
@@ -358,7 +463,10 @@ def main():
     args = ap.parse_args()
 
     master = json.load(open(MASTER, encoding='utf-8'))
-    problems = derive(master, load_mob_db(), load_item_db(), load_spawns())
+    mobs = load_mob_db()
+    items = load_item_db()
+    spawns = load_spawns()
+    problems = derive(master, mobs, items, spawns)
     if problems:
         print('FAIL - %d problem(s) in db/dm_hunt_db.json:' % len(problems), file=sys.stderr)
         for p in problems:
@@ -374,6 +482,8 @@ def main():
         (SCRIPT_TABLE, render_script_table(master)),
         (KORANGAR_TSV, render_tsv(master)),
         (KORANGAR_LOC, render_locations(master)),
+        (KORANGAR_HUNT_OBJ, render_hunt_objectives(master, mobs)),
+        (KORANGAR_HUNT_GUIDE, render_hunt_guidance(master)),
     ]
 
     if args.check:

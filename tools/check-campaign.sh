@@ -32,6 +32,20 @@ if ! ./tools/gen-hunts.py --check; then
     exit 1
 fi
 
+echo "Checking hidden-chest manifest parity ..."
+if ! ./tools/gen-chests.py --check; then
+    echo
+    echo "FAIL - hidden chest manifest is stale or invalid."
+    exit 1
+fi
+
+echo "Checking equipment-eligibility parity ..."
+if ! ./tools/gen-equipment-eligibility.py --check; then
+    echo
+    echo "FAIL - equipment eligibility manifest is stale or invalid."
+    exit 1
+fi
+
 echo "Checking Act I static rules ..."
 if ! python3 ./tools/check-act1.py; then
     echo

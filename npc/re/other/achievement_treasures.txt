@@ -38,6 +38,10 @@
 	if (!achievement_iscompleted(.@id)) {
 		achievement_progress(.@id, 1, 1, true);
 		callfunc("DM_TreasureFound", .@id);
+	} else {
+		mes "[Empty Chest]";
+		mes "The latch is open and the contents have already been taken.";
+		close2();
 	}
 	end;
 OnInit:
@@ -48,8 +52,7 @@ OnInit:
 -	script	achievement_wp	FAKE_NPC,{
 OnTouch:
 	sscanf(strnpcinfo(NPC_NAME_HIDDEN), "wp%d", .@id);
-	if (!achievement_iscompleted(.@id))
-		cloakoffnpc(sprintf("#tr%d", .@id), playerattached());
+	cloakoffnpc(sprintf("#tr%d", .@id), playerattached());
 	end;
 }
 
