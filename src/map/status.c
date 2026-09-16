@@ -239,6 +239,16 @@ static int status_charge(struct block_list *bl, int64 hp, int64 sp)
 //If flag&2, fail if target does not has enough to subtract.
 //If flag&4, if killed, mob must not give exp/loot.
 //flag will be set to &8 when damaging sp of a dead character
+static void status_mark_combat(struct block_list *bl)
+{
+	struct map_session_data *sd = BL_CAST(BL_PC, bl);
+
+	if (sd == NULL)
+		return;
+	sd->last_combat_tick = timer->gettick();
+	sd->respawn_fill_until = 0;
+}
+
 static int status_damage(struct block_list *src, struct block_list *target, int64 in_hp, int64 in_sp, int walkdelay, int flag)
 {
 	struct status_data *st;
@@ -269,6 +279,12 @@ static int status_damage(struct block_list *src, struct block_list *target, int6
 	st = status->get_status_data(target);
 	if( st == &status->dummy )
 		return 0;
+
+	if (hp > 0) {
+		status_mark_combat(target);
+		if (src != NULL)
+			status_mark_combat(src);
+	}
 
 	if ((unsigned int)hp >= st->hp) {
 		if (flag&2) return 0;
@@ -1478,6 +1494,7 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 	pc->calc_skilltree(sd); // SkillTree calculation
 
 	sd->max_weight = status->dbs->max_weight_base[pc->class2idx(sd->status.class)]+sd->status.str*300;
+	sd->max_weight *= 5; // Seal Cascade: playtest carry capacity ×5.
 
 	if(opt&SCO_FIRST) {
 		//Load Hp/SP from char-received data.
@@ -13962,22 +13979,55 @@ static int status_natural_heal(struct block_list *bl, va_list args)
 	ud = unit->bl2ud(bl);
 
 	if (flag&(RGN_HP|RGN_SHP|RGN_SSP) && ud && ud->walktimer != INVALID_TIMER) {
-		flag&=~(RGN_SHP|RGN_SSP);
-		if(!regen->state.walk)
-			flag&=~RGN_HP;
+		// Players keep standing regen while walking (playtest: same as stand).
+		if (sd == NULL) {
+			flag&=~(RGN_SHP|RGN_SSP);
+			if(!regen->state.walk)
+				flag&=~RGN_HP;
+		}
 	}
 
 	if (!flag)
 		return 0;
 
+	if (sd != NULL && sd->respawn_fill_until != 0) {
+		int64 now = timer->gettick();
+
+		if (now >= sd->respawn_fill_until) {
+			status->set_hp(bl, st->max_hp, STATUS_HEAL_FORCED);
+			status->set_sp(bl, st->max_sp, STATUS_HEAL_FORCED);
+			sd->respawn_fill_until = 0;
+		} else {
+			status->heal(bl, (int)(st->max_hp / 20), (int)(st->max_sp / 20), STATUS_HEAL_FORCED);
+		}
+		return 0;
+	}
+
+	if (sd != NULL) {
+		if (vd == NULL)
+			vd = status->get_viewdata(bl);
+		if (vd != NULL && vd->dead_sit == 2) {
+			sd->sit_regen_tick += (int)status->natural_heal_diff_tick;
+			if (sd->sit_regen_tick >= 10000) {
+				sd->sit_regen_tick -= 10000;
+				status->heal(bl, (int)(st->max_hp / 4), (int)(st->max_sp / 4), STATUS_HEAL_FORCED | STATUS_HEAL_SHOWEFFECT);
+				clif->updatestatus(sd, SP_HP);
+				clif->updatestatus(sd, SP_SP);
+			}
+			return 0;
+		}
+	}
+
 	int hp_bonus = regen->rate.hp,
 		sp_bonus = regen->rate.sp;
 	if ((flag & (RGN_HP | RGN_SP)) != 0) {
-		if(vd == NULL)
+		if (vd == NULL)
 			vd = status->get_viewdata(bl);
 		if (vd != NULL && vd->dead_sit == 2) {
-			// In Aegis sit bonus is calculated beofre any other bonuses
-			// Which is also an cumulative additions [Hemagx]
+			hp_bonus *= 2;
+			sp_bonus *= 2;
+		} else if (sd != NULL) {
+			// Standing/walking: official sitting cadence (2× standing frequency).
 			hp_bonus *= 2;
 			sp_bonus *= 2;
 		}

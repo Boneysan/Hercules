@@ -9003,6 +9003,22 @@ ACMD(resetskill)
 	return true;
 }
 
+ACMD(refundskill)
+{
+	int skill_id = atoi(message);
+
+	if (skill_id <= 0) {
+		clif->message(fd, "Usage: @refundskill <skill id>");
+		return false;
+	}
+	if (!pc->skilldown(sd, (uint16)skill_id)) {
+		clif->message(fd, "Could not refund that skill.");
+		return false;
+	}
+	clif->message(fd, "Skill point refunded.");
+	return true;
+}
+
 /*==========================================
  * #storagelist: Displays the items list of a player's storage.
  * #cartlist: Displays contents of target's cart.
@@ -11032,6 +11048,7 @@ static void atcommand_basecommands(void)
 		ACMD_DEF(agitstart2),
 		ACMD_DEF(agitend2),
 		ACMD_DEF2("skreset", resetskill),
+		ACMD_DEF(refundskill),
 		ACMD_DEF2("streset", resetstat),
 		ACMD_DEF2("storagelist", itemlist),
 		ACMD_DEF2("cartlist", itemlist),

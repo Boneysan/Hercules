@@ -320,6 +320,9 @@ struct map_session_data {
 	int npc_timer_id; //For player attached npc timers. [Skotlex]
 	int chat_id;
 	int64 idletime;
+	int64 last_combat_tick;
+	int64 respawn_fill_until;
+	int sit_regen_tick;
 	struct {
 		int npc_id;
 		int64 timeout;
@@ -1085,6 +1088,7 @@ END_ZEROED_BLOCK; /* End */
 	bool (*statusup) (struct map_session_data *sd, int type, int increase);
 	int (*statusup2) (struct map_session_data *sd,int type,int val);
 	int (*skillup) (struct map_session_data *sd,uint16 skill_id);
+	int (*skilldown) (struct map_session_data *sd,uint16 skill_id);
 	int (*allskillup) (struct map_session_data *sd);
 	int (*resetlvl) (struct map_session_data *sd,int type);
 	int (*resetstate) (struct map_session_data *sd);

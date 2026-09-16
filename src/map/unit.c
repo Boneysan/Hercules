@@ -2160,7 +2160,7 @@ static int unit_attack(struct block_list *src, int target_id, int continuous)
 			}
 			return 0;
 		}
-		if( pc_is90overweight(sd) || pc_isridingwug(sd) ) { // overweight or mounted on warg - stop attacking
+		if( pc_isridingwug(sd) ) { // mounted on warg - stop attacking
 			unit->stop_attack(src);
 			return 0;
 		}

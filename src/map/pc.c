@@ -579,13 +579,20 @@ static int pc_setrestartvalue(struct map_session_data *sd, int type)
 	st = &sd->battle_status;
 
 	if (type&1) {
-		//Normal resurrection
-		status->heal(&sd->bl, bst->hp, 0, STATUS_HEAL_FORCED | STATUS_HEAL_ALLOWREVIVE);
-		if( st->sp < bst->sp )
-			status->set_sp(&sd->bl, bst->sp, STATUS_HEAL_FORCED);
+		unsigned int hp = bst->hp / 2;
+		unsigned int sp = bst->sp / 2;
+
+		if (hp < 1)
+			hp = 1;
+		status->set_hp(&sd->bl, hp, STATUS_HEAL_FORCED | STATUS_HEAL_ALLOWREVIVE);
+		status->set_sp(&sd->bl, sp, STATUS_HEAL_FORCED);
+		sd->respawn_fill_until = timer->gettick() + 10000;
+		sd->last_combat_tick = 0;
 	} else { //Just for saving on the char-server (with values as if respawned)
-		sd->status.hp = bst->hp;
-		sd->status.sp = (st->sp < bst->sp) ? bst->sp : st->sp;
+		sd->status.hp = bst->hp / 2;
+		if (sd->status.hp < 1)
+			sd->status.hp = 1;
+		sd->status.sp = bst->sp / 2;
 	}
 	return 0;
 }
@@ -7507,6 +7514,48 @@ static int pc_skillup(struct map_session_data *sd, uint16 skill_id)
 	return 0;
 }
 
+static int pc_skilldown(struct map_session_data *sd, uint16 skill_id)
+{
+	int index;
+	int classidx;
+	int i;
+
+	nullpo_ret(sd);
+	if (!(index = skill->get_index(skill_id)))
+		return 0;
+	if (sd->status.skill[index].id == 0 || sd->status.skill[index].lv < 1)
+		return 0;
+	if (sd->status.skill[index].flag != SKILL_FLAG_PERMANENT)
+		return 0;
+
+	classidx = pc->class2idx(sd->status.class);
+	for (i = 0; i < MAX_SKILL_TREE && pc->skill_tree[classidx][i].id > 0; i++) {
+		int other = pc->skill_tree[classidx][i].id;
+		int other_idx = pc->skill_tree[classidx][i].idx;
+		int j;
+
+		if (other == skill_id || sd->status.skill[other_idx].lv < 1)
+			continue;
+		for (j = 0; j < VECTOR_LENGTH(pc->skill_tree[classidx][i].need); j++) {
+			struct skill_tree_requirement *req = &VECTOR_INDEX(pc->skill_tree[classidx][i].need, j);
+			if (req->idx == index && sd->status.skill[index].lv <= req->lv) {
+				clif->messagecolor_self(sd->fd, COLOR_RED, "Refund the skills that require this one first.");
+				return 0;
+			}
+		}
+	}
+
+	sd->status.skill[index].lv--;
+	sd->status.skill_point++;
+	if (sd->status.skill[index].lv == 0)
+		sd->status.skill[index].id = 0;
+	status_calc_pc(sd, SCO_NONE);
+	clif->skillup(sd, skill_id, sd->status.skill[index].lv, 0);
+	clif->updatestatus(sd, SP_SKILLPOINT);
+	clif->skillinfoblock(sd);
+	return 1;
+}
+
 /*==========================================
  * /allskill
  *------------------------------------------*/
@@ -13247,6 +13296,7 @@ void pc_defaults(void)
 	pc->statusup = pc_statusup;
 	pc->statusup2 = pc_statusup2;
 	pc->skillup = pc_skillup;
+	pc->skilldown = pc_skilldown;
 	pc->allskillup = pc_allskillup;
 	pc->resetlvl = pc_resetlvl;
 	pc->resetstate = pc_resetstate;
