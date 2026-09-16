@@ -27,6 +27,7 @@
 #include "map/chrif.h"
 #include "map/clan.h"
 #include "map/clif.h"
+#include "map/combat_state.h"
 #include "map/elemental.h"
 #include "map/guild.h"
 #include "map/homunculus.h"
@@ -239,32 +240,7 @@ static int status_charge(struct block_list *bl, int64 hp, int64 sp)
 //If flag&2, fail if target does not has enough to subtract.
 //If flag&4, if killed, mob must not give exp/loot.
 //flag will be set to &8 when damaging sp of a dead character
-static void status_mark_combat(struct block_list *bl)
-{
-	struct map_session_data *sd = BL_CAST(BL_PC, bl);
 
-	if (sd == NULL)
-		return;
-	sd->last_combat_tick = timer->gettick();
-}
-
-static bool status_is_in_combat(struct block_list *bl)
-{
-	struct map_session_data *sd;
-
-	if (bl == NULL)
-		return false;
-	sd = BL_CAST(BL_PC, bl);
-	if (sd == NULL)
-		return false;
-	if (sd->last_combat_tick == 0)
-		return false;
-	if (DIFF_TICK(timer->gettick(), sd->last_combat_tick) >= battle_config.campaign_combat_timeout_ms) {
-		sd->last_combat_tick = 0;
-		return false;
-	}
-	return true;
-}
 
 static enum natural_heal_block_reason status_check_natural_heal_block(struct block_list *bl)
 {
@@ -334,14 +310,7 @@ static int status_damage(struct block_list *src, struct block_list *target, int6
 	if( st == &status->dummy )
 		return 0;
 
-	if (hp > 0) {
-		struct map_session_data *target_sd = BL_CAST(BL_PC, target);
-		if (target_sd != NULL)
-			target_sd->respawn_fill_until = 0;
-		status_mark_combat(target);
-		if (src != NULL)
-			status_mark_combat(src);
-	}
+	status_apply_combat_from_damage(src, target, hp);
 
 	if ((unsigned int)hp >= st->hp) {
 		if (flag&2) return 0;
@@ -10766,7 +10735,6 @@ static void status_change_start_stop_action(struct block_list *bl, enum sc_type 
 		case SC_CLOAKING:
 		case SC_CLOAKINGEXCEED:
 		case SC_CHASEWALK:
-		case SC_WEIGHTOVER90:
 		case SC_CAMOUFLAGE:
 		case SC_SIREN:
 		case SC_ALL_RIDING:
@@ -13926,6 +13894,20 @@ static int status_change_spread(struct block_list *src, struct block_list *bl, i
 	return flag;
 }
 
+static void status_notify_recovery_ui(struct map_session_data *sd, int block_reason)
+{
+	uint8 mode, block;
+
+	if (sd == NULL || clif == NULL || clif->recovery_state == NULL)
+		return;
+	status_recovery_ui_state(sd, block_reason, &mode, &block);
+	if (mode == sd->last_recovery_mode && block == sd->last_recovery_block)
+		return;
+	sd->last_recovery_mode = mode;
+	sd->last_recovery_block = block;
+	clif->recovery_state(sd, mode, block);
+}
+
 //Natural regen related stuff.
 static int status_natural_heal(struct block_list *bl, va_list args)
 {
@@ -13949,42 +13931,44 @@ static int status_natural_heal(struct block_list *bl, va_list args)
 
 	enum natural_heal_block_reason block_reason = status_check_natural_heal_block(bl);
 	if (block_reason != NATURAL_HEAL_OK) {
-		if (sd != NULL)
+		if (sd != NULL) {
 			sd->sit_regen_tick = 0;
+			status_notify_recovery_ui(sd, (int)block_reason);
+		}
 		return 0;
 	}
 
 	if (sd != NULL && sd->respawn_fill_until != 0) {
-		int64 now = timer->gettick();
+		int add_hp = 0, add_sp = 0;
+		bool complete = false;
 
-		if (now >= sd->respawn_fill_until) {
+		status_apply_respawn_fill(sd, (int)st->max_hp, (int)st->max_sp, timer->gettick(),
+			(int)status->natural_heal_diff_tick, &add_hp, &add_sp, &complete);
+		if (complete) {
 			status->set_hp(bl, st->max_hp, STATUS_HEAL_FORCED);
 			status->set_sp(bl, st->max_sp, STATUS_HEAL_FORCED);
-			sd->respawn_fill_until = 0;
 		} else {
-			int add_hp = (int)((int64)st->max_hp * (100 - battle_config.campaign_respawn_percent) * status->natural_heal_diff_tick / (100 * (int64)battle_config.campaign_respawn_fill_ms));
-			int add_sp = (int)((int64)st->max_sp * (100 - battle_config.campaign_respawn_percent) * status->natural_heal_diff_tick / (100 * (int64)battle_config.campaign_respawn_fill_ms));
-			if (add_hp < 1) add_hp = 1;
-			if (add_sp < 1) add_sp = 1;
 			status->heal(bl, add_hp, add_sp, STATUS_HEAL_FORCED);
 		}
+		status_notify_recovery_ui(sd, (int)block_reason);
 		return 0;
 	}
 
 	if (sd != NULL) {
 		vd = status->get_viewdata(bl);
 		if (vd != NULL && vd->dead_sit == 2) {
-			sd->sit_regen_tick += (int)status->natural_heal_diff_tick;
-			if (sd->sit_regen_tick >= battle_config.campaign_sit_recovery_interval_ms) {
-				sd->sit_regen_tick -= battle_config.campaign_sit_recovery_interval_ms;
-				status->heal(bl, (int)(st->max_hp * battle_config.campaign_sit_recovery_percent / 100),
-					(int)(st->max_sp * battle_config.campaign_sit_recovery_percent / 100),
-					STATUS_HEAL_FORCED | STATUS_HEAL_SHOWEFFECT);
+			int add_hp = 0, add_sp = 0;
+
+			if (status_apply_sitting_recovery(sd, (int)st->max_hp, (int)st->max_sp,
+					(int)status->natural_heal_diff_tick, &add_hp, &add_sp)) {
+				status->heal(bl, add_hp, add_sp, STATUS_HEAL_FORCED | STATUS_HEAL_SHOWEFFECT);
 				clif->updatestatus(sd, SP_HP);
 				clif->updatestatus(sd, SP_SP);
 			}
+			status_notify_recovery_ui(sd, (int)block_reason);
 			return 0;
 		}
+		status_notify_recovery_ui(sd, (int)block_reason);
 	}
 
 	flag = regen->flag;

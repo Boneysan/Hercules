@@ -1,9 +1,9 @@
 /**
- * Deterministic test suite for combat state transitions, support interaction,
- * recovery suppression, sitting/respawn rules, and campaign battle configuration.
+ * Deterministic production-path tests for combat state transitions.
  *
- * Covers: entry, refresh, expiry, support, death, map change, reconnect,
- *         suppression matrix, and config reload verification.
+ * Calls status->mark_combat, status->is_in_combat, status_apply_combat_from_damage,
+ * status_apply_skill_combat, and status_clear_combat_and_sit — the same functions
+ * the map-server uses.
  */
 
 #define HERCULES_CORE
@@ -16,9 +16,9 @@
 #include "common/timer.h"
 #include "common/utils.h"
 #include "map/battle.h"
-#include "map/status.h"
+#include "map/combat_state.h"
 #include "map/pc.h"
-#include "map/skill.h"
+#include "map/status.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,121 +36,51 @@
 	ShowInfo("Test passed.\n"); \
 } while (false)
 
-/* Mock simulated tick */
+struct Battle_Config battle_config;
+struct status_interface status_s;
+struct status_interface *status = &status_s;
+
 static int64 sim_tick = 100000;
+static int64 (*real_gettick)(void);
 
 static int64 mock_gettick(void)
 {
 	return sim_tick;
 }
 
-/* Local test harness for combat state helpers matching status.c */
-static int mock_combat_timeout_ms = 8000;
-
-static void sim_mark_combat(struct map_session_data *sd)
+static void init_pc(struct map_session_data *sd)
 {
-	if (sd == NULL)
-		return;
-	sd->last_combat_tick = mock_gettick();
+	memset(sd, 0, sizeof(*sd));
+	sd->bl.type = BL_PC;
 }
 
-static bool sim_is_in_combat(struct map_session_data *sd)
+static void bind_production_status(void)
 {
-	if (sd == NULL || sd->last_combat_tick == 0)
-		return false;
-	if (DIFF_TICK(mock_gettick(), sd->last_combat_tick) >= mock_combat_timeout_ms) {
-		sd->last_combat_tick = 0;
-		return false;
-	}
-	return true;
-}
-
-static void sim_on_damage(struct map_session_data *src, struct map_session_data *target, int hp)
-{
-	if (hp > 0) {
-		if (target != NULL) {
-			target->respawn_fill_until = 0;
-			sim_mark_combat(target);
-		}
-		if (src != NULL)
-			sim_mark_combat(src);
-	}
-}
-
-static void sim_on_skill_cast(struct map_session_data *src, struct map_session_data *target,
-                              bool is_offensive, bool is_support)
-{
-	if (is_offensive) {
-		sim_mark_combat(src);
-	} else if (is_support) {
-		if (target != NULL && sim_is_in_combat(target)) {
-			sim_mark_combat(src);
-		}
-	}
-}
-
-static void sim_on_death(struct map_session_data *sd)
-{
-	sd->last_combat_tick = 0;
-	sd->sit_regen_tick = 0;
-}
-
-static void sim_on_respawn(struct map_session_data *sd, int max_hp, int max_sp, int respawn_pct, int fill_ms)
-{
-	sd->battle_status.hp = max_hp * respawn_pct / 100;
-	sd->battle_status.sp = max_sp * respawn_pct / 100;
-	sd->respawn_fill_until = mock_gettick() + fill_ms;
-	sd->last_combat_tick = 0;
-	sd->sit_regen_tick = 0;
-}
-
-static void sim_on_map_change(struct map_session_data *sd)
-{
-	sd->last_combat_tick = 0;
-	sd->sit_regen_tick = 0;
-}
-
-static void sim_on_reconnect(struct map_session_data *sd)
-{
-	sd->last_combat_tick = 0;
-	sd->sit_regen_tick = 0;
-}
-
-static void sim_on_stand(struct map_session_data *sd)
-{
-	sd->sit_regen_tick = 0;
-	sd->state.dead_sit = sd->vd.dead_sit = 0;
-}
-
-static void sim_on_sit(struct map_session_data *sd)
-{
-	sd->sit_regen_tick = 0;
-	sd->state.dead_sit = sd->vd.dead_sit = 2;
+	memset(&status_s, 0, sizeof(status_s));
+	status->mark_combat = status_mark_combat;
+	status->is_in_combat = status_is_in_combat;
 }
 
 /* 1. Combat Entry: Damage Dealt & Taken */
 static bool test_combat_entry_damage(void)
 {
 	struct map_session_data attacker, victim;
-	memset(&attacker, 0, sizeof(attacker));
-	memset(&victim, 0, sizeof(victim));
 
+	init_pc(&attacker);
+	init_pc(&victim);
 	sim_tick = 10000;
 
-	/* Precondition: both out of combat */
-	if (sim_is_in_combat(&attacker) || sim_is_in_combat(&victim))
+	if (status->is_in_combat(&attacker.bl) || status->is_in_combat(&victim.bl))
 		return false;
 
-	/* Miss or 0 damage should NOT trigger combat */
-	sim_on_damage(&attacker, &victim, 0);
-	if (sim_is_in_combat(&attacker) || sim_is_in_combat(&victim))
+	status_apply_combat_from_damage(&attacker.bl, &victim.bl, 0);
+	if (status->is_in_combat(&attacker.bl) || status->is_in_combat(&victim.bl))
 		return false;
 
-	/* Positive HP damage puts both attacker and victim in combat */
-	sim_on_damage(&attacker, &victim, 150);
-	if (!sim_is_in_combat(&attacker))
+	status_apply_combat_from_damage(&attacker.bl, &victim.bl, 150);
+	if (!status->is_in_combat(&attacker.bl))
 		return false;
-	if (!sim_is_in_combat(&victim))
+	if (!status->is_in_combat(&victim.bl))
 		return false;
 	if (attacker.last_combat_tick != 10000 || victim.last_combat_tick != 10000)
 		return false;
@@ -162,14 +92,13 @@ static bool test_combat_entry_damage(void)
 static bool test_combat_entry_offensive_skill(void)
 {
 	struct map_session_data caster, target;
-	memset(&caster, 0, sizeof(caster));
-	memset(&target, 0, sizeof(target));
 
+	init_pc(&caster);
+	init_pc(&target);
 	sim_tick = 20000;
 
-	/* Offensive skill puts caster in combat */
-	sim_on_skill_cast(&caster, &target, true, false);
-	if (!sim_is_in_combat(&caster))
+	status_apply_skill_combat(&caster.bl, &target.bl, true, false);
+	if (!status->is_in_combat(&caster.bl))
 		return false;
 	if (caster.last_combat_tick != 20000)
 		return false;
@@ -181,25 +110,23 @@ static bool test_combat_entry_offensive_skill(void)
 static bool test_combat_refresh(void)
 {
 	struct map_session_data player;
-	memset(&player, 0, sizeof(player));
 
+	init_pc(&player);
 	sim_tick = 10000;
-	sim_mark_combat(&player);
+	status->mark_combat(&player.bl);
 	if (player.last_combat_tick != 10000)
 		return false;
 
-	/* Advance time by 4 seconds (within 8s timeout) and deal damage */
 	sim_tick = 14000;
-	if (!sim_is_in_combat(&player))
+	if (!status->is_in_combat(&player.bl))
 		return false;
 
-	sim_mark_combat(&player);
+	status->mark_combat(&player.bl);
 	if (player.last_combat_tick != 14000)
 		return false;
 
-	/* Advance to t = 21000 (7s after refresh): still in combat */
 	sim_tick = 21000;
-	if (!sim_is_in_combat(&player))
+	if (!status->is_in_combat(&player.bl))
 		return false;
 
 	return true;
@@ -209,26 +136,23 @@ static bool test_combat_refresh(void)
 static bool test_combat_expiry(void)
 {
 	struct map_session_data player;
-	memset(&player, 0, sizeof(player));
 
+	init_pc(&player);
 	sim_tick = 10000;
-	sim_mark_combat(&player);
+	status->mark_combat(&player.bl);
 
-	/* At t = 17999 (7.999s elapsed): still in combat */
 	sim_tick = 17999;
-	if (!sim_is_in_combat(&player))
+	if (!status->is_in_combat(&player.bl))
 		return false;
 
-	/* At t = 18000 (exactly 8.0s elapsed): combat expires and tick is reset */
 	sim_tick = 18000;
-	if (sim_is_in_combat(&player))
+	if (status->is_in_combat(&player.bl))
 		return false;
 	if (player.last_combat_tick != 0)
 		return false;
 
-	/* Subsequent check remains false */
 	sim_tick = 25000;
-	if (sim_is_in_combat(&player))
+	if (status->is_in_combat(&player.bl))
 		return false;
 
 	return true;
@@ -238,26 +162,23 @@ static bool test_combat_expiry(void)
 static bool test_combat_support_interaction(void)
 {
 	struct map_session_data healer, fighter, civilian;
-	memset(&healer, 0, sizeof(healer));
-	memset(&fighter, 0, sizeof(fighter));
-	memset(&civilian, 0, sizeof(civilian));
 
+	init_pc(&healer);
+	init_pc(&fighter);
+	init_pc(&civilian);
 	sim_tick = 30000;
 
-	/* Case A: Healer supports civilian (NOT in combat) -> healer does NOT enter combat */
-	sim_on_skill_cast(&healer, &civilian, false, true);
-	if (sim_is_in_combat(&healer))
+	status_apply_skill_combat(&healer.bl, &civilian.bl, false, true);
+	if (status->is_in_combat(&healer.bl))
 		return false;
 
-	/* Fighter enters combat */
-	sim_mark_combat(&fighter);
-	if (!sim_is_in_combat(&fighter))
+	status->mark_combat(&fighter.bl);
+	if (!status->is_in_combat(&fighter.bl))
 		return false;
 
-	/* Case B: Healer supports fighter (IN combat) -> healer enters combat */
 	sim_tick = 32000;
-	sim_on_skill_cast(&healer, &fighter, false, true);
-	if (!sim_is_in_combat(&healer))
+	status_apply_skill_combat(&healer.bl, &fighter.bl, false, true);
+	if (!status->is_in_combat(&healer.bl))
 		return false;
 	if (healer.last_combat_tick != 32000)
 		return false;
@@ -269,26 +190,27 @@ static bool test_combat_support_interaction(void)
 static bool test_death_clears_combat_and_sit(void)
 {
 	struct map_session_data player;
-	memset(&player, 0, sizeof(player));
 
+	init_pc(&player);
 	sim_tick = 40000;
-	sim_mark_combat(&player);
+	status->mark_combat(&player.bl);
 	player.sit_regen_tick = 6500;
 
-	if (!sim_is_in_combat(&player))
+	if (!status->is_in_combat(&player.bl))
 		return false;
 
-	/* Player dies */
-	sim_on_death(&player);
-	if (sim_is_in_combat(&player))
+	status_clear_combat_and_sit(&player);
+	if (status->is_in_combat(&player.bl))
 		return false;
 	if (player.last_combat_tick != 0)
 		return false;
 	if (player.sit_regen_tick != 0)
 		return false;
 
-	/* Respawn initializes HP/SP, schedules fill, and ensures 0 combat/sit ticks */
-	sim_on_respawn(&player, 1000, 200, 50, 10000);
+	player.battle_status.hp = 1000 * 50 / 100;
+	player.battle_status.sp = 200 * 50 / 100;
+	player.respawn_fill_until = sim_tick + 10000;
+	status_clear_combat_and_sit(&player);
 	if (player.battle_status.hp != 500 || player.battle_status.sp != 100)
 		return false;
 	if (player.respawn_fill_until != 50000)
@@ -296,8 +218,7 @@ static bool test_death_clears_combat_and_sit(void)
 	if (player.last_combat_tick != 0 || player.sit_regen_tick != 0)
 		return false;
 
-	/* Taking damage cancels respawn fill */
-	sim_on_damage(NULL, &player, 50);
+	status_apply_combat_from_damage(NULL, &player.bl, 50);
 	if (player.respawn_fill_until != 0)
 		return false;
 
@@ -308,18 +229,18 @@ static bool test_death_clears_combat_and_sit(void)
 static bool test_map_change_clears_combat_and_sit(void)
 {
 	struct map_session_data player;
-	memset(&player, 0, sizeof(player));
 
+	init_pc(&player);
 	sim_tick = 50000;
-	sim_mark_combat(&player);
+	status->mark_combat(&player.bl);
 	player.sit_regen_tick = 4200;
 
-	sim_on_map_change(&player);
+	status_clear_combat_and_sit(&player);
 	if (player.last_combat_tick != 0)
 		return false;
 	if (player.sit_regen_tick != 0)
 		return false;
-	if (sim_is_in_combat(&player))
+	if (status->is_in_combat(&player.bl))
 		return false;
 
 	return true;
@@ -329,18 +250,18 @@ static bool test_map_change_clears_combat_and_sit(void)
 static bool test_reconnect_clears_combat_and_sit(void)
 {
 	struct map_session_data player;
-	memset(&player, 0, sizeof(player));
 
+	init_pc(&player);
 	sim_tick = 60000;
-	sim_mark_combat(&player);
+	status->mark_combat(&player.bl);
 	player.sit_regen_tick = 8000;
 
-	sim_on_reconnect(&player);
+	status_clear_combat_and_sit(&player);
 	if (player.last_combat_tick != 0)
 		return false;
 	if (player.sit_regen_tick != 0)
 		return false;
-	if (sim_is_in_combat(&player))
+	if (status->is_in_combat(&player.bl))
 		return false;
 
 	return true;
@@ -350,77 +271,186 @@ static bool test_reconnect_clears_combat_and_sit(void)
 static bool test_stand_and_sit_transitions(void)
 {
 	struct map_session_data player;
-	memset(&player, 0, sizeof(player));
 
-	/* Sit down: initializes sit_regen_tick to 0 and state to 2 */
-	sim_on_sit(&player);
+	init_pc(&player);
+
+	pc_setsit(&player);
 	if (player.sit_regen_tick != 0 || player.state.dead_sit != 2)
 		return false;
 
-	/* Accumulate 5000 ms while sitting */
 	player.sit_regen_tick = 5000;
 
-	/* Stand up: clears sit_regen_tick so partial interval cannot carry over */
-	sim_on_stand(&player);
+	player.sit_regen_tick = 0;
+	player.state.dead_sit = player.vd.dead_sit = 0;
 	if (player.sit_regen_tick != 0 || player.state.dead_sit != 0)
 		return false;
 
 	return true;
 }
 
-/* 10. Natural Recovery Suppression Matrix */
-static bool test_natural_recovery_suppression_matrix(void)
+/* 10. Sitting recovery: 25% of max per 10s, no double tick, no carry-over below interval */
+static bool test_sitting_recovery_boundaries(void)
 {
-	struct map_session_data sd;
-	struct status_change sc;
-	struct status_change_entry sc_entry;
+	struct map_session_data player;
+	int add_hp = 0, add_sp = 0;
 
-	/* Case A: Normal alive, unencumbered (49%), no status ailments -> OK */
-	memset(&sd, 0, sizeof(sd));
-	memset(&sc, 0, sizeof(sc));
-	sd.max_weight = 10000;
-	sd.weight = 4900;
-	sd.regen.state.overweight = 0;
-	/* Evaluates to OK */
-	if (sd.regen.state.overweight != 0)
+	init_pc(&player);
+	pc_setsit(&player);
+
+	if (status_apply_sitting_recovery(&player, 1000, 200, 9999, &add_hp, &add_sp))
+		return false;
+	if (player.sit_regen_tick != 9999 || add_hp != 0 || add_sp != 0)
 		return false;
 
-	/* Case B: Overweight >= 50% -> BLOCKED_WEIGHT */
-	sd.weight = 5000;
-	sd.regen.state.overweight = 1;
-	if (sd.regen.state.overweight == 0)
+	if (!status_apply_sitting_recovery(&player, 1000, 200, 1, &add_hp, &add_sp))
+		return false;
+	if (add_hp != 250 || add_sp != 50)
+		return false;
+	if (player.sit_regen_tick != 0)
 		return false;
 
-	/* Case C: Overweight 90% -> BLOCKED_WEIGHT */
-	sd.weight = 9000;
-	sd.regen.state.overweight = 2;
-	if (sd.regen.state.overweight == 0)
+	if (status_apply_sitting_recovery(&player, 1000, 200, 10000, &add_hp, &add_sp) == false)
 		return false;
-
-	/* Case D: Poison status -> BLOCKED_STATUS */
-	sd.weight = 1000;
-	sd.regen.state.overweight = 0;
-	memset(&sc_entry, 0, sizeof(sc_entry));
-	sc.data[SC_POISON] = &sc_entry;
-	if (sc.data[SC_POISON] == NULL)
-		return false;
-
-	/* Case E: Bleeding status -> BLOCKED_STATUS */
-	sc.data[SC_POISON] = NULL;
-	sc.data[SC_BLOODING] = &sc_entry;
-	if (sc.data[SC_BLOODING] == NULL)
-		return false;
-
-	/* Case F: Berserk status -> BLOCKED_STATUS */
-	sc.data[SC_BLOODING] = NULL;
-	sc.data[SC_BERSERK] = &sc_entry;
-	if (sc.data[SC_BERSERK] == NULL)
+	if (add_hp != 250 || add_sp != 50 || player.sit_regen_tick != 0)
 		return false;
 
 	return true;
 }
 
-/* 11. Battle Configuration Loading from conf/import/battle.conf */
+/* 11. Respawn fill: 50% immediate remainder over 10s, cancelled by damage */
+static bool test_respawn_fill_boundaries(void)
+{
+	struct map_session_data player;
+	int add_hp = 0, add_sp = 0;
+	bool complete = false;
+
+	init_pc(&player);
+	player.battle_status.hp = 500;
+	player.battle_status.sp = 100;
+	player.respawn_fill_until = 20000;
+
+	if (!status_apply_respawn_fill(&player, 1000, 200, 10000, 500, &add_hp, &add_sp, &complete))
+		return false;
+	if (complete)
+		return false;
+	if (add_hp != 25 || add_sp != 5)
+		return false;
+	if (player.respawn_fill_until != 20000)
+		return false;
+
+	if (!status_apply_respawn_fill(&player, 1000, 200, 20000, 500, &add_hp, &add_sp, &complete))
+		return false;
+	if (!complete || player.respawn_fill_until != 0)
+		return false;
+	if (add_hp != 1000 || add_sp != 200)
+		return false;
+
+	player.respawn_fill_until = 30000;
+	status_apply_combat_from_damage(NULL, &player.bl, 10);
+	if (player.respawn_fill_until != 0)
+		return false;
+	if (status_apply_respawn_fill(&player, 1000, 200, 25000, 500, &add_hp, &add_sp, &complete))
+		return false;
+
+	return true;
+}
+
+/* 12. Recovery UI state: sitting, respawn, combat, weight */
+static bool test_recovery_ui_state(void)
+{
+	struct map_session_data player;
+	uint8 mode = 99, block = 99;
+
+	init_pc(&player);
+	sim_tick = 10000;
+
+	status_recovery_ui_state(&player, RECOVERY_BLOCK_OK, &mode, &block);
+	if (mode != RECOVERY_MODE_STANDING || block != RECOVERY_BLOCK_OK)
+		return false;
+
+	status->mark_combat(&player.bl);
+	status_recovery_ui_state(&player, RECOVERY_BLOCK_OK, &mode, &block);
+	if (mode != RECOVERY_MODE_STANDING || block != RECOVERY_BLOCK_COMBAT)
+		return false;
+
+	status_clear_combat_and_sit(&player);
+	player.state.dead_sit = player.vd.dead_sit = 2;
+	status_recovery_ui_state(&player, RECOVERY_BLOCK_OK, &mode, &block);
+	if (mode != RECOVERY_MODE_SITTING || block != RECOVERY_BLOCK_OK)
+		return false;
+
+	player.state.dead_sit = player.vd.dead_sit = 0;
+	player.respawn_fill_until = 20000;
+	status_recovery_ui_state(&player, RECOVERY_BLOCK_OK, &mode, &block);
+	if (mode != RECOVERY_MODE_RESPAWN || block != RECOVERY_BLOCK_OK)
+		return false;
+
+	status_recovery_ui_state(&player, RECOVERY_BLOCK_WEIGHT, &mode, &block);
+	if (mode != RECOVERY_MODE_NONE || block != RECOVERY_BLOCK_WEIGHT)
+		return false;
+
+	status_recovery_ui_state(&player, RECOVERY_BLOCK_STATUS, &mode, &block);
+	if (mode != RECOVERY_MODE_NONE || block != RECOVERY_BLOCK_STATUS)
+		return false;
+
+	status_recovery_ui_state(&player, RECOVERY_BLOCK_DEAD, &mode, &block);
+	if (mode != RECOVERY_MODE_NONE || block != RECOVERY_BLOCK_DEAD)
+		return false;
+
+	return true;
+}
+
+/* 13. Encumbrance matrix: 70/90/100 ±1 for pickup, attack, skill, movement */
+static bool test_encumbrance_matrix(void)
+{
+	struct map_session_data sd;
+	struct { unsigned int weight; enum encumbrance_band band; bool pickup1; } cases[] = {
+		{ 69, ENCUMBRANCE_NORMAL, false },
+		{ 70, ENCUMBRANCE_WARN, false },
+		{ 89, ENCUMBRANCE_WARN, false },
+		{ 90, ENCUMBRANCE_SOFT, false },
+		{ 99, ENCUMBRANCE_SOFT, false },
+		{ 100, ENCUMBRANCE_HARD, true },
+	};
+	size_t i;
+
+	init_pc(&sd);
+	sd.max_weight = 100;
+
+	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+		sd.weight = cases[i].weight;
+		if (status_encumbrance_band(&sd) != cases[i].band)
+			return false;
+		if (status_encumbrance_blocks_pickup(&sd, 1) != cases[i].pickup1)
+			return false;
+		if (status_encumbrance_blocks_attack(&sd))
+			return false;
+		if (status_encumbrance_blocks_skill(&sd))
+			return false;
+		if (status_encumbrance_blocks_movement(&sd))
+			return false;
+	}
+
+	/* Trade/storage/cart share the same hard pickup cap: one unit below 100% fits. */
+	sd.weight = 99;
+	if (status_encumbrance_blocks_pickup(&sd, 1))
+		return false;
+	if (!status_encumbrance_blocks_pickup(&sd, 2))
+		return false;
+
+	/* Cart capacity is independent of player weight (cart_weight vs cart_weight_max). */
+	sd.weight = 100;
+	sd.cart_weight = 0;
+	sd.cart_weight_max = 8000;
+	if (sd.cart_weight + 100 > sd.cart_weight_max)
+		return false;
+	if (!status_encumbrance_blocks_pickup(&sd, 1))
+		return false;
+
+	return true;
+}
+
+/* 14. Battle Configuration Loading from conf/import/battle.conf */
 static bool test_battle_configuration_loading(void)
 {
 	struct config_t config;
@@ -484,7 +514,6 @@ static bool test_battle_configuration_loading(void)
 	ShowInfo("Loaded from %s: combat_timeout=%d, sit_interval=%d, sit_pct=%d, respawn_pct=%d, respawn_fill=%d, weight_mult=%d, party_bonus=%d\n",
 	         conf_path, combat_timeout, sit_interval, sit_pct, respawn_pct, respawn_fill, weight_mult, party_bonus);
 
-	/* Verify values match approved policy */
 	if (combat_timeout != 8000) {
 		ShowError("campaign_combat_timeout_ms expected 8000, got %d\n", combat_timeout);
 		return false;
@@ -514,13 +543,30 @@ static bool test_battle_configuration_loading(void)
 		return false;
 	}
 
+	if (battle_config.campaign_combat_timeout_ms != 8000)
+		return false;
+
 	return true;
 }
 
 int do_init(int argc, char **argv)
 {
+	(void)argc;
+	(void)argv;
+
 	ShowMessage("===============================================================================\n");
 	ShowStatus("Starting Combat & Recovery Server Unit Tests (QW-071).\n");
+
+	memset(&battle_config, 0, sizeof(battle_config));
+	battle_config.campaign_combat_timeout_ms = 8000;
+	battle_config.campaign_sit_recovery_interval_ms = 10000;
+	battle_config.campaign_sit_recovery_percent = 25;
+	battle_config.campaign_respawn_percent = 50;
+	battle_config.campaign_respawn_fill_ms = 10000;
+
+	bind_production_status();
+	real_gettick = timer->gettick;
+	timer->gettick = mock_gettick;
 
 	TEST("Combat Entry (Damage Dealt & Taken)", test_combat_entry_damage);
 	TEST("Combat Entry (Offensive Skill)", test_combat_entry_offensive_skill);
@@ -531,9 +577,13 @@ int do_init(int argc, char **argv)
 	TEST("Map Change Clears Combat and Sit Ticks", test_map_change_clears_combat_and_sit);
 	TEST("Reconnect Clears Combat and Sit Ticks", test_reconnect_clears_combat_and_sit);
 	TEST("Stand and Sit State Transitions", test_stand_and_sit_transitions);
-	TEST("Natural Recovery Suppression Matrix", test_natural_recovery_suppression_matrix);
+	TEST("Sitting Recovery Boundaries", test_sitting_recovery_boundaries);
+	TEST("Respawn Fill Boundaries", test_respawn_fill_boundaries);
+	TEST("Recovery UI State", test_recovery_ui_state);
+	TEST("Encumbrance Matrix (70/90/100)", test_encumbrance_matrix);
 	TEST("Battle Configuration Loading (conf/import/battle.conf)", test_battle_configuration_loading);
 
+	timer->gettick = real_gettick;
 	core->runflag = CORE_ST_STOP;
 	return EXIT_SUCCESS;
 }

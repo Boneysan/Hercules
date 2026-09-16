@@ -31,6 +31,7 @@
 #include "map/chrif.h"
 #include "map/clan.h"
 #include "map/clif.h"
+#include "map/combat_state.h"
 #include "map/date.h" // is_day_of_*()
 #include "map/duel.h"
 #include "map/elemental.h"
@@ -587,8 +588,7 @@ static int pc_setrestartvalue(struct map_session_data *sd, int type)
 		status->set_hp(&sd->bl, hp, STATUS_HEAL_FORCED | STATUS_HEAL_ALLOWREVIVE);
 		status->set_sp(&sd->bl, sp, STATUS_HEAL_FORCED);
 		sd->respawn_fill_until = timer->gettick() + battle_config.campaign_respawn_fill_ms;
-		sd->last_combat_tick = 0;
-		sd->sit_regen_tick = 0;
+		status_clear_combat_and_sit(sd);
 	} else { //Just for saving on the char-server (with values as if respawned)
 		sd->status.hp = (unsigned int)((int64)bst->hp * battle_config.campaign_respawn_percent / 100);
 		if (sd->status.hp < 1)
@@ -1271,8 +1271,7 @@ static bool pc_authok(struct map_session_data *sd, int login_id2, time_t expirat
 	//Initializations to null/0 unneeded since map_session_data was filled with 0 upon allocation.
 	if(!sd->status.hp) pc_setdead(sd);
 	sd->state.connect_new = 1;
-	sd->last_combat_tick = 0;
-	sd->sit_regen_tick = 0;
+	status_clear_combat_and_sit(sd);
 
 	sd->followtimer = INVALID_TIMER; // [MouseJstr]
 	sd->invincible_timer = INVALID_TIMER;
@@ -4842,7 +4841,7 @@ static int pc_additem(struct map_session_data *sd, const struct item *item_data,
 	}
 
 	w = data->weight*amount;
-	if(sd->weight + w > sd->max_weight)
+	if (status_encumbrance_blocks_pickup(sd, (int)w))
 		return 2;
 
 	if( item_data->bound ) {
@@ -5100,7 +5099,7 @@ static int pc_autopickup_sub(struct block_list *bl, va_list ap)
 		return 0;
 
 	weight = idata->weight * fitem->item_data.amount;
-	if (weight > 0 && sd->weight + weight > sd->max_weight)
+	if (weight > 0 && status_encumbrance_blocks_pickup(sd, weight))
 		return 0;
 
 	switch (pc->checkadditem(sd, fitem->item_data.nameid, fitem->item_data.amount)) {
@@ -5379,7 +5378,7 @@ static int pc_isUseitem(struct map_session_data *sd, int n)
 		return 0;
 
 	if( item->package || item->group ) {
-		if (pc_is90overweight(sd)) {
+		if (status_encumbrance_blocks_pickup(sd, 0)) {
 			clif->msgtable(sd, MSG_CANT_GET_ITEM_BECAUSE_WEIGHT);
 			return 0;
 		}
@@ -6209,8 +6208,7 @@ static int pc_setpos(struct map_session_data *sd, unsigned short map_index, int 
 		if (map->list[map_id].cell == (struct mapcell *)0xdeadbeaf)
 			map->cellfromcache(&map->list[map_id]);
 
-		sd->last_combat_tick = 0;
-		sd->sit_regen_tick = 0;
+		status_clear_combat_and_sit(sd);
 
 		if (sd->sc.count != 0) { // Cancel some map related stuff.
 			if (sd->sc.data[SC_JAILED] != NULL)
@@ -8099,8 +8097,7 @@ static int pc_dead(struct map_session_data *sd, struct block_list *src)
 {
 	nullpo_ret(sd);
 
-	sd->last_combat_tick = 0;
-	sd->sit_regen_tick = 0;
+	status_clear_combat_and_sit(sd);
 
 	for (int i = 0; i < MAX_PC_DEVOTION; i++) {
 		if (sd->devotion[i] != 0) {

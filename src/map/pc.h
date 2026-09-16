@@ -323,6 +323,8 @@ struct map_session_data {
 	int64 last_combat_tick;
 	int64 respawn_fill_until;
 	int sit_regen_tick;
+	uint8 last_recovery_mode;
+	uint8 last_recovery_block;
 	struct {
 		int npc_id;
 		int64 timeout;

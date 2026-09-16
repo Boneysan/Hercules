@@ -5305,6 +5305,19 @@ struct PACKET_ZC_SKILL_FAIL_REASON {
 } __attribute__((packed));
 DEFINE_PACKET_HEADER(ZC_SKILL_FAIL_REASON, 0x0efe);
 
+/**
+ * Campaign recovery HUD (`ZC_RECOVERY_STATE`, fork packet 0x0efd).
+ *
+ * `mode` is `enum recovery_mode`; `block` is `enum recovery_block`.
+ * A stock client consumes the 4-byte length and ignores the payload.
+ */
+struct PACKET_ZC_RECOVERY_STATE {
+	int16 PacketType;
+	uint8 mode;
+	uint8 block;
+} __attribute__((packed));
+DEFINE_PACKET_HEADER(ZC_RECOVERY_STATE, 0x0efd);
+
 // Fork feature: send SP alongside HP to party members, so the party window can
 // show both. It selects packet 0x0bab, whose length is only declared in the
 // 2021+ length tables (packets2021_len_*.h, packets2022_len_zero.h).

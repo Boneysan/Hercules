@@ -57,6 +57,7 @@
 #include "map/script.h"
 #include "map/skill.h"
 #include "map/status.h"
+#include "map/combat_state.h"
 #include "map/stylist.h"
 #include "map/storage.h"
 #include "map/trade.h"
@@ -5979,6 +5980,22 @@ static void clif_skill_fail_reason(struct map_session_data *sd, uint16 skill_id,
 	}
 
 	clif->skill_fail(sd, skill_id, USESKILL_FAIL_LEVEL, 0, 0);
+}
+
+static void clif_recovery_state(struct map_session_data *sd, uint8 mode, uint8 block)
+{
+	int fd;
+
+	nullpo_retv(sd);
+	fd = sd->fd;
+	if (fd == 0)
+		return;
+	WFIFOHEAD(fd, sizeof(struct PACKET_ZC_RECOVERY_STATE));
+	struct PACKET_ZC_RECOVERY_STATE *p = WFIFOP(fd, 0);
+	p->PacketType = HEADER_ZC_RECOVERY_STATE;
+	p->mode = mode;
+	p->block = block;
+	WFIFOSET(fd, sizeof(struct PACKET_ZC_RECOVERY_STATE));
 }
 
 /// Skill cooldown display icon (ZC_SKILL_POSTDELAY).
@@ -18110,11 +18127,6 @@ static void clif_parse_Mail_getattach(int fd, struct map_session_data *sd)
 		if ((data = itemdb->exists(sd->mail.inbox.msg[i].item.nameid)) == NULL)
 			return;
 
-		if( pc_is90overweight(sd) ) {
-			clif->mail_getattachment(fd, 2);
-			return;
-		}
-
 		switch( pc->checkadditem(sd, data->nameid, sd->mail.inbox.msg[i].item.amount) ) {
 			case ADDITEM_NEW:
 				fail = ( pc->inventoryblank(sd) == 0 );
@@ -18129,7 +18141,7 @@ static void clif_parse_Mail_getattach(int fd, struct map_session_data *sd)
 		}
 
 		weight = data->weight * sd->mail.inbox.msg[i].item.amount;
-		if( sd->weight + weight > sd->max_weight ) {
+		if (status_encumbrance_blocks_pickup(sd, (int)weight)) {
 			clif->mail_getattachment(fd, 2);
 			return;
 		}
@@ -26863,6 +26875,7 @@ void clif_defaults(void)
 	clif->skillcastcancel = clif_skillcastcancel;
 	clif->skill_fail = clif_skill_fail;
 	clif->skill_fail_reason = clif_skill_fail_reason;
+	clif->recovery_state = clif_recovery_state;
 	clif->skill_cooldown = clif_skill_cooldown;
 	clif->skill_memomessage = clif_skill_memomessage;
 	clif->skill_mapinfomessage = clif_skill_mapinfomessage;
