@@ -6645,6 +6645,20 @@ static int skill_castend_id(int tid, int64 tick, int id, intptr_t data)
 		// SC_MAGICPOWER needs to switch states before any damage is actually dealt
 		skill->toggle_magicpower(src, ud->skill_id, ud->skill_lv);
 
+		{
+			int s_inf = skill->get_inf(ud->skill_id);
+			int s_nk = skill->get_nk(ud->skill_id);
+			if ((s_inf & INF_ATTACK_SKILL) != 0 || (s_nk & NK_NO_DAMAGE) == 0) {
+				status->mark_combat(src);
+			} else if (target != NULL && target != src && battle->check_target(src, target, BCT_ENEMY) > 0 && (s_inf & INF_SUPPORT_SKILL) == 0) {
+				status->mark_combat(src);
+			} else if ((s_inf & INF_SUPPORT_SKILL) != 0) {
+				if (target != NULL && status->is_in_combat(target)) {
+					status->mark_combat(src);
+				}
+			}
+		}
+
 #if 0 // On aegis damage skills are also increase by camouflage. Need confirmation on kRO.
 		if( ud->skill_id != RA_CAMOUFLAGE ) // only normal attack and auto cast skills benefit from its bonuses
 			status_change_end(src,SC_CAMOUFLAGE, INVALID_TIMER);
@@ -12422,6 +12436,14 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 
 	// SC_MAGICPOWER needs to switch states before any damage is actually dealt
 	skill->toggle_magicpower(src, skill_id, skill_lv);
+
+	{
+		int p_inf = skill->get_inf(skill_id);
+		int p_nk = skill->get_nk(skill_id);
+		if ((p_inf & INF_ATTACK_SKILL) != 0 || (p_nk & NK_NO_DAMAGE) == 0) {
+			status->mark_combat(src);
+		}
+	}
 
 	PRAGMA_GCC46(GCC diagnostic push)
 	PRAGMA_GCC46(GCC diagnostic ignored "-Wswitch-enum")

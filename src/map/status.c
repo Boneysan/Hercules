@@ -246,7 +246,61 @@ static void status_mark_combat(struct block_list *bl)
 	if (sd == NULL)
 		return;
 	sd->last_combat_tick = timer->gettick();
-	sd->respawn_fill_until = 0;
+}
+
+static bool status_is_in_combat(struct block_list *bl)
+{
+	struct map_session_data *sd;
+
+	if (bl == NULL)
+		return false;
+	sd = BL_CAST(BL_PC, bl);
+	if (sd == NULL)
+		return false;
+	if (sd->last_combat_tick == 0)
+		return false;
+	if (DIFF_TICK(timer->gettick(), sd->last_combat_tick) >= battle_config.campaign_combat_timeout_ms) {
+		sd->last_combat_tick = 0;
+		return false;
+	}
+	return true;
+}
+
+static enum natural_heal_block_reason status_check_natural_heal_block(struct block_list *bl)
+{
+	struct map_session_data *sd;
+	struct status_change *sc;
+
+	nullpo_retr(NATURAL_HEAL_BLOCKED_DEAD, bl);
+	if (status->isdead(bl))
+		return NATURAL_HEAL_BLOCKED_DEAD;
+
+	sc = status->get_sc(bl);
+	if (sc != NULL) {
+		if ((sc->data[SC_POISON] != NULL && sc->data[SC_SLOWPOISON] == NULL)
+			|| (sc->data[SC_DPOISON] != NULL && sc->data[SC_SLOWPOISON] == NULL)
+			|| sc->data[SC_BERSERK] != NULL
+			|| sc->data[SC_TRICKDEAD] != NULL
+			|| sc->data[SC_BLOODING] != NULL
+			|| sc->data[SC_MAGICMUSHROOM] != NULL
+			|| sc->data[SC_RAISINGDRAGON] != NULL
+			|| sc->data[SC_SATURDAY_NIGHT_FEVER] != NULL
+			|| (sc->option & (OPTION_HIDE | OPTION_CLOAK | OPTION_CHASEWALK))
+			|| sc->data[SC__INVISIBILITY] != NULL
+		) {
+			return NATURAL_HEAL_BLOCKED_STATUS;
+		}
+	}
+
+	sd = BL_CAST(BL_PC, bl);
+	if (sd != NULL) {
+		if (pc_isoverhealweight(sd) || sd->regen.state.overweight != 0) {
+			if (!(sc != NULL && sc->data[SC_TENSIONRELAX] != NULL))
+				return NATURAL_HEAL_BLOCKED_WEIGHT;
+		}
+	}
+
+	return NATURAL_HEAL_OK;
 }
 
 static int status_damage(struct block_list *src, struct block_list *target, int64 in_hp, int64 in_sp, int walkdelay, int flag)
@@ -281,6 +335,9 @@ static int status_damage(struct block_list *src, struct block_list *target, int6
 		return 0;
 
 	if (hp > 0) {
+		struct map_session_data *target_sd = BL_CAST(BL_PC, target);
+		if (target_sd != NULL)
+			target_sd->respawn_fill_until = 0;
 		status_mark_combat(target);
 		if (src != NULL)
 			status_mark_combat(src);
@@ -1494,7 +1551,6 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 	pc->calc_skilltree(sd); // SkillTree calculation
 
 	sd->max_weight = status->dbs->max_weight_base[pc->class2idx(sd->status.class)]+sd->status.str*300;
-	sd->max_weight *= 5; // Seal Cascade: playtest carry capacity ×5.
 
 	if(opt&SCO_FIRST) {
 		//Load Hp/SP from char-received data.
@@ -2194,6 +2250,9 @@ static int status_calc_pc_(struct map_session_data *sd, enum e_status_calc_opt o
 		sd->max_weight += sd->max_weight*sc->data[SC_KNOWLEDGE]->val1/10;
 	if((skill_lv=pc->checkskill(sd,ALL_INCCARRY))>0)
 		sd->max_weight += 2000*skill_lv;
+
+	if (battle_config.campaign_max_weight_multiplier > 1)
+		sd->max_weight *= battle_config.campaign_max_weight_multiplier;
 
 	sd->cart_weight_max = battle_config.max_cart_weight + (pc->checkskill(sd, GN_REMODELING_CART)*5000);
 
@@ -13888,6 +13947,46 @@ static int status_natural_heal(struct block_list *bl, va_list args)
 		sc = NULL;
 	sd = BL_CAST(BL_PC,bl);
 
+	enum natural_heal_block_reason block_reason = status_check_natural_heal_block(bl);
+	if (block_reason != NATURAL_HEAL_OK) {
+		if (sd != NULL)
+			sd->sit_regen_tick = 0;
+		return 0;
+	}
+
+	if (sd != NULL && sd->respawn_fill_until != 0) {
+		int64 now = timer->gettick();
+
+		if (now >= sd->respawn_fill_until) {
+			status->set_hp(bl, st->max_hp, STATUS_HEAL_FORCED);
+			status->set_sp(bl, st->max_sp, STATUS_HEAL_FORCED);
+			sd->respawn_fill_until = 0;
+		} else {
+			int add_hp = (int)((int64)st->max_hp * (100 - battle_config.campaign_respawn_percent) * status->natural_heal_diff_tick / (100 * (int64)battle_config.campaign_respawn_fill_ms));
+			int add_sp = (int)((int64)st->max_sp * (100 - battle_config.campaign_respawn_percent) * status->natural_heal_diff_tick / (100 * (int64)battle_config.campaign_respawn_fill_ms));
+			if (add_hp < 1) add_hp = 1;
+			if (add_sp < 1) add_sp = 1;
+			status->heal(bl, add_hp, add_sp, STATUS_HEAL_FORCED);
+		}
+		return 0;
+	}
+
+	if (sd != NULL) {
+		vd = status->get_viewdata(bl);
+		if (vd != NULL && vd->dead_sit == 2) {
+			sd->sit_regen_tick += (int)status->natural_heal_diff_tick;
+			if (sd->sit_regen_tick >= battle_config.campaign_sit_recovery_interval_ms) {
+				sd->sit_regen_tick -= battle_config.campaign_sit_recovery_interval_ms;
+				status->heal(bl, (int)(st->max_hp * battle_config.campaign_sit_recovery_percent / 100),
+					(int)(st->max_sp * battle_config.campaign_sit_recovery_percent / 100),
+					STATUS_HEAL_FORCED | STATUS_HEAL_SHOWEFFECT);
+				clif->updatestatus(sd, SP_HP);
+				clif->updatestatus(sd, SP_SP);
+			}
+			return 0;
+		}
+	}
+
 	flag = regen->flag;
 	if (flag&RGN_HP && (st->hp >= st->max_hp || regen->state.block&1))
 		flag&=~(RGN_HP|RGN_SHP);
@@ -13908,7 +14007,7 @@ static int status_natural_heal(struct block_list *bl, va_list args)
 			pc->regen(sd, status->natural_heal_diff_tick);
 	}
 
-	if ((flag & (RGN_SHP | RGN_SSP)) != 0
+	if (sd == NULL && (flag & (RGN_SHP | RGN_SSP)) != 0
 	 && regen->sitting != NULL
 	 && (vd = status->get_viewdata(bl)) != NULL
 	 && vd->dead_sit == 2
@@ -13989,34 +14088,6 @@ static int status_natural_heal(struct block_list *bl, va_list args)
 
 	if (!flag)
 		return 0;
-
-	if (sd != NULL && sd->respawn_fill_until != 0) {
-		int64 now = timer->gettick();
-
-		if (now >= sd->respawn_fill_until) {
-			status->set_hp(bl, st->max_hp, STATUS_HEAL_FORCED);
-			status->set_sp(bl, st->max_sp, STATUS_HEAL_FORCED);
-			sd->respawn_fill_until = 0;
-		} else {
-			status->heal(bl, (int)(st->max_hp / 20), (int)(st->max_sp / 20), STATUS_HEAL_FORCED);
-		}
-		return 0;
-	}
-
-	if (sd != NULL) {
-		if (vd == NULL)
-			vd = status->get_viewdata(bl);
-		if (vd != NULL && vd->dead_sit == 2) {
-			sd->sit_regen_tick += (int)status->natural_heal_diff_tick;
-			if (sd->sit_regen_tick >= 10000) {
-				sd->sit_regen_tick -= 10000;
-				status->heal(bl, (int)(st->max_hp / 4), (int)(st->max_sp / 4), STATUS_HEAL_FORCED | STATUS_HEAL_SHOWEFFECT);
-				clif->updatestatus(sd, SP_HP);
-				clif->updatestatus(sd, SP_SP);
-			}
-			return 0;
-		}
-	}
 
 	int hp_bonus = regen->rate.hp,
 		sp_bonus = regen->rate.sp;
@@ -15169,6 +15240,9 @@ void status_defaults(void)
 
 	status->isdead = status_isdead;
 	status->isimmune = status_isimmune;
+	status->mark_combat = status_mark_combat;
+	status->is_in_combat = status_is_in_combat;
+	status->check_natural_heal_block = status_check_natural_heal_block;
 
 	status->get_sc_def = status_get_sc_def;
 

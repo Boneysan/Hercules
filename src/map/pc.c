@@ -579,20 +579,21 @@ static int pc_setrestartvalue(struct map_session_data *sd, int type)
 	st = &sd->battle_status;
 
 	if (type&1) {
-		unsigned int hp = bst->hp / 2;
-		unsigned int sp = bst->sp / 2;
+		unsigned int hp = (unsigned int)((int64)bst->hp * battle_config.campaign_respawn_percent / 100);
+		unsigned int sp = (unsigned int)((int64)bst->sp * battle_config.campaign_respawn_percent / 100);
 
 		if (hp < 1)
 			hp = 1;
 		status->set_hp(&sd->bl, hp, STATUS_HEAL_FORCED | STATUS_HEAL_ALLOWREVIVE);
 		status->set_sp(&sd->bl, sp, STATUS_HEAL_FORCED);
-		sd->respawn_fill_until = timer->gettick() + 10000;
+		sd->respawn_fill_until = timer->gettick() + battle_config.campaign_respawn_fill_ms;
 		sd->last_combat_tick = 0;
+		sd->sit_regen_tick = 0;
 	} else { //Just for saving on the char-server (with values as if respawned)
-		sd->status.hp = bst->hp / 2;
+		sd->status.hp = (unsigned int)((int64)bst->hp * battle_config.campaign_respawn_percent / 100);
 		if (sd->status.hp < 1)
 			sd->status.hp = 1;
-		sd->status.sp = bst->sp / 2;
+		sd->status.sp = (unsigned int)((int64)bst->sp * battle_config.campaign_respawn_percent / 100);
 	}
 	return 0;
 }
@@ -1270,6 +1271,8 @@ static bool pc_authok(struct map_session_data *sd, int login_id2, time_t expirat
 	//Initializations to null/0 unneeded since map_session_data was filled with 0 upon allocation.
 	if(!sd->status.hp) pc_setdead(sd);
 	sd->state.connect_new = 1;
+	sd->last_combat_tick = 0;
+	sd->sit_regen_tick = 0;
 
 	sd->followtimer = INVALID_TIMER; // [MouseJstr]
 	sd->invincible_timer = INVALID_TIMER;
@@ -6206,6 +6209,9 @@ static int pc_setpos(struct map_session_data *sd, unsigned short map_index, int 
 		if (map->list[map_id].cell == (struct mapcell *)0xdeadbeaf)
 			map->cellfromcache(&map->list[map_id]);
 
+		sd->last_combat_tick = 0;
+		sd->sit_regen_tick = 0;
+
 		if (sd->sc.count != 0) { // Cancel some map related stuff.
 			if (sd->sc.data[SC_JAILED] != NULL)
 				return 4; // You may not get out!
@@ -8092,6 +8098,9 @@ static void pc_damage(struct map_session_data *sd, struct block_list *src, unsig
 static int pc_dead(struct map_session_data *sd, struct block_list *src)
 {
 	nullpo_ret(sd);
+
+	sd->last_combat_tick = 0;
+	sd->sit_regen_tick = 0;
 
 	for (int i = 0; i < MAX_PC_DEVOTION; i++) {
 		if (sd->devotion[i] != 0) {
@@ -11363,6 +11372,7 @@ static void pc_setstand(struct map_session_data *sd)
 	//Reset sitting tick.
 	sd->sitting_regen.tick.hp = 0;
 	sd->sitting_regen.tick.sp = 0;
+	sd->sit_regen_tick = 0;
 	if (pc_isdead(sd)) {
 		sd->state.dead_sit = sd->vd.dead_sit = 0;
 		clif->party_dead_notification(sd);

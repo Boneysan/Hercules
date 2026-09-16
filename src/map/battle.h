@@ -400,6 +400,12 @@ struct Battle_Config {
 	int idle_no_share;
 	int party_update_interval;
 	int party_even_share_bonus;
+	int campaign_combat_timeout_ms;
+	int campaign_sit_recovery_interval_ms;
+	int campaign_sit_recovery_percent;
+	int campaign_respawn_percent;
+	int campaign_respawn_fill_ms;
+	int campaign_max_weight_multiplier;
 	int delay_battle_damage;
 	int hide_woe_damage;
 	int display_version;
