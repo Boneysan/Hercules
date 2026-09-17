@@ -21,6 +21,7 @@
 #include "map/status.h"
 
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -438,6 +439,20 @@ static bool test_encumbrance_matrix(void)
 	if (!status_encumbrance_blocks_pickup(&sd, 2))
 		return false;
 
+	/* Buying-store creation keeps its approved 90% soft ceiling without
+	 * reintroducing additive overflow arithmetic. */
+	sd.max_weight = 100;
+	sd.weight = 89;
+	if (status_encumbrance_blocks_at_percent(&sd, 1, 90))
+		return false;
+	if (!status_encumbrance_blocks_at_percent(&sd, 2, 90))
+		return false;
+	sd.weight = 90;
+	if (status_encumbrance_blocks_at_percent(&sd, 0, 90))
+		return false;
+	if (!status_encumbrance_blocks_at_percent(&sd, INT64_MAX, 90))
+		return false;
+
 	/* Cart capacity is independent of player weight (cart_weight vs cart_weight_max). */
 	sd.weight = 100;
 	sd.cart_weight = 0;
@@ -445,6 +460,20 @@ static bool test_encumbrance_matrix(void)
 	if (sd.cart_weight + 100 > sd.cart_weight_max)
 		return false;
 	if (!status_encumbrance_blocks_pickup(&sd, 1))
+		return false;
+	sd.cart_weight = 99;
+	sd.cart_weight_max = 100;
+	if (status_cart_weight_blocks(&sd, 1))
+		return false;
+	if (!status_cart_weight_blocks(&sd, 2) || !status_cart_weight_blocks(&sd, INT64_MAX))
+		return false;
+
+	/* A large requested stack must not wrap the unsigned weight calculation. */
+	sd.weight = 1;
+	sd.max_weight = 100;
+	if (!status_encumbrance_blocks_pickup(&sd, INT_MAX))
+		return false;
+	if (!status_encumbrance_blocks_pickup(&sd, INT64_MAX))
 		return false;
 
 	return true;

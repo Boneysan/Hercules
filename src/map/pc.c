@@ -5738,7 +5738,8 @@ static void pc_autocast_remove(struct map_session_data *sd, enum autocast_type t
 static int pc_cart_additem(struct map_session_data *sd, struct item *item_data, int amount, e_log_pick_type log_type)
 {
 	struct item_data *data;
-	int i,w;
+	int i;
+	int64 w;
 
 	nullpo_retr(1, sd);
 	nullpo_retr(1, item_data);
@@ -5758,7 +5759,8 @@ static int pc_cart_additem(struct map_session_data *sd, struct item *item_data, 
 		return 1;/* TODO: there is no official response to this? */
 	}
 
-	if( (w = data->weight*amount) + sd->cart_weight > sd->cart_weight_max )
+	w = (int64)data->weight * amount;
+	if (status_cart_weight_blocks(sd, w))
 		return 1;
 
 	i = MAX_CART;

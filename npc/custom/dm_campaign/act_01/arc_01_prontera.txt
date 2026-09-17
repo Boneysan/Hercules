@@ -10,6 +10,10 @@ prontera,155,185,5	script	Session Board#dm	4_BOARD3,{
 		callfunc("DM_PartyMes", "A campaign session is underway.");
 		callfunc("DM_PartyMes", callfunc("DM_Act01BoardLine"));
 		next();
+		callfunc("DM_CheckpointPreview", getcharid(CHAR_ID_PARTY));
+		if (select("Apply eligible checkpoint sync.", "Continue.") == 1)
+			callfunc("DM_CheckpointReconcile", getcharid(CHAR_ID_PARTY), "confirm");
+		next();
 		callfunc("DM_PartyMes", "[Session Board]");
 		callfunc("DM_PartyMes", "Optional bounties pay coin. They do not open the chamber.");
 		close();
@@ -105,6 +109,7 @@ S_SwearIn:
 	callfunc("DM_InstanceSetFlag", "dm_arc01_started", 1);
 	callfunc("DM_InstanceQuestStart", 20001);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 101);
+	callfunc("DM_DMJStoryObjective", 20001, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	callfunc("DM_SceneRelease", "arc01_wynne_start");
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Omens at the Fountain]^000000");
@@ -320,6 +325,7 @@ prontera,150,37,3	script	Mira#dm	4_F_KID2,{
 	callfunc("DM_InstanceQuestStart", 20006);
 	callfunc("DM_InstanceQuestComplete", 20006);
 	callfunc("DM_Arc01PayClues");
+	callfunc("DM_DMJStoryObjective", 20006, 2, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 105);
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Mira is found. South Gate Soup Line complete.]^000000");
@@ -365,6 +371,7 @@ prt_sewb1,135,240,4	script	Painted Sluice#dm	4_ENERGY_WHITE,{
 	callfunc("DM_PartyMes", "^3355FF*The water vibrates when you touch the iron. The hum leads down, not out.*^000000");
 	callfunc("DM_InstanceSetFlag", "dm_arc01_clue_mask", dm_arc01_clue_mask | 1);
 	callfunc("DM_Arc01PayClues");
+	callfunc("DM_DMJStoryObjective", 20001, 2, "Explore", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Clue: painted sluice. Tibbets or Mira can supply the second sign.]^000000");
 	close();
@@ -408,6 +415,7 @@ prontera,146,193,5	script	Tibbets the Keeper#dm	1_M_SIZ,{
 		callfunc("DM_InstanceSetFlag", "dm_arc01_key_access", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc01_clue_mask", dm_arc01_clue_mask | 4);
 		callfunc("DM_Arc01PayClues");
+		callfunc("DM_DMJStoryObjective", 20001, 3, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 		callfunc("DM_PartyMes", "^3355FF[Tibbets trusts you with the wheel. Friendship makes the drain easier. It does not drain the chamber for you.]^000000");
 		close();
 	case 2:
@@ -418,6 +426,7 @@ prontera,146,193,5	script	Tibbets the Keeper#dm	1_M_SIZ,{
 			callfunc("DM_InstanceSetFlag", "dm_arc01_key_access", 1);
 			callfunc("DM_InstanceSetFlag", "dm_arc01_clue_mask", dm_arc01_clue_mask | 4);
 			callfunc("DM_Arc01PayClues");
+			callfunc("DM_DMJStoryObjective", 20001, 3, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 			close();
 		}
 		callfunc("DM_PartyMes", "[Tibbets]");
@@ -474,6 +483,7 @@ prt_sewb4,103,88,4	script	Tide-Wheel#dm	4_ENERGY_BLUE,{
 		if (callfunc("DM_CheckRoll", "craft", .@dc) || dm_arc01_tibbets_befriended || callfunc("DM_IsDM")) {
 			callfunc("DM_InstanceSetFlag", "dm_arc01_chamber_drained", 1);
 			callfunc("DM_Arc01PayPrepared");
+			callfunc("DM_DMJStoryObjective", 20005, 1, "Interact", 1, 2, 0, getcharid(CHAR_ID_PARTY));
 			callfunc("DM_PartyMes", "^3355FF*Water falls. Wards spit. One reinforcement wave will not arrive.*^000000");
 			mapannounce strnpcinfo(NPC_MAP), "[Listening Chamber] The tide-wheel opens. The slab goes dry.", bc_map, 0x88CCFF;
 		} else {
@@ -508,6 +518,7 @@ prt_sewb4,112,100,4	script	Binding Stone#dm	4_ENERGY_BLUE,{
 	case 1:
 		callfunc("DM_InstanceSetFlag", "dm_arc01_binding_applied", 1);
 		callfunc("DM_Arc01PayPrepared");
+		callfunc("DM_DMJStoryObjective", 20005, 2, "Interact", 1, 2, 1, getcharid(CHAR_ID_PARTY));
 		callfunc("DM_PartyMes", "^3355FF*The word takes. The chain drinks less. The Deviruchi will starve a little before it fights.*^000000");
 		mapannounce strnpcinfo(NPC_MAP), "[Listening Chamber] The binding-word holds. The conduit thins.", bc_map, 0x88CCFF;
 		close();
@@ -676,6 +687,10 @@ OnDeviruchiDead:
 	}
 	callfunc("DM_PartyExp", 27500, 11300, .@party);
 	callfunc("DM_Arc01Complete", .@party);
+	.@checkpoint_step = callfunc("DM_CheckpointStep", .@party);
+	if (.@checkpoint_step >= 0)
+		callfunc("DM_DMJObjective", 20006, 1, "DM", 1, 1, 1, 1, 1, 1,
+			100000 + .@checkpoint_step, .@party);
 	mapannounce .@map$, "[The Listening Chamber] The Deviruchi falls silent. Far below, something vast shifts in its sleep.", bc_map, 0xFFAA33;
 	dispbottom "[Seal Cascade] The seals are weakening. Arc 1 complete. Return to Wynne, then Sun-Hwa in Payon.";
 	end;

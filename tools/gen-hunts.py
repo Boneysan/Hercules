@@ -37,7 +37,10 @@ KORANGAR_LOC = os.path.join(ROOT, os.pardir, 'korangar', 'korangar', 'src', 'wor
 KORANGAR_HUNT_OBJ = os.path.join(ROOT, os.pardir, 'korangar', 'korangar', 'src', 'world',
                                  'library', 'hunt_objectives.tsv')
 KORANGAR_HUNT_GUIDE = os.path.join(ROOT, os.pardir, 'korangar', 'korangar', 'src', 'world',
-                                   'library', 'hunt_guidance.tsv')
+                                 'library', 'hunt_guidance.tsv')
+KORANGAR_STORY = os.path.join(ROOT, os.pardir, 'korangar', 'korangar', 'src', 'world',
+                              'library', 'hunt_story.tsv')
+CAMPAIGN_FLAGS = os.path.join(ROOT, 'npc', 'custom', 'dm_campaign', 'shared', 'dm_flags.txt')
 
 # Town hub who hands out / takes in contracts for each hunt arc.
 ARC_HUBS = {
@@ -387,7 +390,7 @@ def readable_area(zone):
 
 
 def render_hunt_objectives(master, mobs):
-    """quest_id \t name \t objective_type \t sources \t item_counts \t maps \t party_share \t turn_in"""
+    """quest_id \t name \t type \t sources \t items \t maps \t share \t turn_in \t required \t completion \t dm_trigger"""
     rows = ['# schema=1']
     for quest in master['quests']:
         qid = quest['id']
@@ -412,7 +415,7 @@ def render_hunt_objectives(master, mobs):
         maps_str = quest.get('zone', '').replace('/', ',')
         party_share = 'inventory'
         npc, _mmap, _x, _y = ARC_HUBS.get(quest.get('arc', 0), ('Quartermaster Wynne', '', 0, 0))
-        rows.append(f'{qid}\t{name}\t{obj_type}\t{sources_str}\t{items_str}\t{maps_str}\t{party_share}\t{npc}')
+        rows.append(f'{qid}\t{name}\t{obj_type}\t{sources_str}\t{items_str}\t{maps_str}\t{party_share}\t{npc}\trequired\tinventory\t0')
     return '\n'.join(rows) + '\n'
 
 
@@ -437,6 +440,93 @@ def render_hunt_guidance(master):
     # Include story guidance fixture
     rows.append('20050\tFountain\tProntera\tSpeak to the fountain keeper')
     return '\n'.join(rows) + '\n'
+
+
+def load_campaign_flags():
+    """Return the canonical campaign flags declared by the server helpers."""
+    text = open(CAMPAIGN_FLAGS, encoding='utf-8', errors='replace').read()
+    # dm_flags.txt is the reset/diagnostic registry for campaign state. Keeping
+    # the generator tied to that registry catches stale client reveal gates
+    # without trying to infer state from arbitrary script variable references.
+    return set(re.findall(r'DM_ClearFlag",\s*"(dm_[a-z0-9_]+)"', text))
+
+
+def story_steps():
+    """Arc 1 story beats mirrored from act_01/arc_01_prontera.txt."""
+    return [
+        'wynne_start\tQuartermaster Wynne\tThe fountain hums and the south road is unsafe.\tAsk Tibbets, the mother, or inspect the painted sluice.\ttibbets|mother|sluice\trevealed\tdm_arc01_started',
+        'mother\tFrightened Mother\tMira followed the gray bread-man from the south-gate soup line.\tFind Mira before choosing how to rescue her.\tmira\thidden\tdm_arc01_child_found',
+        'mira\tMira\tThe bread-man wears a goat ring and the water is a song.\tReturn to her mother; the drawing names the next sign.\tmother\thidden\tdm_arc01_child_found',
+        'sluice\tPainted Sluice\tA goat-head and copper-smelling paint lead down into the water.\tFind a second sign from Tibbets or Mira.\ttibbets|mira\thidden\tdm_arc01_clue_mask:1',
+        'tibbets\tTibbets the Keeper\tThe gray almsman and Deacon Holt use the lowest chamber.\tObtain the tide-wheel and drain the chamber.\tdrain\thidden\tdm_arc01_clue_mask:4',
+        'drain\tTide-Wheel\tThe flooded Listening Chamber can be made dry.\tDrain the chamber, then speak to Hlin at the binding stone if desired.\tbinding|holt\thidden\tdm_arc01_chamber_drained',
+        "binding\tBinding Stone\tHolt's chalk names the binding word Hlin.\tApply the word before confronting the conduit.\tholt\thidden\tdm_arc01_binding_applied",
+        'holt\tDeacon Holt\tThe Deviruchi is chained to the goat-head conduit.\tResolve the encounter, then return to Wynne.\twynne\thidden\tdm_arc01_holt_approach',
+    ]
+
+
+def validate_story_reveal_conditions(flags):
+    """Reject story gates that do not correspond to a server campaign flag."""
+    problems = []
+    for row in story_steps():
+        fields = row.split('\t')
+        if len(fields) != 7:
+            problems.append('story %s: expected 7 tab-separated fields' % (fields[0],))
+            continue
+        condition = fields[6]
+        if condition == 'always':
+            continue
+        match = re.fullmatch(r'(dm_[a-z0-9_]+)(?::([1-9][0-9]*))?', condition)
+        if not match:
+            problems.append('story %s: invalid reveal condition %r' % (fields[0], condition))
+            continue
+        flag = match.group(1)
+        if flag not in flags:
+            problems.append('story %s: reveal flag %s is not declared in %s'
+                            % (fields[0], flag, os.path.relpath(CAMPAIGN_FLAGS, ROOT)))
+    return problems
+
+
+def validate_story_shape():
+    """Keep the generated Arc 1 story graph complete and navigable."""
+    rows = story_steps()
+    problems = []
+    ids = []
+    for row in rows:
+        fields = row.split('\t')
+        if len(fields) != 7:
+            continue
+        step_id, speaker, clue, action, next_lead, visibility, _condition = fields
+        ids.append(step_id)
+        if not all((step_id, speaker, clue, action, next_lead)):
+            problems.append('story %s: speaker, clue, action, and next lead are required' % (step_id or '<missing>',))
+        if visibility not in ('revealed', 'hidden'):
+            problems.append('story %s: invalid visibility %r' % (step_id, visibility))
+    if len(ids) != len(set(ids)):
+        problems.append('story: duplicate step id')
+    known = set(ids)
+    for row in rows:
+        fields = row.split('\t')
+        if len(fields) != 7:
+            continue
+        step_id, _speaker, _clue, _action, next_lead, _visibility, _condition = fields
+        for lead in next_lead.split('|'):
+            # The final Arc 1 lead returns to Wynne, whose story row is the
+            # initial `wynne_start` beat rather than a second step.
+            if lead not in known and lead != 'wynne':
+                problems.append('story %s: next lead %s is not a story step' % (step_id, lead))
+    revealed = [row for row in rows if len(row.split('\t')) == 7 and row.split('\t')[5] == 'revealed']
+    if len(revealed) != 1 or revealed[0].split('\t')[0] != 'wynne_start':
+        problems.append('story: exactly wynne_start must be initially revealed')
+    return problems
+
+
+def render_story_steps(_master):
+    """Arc 1 story beats mirrored from act_01/arc_01_prontera.txt."""
+    return '\n'.join([
+        '# schema=1',
+        '# id\tspeaker\tclue\tremaining action\tnext lead\tvisibility\tauthoritative reveal condition',
+    ] + story_steps()) + '\n'
 
 
 def report(master):
@@ -467,6 +557,8 @@ def main():
     items = load_item_db()
     spawns = load_spawns()
     problems = derive(master, mobs, items, spawns)
+    problems.extend(validate_story_reveal_conditions(load_campaign_flags()))
+    problems.extend(validate_story_shape())
     if problems:
         print('FAIL - %d problem(s) in db/dm_hunt_db.json:' % len(problems), file=sys.stderr)
         for p in problems:
@@ -484,6 +576,7 @@ def main():
         (KORANGAR_LOC, render_locations(master)),
         (KORANGAR_HUNT_OBJ, render_hunt_objectives(master, mobs)),
         (KORANGAR_HUNT_GUIDE, render_hunt_guidance(master)),
+        (KORANGAR_STORY, render_story_steps(master)),
     ]
 
     if args.check:

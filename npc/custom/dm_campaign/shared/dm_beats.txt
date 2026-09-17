@@ -119,9 +119,10 @@ function	script	DM_BeatArc01	{
 	case 6:
 		callfunc("DM_InstanceSetFlag", "dm_arc01_child_found", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc01_clue_mask", dm_arc01_clue_mask | 2);
-		callfunc("DM_InstanceQuestStart", 20006);
-		callfunc("DM_InstanceQuestComplete", 20006);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 105);
+	callfunc("DM_InstanceQuestStart", 20006);
+	callfunc("DM_InstanceQuestComplete", 20006);
+	callfunc("DM_DMJStoryObjective", 20006, 2, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 105);
 		callfunc("DM_MapStory", "Mira names the bread-man and the goat ring.");
 		mes("20006 complete. Child found.");
 		break;
@@ -144,11 +145,13 @@ function	script	DM_BeatArc01	{
 	case 10:
 		callfunc("DM_InstanceSetFlag", "dm_arc01_chamber_drained", 1);
 		callfunc("DM_InstanceSetFlag", "dm_arc01_key_access", 1);
+		callfunc("DM_DMJStoryObjective", 20001, 2, "Explore", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 		callfunc("DM_MapStory", "The tide-wheel opens. The slab goes dry. One reinforcement wave will not arrive.");
 		mes("Chamber drained.");
 		break;
 	case 11:
 		callfunc("DM_InstanceSetFlag", "dm_arc01_binding_applied", 1);
+		callfunc("DM_DMJStoryObjective", 20005, 1, "Interact", 1, 2, 0, getcharid(CHAR_ID_PARTY));
 		callfunc("DM_MapStory", "The binding-word Hlin holds. The conduit thins.");
 		mes("Binding applied.");
 		break;
@@ -245,7 +248,7 @@ function	script	DM_BeatArc03	{
 	mes("[Arc 3 - Sand and Whispers]");
 	mes("Wells and checkpoints are the main path. Asking Sabra a question does not commit.");
 	next();
-	switch (select("Warp - Rashid", "Beat - Rashid starts (20013 only)", "Beat - Optional hunts", "Warp - Sabra / wells", "Beat - Both wells inspected", "Beat - Sabra: expose + water", "Beat - Sabra: keep relief", "Warp - Osiris (91,83)", "Beat - Start 20017", "Warp - Amon Ra", "Beat - Start 20018", "Beat - Complete Arc 3", "Back")) {
+	switch (select("Warp - Rashid", "Beat - Rashid starts (20013 only)", "Beat - Optional hunts", "Warp - Sabra / wells", "Beat - Both wells inspected", "Beat - Sabra - expose + water", "Beat - Sabra - keep relief", "Warp - Osiris (91,83)", "Beat - Start 20017", "Warp - Amon Ra", "Beat - Start 20018", "Beat - Complete Arc 3", "Back")) {
 	case 1:
 		callfunc("DM_WarpParty", "morocc", 159, 97);
 		mes("Party warped to Rashid.");

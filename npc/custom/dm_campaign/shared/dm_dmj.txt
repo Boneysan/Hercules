@@ -1,0 +1,106 @@
+// Structured DM state echoes (Phase A, QW-052/QW-054).
+//
+// These messages are transport only. Campaign flags, quests, and checkpoints
+// remain authoritative on the server; the client never infers completion from
+// narrative chat or local actions.
+
+function	script	DM_DMJObjective	{
+	.@quest_id = getarg(0, 0);
+	.@objective_id = getarg(1, 0);
+	.@kind$ = getarg(2, "DM");
+	.@current = getarg(3, 0);
+	.@total = getarg(4, 0);
+	.@required = getarg(5, 1);
+	.@completed = getarg(6, 0);
+	.@party_shared = getarg(7, 1);
+	.@dm_triggered = getarg(8, 1);
+	.@seq = getarg(9, 0);
+	.@party_id = getarg(10, getcharid(CHAR_ID_PARTY));
+	if (.@quest_id <= 0 || .@objective_id <= 0 || .@seq < 0)
+		return 0;
+
+	if (.@party_id <= 0) {
+		dispbottom("[DMJ]{\"t\":\"objective\",\"v\":1,\"seq\":" + .@seq
+			+ ",\"quest_id\":" + .@quest_id + ",\"objective_id\":" + .@objective_id
+			+ ",\"kind\":\"" + .@kind$ + "\",\"current\":" + .@current
+			+ ",\"total\":" + .@total + ",\"required\":" + .@required
+			+ ",\"completed\":" + .@completed + ",\"party_shared\":" + .@party_shared
+			+ ",\"dm_triggered\":" + .@dm_triggered + "}");
+		return 1;
+	}
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]) || !attachrid(.@accid[.@i]))
+			continue;
+		dispbottom("[DMJ]{\"t\":\"objective\",\"v\":1,\"seq\":" + .@seq
+			+ ",\"quest_id\":" + .@quest_id + ",\"objective_id\":" + .@objective_id
+			+ ",\"kind\":\"" + .@kind$ + "\",\"current\":" + .@current
+			+ ",\"total\":" + .@total + ",\"required\":" + .@required
+			+ ",\"completed\":" + .@completed + ",\"party_shared\":" + .@party_shared
+			+ ",\"dm_triggered\":" + .@dm_triggered + "}");
+		detachrid();
+		++.@done;
+	}
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+	return .@done;
+}
+
+// Emit a typed preview/confirm result to the invoking member. The server
+// computes these counts; the client only displays the authoritative result.
+function	script	DM_DMJReconcile	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@arc = getarg(1, 0);
+	.@step = getarg(2, 0);
+	.@mode$ = getarg(3, "preview");
+	.@eligible = getarg(4, 0);
+	.@ahead = getarg(5, 0);
+	.@offline = getarg(6, 0);
+	.@unavailable = getarg(7, 0);
+	.@changed = getarg(8, 0);
+	.@seq = getarg(9, .@arc * 100000 + .@step);
+	if (.@party_id <= 0 || .@arc <= 0 || .@seq < 0)
+		return 0;
+	dispbottom("[DMJ]{\"t\":\"reconcile\",\"v\":1,\"seq\":" + .@seq
+		+ ",\"party_id\":" + .@party_id + ",\"arc\":" + .@arc
+		+ ",\"step\":" + .@step + ",\"mode\":\"" + .@mode$ + "\""
+		+ ",\"eligible\":" + .@eligible + ",\"ahead\":" + .@ahead
+		+ ",\"offline\":" + .@offline + ",\"unavailable\":" + .@unavailable
+		+ ",\"changed\":" + .@changed + "}");
+	return 1;
+}
+
+// Convenience producer for story transitions. The checkpoint sequence is
+// sampled after the authoritative flag/quest mutation, so repeated dialogue
+// cannot invent client progress or advance the campaign by itself.
+function	script	DM_DMJStoryObjective	{
+	.@quest_id = getarg(0, 0);
+	.@objective_id = getarg(1, 0);
+	.@kind$ = getarg(2, "Talk");
+	.@current = getarg(3, 0);
+	.@total = getarg(4, 1);
+	.@completed = getarg(5, 0);
+	.@party_id = getarg(6, getcharid(CHAR_ID_PARTY));
+	if (.@party_id <= 0)
+		return 0;
+	.@step = callfunc("DM_CheckpointStep", .@party_id);
+	if (.@step < 0)
+		return 0;
+	return callfunc("DM_DMJObjective", .@quest_id, .@objective_id, .@kind$,
+		.@current, .@total, 1, .@completed, 1, 0,
+		100000 + .@step, .@party_id);
+}
+
+// Convenience producer for a completed DM encounter objective. Encounter
+// quests use the same authoritative checkpoint sequence as story transitions,
+// so the client receives one typed update without inferring a boss result.
+function	script	DM_DMJEncounterObjective	{
+	.@quest_id = getarg(0, 0);
+	.@objective_id = getarg(1, 1);
+	.@party_id = getarg(2, getcharid(CHAR_ID_PARTY));
+	return callfunc("DM_DMJStoryObjective", .@quest_id, .@objective_id,
+		"DM", 1, 1, 1, .@party_id);
+}

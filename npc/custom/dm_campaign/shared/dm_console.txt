@@ -147,6 +147,11 @@ OnDM:
 		end;
 	}
 
+	if (.@sub$ == "reconcile") {
+		callfunc("DM_CheckpointReconcile", getcharid(CHAR_ID_PARTY), (.@atcmd_numparameters > 1 ? .@atcmd_parameters$[1] : "preview"));
+		end;
+	}
+
 	if (.@sub$ == "check") {
 		callsub(S_Check, 1);
 		end;
@@ -508,6 +513,7 @@ S_Help:
 	dispbottom("[DM] @dm recall              (pulls party to you)");
 	dispbottom("[DM] @dm instance <start <map> [x] [y] [label] | end>");
 	dispbottom("[DM] @dm status              (arc progress + key flags at a glance)");
+	dispbottom("[DM] @dm reconcile [confirm] (preview/apply durable checkpoint sync)");
 	dispbottom("[DM] @dm reset confirm       (wipe all campaign flags for a fresh run)");
 	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmstatus, @dmreset");
 	return;
@@ -679,6 +685,8 @@ S_Reset:
 
 	.@party_id = getcharid(CHAR_ID_PARTY);
 	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	if (.@party_id > 0)
+		callfunc("DM_CheckpointReset", .@party_id);
 	if (.@party_id > 0) {
 		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
 		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
@@ -796,6 +804,8 @@ S_Mode:
 		}
 		$dm_mode = 1;
 		$dm_active_party = .@party;
+		callfunc("DM_CheckpointStart", .@party, 1);
+		callfunc("DM_CheckpointSyncParty", .@party);
 		dispbottom("[DM] DnD mode enabled. MVP spawns will be suppressed.");
 		dispbottom("[DM] Campaign NPCs are active for party " + $dm_active_party + ".");
 		mapannounce "prontera", "A campaign session has begun. Check the Session Board near the fountain.", bc_map, 0xFFAA33;

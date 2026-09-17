@@ -213,6 +213,7 @@ function	script	DM_Arc02Complete	{
 	callfunc("DM_PartyQuestComplete", 20012, .@party);
 	callfunc("DM_PartyQuestComplete", 20007, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 299, .@party);
+	callfunc("DM_DMJEncounterObjective", 20012, 1, .@party);
 	return 1;
 }
 
@@ -223,6 +224,7 @@ function	script	DM_Arc03Complete	{
 	callfunc("DM_PartyQuestComplete", 20018, .@party);
 	callfunc("DM_PartyQuestComplete", 20013, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 399, .@party);
+	callfunc("DM_DMJEncounterObjective", 20018, 1, .@party);
 	return 1;
 }
 
@@ -233,6 +235,7 @@ function	script	DM_Arc04Complete	{
 	callfunc("DM_PartyQuestComplete", 20023, .@party);
 	callfunc("DM_PartyQuestComplete", 20019, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 499, .@party);
+	callfunc("DM_DMJEncounterObjective", 20023, 1, .@party);
 	return 1;
 }
 
@@ -244,6 +247,7 @@ function	script	DM_Arc05Complete	{
 	callfunc("DM_PartyQuestComplete", 20025, .@party);
 	callfunc("DM_InstanceSetFlag", "dm_act01_complete", 1);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 599, .@party);
+	callfunc("DM_DMJEncounterObjective", 20030, 1, .@party);
 	return 1;
 }
 

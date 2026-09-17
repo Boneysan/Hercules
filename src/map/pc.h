@@ -490,7 +490,8 @@ END_ZEROED_BLOCK;
 		struct {
 			int index, amount;
 		} item[10];
-		int zeny, weight;
+		int zeny;
+		int64 weight;
 	} deal;
 	bool party_creating; // whether the char is requesting party creation
 	bool party_joining; // whether the char is accepting party invitation

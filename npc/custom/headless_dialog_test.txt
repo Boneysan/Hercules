@@ -32,3 +32,21 @@ prontera,160,200,4	script	Dialogue Test NPC	4_F_01,{
 			end;
 	}
 }
+
+// Disposable-runner-only quest award fixture. It exercises the same authored
+// DM_PartyExp path as campaign turn-ins without changing a production quest.
+prontera,163,200,4	script	EXP Quest Award Test NPC	4_F_01,{
+	mes "[EXP Quest Award Test]";
+	mes "A small authored quest award fixture.";
+	next;
+	if (!questprogress(2000))
+		setquest 2000;
+	if (questprogress(2000) == 1) {
+		callfunc("DM_PartyExp", 1000, 500);
+		completequest 2000;
+		mes "Quest awarded 1000 base / 500 job EXP.";
+		close;
+	}
+	mes "Quest already complete.";
+	close;
+}

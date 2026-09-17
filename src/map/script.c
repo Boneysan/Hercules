@@ -31,6 +31,7 @@
 #include "map/chrif.h"
 #include "map/clan.h"
 #include "map/clif.h"
+#include "map/combat_state.h"
 #include "map/date.h"
 #include "map/elemental.h"
 #include "map/goldpc.h"
@@ -8617,7 +8618,8 @@ static BUILDIN(countnameditem)
 static BUILDIN(checkweight)
 {
 	int slots, amount2=0;
-	unsigned int weight=0, i, nbargs;
+	int64 weight=0;
+	unsigned int i, nbargs;
 	struct item_data* id = NULL;
 	struct map_session_data* sd;
 
@@ -8659,8 +8661,8 @@ static BUILDIN(checkweight)
 			return false;
 		}
 
-		weight += itemdb_weight(nameid)*amount; //total weight for all chk
-		if( weight + sd->weight > sd->max_weight )
+		weight += (int64)itemdb_weight(nameid)*amount; //total weight for all chk
+		if (status_encumbrance_blocks_pickup(sd, weight))
 		{// too heavy
 			script_pushint(st,0);
 			return true;
@@ -8699,7 +8701,8 @@ static BUILDIN(checkweight)
 static BUILDIN(checkweight2)
 {
 	//variable sub checkweight
-	int i=0, amount2=0, slots=0, weight=0;
+	int i=0, amount2=0, slots=0;
+	int64 weight=0;
 	short fail=0;
 
 	//variable for array parsing
@@ -8762,8 +8765,8 @@ static BUILDIN(checkweight2)
 			fail = 1;
 			continue;
 		}
-		weight += itemdb_weight(nameid)*amount;
-		if( weight + sd->weight > sd->max_weight ) {
+		weight += (int64)itemdb_weight(nameid)*amount;
+		if (status_encumbrance_blocks_pickup(sd, weight)) {
 			fail = 1;
 			continue;
 		}

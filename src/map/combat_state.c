@@ -177,13 +177,34 @@ enum encumbrance_band status_encumbrance_band(const struct map_session_data *sd)
 	return ENCUMBRANCE_NORMAL;
 }
 
-bool status_encumbrance_blocks_pickup(const struct map_session_data *sd, int extra_weight)
+bool status_encumbrance_blocks_at_percent(const struct map_session_data *sd, int64 extra_weight, unsigned int percent)
 {
 	if (sd == NULL)
 		return true;
 	if (extra_weight < 0)
 		extra_weight = 0;
-	return sd->weight + (unsigned int)extra_weight > sd->max_weight;
+	if (percent > 100)
+		percent = 100;
+	/* Calculate capacity wide, then compare by subtraction so malformed/very
+	 * large stacks cannot wrap an additive weight check. */
+	uint64 capacity = ((uint64)(sd->max_weight > 0 ? sd->max_weight : 0) * percent) / 100;
+	uint64 current = sd->weight > 0 ? (uint64)sd->weight : 0;
+	uint64 extra = (uint64)extra_weight;
+	return current > capacity || extra > capacity - current;
+}
+
+bool status_encumbrance_blocks_pickup(const struct map_session_data *sd, int64 extra_weight)
+{
+	return status_encumbrance_blocks_at_percent(sd, extra_weight, 100);
+}
+
+bool status_cart_weight_blocks(const struct map_session_data *sd, int64 extra_weight)
+{
+	if (sd == NULL)
+		return true;
+	if (extra_weight < 0)
+		extra_weight = 0;
+	return sd->cart_weight > sd->cart_weight_max || (uint64)extra_weight > sd->cart_weight_max - sd->cart_weight;
 }
 
 bool status_encumbrance_blocks_attack(const struct map_session_data *sd)

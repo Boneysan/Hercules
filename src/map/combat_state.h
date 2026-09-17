@@ -43,7 +43,9 @@ enum encumbrance_band {
 };
 
 enum encumbrance_band status_encumbrance_band(const struct map_session_data *sd);
-bool status_encumbrance_blocks_pickup(const struct map_session_data *sd, int extra_weight);
+bool status_encumbrance_blocks_at_percent(const struct map_session_data *sd, int64 extra_weight, unsigned int percent);
+bool status_encumbrance_blocks_pickup(const struct map_session_data *sd, int64 extra_weight);
+bool status_cart_weight_blocks(const struct map_session_data *sd, int64 extra_weight);
 bool status_encumbrance_blocks_attack(const struct map_session_data *sd);
 bool status_encumbrance_blocks_skill(const struct map_session_data *sd);
 bool status_encumbrance_blocks_movement(const struct map_session_data *sd);
