@@ -16,6 +16,16 @@ without recompiling the server.
 - `dm_instances.txt` - script-driven private dungeon instances (create/attach/init/warp/destroy; no instance_db needed).
 - `dm_console.txt` - GM-facing bound commands.
 - `dm_traps.txt` - reusable hazard, puzzle reset, and encounter cleanup helpers.
+- `dm_beats.txt` - `@dmbeat` director for all 19 arcs.
+- `dm_handbook.txt` - `@dmguide` cue cards.
+- `dm_hunts.txt` - generated hunt table (do not hand-edit; `tools/gen-hunts.py`).
+- `dm_encounters.txt` - named encounter composer, formations, party add-count scaling, budget readout, stealth.
+- `dm_mobstats.txt` - generated HP/EHP/DPS lookup (`tools/gen-encounter-stats.py`).
+- `dm_checks.txt` - `@check` / `@assist` / `@dm check` skill checks.
+- `dm_mapflags.txt` - nowarp/noteleport/nomemo on set-piece maps.
+
+Designer-facing palette (which tool to pick when writing a scene, including the damage-taken knob for high-level sprites):
+[design/dm-tools-for-encounters.md](design/dm-tools-for-encounters.md).
 
 ## GM Commands
 
@@ -53,10 +63,27 @@ All commands require GM level 60 or higher.
 @dm instance end
 @dminstance start <source_map> [x] [y] [label]
 @dminstance end
+@dm exp <base> [job]
+@dmexp <base> [job]
+@dm status
+@dmstatus
+@dm reset confirm
+@dmreset confirm
+@dmenc list | info <name> | spawn <name> [ambush|line|scatter]
+@dm stealth [dc]
+@dm wake
+@dm check <player|me|party> <tag|stat> <dc> [dm_flag]
+@dmcheck <player|me|party> <tag|stat> <dc> [dm_flag]
+@dm stakes <success> | <failure>
+@dmstakes <success> | <failure>
+@check <tag|stat> <dc>
+@assist <player> <tag>
 @roll [hidden] <NdX[+/-mod]>
 @roll fudge <total> [note]
 @roll override <total> [note]
 ```
+
+`@check` and `@assist` are player-facing (GM level 0). Everything else in this list is GM 60+ except `@roll` (public; `@roll hidden` / fudge / override are DM-only).
 
 `@dm mode on` does two things: suppresses normal BOSS/MVP spawns server-wide, and
 stores the DM's current party ID in `$dm_active_party`. All 49 visible campaign
@@ -251,7 +278,48 @@ specific arc encounter staging should live in per-arc scripts or `@dmbeat`
 variants so branch behavior remains repeatable.
 
 Use `@dmcleanup` to remove monsters spawned with the DM console labels from the
-current map.
+current map. It does **not** kill story-script labels such as
+`Deacon Holt#dm::OnDeviruchiDead`. Those need `DM_CleanupEncounter` or a spawn
+wired to `DM_Console::OnDMKilled`.
+
+### Named encounters and live budget
+
+`@dmenc list` / `info` / `spawn` is the composer in `dm_encounters.txt`. Packs
+have an elite, minions, and optional caster; minion **count** scales with
+`DM_PartyOnlineCount()`. `@dmenc info` prints time-to-die against the party
+standing there, using `DM_MobStat` (regenerate with
+`./tools/gen-encounter-stats.py`). Formations: `ambush`, `line`, `scatter`.
+
+`@dm stealth [dc]` (default 15) strips `MD_AGGRESSIVE|MD_DETECTOR` on the map,
+the party rolls AGI, and the outcome wakes none / one / all. `@dm wake`
+restores stored modes.
+
+### Dialing a high-level sprite (damage knob)
+
+`DM_EncTune` / `DM_EncMonster` wrap the engine knobs. `@dmenc spawn` and
+`@dm spawn` auto-tune. Re-dial live with:
+
+```text
+@dmenc tune              // party average (excluding the DM), 100%
+@dmenc tune 18           // force level 18
+@dmenc tune 18 70        // mercy / easier
+@dm tune 30 130          // same, from @dm
+```
+
+`DM_EncPartyLevel` skips GM 60+ so a level-99 DM in the party does not inflate
+the target. `DM_EncTuneTarget(<expected>)` then clamps around the scene's
+contract (expected−8 … expected+15).
+
+Story set-pieces should call `DM_EncMonster` with the iconic stock id
+(Deviruchi 1109, Baphomet, Tao, …) rather than adding a `mob_db2` clone.
+Full recipe: [design/dm-tools-for-encounters.md](design/dm-tools-for-encounters.md).
+
+### Checks
+
+`@check <tag|stat> <dc>` and `@assist <player> <tag>` are for players.
+`@dm check` calls one on a name, `me`, or `party`, and may set a `dm_*` flag
+on success. `@dm stakes` announces success/failure lines first. Maths and tags:
+[skill-checks-and-encounters.md](skill-checks-and-encounters.md).
 
 ## Trap And Hazard Helpers
 

@@ -121,6 +121,12 @@ function	script	DM_PartyApplyFlag	{
 	if (.@origin_aid)
 		attachrid(.@origin_aid);
 
+	// The durable SQL checkpoint advances once per accepted party flag event.
+	// Character variables above remain the per-member mirror used by the
+	// Session Board; they are never treated as the authority for progression.
+	if (.@done > 0 && $dm_active_party > 0 && $dm_active_party == .@party_id)
+		callfunc("DM_CheckpointRecordPartyEvent", .@party_id, 1, getcharid(CHAR_ID_CHAR), .@flag$);
+
 	return .@done;
 }
 
@@ -181,6 +187,12 @@ function	script	DM_HuntCollect	{
 
 	for (.@i = 0; .@i < .@n; ++.@i)
 		delitem(.@item[.@i], .@need[.@i]);
+
+	// Hunt collection is the authoritative item-consumption boundary. If this
+	// character owns the party checkpoint's carried item, clear that ownership
+	// only after every required item was successfully removed. A different
+	// member cannot consume the checkpoint owner through this path.
+	callfunc("DM_CheckpointConsume", getcharid(CHAR_ID_PARTY), getcharid(CHAR_ID_CHAR));
 
 	return 1;
 }

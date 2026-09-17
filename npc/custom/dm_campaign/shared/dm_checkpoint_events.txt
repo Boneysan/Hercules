@@ -1,0 +1,17 @@
+// Reconcile a campaign member as soon as Hercules has restored the character
+// and party context. This is deliberately guarded by DM_SessionAllows: a
+// normal login must never query or mutate campaign state for another party.
+
+-	script	DM_CampaignCheckpointEvents	-1,{
+OnPCLoginEvent:
+	if (callfunc("DM_SessionAllows"))
+		callfunc("DM_CheckpointSyncParty", $dm_active_party);
+	end;
+
+OnPCLoadMapEvent:
+	// Login can precede party restoration on some map-server paths. The map
+	// event is the retry point for late joins and reconnects in that case.
+	if (callfunc("DM_SessionAllows"))
+		callfunc("DM_CheckpointSyncParty", $dm_active_party);
+	end;
+}

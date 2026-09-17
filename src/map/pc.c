@@ -31,6 +31,7 @@
 #include "map/chrif.h"
 #include "map/clan.h"
 #include "map/clif.h"
+#include "map/combat_state.h"
 #include "map/date.h" // is_day_of_*()
 #include "map/duel.h"
 #include "map/elemental.h"
@@ -579,13 +580,20 @@ static int pc_setrestartvalue(struct map_session_data *sd, int type)
 	st = &sd->battle_status;
 
 	if (type&1) {
-		//Normal resurrection
-		status->heal(&sd->bl, bst->hp, 0, STATUS_HEAL_FORCED | STATUS_HEAL_ALLOWREVIVE);
-		if( st->sp < bst->sp )
-			status->set_sp(&sd->bl, bst->sp, STATUS_HEAL_FORCED);
+		unsigned int hp = (unsigned int)((int64)bst->hp * battle_config.campaign_respawn_percent / 100);
+		unsigned int sp = (unsigned int)((int64)bst->sp * battle_config.campaign_respawn_percent / 100);
+
+		if (hp < 1)
+			hp = 1;
+		status->set_hp(&sd->bl, hp, STATUS_HEAL_FORCED | STATUS_HEAL_ALLOWREVIVE);
+		status->set_sp(&sd->bl, sp, STATUS_HEAL_FORCED);
+		sd->respawn_fill_until = timer->gettick() + battle_config.campaign_respawn_fill_ms;
+		status_clear_combat_and_sit(sd);
 	} else { //Just for saving on the char-server (with values as if respawned)
-		sd->status.hp = bst->hp;
-		sd->status.sp = (st->sp < bst->sp) ? bst->sp : st->sp;
+		sd->status.hp = (unsigned int)((int64)bst->hp * battle_config.campaign_respawn_percent / 100);
+		if (sd->status.hp < 1)
+			sd->status.hp = 1;
+		sd->status.sp = (unsigned int)((int64)bst->sp * battle_config.campaign_respawn_percent / 100);
 	}
 	return 0;
 }
@@ -1263,6 +1271,7 @@ static bool pc_authok(struct map_session_data *sd, int login_id2, time_t expirat
 	//Initializations to null/0 unneeded since map_session_data was filled with 0 upon allocation.
 	if(!sd->status.hp) pc_setdead(sd);
 	sd->state.connect_new = 1;
+	status_clear_combat_and_sit(sd);
 
 	sd->followtimer = INVALID_TIMER; // [MouseJstr]
 	sd->invincible_timer = INVALID_TIMER;
@@ -1488,6 +1497,15 @@ static int pc_reg_received(struct map_session_data *sd)
 	nullpo_ret(sd);
 	sd->vars_ok = true;
 
+	// Seal Cascade: the character's own automatic-pickup choice. Stored as
+	// radius + 1, so that 0 keeps meaning "never chosen" and a deliberate OFF
+	// survives a relog instead of reading as unset and defaulting back on.
+	{
+		int stored = pc_readglobalreg(sd, script->add_variable("AUTOPICKUP"));
+
+		sd->state.autopickup = (stored > 0) ? cap_value(stored - 1, 0, 2) : cap_value(battle_config.autopickup_radius, 0, 2);
+	}
+
 	sd->change_level_2nd = pc_readglobalreg(sd,script->add_variable("jobchange_level"));
 	sd->change_level_3rd = pc_readglobalreg(sd,script->add_variable("jobchange_level_3rd"));
 	sd->die_counter = pc_readglobalreg(sd,script->add_variable("PC_DIE_COUNTER"));
@@ -1556,6 +1574,11 @@ static int pc_reg_received(struct map_session_data *sd)
 	if (sd->state.active)
 		return 0;
 	sd->state.active = 1;
+
+	// Automatic pickup is on by default, because the whole point of it is that
+	// nobody has to be told it exists. This is only the value in force until
+	// the character's registry arrives; pc_reg_received replaces it with their
+	// own stored choice, and a party overrides both (pc_autopickup_radius).
 
 	if (sd->status.party_id)
 		party->member_joined(sd);
@@ -4818,7 +4841,7 @@ static int pc_additem(struct map_session_data *sd, const struct item *item_data,
 	}
 
 	w = data->weight*amount;
-	if(sd->weight + w > sd->max_weight)
+	if (status_encumbrance_blocks_pickup(sd, (int)w))
 		return 2;
 
 	if( item_data->bound ) {
@@ -5015,6 +5038,127 @@ static int pc_dropitem(struct map_session_data *sd, int n, int amount)
  *   0 = fail
  *   1 = success
  *------------------------------------------*/
+/**
+ * How often the automatic pickup sweep runs, in milliseconds.
+ *
+ * Fast enough that walking over a drop feels like standing on it takes it,
+ * slow enough that the work is nothing: one 5x5 block scan per player who has
+ * the feature on, and nobody else is looked at.
+ */
+#define AUTOPICKUP_INTERVAL 400
+
+/**
+ * The pickup radius actually in force for this character.
+ *
+ * A party overrides the member's own choice. Loot inside a group is shared --
+ * `party_default_share` turns both item rules on at creation -- so one member
+ * opting out does not keep anything for themselves, it only leaves drops lying
+ * on the floor for everybody. Their own setting applies again the moment they
+ * leave the party.
+ */
+int pc_autopickup_radius(const struct map_session_data *sd)
+{
+	nullpo_ret(sd);
+
+	if (sd->status.party_id != 0)
+		return cap_value(battle_config.autopickup_radius, 0, 2);
+
+	return (int)sd->state.autopickup;
+}
+
+/**
+ * Takes one floor item for a player with automatic pickup on.
+ *
+ * Called through map->foreachinarea, so bl is a BL_ITEM inside the player's
+ * pickup square. Everything that decides whether the item may be taken -- the
+ * two cell reach, the killer's reservation window, the party's share rule --
+ * already lives in pc->takeitem, the same function a mouse click goes through.
+ * This decides only whether it is worth asking.
+ */
+static int pc_autopickup_sub(struct block_list *bl, va_list ap)
+{
+	struct flooritem_data *fitem = NULL;
+	struct map_session_data *sd = va_arg(ap, struct map_session_data *);
+	struct item_data *idata = NULL;
+	int weight = 0;
+
+	nullpo_ret(bl);
+	Assert_ret(bl->type == BL_ITEM);
+	fitem = BL_UCAST(BL_ITEM, bl);
+	nullpo_ret(sd);
+
+	if (fitem->item_data.amount <= 0)
+		return 0;
+
+	// Ask only when the item would actually fit. pc->takeitem reports a full
+	// bag or an overweight character through clif->additem, and this runs more
+	// than twice a second: without these checks, standing next to a drop you
+	// cannot carry would repeat the same red error line forever.
+	idata = itemdb->exists(fitem->item_data.nameid);
+	if (idata == NULL)
+		return 0;
+
+	weight = idata->weight * fitem->item_data.amount;
+	if (weight > 0 && status_encumbrance_blocks_pickup(sd, weight))
+		return 0;
+
+	switch (pc->checkadditem(sd, fitem->item_data.nameid, fitem->item_data.amount)) {
+	case ADDITEM_NEW:
+		if (pc->inventoryblank(sd) == 0)
+			return 0;
+		break;
+	case ADDITEM_OVERAMOUNT:
+		return 0;
+	default:
+		break;
+	}
+
+	return pc->takeitem(sd, fitem);
+}
+
+/**
+ * Sweeps the pickup square of one player.
+ *
+ * Returns without looking at the map for anyone who has the feature off, so
+ * the cost of the sweep is paid only by the people using it.
+ */
+static int pc_autopickup_pc(struct map_session_data *sd, va_list ap)
+{
+	int radius;
+
+	nullpo_ret(sd);
+
+	radius = pc_autopickup_radius(sd);
+	if (radius <= 0)
+		return 0;
+	if (sd->state.active == 0 || sd->state.standalone != 0 || sd->state.autotrade != 0)
+		return 0;
+	if (pc_isdead(sd) || sd->state.vending != 0 || sd->state.buyingstore != 0 || sd->state.trading != 0)
+		return 0;
+	if (sd->bl.m < 0)
+		return 0;
+	// A map that bans autoloot bans this too: it is the same act, minus the click.
+	if (map->list[sd->bl.m].flag.noautoloot != 0)
+		return 0;
+	if (pc_has_permission(sd, PC_PERM_DISABLE_PICK_UP))
+		return 0;
+
+	map->foreachinarea(pc_autopickup_sub, sd->bl.m,
+			sd->bl.x - radius, sd->bl.y - radius,
+			sd->bl.x + radius, sd->bl.y + radius,
+			BL_ITEM, sd);
+	return 1;
+}
+
+/**
+ * Automatic pickup sweep, for every player who has it on.
+ */
+static int pc_autopickup_timer(int tid, int64 tick, int id, intptr_t data)
+{
+	map->foreachpc(pc_autopickup_pc);
+	return 0;
+}
+
 static int pc_takeitem(struct map_session_data *sd, struct flooritem_data *fitem)
 {
 	int flag=0;
@@ -5234,7 +5378,7 @@ static int pc_isUseitem(struct map_session_data *sd, int n)
 		return 0;
 
 	if( item->package || item->group ) {
-		if (pc_is90overweight(sd)) {
+		if (status_encumbrance_blocks_pickup(sd, 0)) {
 			clif->msgtable(sd, MSG_CANT_GET_ITEM_BECAUSE_WEIGHT);
 			return 0;
 		}
@@ -5594,7 +5738,8 @@ static void pc_autocast_remove(struct map_session_data *sd, enum autocast_type t
 static int pc_cart_additem(struct map_session_data *sd, struct item *item_data, int amount, e_log_pick_type log_type)
 {
 	struct item_data *data;
-	int i,w;
+	int i;
+	int64 w;
 
 	nullpo_retr(1, sd);
 	nullpo_retr(1, item_data);
@@ -5614,7 +5759,8 @@ static int pc_cart_additem(struct map_session_data *sd, struct item *item_data, 
 		return 1;/* TODO: there is no official response to this? */
 	}
 
-	if( (w = data->weight*amount) + sd->cart_weight > sd->cart_weight_max )
+	w = (int64)data->weight * amount;
+	if (status_cart_weight_blocks(sd, w))
 		return 1;
 
 	i = MAX_CART;
@@ -6063,6 +6209,8 @@ static int pc_setpos(struct map_session_data *sd, unsigned short map_index, int 
 
 		if (map->list[map_id].cell == (struct mapcell *)0xdeadbeaf)
 			map->cellfromcache(&map->list[map_id]);
+
+		status_clear_combat_and_sit(sd);
 
 		if (sd->sc.count != 0) { // Cancel some map related stuff.
 			if (sd->sc.data[SC_JAILED] != NULL)
@@ -7372,6 +7520,48 @@ static int pc_skillup(struct map_session_data *sd, uint16 skill_id)
 	return 0;
 }
 
+static int pc_skilldown(struct map_session_data *sd, uint16 skill_id)
+{
+	int index;
+	int classidx;
+	int i;
+
+	nullpo_ret(sd);
+	if (!(index = skill->get_index(skill_id)))
+		return 0;
+	if (sd->status.skill[index].id == 0 || sd->status.skill[index].lv < 1)
+		return 0;
+	if (sd->status.skill[index].flag != SKILL_FLAG_PERMANENT)
+		return 0;
+
+	classidx = pc->class2idx(sd->status.class);
+	for (i = 0; i < MAX_SKILL_TREE && pc->skill_tree[classidx][i].id > 0; i++) {
+		int other = pc->skill_tree[classidx][i].id;
+		int other_idx = pc->skill_tree[classidx][i].idx;
+		int j;
+
+		if (other == skill_id || sd->status.skill[other_idx].lv < 1)
+			continue;
+		for (j = 0; j < VECTOR_LENGTH(pc->skill_tree[classidx][i].need); j++) {
+			struct skill_tree_requirement *req = &VECTOR_INDEX(pc->skill_tree[classidx][i].need, j);
+			if (req->idx == index && sd->status.skill[index].lv <= req->lv) {
+				clif->messagecolor_self(sd->fd, COLOR_RED, "Refund the skills that require this one first.");
+				return 0;
+			}
+		}
+	}
+
+	sd->status.skill[index].lv--;
+	sd->status.skill_point++;
+	if (sd->status.skill[index].lv == 0)
+		sd->status.skill[index].id = 0;
+	status_calc_pc(sd, SCO_NONE);
+	clif->skillup(sd, skill_id, sd->status.skill[index].lv, 0);
+	clif->updatestatus(sd, SP_SKILLPOINT);
+	clif->skillinfoblock(sd);
+	return 1;
+}
+
 /*==========================================
  * /allskill
  *------------------------------------------*/
@@ -7908,6 +8098,8 @@ static void pc_damage(struct map_session_data *sd, struct block_list *src, unsig
 static int pc_dead(struct map_session_data *sd, struct block_list *src)
 {
 	nullpo_ret(sd);
+
+	status_clear_combat_and_sit(sd);
 
 	for (int i = 0; i < MAX_PC_DEVOTION; i++) {
 		if (sd->devotion[i] != 0) {
@@ -11179,6 +11371,7 @@ static void pc_setstand(struct map_session_data *sd)
 	//Reset sitting tick.
 	sd->sitting_regen.tick.hp = 0;
 	sd->sitting_regen.tick.sp = 0;
+	sd->sit_regen_tick = 0;
 	if (pc_isdead(sd)) {
 		sd->state.dead_sit = sd->vd.dead_sit = 0;
 		clif->party_dead_notification(sd);
@@ -12928,6 +13121,12 @@ static void do_init_pc(bool minimal)
 	timer->add_func_list(pc->global_expiration_timer,"pc_global_expiration_timer");
 	timer->add_func_list(pc->expiration_timer,"pc_expiration_timer");
 
+	// Registered unconditionally: autopickup_radius may be 0 while individual
+	// players still switch it on with @autopickup, and a sweep with nobody
+	// using it walks an empty list.
+	timer->add_func_list(pc_autopickup_timer, "pc_autopickup_timer");
+	timer->add_interval(timer->gettick() + AUTOPICKUP_INTERVAL, pc_autopickup_timer, 0, 0, AUTOPICKUP_INTERVAL);
+
 	timer->add(timer->gettick() + map->autosave_interval, pc->autosave, 0, 0);
 
 	// 0=day, 1=night [Yor]
@@ -13106,6 +13305,7 @@ void pc_defaults(void)
 	pc->statusup = pc_statusup;
 	pc->statusup2 = pc_statusup2;
 	pc->skillup = pc_skillup;
+	pc->skilldown = pc_skilldown;
 	pc->allskillup = pc_allskillup;
 	pc->resetlvl = pc_resetlvl;
 	pc->resetstate = pc_resetstate;

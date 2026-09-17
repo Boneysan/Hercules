@@ -62,3 +62,11 @@ tha_t12	mapflag	nomemo
 moc_fild22	mapflag	nowarp
 moc_fild22	mapflag	noteleport
 moc_fild22	mapflag	nomemo
+
+treasure01	mapflag	nowarp
+treasure01	mapflag	noteleport
+treasure01	mapflag	nomemo
+
+tur_dun04	mapflag	nowarp
+tur_dun04	mapflag	noteleport
+tur_dun04	mapflag	nomemo

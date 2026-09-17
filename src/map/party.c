@@ -188,6 +188,19 @@ static int party_create(struct map_session_data *sd, const char *name, int item,
 
 	sd->party_creating = true;
 
+	// korangar creates every party with both share flags at zero
+	// (`create_party` sends CreatePartyPacket::new(name, 0, 0)), so a party
+	// formed here starts out keeping each drop for whoever touched it first --
+	// which turns automatic pickup into a race between friends rather than a
+	// group feature. The options CAN be changed afterwards (the client has
+	// set_party_options and a window for it), but nothing should depend on a
+	// player finding that, so the server decides the starting value instead.
+	// party_default_share in party.conf.
+	if ((battle_config.party_default_share & 1) != 0)
+		item = 1;   // any member may take a drop still reserved for a teammate
+	if ((battle_config.party_default_share & 2) != 0)
+		item2 = 1;  // loot is handed out by party_item_share_type, not kept
+
 	party->fill_member(&leader, sd, 1);
 
 	intif->create_party(&leader,name,item,item2);
@@ -213,6 +226,17 @@ static void party_created(int account_id, int char_id, int fail, int party_id, c
 
 	if( !fail ) {
 		sd->status.party_id = party_id;
+
+		// EXP sharing has no creation flag at all, so it can only be pushed
+		// after the fact. The hazard it carries is a high level member soaking
+		// an even share; this table's DM plays at the party's own level, so
+		// bit 4 is set and this runs. The char server still refuses when the
+		// members' level spread is wider than party_share_level
+		// (conf/common/inter-server.conf, 15 here), which is the backstop if
+		// that ever stops being true.
+		if ((battle_config.party_default_share & 4) != 0)
+			intif->party_changeoption(party_id, account_id, 1, battle_config.party_default_share & 3);
+
 		clif->party_created(sd,0); //Success message
 		//We don't do any further work here because the char-server sends a party info packet right after creating the party.
 	} else {

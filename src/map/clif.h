@@ -1132,6 +1132,7 @@ struct clif_interface {
 	void (*skillcastcancel) (struct block_list* bl);
 	void (*skill_fail) (struct map_session_data *sd, uint16 skill_id, enum useskill_fail_cause cause, int btype, int32 item_id);
 	void (*skill_fail_reason) (struct map_session_data *sd, uint16 skill_id, enum skill_fail_reason reason);
+	void (*recovery_state) (struct map_session_data *sd, uint8 mode, uint8 block);
 	void (*skill_cooldown) (struct map_session_data *sd, uint16 skill_id, unsigned int duration);
 	void (*skill_memomessage) (struct map_session_data* sd, int type);
 	void (*skill_mapinfomessage) (struct map_session_data *sd, int type);

@@ -251,6 +251,7 @@ struct map_session_data {
 		unsigned int callshop : 1; // flag to indicate that a script used callshop; on a shop
 		short pmap; // Previous map on Map Change
 		unsigned int autoloot;
+		unsigned int autopickup : 2; // Seal Cascade: the CHARACTER's own pickup radius in cells, 0 = off
 		int autolootid[AUTOLOOTITEM_SIZE]; // [Zephyrus]
 		unsigned int autoloottype;
 		unsigned int autolooting : 1; //performance-saver, autolooting state for @alootid
@@ -319,6 +320,11 @@ struct map_session_data {
 	int npc_timer_id; //For player attached npc timers. [Skotlex]
 	int chat_id;
 	int64 idletime;
+	int64 last_combat_tick;
+	int64 respawn_fill_until;
+	int sit_regen_tick;
+	uint8 last_recovery_mode;
+	uint8 last_recovery_block;
 	struct {
 		int npc_id;
 		int64 timeout;
@@ -484,7 +490,8 @@ END_ZEROED_BLOCK;
 		struct {
 			int index, amount;
 		} item[10];
-		int zeny, weight;
+		int zeny;
+		int64 weight;
 	} deal;
 	bool party_creating; // whether the char is requesting party creation
 	bool party_joining; // whether the char is accepting party invitation
@@ -720,7 +727,7 @@ END_ZEROED_BLOCK;
 #endif
 
 #define pc_setdead(sd)        ( (sd)->state.dead_sit = (sd)->vd.dead_sit = 1 )
-#define pc_setsit(sd)         ( (sd)->state.dead_sit = (sd)->vd.dead_sit = 2 )
+#define pc_setsit(sd)         ( (sd)->sit_regen_tick = 0, (sd)->state.dead_sit = (sd)->vd.dead_sit = 2 )
 #define pc_isdead(sd)         ( (sd)->state.dead_sit == 1 )
 #define pc_issit(sd)          ( (sd)->vd.dead_sit == 2 )
 #define pc_isidle(sd)         ( (sd)->chat_id != 0 || (sd)->state.vending || (sd)->state.buyingstore || DIFF_TICK(sockt->last_tick, (sd)->idletime) >= battle->bc->idle_no_share )
@@ -1084,6 +1091,7 @@ END_ZEROED_BLOCK; /* End */
 	bool (*statusup) (struct map_session_data *sd, int type, int increase);
 	int (*statusup2) (struct map_session_data *sd,int type,int val);
 	int (*skillup) (struct map_session_data *sd,uint16 skill_id);
+	int (*skilldown) (struct map_session_data *sd,uint16 skill_id);
 	int (*allskillup) (struct map_session_data *sd);
 	int (*resetlvl) (struct map_session_data *sd,int type);
 	int (*resetstate) (struct map_session_data *sd);
@@ -1304,5 +1312,16 @@ void pc_defaults(void);
 #endif // HERCULES_CORE
 
 HPShared struct pc_interface *pc;
+
+/**
+ * Seal Cascade: the pickup radius actually in force for this character.
+ *
+ * Not simply `sd->state.autopickup`: being in a party overrides the member's
+ * own choice. Loot inside a group is shared, so one member opting out would
+ * only leave drops lying on the floor for everybody. Declared here rather than
+ * added to the pc interface so the HPM hook tables do not have to be
+ * regenerated for it.
+ */
+int pc_autopickup_radius(const struct map_session_data *sd);
 
 #endif /* MAP_PC_H */

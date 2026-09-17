@@ -24,6 +24,7 @@
 
 #include "map/atcommand.h"
 #include "map/battle.h"
+#include "map/combat_state.h"
 #include "map/chrif.h"
 #include "map/clif.h"
 #include "map/intif.h"
@@ -352,7 +353,8 @@ static void trade_tradeadditem(struct map_session_data *sd, short index, short a
 {
 	struct map_session_data *target_sd;
 	struct item *item;
-	int trade_i, trade_weight;
+	int trade_i;
+	int64 trade_weight;
 	int src_lv, dst_lv;
 
 	nullpo_retv(sd);
@@ -414,8 +416,8 @@ static void trade_tradeadditem(struct map_session_data *sd, short index, short a
 		return;
 	}
 
-	trade_weight = sd->inventory_data[index]->weight * amount;
-	if (target_sd->weight + sd->deal.weight + trade_weight > target_sd->max_weight) {
+	trade_weight = (int64)sd->inventory_data[index]->weight * amount;
+	if (status_encumbrance_blocks_pickup(target_sd, sd->deal.weight + trade_weight)) {
 		//fail to add item -- the player was over weighted.
 		clif->tradeitemok(sd, index+2, TIO_OVERWEIGHT);
 		return;
@@ -426,7 +428,7 @@ static void trade_tradeadditem(struct map_session_data *sd, short index, short a
 		if (sd->deal.item[trade_i].amount + amount > sd->status.inventory[index].amount) {
 			//packet deal exploit check
 			amount = sd->status.inventory[index].amount - sd->deal.item[trade_i].amount;
-			trade_weight = sd->inventory_data[index]->weight * amount;
+			trade_weight = (int64)sd->inventory_data[index]->weight * amount;
 		}
 		sd->deal.item[trade_i].amount += amount;
 	} else {

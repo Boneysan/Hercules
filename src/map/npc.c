@@ -25,6 +25,7 @@
 
 #include "map/battle.h"
 #include "map/chat.h"
+#include "map/combat_state.h"
 #include "map/clan.h"
 #include "map/clif.h"
 #include "map/guild.h"
@@ -1604,7 +1605,7 @@ static int npc_cashshop_buylist(struct map_session_data *sd, int points, struct 
 		w += itemdb_weight(entry->id) * entry->amount;
 	}
 
-	if( w + sd->weight > sd->max_weight )
+	if (status_encumbrance_blocks_pickup(sd, w))
 		return ERROR_TYPE_INVENTORY_WEIGHT;
 
 	if( pc->inventoryblank(sd) < new_ )
@@ -2237,7 +2238,7 @@ static int npc_cashshop_buy(struct map_session_data *sd, int nameid, int amount,
 	}
 
 	w = item->weight * amount;
-	if( w + sd->weight > sd->max_weight )
+	if (status_encumbrance_blocks_pickup(sd, w))
 		return ERROR_TYPE_INVENTORY_WEIGHT;
 
 	if ((int64)shop[i].value * amount > INT_MAX) {
@@ -2374,7 +2375,7 @@ static int npc_buylist(struct map_session_data *sd, struct itemlist *item_list)
 		return npc->buylist_sub(sd, item_list, nd->master_nd);
 	if (z > sd->status.zeny)
 		return 1; // Not enough Zeny
-	if (w + sd->weight > sd->max_weight)
+	if (status_encumbrance_blocks_pickup(sd, w))
 		return 2; // Too heavy
 	if (pc->inventoryblank(sd) < new_)
 		return 3; // Not enough space to store items
@@ -2487,7 +2488,7 @@ static enum market_buy_result npc_market_buylist(struct map_session_data *sd, st
 	if (z > sd->status.zeny) /* TODO find official response for this */
 		return MARKET_BUY_RESULT_NO_ZENY; // Not enough Zeny
 
-	if( w + sd->weight > sd->max_weight ) /* TODO find official response for this */
+	if (status_encumbrance_blocks_pickup(sd, w)) /* TODO find official response for this */
 		return MARKET_BUY_RESULT_OVER_WEIGHT; // Too heavy
 
 	if( pc->inventoryblank(sd) < new_ ) /* TODO find official response for this */
@@ -2611,7 +2612,7 @@ static int npc_barter_buylist(struct map_session_data *sd, struct barteritemlist
 		w -= itemdb_weight(removeId) * removeAmount;
 	}
 
-	if (w + sd->weight > sd->max_weight)
+	if (status_encumbrance_blocks_pickup(sd, w))
 		return 2; // Too heavy
 
 	if (pc->inventoryblank(sd) < new_)
@@ -2755,7 +2756,7 @@ static int npc_expanded_barter_buylist(struct map_session_data *sd, struct barte
 	if (z > sd->status.zeny)
 		return 3; // Not enough Zeny
 
-	if ((int64)w + sd->weight > sd->max_weight)
+	if (status_encumbrance_blocks_pickup(sd, w))
 		return 2; // Too heavy
 
 	if (pc->inventoryblank(sd) < new_)
@@ -2937,6 +2938,9 @@ static int npc_selllist(struct map_session_data *sd, struct itemlist *item_list)
 
 		if (nameid == 0 || sd->inventory_data[idx] == NULL || sd->status.inventory[idx].amount < entry->amount)
 			return 1;
+
+		if (sd->status.inventory[idx].equip != 0)
+			return 1; // Equipped items cannot be sold
 
 		if (nd->master_nd != NULL) // Script-controlled shops decide by themselves, what can be sold and at what price.
 			continue;

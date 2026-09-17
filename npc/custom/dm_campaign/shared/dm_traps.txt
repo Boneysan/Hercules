@@ -96,6 +96,19 @@ function	script	DM_HazardArea	{
 	return .@hit;
 }
 
+// One signaled pulse. Wrong glyph configs and failed drain repairs use this
+// instead of a looping hazard. Recoverable; does not start a timer.
+function	script	DM_PulseWarn	{
+	.@map$ = getarg(0, strnpcinfo(NPC_MAP));
+	.@x = getarg(1, 0);
+	.@y = getarg(2, 0);
+	.@pct = getarg(3, 3);
+	.@line$ = getarg(4, "Pressure vents. The attempt resets. Try a different order.");
+	mapannounce .@map$, "[Seal] " + .@line$, bc_map, 0xFFAA33;
+	callfunc("DM_HazardArea", .@map$, .@x, .@y, 8, .@pct, SC_CURSE, 3000, getcharid(CHAR_ID_PARTY));
+	return 1;
+}
+
 // DM_ResetPuzzleFlag("<flag_prefix>", count)
 // Sets a sequence of indexed flags back to 0. Useful for resettable puzzles.
 function	script	DM_ResetPuzzleFlag	{

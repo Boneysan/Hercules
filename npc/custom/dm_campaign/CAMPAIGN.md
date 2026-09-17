@@ -7,13 +7,13 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 
 ## Quick Reference
 
-| Arc | Title | Hub NPC / Map | Boss | Quest IDs |
-|-----|-------|---------------|------|-----------|
-| 01 | The Broken Gate | Prontera | — | 20001–20004 |
-| 02 | River of Ash | Payon | — | 20007–20012 |
-| 03 | The Scar | Morroc | — | 20013–20018 |
-| 04 | The Warden's Brand | Geffen | — | 20019–20024 |
-| 05 | The Leviathan Compact | Alberta / Izlude | — | 20025–20030 |
+| Arc | Title | Hub NPC / Map | Set-piece | Quest IDs |
+|-----|-------|---------------|-----------|-----------|
+| 01 | Omens at the Fountain | Wynne / Prontera | Deviruchi (1109) in the Listening Chamber | 20001–20006 |
+| 02 | The Sleeping Forest | Sun-Hwa / Payon | Moonlight Flower (1150) in pay_dun04 | 20007–20012 |
+| 03 | Sand and Whispers | Rashid / Morroc | Osiris (1038) then Amon Ra (1511) | 20013–20018 |
+| 04 | The City Above the Beast | Elsbeth / Geffen | Baphomet (1039) in gef_dun02 | 20019–20024 |
+| 05 | Tides and Trade | Mara / Alberta | Hold fight, then Tao Gunka (1583) | 20025–20030 |
 | 06 | The Council's Edge | Yuno | Mistress (1059) | 20101–20104 |
 | 07 | Iron Congregation | Einbroch | RSX-0806 (1623) | 20111–20115 |
 | 08 | Cathedral of Chains | Glast Heim | Dark Lord (1272) | 20121–20124 |
@@ -33,18 +33,32 @@ via `dm_console.txt` commands (`@dm`, `@dmbeat`, `@dmflag`, etc.).
 
 ## Act I (Arcs 1–5) — The First Thread
 
-**Flow:** Tavern intro → each arc uses S_StartArc / S_TurnIns pattern with 2
-hunting contracts + 1 story quest. No MVP bosses; story resolution via villain
-dialogue choices.
+**Player promise:** the small people we help change what happens under the city.
 
-Arc 4's Baphomet's Seal beat starts the Vault Seal Pressure hazard: three
-pulses around `gef_dun02` 214,212 with curse pressure. The Outer Seal Puzzle
-(`DM_ResetPuzzleFlag`) also unlocks via `@dmbeat` in Arc 4.
+**Flow:** investigate, operate, rescue, then talk. Optional hunts never open
+the set-piece. Shared tools in `dm_session.txt`: scene claim, encounter
+records, `DM_Arc01Complete`…`DM_Arc05Complete`. Stock sprites, tuned with
+`DM_EncMonster` / `DM_EncTune`. `@dm cleanup` sweeps registered encounters
+and does not award victory.
+
+| Arc | What players do | Tracker close |
+|-----|-----------------|---------------|
+| 1 Prontera | Paint + Mira (or Tibbets) → optional drain/Hlin → Holt | `DM_Arc01Complete` closes 20005 **and** 20001 |
+| 2 Payon | Two memorials → cut conduits → restore or burn | 20012 **and** 20007 |
+| 3 Morroc | Two wells + checkpoints → Osiris/Amon. Sabra questions do not commit | 20018 **and** 20013 |
+| 4 Geffen | East/North/West glyphs (iron works) → defend the configuration | 20023 **and** 20019. Catechism 20024 is optional |
+| 5 Alberta | Two ferry departures + two diver sites → quiet/loud hold → Tao | 20030 **and** 20025. Sets `dm_act01_complete` |
+
+Arc 4 vault pressure now starts from the player Baphomet path as well as the
+DM beat. Wrong glyph order is a short pulse, then the attempt resets.
 
 **Key flags set:**
 - `dm_arc04_cassell_unmasked` — Cassell's true role revealed (callbacks in Arcs 8, 19)
-- `dm_arc04_seal_reinforced` — Baphomet seal reinforced (callback in Arc 8)
-- `dm_arc01_sigil_ring_obtained` — Sigil Ring item acquired (affects Arc 8 flavor)
+- `dm_arc04_seal_reinforced` / `dm_arc04_city_dimmed` — Geffen dims (street lamp + Elsbeth)
+- `dm_arc04_overflow_kept` — city stays bright
+- `dm_arc01_sigil_ring_obtained` — Sigil Ring (Arcs 2–6, 8 flavor)
+- `dm_arc03_relief_secured` — Arc 5 harbor reads actual water, not only accusation
+- `dm_arc05_departures_used` / `dm_arc05_diver_groups_saved` — rescue work, not menus
 
 ---
 

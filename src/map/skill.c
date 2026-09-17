@@ -47,6 +47,7 @@
 #include "map/refine.h"
 #include "map/script.h"
 #include "map/status.h"
+#include "map/combat_state.h"
 #include "map/storage.h"
 #include "map/unit.h"
 #include "common/cbasetypes.h"
@@ -6645,6 +6646,16 @@ static int skill_castend_id(int tid, int64 tick, int id, intptr_t data)
 		// SC_MAGICPOWER needs to switch states before any damage is actually dealt
 		skill->toggle_magicpower(src, ud->skill_id, ud->skill_lv);
 
+		{
+			int s_inf = skill->get_inf(ud->skill_id);
+			int s_nk = skill->get_nk(ud->skill_id);
+			bool offensive = ((s_inf & INF_ATTACK_SKILL) != 0 || (s_nk & NK_NO_DAMAGE) == 0)
+				|| (target != NULL && target != src && battle->check_target(src, target, BCT_ENEMY) > 0 && (s_inf & INF_SUPPORT_SKILL) == 0);
+			bool support = (s_inf & INF_SUPPORT_SKILL) != 0;
+
+			status_apply_skill_combat(src, target, offensive, support);
+		}
+
 #if 0 // On aegis damage skills are also increase by camouflage. Need confirmation on kRO.
 		if( ud->skill_id != RA_CAMOUFLAGE ) // only normal attack and auto cast skills benefit from its bonuses
 			status_change_end(src,SC_CAMOUFLAGE, INVALID_TIMER);
@@ -12423,6 +12434,14 @@ static int skill_castend_pos2(struct block_list *src, int x, int y, uint16 skill
 	// SC_MAGICPOWER needs to switch states before any damage is actually dealt
 	skill->toggle_magicpower(src, skill_id, skill_lv);
 
+	{
+		int p_inf = skill->get_inf(skill_id);
+		int p_nk = skill->get_nk(skill_id);
+		if ((p_inf & INF_ATTACK_SKILL) != 0 || (p_nk & NK_NO_DAMAGE) == 0) {
+			status_apply_skill_combat(src, NULL, true, false);
+		}
+	}
+
 	PRAGMA_GCC46(GCC diagnostic push)
 	PRAGMA_GCC46(GCC diagnostic ignored "-Wswitch-enum")
 	switch(skill_id) {
@@ -15683,7 +15702,7 @@ static int skill_check_condition_castbegin(struct map_session_data *sd, uint16 s
 	if( !sc->count )
 		sc = NULL;
 
-	if (pc_is90overweight(sd) && sd->auto_cast_current.type != AUTOCAST_ITEM) { // Skill casting items ignore the overweight restriction.
+	if (status_encumbrance_blocks_skill(sd) && sd->auto_cast_current.type != AUTOCAST_ITEM) {
 		clif->skill_fail(sd, skill_id, USESKILL_FAIL_WEIGHTOVER, 0, 0);
 		return 0;
 	}
@@ -16900,7 +16919,7 @@ static int skill_check_condition_castend(struct map_session_data *sd, uint16 ski
 			break;
 	}
 
-	if (pc_is90overweight(sd) && sd->auto_cast_current.type != AUTOCAST_ITEM) { // Skill casting items ignore the overweight restriction.
+	if (status_encumbrance_blocks_skill(sd) && sd->auto_cast_current.type != AUTOCAST_ITEM) {
 		clif->skill_fail(sd, skill_id, USESKILL_FAIL_WEIGHTOVER, 0, 0);
 		return 0;
 	}
