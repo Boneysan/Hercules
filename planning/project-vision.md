@@ -1,5 +1,11 @@
 # Hercules RO — Project Vision & DM Game Night System
 
+> **Product-level design lives in the client repo:** the Game Design Document is
+> `korangar/docs/GDD.md` ([Boneysan/korangar](https://github.com/Boneysan/korangar)).
+> It audits both forks and records cross-repo decisions (DM Session mode, autoloot
+> permissions, `@partyjump`, the in-game encyclopedia). This folder holds the
+> DM-campaign and server-operations design that the GDD refers to.
+
 ## Concept: Live Dungeon Master in Ragnarok Online
 
 RO already has everything a tabletop session needs:
