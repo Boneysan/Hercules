@@ -22,7 +22,7 @@
 
 // ── Kronecker G Heine — The Intelligence Director ─────────────────────────
 prontera,150,150,5	script	Kronecker G Heine#dm	4_M_01,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20201) == 2) {
 		callfunc("DM_PartyMes", "[Kronecker G Heine]");
 		if (dm_arc16_rina_defected)
@@ -95,8 +95,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20202) == 1 && callfunc("DM_HuntReady", 20202)) {
-		callfunc("DM_HuntCollect", 20202);
+	callfunc("DM_HuntNoteShort", 20202);
+	if (questprogress(20202) == 1 && callfunc("DM_HuntCollect", 20202)) {
 		callfunc("DM_InstanceQuestComplete", 20202);
 		callfunc("DM_PartyExp", 520000, 260000);
 		callfunc("DM_GivePartyZeny", 42000);
@@ -121,8 +121,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20203) == 1 && callfunc("DM_HuntReady", 20203)) {
-		callfunc("DM_HuntCollect", 20203);
+	callfunc("DM_HuntNoteShort", 20203);
+	if (questprogress(20203) == 1 && callfunc("DM_HuntCollect", 20203)) {
 		callfunc("DM_InstanceQuestComplete", 20203);
 		callfunc("DM_PartyExp", 540000, 270000);
 		callfunc("DM_GivePartyZeny", 44000);
@@ -205,7 +205,7 @@ S_TurnIns:
 
 // ── Matron Rina — The Coordinator ─────────────────────────────────────────
 prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc16_started) {
 		callfunc("DM_PartyMes", "[Matron Rina]");
 		callfunc("DM_PartyMes", "This part of the prison is not open to visitors.");

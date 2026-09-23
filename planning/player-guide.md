@@ -7,25 +7,15 @@ to know to connect, create a character, and jump into a session.
 
 ## Getting Connected
 
-> **GM note (2026-08-12):** friends get the Korangar pack from a private Google
-> Drive folder, not the 2019 official client. How to build and share that pack
-> is [korangar/docs/plans/friends-distribution.md](../../korangar/docs/plans/friends-distribution.md).
-> Rewrite this section when the first pack ships. The steps below are stale.
+Friends use the current private Korangar pack. The host supplies the pack and
+setup instructions; [client distribution plan](../../korangar/docs/plans/friends-distribution.md)
+tracks how it is built and shared.
 
 ### The Client
 
-You'll need the Ragnarok Online client, version **2019-06-05**. If you don't
-have one already, ask the GM — they can share the setup package.
-
-After installing, open the client's `clientinfo.xml` (or the setup launcher)
-and point it at:
-
-```
-Server address: 127.0.0.1   Port: 6900
-```
-
-If you're connecting from a different machine on the same local network, ask
-the GM for the server's local IP address (something like `192.168.x.x`).
+Ask the host for the latest Korangar Windows or macOS pack and follow its
+`READ ME FIRST` instructions. The pack supplies the server address; do not
+replace it with `127.0.0.1` unless you are hosting the server on your own PC.
 
 ### Creating Your Account
 
@@ -68,8 +58,9 @@ will make it work.
    see a server announcement. That's your cue to check the Session Board and
    look for the first story NPC the DM points you toward.
 
-4. **Follow the quest markers.** Active quests show up on your mini-map as
-   yellow markers. Click NPCs with a marker to advance the story. Most of the
+4. **Follow the quest markers.** Story NPCs can have quest icons above them.
+   Use **Ctrl+Q** for the current quest log; next-exit minimap guidance is
+   planned, so the DM may still need to name the next destination. Most of the
    adventure is driven by talking to story characters and making choices —
    combat happens when the DM decides it's time.
 
@@ -121,6 +112,12 @@ There are five ways the story can end. Only one of them is obvious.
 
 ## Quick Tips
 
+- Free stat and skill reallocation at any level is the server's intended
+  policy. The current **Reset skills** and **Reset stats** buttons are not yet
+  reliable for ordinary players: their command names/permissions need a fix.
+  For a one-point skill refund, `@refundskill <skill id>` is granted to
+  players; refund dependent skills first. The priced Reset Girl NPC is inactive.
+  Until the reset fix ships, ask the host if you need a full reset.
 - Talk to every NPC the DM highlights. Story is usually in the dialogue, not
   just the quest log.
 - The `@roll` command shows your result to the whole map. The DM may ask for a

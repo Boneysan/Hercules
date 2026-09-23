@@ -22,7 +22,7 @@
 
 // ── Foreman Dunmar — The Man With Miners ───────────────────────────────────
 veins,100,100,5	script	Foreman Dunmar#dm	4_M_06,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20181) == 2) {
 		callfunc("DM_PartyMes", "[Foreman Dunmar]");
 		callfunc("DM_PartyMes", "Ifrit is gone. The tunnels are cooler. Not cool — cooler. My people are alive. That is what I wanted from this.");
@@ -95,8 +95,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20183) == 1 && callfunc("DM_HuntReady", 20183)) {
-		callfunc("DM_HuntCollect", 20183);
+	callfunc("DM_HuntNoteShort", 20183);
+	if (questprogress(20183) == 1 && callfunc("DM_HuntCollect", 20183)) {
 		callfunc("DM_InstanceQuestComplete", 20183);
 		callfunc("DM_PartyExp", 420000, 200000);
 		callfunc("DM_GivePartyZeny", 35000);
@@ -121,8 +121,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20184) == 1 && callfunc("DM_HuntReady", 20184)) {
-		callfunc("DM_HuntCollect", 20184);
+	callfunc("DM_HuntNoteShort", 20184);
+	if (questprogress(20184) == 1 && callfunc("DM_HuntCollect", 20184)) {
 		callfunc("DM_InstanceQuestComplete", 20184);
 		callfunc("DM_PartyExp", 440000, 210000);
 		callfunc("DM_GivePartyZeny", 37000);
@@ -193,7 +193,7 @@ S_TurnIns:
 
 // ── Prelate Hesma — The Silence Before the Fire ────────────────────────────
 veins,110,100,5	script	Prelate Hesma#dm	4_M_06,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc14_started) {
 		callfunc("DM_PartyMes", "[Prelate Hesma]");
 		callfunc("DM_PartyMes", "Veins's sacred fires are a place of peace and reflection. Please respect the sanctity of the grounds.");

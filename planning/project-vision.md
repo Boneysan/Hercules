@@ -5,6 +5,18 @@
 > It audits both forks and records cross-repo decisions (DM Session mode, autoloot
 > permissions, `@partyjump`, the in-game encyclopedia). This folder holds the
 > DM-campaign and server-operations design that the GDD refers to.
+> The active GDD build order and current-code audit are in
+> [korangar/docs/plans/gdd-next-slices.md](../../korangar/docs/plans/gdd-next-slices.md).
+> The [end-to-end GDD improvement plan](../../korangar/docs/plans/gdd-improvement-plan.md)
+> covers the later waves and decision gates beyond those next slices.
+> In particular, free player stat/skill resets are now the GDD target, but the
+> command names, permissions, and client buttons need alignment before ordinary
+> players can rely on them. Nearby-party stock quest credit already exists; use
+> the effective import config when assessing EXP settings.
+> Story quests and completion remain **per character**, even when an account's
+> general discoveries are shared. DM Session helpers synchronize online party
+> characters today; missed quest/flag replay is planned in
+> [the DM party quest-sync contract](../../korangar/docs/specs/dm-party-quest-sync.md).
 
 ## Concept: Live Dungeon Master in Ragnarok Online
 
@@ -199,6 +211,10 @@ Hercules/
 ---
 
 ## Planned Features (DM Tooling)
+
+The checklist below is the original concept sketch, not current implementation
+status. For current cross-project work use the GDD build order linked above;
+for campaign operations use [dm-handoff.md](dm-handoff.md).
 
 ### Phase 1 — Foundation
 - [ ] Server builds and runs cleanly in WSL

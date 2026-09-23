@@ -25204,6 +25204,120 @@ static BUILDIN(freeloop)
 	return true;
 }
 
+static BUILDIN(campaigncatchup)
+{
+	struct map_session_data *sd = script->rid2sd(st);
+	if (sd != NULL)
+		party_campaign_catchup_others(sd);
+	return true;
+}
+
+static BUILDIN(campaignpush)
+{
+	struct map_session_data *sd = script->rid2sd(st);
+	if (sd != NULL)
+		party_campaign_push_others(sd);
+	return true;
+}
+
+/**
+ * countcharitem <char id>, <item id>
+ * Item count in that character's live inventory, or -1 when they are offline.
+ * Does not attach the script to them.
+ */
+static BUILDIN(countcharitem)
+{
+	int char_id = script_getnum(st, 2);
+	int nameid = script_getnum(st, 3);
+	struct map_session_data *sd = map->charid2sd(char_id);
+	int count = 0;
+	int i;
+
+	if (sd == NULL) {
+		script_pushint(st, -1);
+		return true;
+	}
+	for (i = 0; i < sd->status.inventorySize; i++) {
+		if (sd->status.inventory[i].nameid == nameid)
+			count += sd->status.inventory[i].amount;
+	}
+	script_pushint(st, count);
+	return true;
+}
+
+/**
+ * delcharitem <char id>, <item id>, <amount>
+ * Removes up to amount from that character. Returns how many were removed,
+ * or -1 when they are offline.
+ */
+static BUILDIN(delcharitem)
+{
+	int char_id = script_getnum(st, 2);
+	int nameid = script_getnum(st, 3);
+	int left = script_getnum(st, 4);
+	struct map_session_data *sd = map->charid2sd(char_id);
+	int removed = 0;
+	int i;
+
+	if (sd == NULL || left <= 0) {
+		script_pushint(st, sd == NULL ? -1 : 0);
+		return true;
+	}
+	for (i = 0; i < sd->status.inventorySize && left > 0; i++) {
+		int take;
+		if (sd->status.inventory[i].nameid != nameid || sd->status.inventory[i].amount <= 0)
+			continue;
+		take = sd->status.inventory[i].amount;
+		if (take > left)
+			take = left;
+		if (pc->delitem(sd, i, take, 0, DELITEM_NORMAL, LOG_TYPE_SCRIPT) == 0) {
+			removed += take;
+			left -= take;
+		}
+	}
+	script_pushint(st, removed);
+	return true;
+}
+
+/**
+ * givecharzeny <char id>, <amount>
+ * Adds zeny without attaching the script. Returns 1, or 0 if offline.
+ */
+static BUILDIN(givecharzeny)
+{
+	int char_id = script_getnum(st, 2);
+	int zeny = script_getnum(st, 3);
+	struct map_session_data *sd = map->charid2sd(char_id);
+
+	if (sd == NULL || zeny == 0) {
+		script_pushint(st, 0);
+		return true;
+	}
+	pc->getzeny(sd, zeny, LOG_TYPE_SCRIPT, NULL);
+	script_pushint(st, 1);
+	return true;
+}
+
+/**
+ * givecharexp <char id>, <base>, <job>
+ * Grants quest EXP without attaching the script. Returns 1, or 0 if offline.
+ */
+static BUILDIN(givecharexp)
+{
+	int char_id = script_getnum(st, 2);
+	uint64 base = (uint64)script_getnum(st, 3);
+	uint64 job = (uint64)script_getnum(st, 4);
+	struct map_session_data *sd = map->charid2sd(char_id);
+
+	if (sd == NULL || (base == 0 && job == 0)) {
+		script_pushint(st, 0);
+		return true;
+	}
+	pc->gainexp(sd, &sd->bl, base, job, EXP_FLAG_QUEST);
+	script_pushint(st, 1);
+	return true;
+}
+
 static BUILDIN(sit)
 {
 	struct map_session_data *sd = NULL;
@@ -29538,6 +29652,12 @@ static void script_parse_builtin(void)
 		BUILDIN_DEF(getcharip,"?"),
 		BUILDIN_DEF(is_function,"s"),
 		BUILDIN_DEF(freeloop,"i"),
+		BUILDIN_DEF(campaigncatchup,""),
+		BUILDIN_DEF(campaignpush,""),
+		BUILDIN_DEF(countcharitem,"ii"),
+		BUILDIN_DEF(delcharitem,"iii"),
+		BUILDIN_DEF(givecharzeny,"ii"),
+		BUILDIN_DEF(givecharexp,"iii"),
 		BUILDIN_DEF(getrandgroupitem,"ii"),
 		BUILDIN_DEF(cleanmap,"s"),
 		BUILDIN_DEF2(cleanmap,"cleanarea","siiii"),

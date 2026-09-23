@@ -5024,7 +5024,7 @@ static int pc_dropitem(struct map_session_data *sd, int n, int amount)
 		return 0;
 	}
 
-	if (!map->addflooritem(&sd->bl, &sd->status.inventory[n], amount, sd->bl.m, sd->bl.x, sd->bl.y, 0, 0, 0, 2, false))
+	if (!map->addflooritem(&sd->bl, &sd->status.inventory[n], amount, sd->bl.m, sd->bl.x, sd->bl.y, 0, 0, 0, 2 | MAP_ADD_FLOOR_ITEM_PLAYER_DROP, false))
 		return 0;
 
 	pc->delitem(sd, n, amount, 1, DELITEM_NORMAL, LOG_TYPE_PICKDROP_PLAYER);
@@ -5089,6 +5089,10 @@ static int pc_autopickup_sub(struct block_list *bl, va_list ap)
 
 	if (fitem->item_data.amount <= 0)
 		return 0;
+	// Player-dropped items remain available to manual pickup, but must not be
+	// immediately swept back up by any character's automatic pickup.
+	if (fitem->player_dropped)
+		return 0;
 
 	// Ask only when the item would actually fit. pc->takeitem reports a full
 	// bag or an overweight character through clif->additem, and this runs more
@@ -5096,6 +5100,8 @@ static int pc_autopickup_sub(struct block_list *bl, va_list ap)
 	// cannot carry would repeat the same red error line forever.
 	idata = itemdb->exists(fitem->item_data.nameid);
 	if (idata == NULL)
+		return 0;
+	if (pc->isautolootblocked(sd, fitem->item_data.nameid))
 		return 0;
 
 	weight = idata->weight * fitem->item_data.amount;
@@ -11427,6 +11433,18 @@ static bool pc_isautolooting(struct map_session_data *sd, int nameid)
 }
 
 /**
+ * Check whether the character explicitly excluded an item from autoloot.
+ */
+static bool pc_isautolootblocked(struct map_session_data *sd, int nameid)
+{
+	int i;
+
+	nullpo_ret(sd);
+	ARR_FIND(0, AUTOLOOTITEM_SIZE, i, sd->state.noautolootid[i] == nameid);
+	return i != AUTOLOOTITEM_SIZE;
+}
+
+/**
  * Checks if player can use @/#command
  * @param sd Player map session data
  * @param command Command name with @/# and without params
@@ -13425,6 +13443,7 @@ void pc_defaults(void)
 
 	pc->disguise = pc_disguise;
 	pc->isautolooting = pc_isautolooting;
+	pc->isautolootblocked = pc_isautolootblocked;
 
 	pc->overheat = pc_overheat;
 	pc->banding = pc_banding;

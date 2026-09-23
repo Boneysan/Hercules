@@ -2931,6 +2931,30 @@ static void status_calc_regen_rate_pc(struct map_session_data *sd, struct regen_
 	nullpo_retv(regen->skill);
 	nullpo_retv(regen->sitting);
 
+	// Friends-server recovery rules: natural SP regeneration is tripled for
+	// everyone, with another 2x for magic/healing archetypes. Melee archetypes
+	// recover HP at 2x. These are rate multipliers, so normal status effects
+	// and recovery skills continue to stack through the standard regen path.
+	regen->rate.sp *= 3;
+	switch (sd->job & MAPID_BASEMASK) {
+	case MAPID_MAGE:
+		regen->rate.sp *= 2;
+		break;
+	case MAPID_ACOLYTE:
+		if ((sd->job & (JOBL_2_1 | JOBL_2_2 | MAPID_BASEMASK)) == MAPID_MONK)
+			regen->rate.hp *= 2;
+		else
+			regen->rate.sp *= 2;
+		break;
+	case MAPID_SWORDMAN:
+	case MAPID_THIEF:
+	case MAPID_MERCHANT:
+		regen->rate.hp *= 2;
+		break;
+	default:
+		break;
+	}
+
 	struct guild_castle *gc = guild->mapindex2gc(sd->bl.m);
 	if (gc != NULL && gc->guild_id == sd->status.guild_id) {
 		regen->rate.hp *= 2;

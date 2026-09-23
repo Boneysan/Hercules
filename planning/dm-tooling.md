@@ -149,6 +149,10 @@ DM_InstanceClearFlag("<flag_name>")
 Those wrappers update every online member of the caller's party and safely fall
 back to solo behavior when the caller is not in a party. This is what lets a DM
 spawn or stage an NPC for one group without advancing unrelated players.
+Story credit remains on each character, never their account. The wrappers do
+not yet replay quest/flag changes missed during a disconnect; the active
+[quest-sync contract](../../korangar/docs/specs/dm-party-quest-sync.md)
+specifies per-character enrollment, event logging, and safe reconnect repair.
 
 Current scripted arc entry points:
 

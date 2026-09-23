@@ -22,7 +22,7 @@
 
 // Apprentice Elsbeth - Geffen ally and Arc 4 support handler
 geffen,120,100,4	script	Apprentice Elsbeth#dm	4_F_01,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20019) == 2) {
 		callfunc("DM_PartyMes", "[Apprentice Elsbeth]");
 		if (dm_arc04_seal_reinforced)
@@ -100,8 +100,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20020) == 1 && callfunc("DM_HuntReady", 20020)) {
-		callfunc("DM_HuntCollect", 20020);
+	callfunc("DM_HuntNoteShort", 20020);
+	if (questprogress(20020) == 1 && callfunc("DM_HuntCollect", 20020)) {
 		callfunc("DM_InstanceQuestComplete", 20020);
 		callfunc("DM_PartyExp", 38000, 17000);
 		callfunc("DM_GivePartyZeny", 5500);
@@ -131,8 +131,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20021) == 1 && callfunc("DM_HuntReady", 20021)) {
-		callfunc("DM_HuntCollect", 20021);
+	callfunc("DM_HuntNoteShort", 20021);
+	if (questprogress(20021) == 1 && callfunc("DM_HuntCollect", 20021)) {
 		callfunc("DM_InstanceQuestComplete", 20021);
 		callfunc("DM_PartyExp", 52000, 23000);
 		callfunc("DM_GivePartyZeny", 6500);
@@ -162,8 +162,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20022) == 1 && callfunc("DM_HuntReady", 20022)) {
-		callfunc("DM_HuntCollect", 20022);
+	callfunc("DM_HuntNoteShort", 20022);
+	if (questprogress(20022) == 1 && callfunc("DM_HuntCollect", 20022)) {
 		callfunc("DM_InstanceQuestComplete", 20022);
 		callfunc("DM_PartyExp", 62000, 28000);
 		callfunc("DM_GivePartyZeny", 8000);
@@ -221,7 +221,7 @@ S_TurnIns:
 
 // Archmagus Doran - human villain and lower-vault gate
 gef_dun02,205,205,4	script	Archmagus Doran#dm	4_M_JOB_WIZARD,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20023) != 1) {
 		if (questprogress(20023) == 2) {
 			callfunc("DM_PartyMes", "[Archmagus Doran]");
@@ -292,7 +292,7 @@ OnInit:
 
 // Baphomet's Seal - main Geffen set-piece
 gef_dun02,214,212,4	script	Baphomet's Seal#dm	4_ENERGY_RED,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20023) != 1) {
 		if (questprogress(20023) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*The cracked keystone still hums where the beast struck it.*^000000");
@@ -426,7 +426,7 @@ OnInit:
 
 // Brother Cassell - the Pilgrim's Offer
 gef_dun02,218,210,4	script	Brother Cassell#dm04	4_M_MONK,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20024) == 2) {
 		callfunc("DM_PartyMes", "[Brother Cassell]");
 		callfunc("DM_PartyMes", "You have already chosen what to do with a key when the door begs to stay closed.");
@@ -525,7 +525,7 @@ OnTimer15000:
 
 // ── Vault Outer Seal Puzzle ────────────────────────────────────────────────
 gef_dun02,219,212,4	script	East Seal Glyph#dm	4_ENERGY_WHITE,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20019) == 0 && questprogress(20023) == 0) {
 		callfunc("DM_PartyMes", "[East Glyph]");
 		callfunc("DM_PartyMes", "Cold iron. Elsbeth has the keys. This lock will not answer tourists.");
@@ -556,8 +556,11 @@ OnInit:
 }
 
 gef_dun02,214,217,4	script	North Seal Glyph#dm	4_ENERGY_WHITE,{
-	if (!callfunc("DM_SessionAllows")) { close; }
-	if (questprogress(20019) == 0 && questprogress(20023) == 0) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	if (questprogress(20019) == 0 && questprogress(20023) == 0) {
+		mes("The seal is quiet. It has nothing to say until the party has taken the Geffen chapter.");
+		close;
+	}
 	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
 		callfunc("DM_PartyMes", "[North Glyph]");
 		callfunc("DM_PartyMes", "The glyph burns with a steady blue light.");
@@ -599,8 +602,11 @@ OnInit:
 }
 
 gef_dun02,209,212,4	script	West Seal Glyph#dm	4_ENERGY_WHITE,{
-	if (!callfunc("DM_SessionAllows")) { close; }
-	if (questprogress(20019) == 0 && questprogress(20023) == 0) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	if (questprogress(20019) == 0 && questprogress(20023) == 0) {
+		mes("The seal is quiet. It has nothing to say until the party has taken the Geffen chapter.");
+		close;
+	}
 	if (dm_arc04_puzzle_1 && dm_arc04_puzzle_2 && dm_arc04_puzzle_3) {
 		callfunc("DM_PartyMes", "[West Glyph]");
 		callfunc("DM_PartyMes", "The glyph burns with a steady blue light.");
@@ -629,7 +635,7 @@ OnInit:
 }
 
 geffen,116,100,4	script	Geffen Street Lamp#dm	4_ENERGY_WHITE,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	callfunc("DM_PartyMes", "[Street Lamp]");
 	if (dm_arc04_city_dimmed)
 		callfunc("DM_PartyMes", "The glass is dull. Apprentices swear at the dark. The seal below is holding.");

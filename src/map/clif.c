@@ -3070,6 +3070,52 @@ static void clif_item_normal(short idx, struct NORMALITEM_INFO *p, struct item *
 #endif
 }
 
+static int64 clif_inventory_order_registry[MAX_INVENTORY];
+static bool clif_inventory_order_registry_ready = false;
+
+static void clif_init_inventory_order_registry(void)
+{
+	if (clif_inventory_order_registry_ready)
+		return;
+	for (int i = 0; i < MAX_INVENTORY; ++i) {
+		char name[32];
+		snprintf(name, sizeof(name), "kor_inv_order_%03d", i);
+		clif_inventory_order_registry[i] = script->add_str(name);
+	}
+	clif_inventory_order_registry_ready = true;
+}
+
+/// Send the saved slot order, dropping stale slots and appending newly acquired items.
+static void clif_send_inventory_order(struct map_session_data *sd)
+{
+	bool seen[MAX_INVENTORY] = { false };
+	int indices[MAX_INVENTORY];
+	int count = 0;
+	clif_init_inventory_order_registry();
+	if (sd->vars_ok) {
+		for (int rank = 0; rank < MAX_INVENTORY && count < sd->status.inventorySize; ++rank) {
+			int value = pc->readregistry(sd, clif_inventory_order_registry[rank]);
+			int index = value - 1;
+			if (value > 0 && index < sd->status.inventorySize && !seen[index]
+				&& sd->status.inventory[index].nameid > 0 && sd->inventory_data[index] != NULL) {
+				indices[count++] = index;
+				seen[index] = true;
+			}
+		}
+	}
+	for (int i = 0; i < sd->status.inventorySize; ++i) {
+		if (!seen[i] && sd->status.inventory[i].nameid > 0 && sd->inventory_data[i] != NULL)
+			indices[count++] = i;
+	}
+
+	WFIFOHEAD(sd->fd, 4 + count * 2);
+	WFIFOW(sd->fd, 0) = 0x0efa;
+	WFIFOW(sd->fd, 2) = 4 + count * 2;
+	for (int i = 0; i < count; ++i)
+		WFIFOW(sd->fd, 4 + i * 2) = indices[i] + 2;
+	WFIFOSET(sd->fd, 4 + count * 2);
+}
+
 static void clif_inventoryList(struct map_session_data *sd)
 {
 #if PACKETVER_RE_NUM >= 20180912 || PACKETVER_ZERO_NUM >= 20180919 || PACKETVER_MAIN_NUM >= 20181002
@@ -3079,6 +3125,7 @@ static void clif_inventoryList(struct map_session_data *sd)
 #if PACKETVER_RE_NUM >= 20180912 || PACKETVER_ZERO_NUM >= 20180919 || PACKETVER_MAIN_NUM >= 20181002
 	clif->inventoryEnd(sd, INVTYPE_INVENTORY);
 #endif
+	clif_send_inventory_order(sd);
 }
 
 static void clif_inventoryItems(struct map_session_data *sd, enum inventory_type type)
@@ -12719,6 +12766,105 @@ static void clif_parse_DropItem(int fd, struct map_session_data *sd)
 
 	//Because the client does not like being ignored.
 	clif->dropitem(sd, item_index, 0);
+}
+
+static void clif_parse_SplitInventoryStack(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+/// Split a stack into a second inventory slot (Korangar fork packet 0x0efc).
+/// 0efc <index>.W <amount>.W; inventory index uses the normal wire +2 offset.
+static void clif_parse_SplitInventoryStack(int fd, struct map_session_data *sd)
+{
+	int source = RFIFOW(fd, 2) - 2;
+	int amount = RFIFOW(fd, 4);
+	int destination;
+	struct item split_item;
+	struct item_data *data;
+
+	if (pc_isdead(sd) || pc_cant_act_except_npc_chat(sd) || sd->state.trading || sd->state.vending || sd->state.prevend
+		|| sd->state.buyingstore
+		|| sd->state.storage_flag != STORAGE_FLAG_CLOSED || sd->npc_id != 0 || source < 0 || source >= sd->status.inventorySize) {
+		clif->message(sd->fd, "Cannot split that inventory stack right now.");
+		return;
+	}
+	if (sd->sc.count && (sd->sc.data[SC_AUTOCOUNTER] || sd->sc.data[SC_BLADESTOP] || pc_ismuted(&sd->sc, MANNER_NOITEM))) {
+		clif->message(sd->fd, "Your current status prevents splitting items.");
+		return;
+	}
+
+	data = sd->inventory_data[source];
+	if (data == NULL || sd->status.inventory[source].nameid <= 0 || sd->status.inventory[source].amount <= amount || amount <= 0
+		|| !itemdb->isstackable2(data) || sd->status.inventory[source].equip != 0
+		|| sd->status.inventory[source].expire_time != 0 || sd->status.inventory[source].unique_id != 0) {
+		clif->message(sd->fd, "Choose a stackable item and an amount smaller than the stack.");
+		return;
+	}
+
+	destination = pc->search_inventory(sd, 0);
+	if (destination == INDEX_NOT_FOUND) {
+		clif->message(sd->fd, "Your inventory is full; make room before splitting a stack.");
+		return;
+	}
+
+	memcpy(&split_item, &sd->status.inventory[source], sizeof(split_item));
+	split_item.amount = amount;
+	split_item.equip = 0;
+	split_item.favorite = 0;
+
+	// Move the amount without passing through pc_additem (which merges matching
+	// stacks) or exposing a transient weight/quest update. Total carried weight
+	// is unchanged by the split.
+	logs->pick_pc(sd, LOG_TYPE_OTHER, -amount, &sd->status.inventory[source], data);
+	sd->status.inventory[source].amount -= amount;
+	memcpy(&sd->status.inventory[destination], &split_item, sizeof(split_item));
+	sd->inventory_data[destination] = data;
+	logs->pick_pc(sd, LOG_TYPE_OTHER, amount, &sd->status.inventory[destination], data);
+	clif->delitem(sd, source, amount, DELITEM_NORMAL);
+	clif->additem(sd, destination, amount, 0);
+	quest->questinfo_refresh(sd);
+	pc->update_idle_time(sd, BCIDLE_DROPITEM);
+}
+
+static void clif_parse_ReorderInventory(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
+/// Persist a permutation of the player's occupied inventory slot ids.
+static void clif_parse_ReorderInventory(int fd, struct map_session_data *sd)
+{
+	int length = RFIFOW(fd, 2);
+	int count;
+	int occupied = 0;
+	int indices[MAX_INVENTORY];
+	bool seen[MAX_INVENTORY] = { false };
+	bool valid = true;
+
+	if (length < 4 || ((length - 4) % 2) != 0) {
+		clif_send_inventory_order(sd);
+		return;
+	}
+	count = (length - 4) / 2;
+	if (count > sd->status.inventorySize || count > MAX_INVENTORY)
+		valid = false;
+	for (int i = 0; i < sd->status.inventorySize; ++i)
+		if (sd->status.inventory[i].nameid > 0 && sd->inventory_data[i] != NULL)
+			++occupied;
+	if (count != occupied)
+		valid = false;
+	for (int i = 0; valid && i < count; ++i) {
+		int index = RFIFOW(fd, 4 + i * 2) - 2;
+		if (index < 0 || index >= sd->status.inventorySize || seen[index]
+			|| sd->status.inventory[index].nameid <= 0 || sd->inventory_data[index] == NULL) {
+			valid = false;
+			break;
+		}
+		seen[index] = true;
+		indices[i] = index;
+	}
+	if (valid && sd->vars_ok) {
+		clif_init_inventory_order_registry();
+		for (int rank = 0; rank < MAX_INVENTORY; ++rank) {
+			int value = rank < count ? indices[rank] + 1 : 0;
+			if (pc->readregistry(sd, clif_inventory_order_registry[rank]) != value)
+				pc->setregistry(sd, clif_inventory_order_registry[rank], value);
+		}
+	}
+	clif_send_inventory_order(sd);
 }
 
 static void clif_parse_UseItem(int fd, struct map_session_data *sd) __attribute__((nonnull (2)));
@@ -27373,6 +27519,8 @@ void clif_defaults(void)
 	clif->pTradeCommit = clif_parse_TradeCommit;
 	clif->pStopAttack = clif_parse_StopAttack;
 	clif->pCancelCast = clif_parse_CancelCast;
+	clif->pSplitInventoryStack = clif_parse_SplitInventoryStack;
+	clif->pReorderInventory = clif_parse_ReorderInventory;
 	clif->pPutItemToCart = clif_parse_PutItemToCart;
 	clif->pGetItemFromCart = clif_parse_GetItemFromCart;
 	clif->pRemoveOption = clif_parse_RemoveOption;

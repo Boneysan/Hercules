@@ -5,7 +5,7 @@ prontera,151,191,4	script	Seal Cascade Checkpoint	4_F_KAFRA1,{
 	mes "[Checkpoint]";
 	mes "I can pin your return point to this cell.";
 	next;
-	switch (select("Save here:Warp to save:Cancel")) {
+	switch (select("Set Respawn Point:Warp to save:Cancel")) {
 	case 1:
 		savepoint "prontera", 151, 191;
 		mes "Saved. Death and Warp to save will return you here.";

@@ -23,8 +23,10 @@ OnInit:
 	bindatcmd("dmmode", strnpcinfo(NPC_NAME_UNIQUE)+"::OnMode", 1, 99, 1);
 	bindatcmd("dmhazard", strnpcinfo(NPC_NAME_UNIQUE)+"::OnHazard", 1, 99, 1);
 	bindatcmd("dmexp", strnpcinfo(NPC_NAME_UNIQUE)+"::OnExp", 1, 99, 1);
+	bindatcmd("town", strnpcinfo(NPC_NAME_UNIQUE)+"::OnTown", 0, 0);
 	bindatcmd("dmreset", strnpcinfo(NPC_NAME_UNIQUE)+"::OnReset", 1, 99, 1);
 	bindatcmd("dmstatus", strnpcinfo(NPC_NAME_UNIQUE)+"::OnStatus", 1, 99, 1);
+	bindatcmd("dmcatchup", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCatchup", 1, 99, 1);
 	bindatcmd("roll", strnpcinfo(NPC_NAME_UNIQUE)+"::OnRoll", 0, 99, 1);
 	// Skill checks are player-facing: anyone may roll their own or help.
 	bindatcmd("check", strnpcinfo(NPC_NAME_UNIQUE)+"::OnCheck", 0, 99, 1);
@@ -144,6 +146,11 @@ OnDM:
 
 	if (.@sub$ == "status") {
 		callsub(S_Status);
+		end;
+	}
+
+	if (.@sub$ == "catchup") {
+		callsub(S_Catchup);
 		end;
 	}
 
@@ -298,6 +305,10 @@ OnHazard:
 	callsub(S_Hazard, 0);
 	end;
 
+OnTown:
+	warp "prontera", 156, 191;
+	end;
+
 OnExp:
 	if (!callfunc("DM_RequireDM"))
 		end;
@@ -320,6 +331,12 @@ OnStatus:
 	if (!callfunc("DM_RequireDM"))
 		end;
 	callsub(S_Status);
+	end;
+
+OnCatchup:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	callsub(S_Catchup);
 	end;
 
 OnCheck:
@@ -513,9 +530,10 @@ S_Help:
 	dispbottom("[DM] @dm recall              (pulls party to you)");
 	dispbottom("[DM] @dm instance <start <map> [x] [y] [label] | end>");
 	dispbottom("[DM] @dm status              (arc progress + key flags at a glance)");
+	dispbottom("[DM] @dm catchup            (save online party progress, then copy it to anyone missing it)");
 	dispbottom("[DM] @dm reconcile [confirm] (preview/apply durable checkpoint sync)");
 	dispbottom("[DM] @dm reset confirm       (wipe all campaign flags for a fresh run)");
-	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmstatus, @dmreset");
+	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmstatus, @dmcatchup, @dmreset");
 	return;
 
 S_Enc:
@@ -702,6 +720,7 @@ S_Reset:
 			callfunc("DM_ClearArc13Flags"); callfunc("DM_ClearArc14Flags"); callfunc("DM_ClearArc15Flags");
 			callfunc("DM_ClearArc16Flags"); callfunc("DM_ClearArc17Flags"); callfunc("DM_ClearArc18Flags");
 			callfunc("DM_ClearArc19Flags");
+			dm_catchup_party = 0;
 			detachrid();
 			++.@cleared;
 		}
@@ -715,6 +734,7 @@ S_Reset:
 		callfunc("DM_ClearArc13Flags"); callfunc("DM_ClearArc14Flags"); callfunc("DM_ClearArc15Flags");
 		callfunc("DM_ClearArc16Flags"); callfunc("DM_ClearArc17Flags"); callfunc("DM_ClearArc18Flags");
 		callfunc("DM_ClearArc19Flags");
+		dm_catchup_party = 0;
 		.@cleared = 1;
 	}
 	for (.@q = 20001; .@q <= 20030; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
@@ -738,6 +758,22 @@ S_Reset:
 	$dm_active_party = 0;
 	freeloop(false);
 	dispbottom("[DM] Campaign reset complete for " + .@cleared + " member(s). All arcs cleared, mode off.");
+	return;
+
+S_Catchup:
+	.@party_id = $dm_active_party;
+	if (.@party_id <= 0)
+		.@party_id = getcharid(CHAR_ID_PARTY);
+	if (.@party_id <= 0) {
+		dispbottom("[DM] Form a party before saving campaign progress.");
+		return;
+	}
+	.@members = callfunc("DM_PublishOnlineParty");
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	query_sql("SELECT COUNT(*) FROM `dm_campaign_party_state` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id + " AND `kind` = 'quest' AND `value` > 0", .@quests);
+	query_sql("SELECT COUNT(*) FROM `dm_campaign_party_state` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id + " AND `kind` = 'flag' AND `value` <> 0", .@flags);
+	dispbottom("[DM] Catch-up ran for " + .@members + " online member(s). Stored quests=" + .@quests + " flags=" + .@flags + ".");
+	dispbottom("[DM] Someone who logs in later, alone, receives this store. It does not overwrite choices they already have.");
 	return;
 
 S_Status:
@@ -769,6 +805,13 @@ S_Status:
 	}
 	dispbottom(.@line$);
 	dispbottom("[DM] (quest: 0=not started  1=in progress  2=complete)");
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	.@store_party = ($dm_active_party > 0 ? $dm_active_party : .@party_id);
+	if (.@store_party > 0) {
+		query_sql("SELECT COUNT(*) FROM `dm_campaign_party_state` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@store_party + " AND `kind` = 'quest' AND `value` > 0", .@quests);
+		query_sql("SELECT COUNT(*) FROM `dm_campaign_party_state` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@store_party + " AND `kind` = 'flag' AND `value` <> 0", .@flags);
+		dispbottom("[DM] Stored for later logins: quests=" + .@quests + " flags=" + .@flags + ". @dm catchup refreshes that.");
+	}
 	dispbottom("[Flags] cassell=" + dm_arc04_cassell_unmasked + " bjorn_joined=" + dm_arc11_bjorn_joined + " carrion_bribed=" + dm_arc13_carrion_bribed);
 	dispbottom("[Flags] himmelmez_bargained=" + dm_arc18_himmelmez_bargained + " campaign_complete=" + dm_campaign_complete);
 	return;
@@ -778,8 +821,21 @@ S_Exp:
 	.@base = atoi(@dm_atcmd_p$[.@offset]);
 	.@job  = atoi(@dm_atcmd_p$[.@offset + 1]);
 
+	if (@dm_atcmd_p$[.@offset] == "rate") {
+		.@mult = atoi(@dm_atcmd_p$[.@offset + 1]);
+		if (.@mult < 1)
+			.@mult = 1;
+		if (.@mult > 10)
+			.@mult = 10;
+		setbattleflag "base_exp_rate", .@mult * 100;
+		setbattleflag "job_exp_rate", .@mult * 100;
+		dispbottom("[DM] Kill EXP rate is now " + .@mult + "x (base and job).");
+		return;
+	}
+
 	if (.@base <= 0 && .@job <= 0) {
 		dispbottom("[DM] Usage: @dm exp <base> [job]");
+		dispbottom("[DM] Usage: @dm exp rate <1-10>");
 		dispbottom("[DM] Example: @dm exp 50000 20000");
 		return;
 	}

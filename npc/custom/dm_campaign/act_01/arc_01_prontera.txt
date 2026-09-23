@@ -29,7 +29,8 @@ prontera,155,185,5	script	Session Board#dm	4_BOARD3,{
 }
 
 prontera,156,191,5	script	Quartermaster Wynne#dm	4_F_01,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	callfunc("DM_SyncListedQuests", 20001, 20002, 20003, 20005, 20006);
 
 	// Legacy: chamber done, tracker still open.
 	if (questprogress(20005) == 2 && questprogress(20001) == 1)
@@ -119,8 +120,13 @@ S_SwearIn:
 
 S_Contracts:
 	.@paid = 0;
-	if (questprogress(20002) == 1 && callfunc("DM_HuntReady", 20002)) {
-		callfunc("DM_HuntCollect", 20002);
+	if (questprogress(20002) == 1 && !callfunc("DM_HuntReady", 20002)) {
+		callfunc("DM_PartyMes", "[Wynne]");
+		callfunc("DM_PartyMes", "Cellar Vermin is not ready. I did not take anything. The party needs Rat Tails, Single Cells, and Worm Peelings together. Logged-out members count too.");
+		callfunc("DM_HuntLedger", 20002);
+		next();
+	}
+	if (questprogress(20002) == 1 && callfunc("DM_HuntCollect", 20002)) {
 		callfunc("DM_InstanceQuestComplete", 20002);
 		callfunc("DM_PartyExp", 4000, 1500);
 		callfunc("DM_GivePartyZeny", 2000);
@@ -129,8 +135,8 @@ S_Contracts:
 		callfunc("DM_PartyMes", "Cellar's a little cleaner. 2,000 zeny. Optional work still counts.");
 		next();
 	}
-	if (questprogress(20003) == 1 && callfunc("DM_HuntReady", 20003)) {
-		callfunc("DM_HuntCollect", 20003);
+	callfunc("DM_HuntNoteShort", 20003);
+	if (questprogress(20003) == 1 && callfunc("DM_HuntCollect", 20003)) {
 		callfunc("DM_InstanceQuestComplete", 20003);
 		callfunc("DM_PartyExp", 4500, 1800);
 		callfunc("DM_GivePartyZeny", 2000);
@@ -208,7 +214,7 @@ S_OfferHunts:
 }
 
 prontera,156,40,3	script	Frightened Mother#dm	4_F_01,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc01_started) {
 		callfunc("DM_PartyMes", "[Frightened Mother]");
 		callfunc("DM_PartyMes", "Please... the guild handles this. Wynne at the fountain first.");
@@ -301,7 +307,7 @@ OnInit:
 }
 
 prontera,150,37,3	script	Mira#dm	4_F_KID2,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc01_started) {
 		callfunc("DM_PartyMes", "[Girl]");
 		callfunc("DM_PartyMes", "The bread-man said not to talk to guildies.");
@@ -342,8 +348,11 @@ OnInit:
 }
 
 prontera,146,34,5	script	Soup-Line Organizer#dm	4_M_02,{
-	if (!callfunc("DM_SessionAllows")) { close; }
-	if (!dm_arc01_started) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc01_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
 	callfunc("DM_PartyMes", "[Organizer]");
 	if (dm_arc01_rescue_route == 3)
 		callfunc("DM_PartyMes", "The child talks. Fine. Charity is still charity.");
@@ -357,7 +366,7 @@ OnInit:
 }
 
 prt_sewb1,135,240,4	script	Painted Sluice#dm	4_ENERGY_WHITE,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc01_started) {
 		callfunc("DM_PartyMes", "^3355FF*The grate hums. You have no guild paper. Wynne would want a name on a ledger first.*^000000");
 		close();
@@ -382,7 +391,7 @@ OnInit:
 }
 
 prontera,146,193,5	script	Tibbets the Keeper#dm	1_M_SIZ,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc01_started) {
 		callfunc("DM_PartyMes", "[Tibbets]");
 		callfunc("DM_PartyMes", "Guild business is up at the fountain. Wynne's the one with the ledger.");
@@ -448,7 +457,7 @@ OnInit:
 }
 
 prt_sewb4,103,88,4	script	Tide-Wheel#dm	4_ENERGY_BLUE,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (dm_arc01_chamber_drained) {
 		callfunc("DM_PartyMes", "^3355FF*The wheel is locked open. The slab is dry. The hum is thinner.*^000000");
 		close();
@@ -503,7 +512,7 @@ OnInit:
 }
 
 prt_sewb4,112,100,4	script	Binding Stone#dm	4_ENERGY_BLUE,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (dm_arc01_binding_applied) {
 		callfunc("DM_PartyMes", "^3355FF*Hlin is already on the stone. The conduit is thinner for it.*^000000");
 		close();
@@ -532,7 +541,7 @@ OnInit:
 }
 
 prt_sewb4,104,99,4	script	Deacon Holt#dm	1_M_PASTOR,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20005) != 1) {
 		if (questprogress(20005) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*The cracked slab is dark. Whatever listened here is gone - for now.*^000000");

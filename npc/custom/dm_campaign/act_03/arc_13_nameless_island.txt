@@ -21,7 +21,7 @@
 
 // ── Father Quill the Doorkeeper — The Last Ward ────────────────────────────
 nameless_i,100,100,5	script	Father Quill#dm	4_M_04,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20171) == 2) {
 		callfunc("DM_PartyMes", "[Father Quill]");
 		if (dm_arc13_carrion_bribed)
@@ -98,8 +98,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20173) == 1 && callfunc("DM_HuntReady", 20173)) {
-		callfunc("DM_HuntCollect", 20173);
+	callfunc("DM_HuntNoteShort", 20173);
+	if (questprogress(20173) == 1 && callfunc("DM_HuntCollect", 20173)) {
 		callfunc("DM_InstanceQuestComplete", 20173);
 		callfunc("DM_PartyExp", 380000, 185000);
 		callfunc("DM_GivePartyZeny", 32000);
@@ -124,8 +124,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20174) == 1 && callfunc("DM_HuntReady", 20174)) {
-		callfunc("DM_HuntCollect", 20174);
+	callfunc("DM_HuntNoteShort", 20174);
+	if (questprogress(20174) == 1 && callfunc("DM_HuntCollect", 20174)) {
 		callfunc("DM_InstanceQuestComplete", 20174);
 		callfunc("DM_PartyExp", 390000, 190000);
 		callfunc("DM_GivePartyZeny", 33000);
@@ -211,7 +211,7 @@ S_TurnIns:
 
 // ── The Broker Carrion — The Deal That Shouldn't Be Tempting ───────────────
 nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc13_started) {
 		callfunc("DM_PartyMes", "[The Broker Carrion]");
 		callfunc("DM_PartyMes", "Not yet. Come back when you have seen what Father Quill is protecting.");

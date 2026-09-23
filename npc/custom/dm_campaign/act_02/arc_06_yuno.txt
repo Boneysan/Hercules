@@ -23,7 +23,7 @@
 
 // ── Doctor Ingrid Vahl — Yuno Atmospheric Researcher ───────────────────────
 yuno,155,185,5	script	Doctor Ingrid Vahl#dm	4_F_02,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20101) == 2) {
 		callfunc("DM_PartyMes", "[Doctor Vahl]");
 		if (dm_arc06_mistress_killed)
@@ -103,8 +103,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20103) == 1 && callfunc("DM_HuntReady", 20103)) {
-		callfunc("DM_HuntCollect", 20103);
+	callfunc("DM_HuntNoteShort", 20103);
+	if (questprogress(20103) == 1 && callfunc("DM_HuntCollect", 20103)) {
 		callfunc("DM_InstanceQuestComplete", 20103);
 		callfunc("DM_PartyExp", 180000, 85000);
 		callfunc("DM_GivePartyZeny", 15000);
@@ -130,8 +130,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20104) == 1 && callfunc("DM_HuntReady", 20104)) {
-		callfunc("DM_HuntCollect", 20104);
+	callfunc("DM_HuntNoteShort", 20104);
+	if (questprogress(20104) == 1 && callfunc("DM_HuntCollect", 20104)) {
 		callfunc("DM_InstanceQuestComplete", 20104);
 		callfunc("DM_PartyExp", 220000, 105000);
 		callfunc("DM_GivePartyZeny", 18000);
@@ -162,8 +162,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20105) == 1 && callfunc("DM_HuntReady", 20105)) {
-		callfunc("DM_HuntCollect", 20105);
+	callfunc("DM_HuntNoteShort", 20105);
+	if (questprogress(20105) == 1 && callfunc("DM_HuntCollect", 20105)) {
 		callfunc("DM_InstanceQuestComplete", 20105);
 		callfunc("DM_PartyExp", 200000, 95000);
 		callfunc("DM_GivePartyZeny", 16000);
@@ -244,7 +244,7 @@ S_TurnIns:
 
 // ── Director Aldous Krenn — The Republic's Money ───────────────────────
 yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc06_started) {
 		callfunc("DM_PartyMes", "[Director Krenn]");
 		callfunc("DM_PartyMes", "The Research Bureau handles appointments. I handle approvals. You require neither.");

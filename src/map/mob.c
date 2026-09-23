@@ -2259,6 +2259,7 @@ static void mob_item_drop(struct mob_data *md, struct item_drop_list *dlist, str
 	if( sd == NULL ) sd = map->charid2sd(dlist->third_charid);
 
 	if( sd
+		&& !pc->isautolootblocked(sd, ditem->item_data.nameid)
 		&& (drop_rate <= sd->state.autoloot || pc->isautolooting(sd, ditem->item_data.nameid))
 		&& (!map->list[sd->bl.m].flag.noautoloot)
 		&& (battle_config.idle_no_autoloot == 0 || DIFF_TICK(sockt->last_tick, sd->idletime) < battle_config.idle_no_autoloot)

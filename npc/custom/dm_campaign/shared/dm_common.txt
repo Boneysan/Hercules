@@ -18,6 +18,21 @@ function	script	DM_SessionAllows	{
 	return $dm_mode && $dm_active_party > 0 && getcharid(CHAR_ID_PARTY) == $dm_active_party;
 }
 
+// Same check as DM_SessionAllows, but a refusal says why and ends the talk.
+// Returns 1 when the character may continue.
+function	script	DM_SessionGate	{
+	if (callfunc("DM_SessionAllows"))
+		return 1;
+	if (!$dm_mode || $dm_active_party <= 0)
+		mes("The guild is not taking work right now.");
+	else if (getcharid(CHAR_ID_PARTY) <= 0)
+		mes("Join the campaign party, then talk to me again.");
+	else
+		mes("This session belongs to another party. Join that party, then talk to me again.");
+	close();
+	return 0;
+}
+
 function	script	DM_SessionParty	{
 	if ($dm_mode && $dm_active_party > 0)
 		return $dm_active_party;

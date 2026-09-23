@@ -91,6 +91,8 @@ packet(0x0112,clif->pSkillUp,2);
 packet(0x0113,clif->pUseSkillToId,2,4,6);  // CZ_USE_SKILL
 packet(0x0116,clif->pUseSkillToPos,2,4,6,8);  // CZ_USE_SKILL_TOGROUND
 packet(0x0118,clif->pStopAttack,0);
+packet(0x0efc,clif->pSplitInventoryStack,2,4); // CZ_SPLIT_INVENTORY_STACK (Korangar fork addition)
+packet(0x0efb,clif->pReorderInventory,2); // CZ_REORDER_INVENTORY (Korangar fork addition)
 packet(0x0f00,clif->pCancelCast,0);  // CZ_CANCEL_CAST (Korangar fork addition)
 packet(0x011b,clif->pUseSkillMap,2,4);
 packet(0x011d,clif->pRequestMemo,0);

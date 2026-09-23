@@ -1627,6 +1627,8 @@ struct clif_interface {
 	void (*pStopAttack) (int fd,struct map_session_data *sd);
 	/// Korangar fork addition (0x0F00) — see clif_parse_CancelCast.
 	void (*pCancelCast) (int fd,struct map_session_data *sd);
+	void (*pSplitInventoryStack) (int fd,struct map_session_data *sd);
+	void (*pReorderInventory) (int fd,struct map_session_data *sd);
 	void (*pPutItemToCart) (int fd,struct map_session_data *sd);
 	void (*pGetItemFromCart) (int fd,struct map_session_data *sd);
 	void (*pRemoveOption) (int fd,struct map_session_data *sd);

@@ -23,7 +23,7 @@
 
 // ── Doctor Mira Tressa — The Archaeologist ─────────────────────────────────
 ba_in01,100,100,5	script	Doctor Mira Tressa#dm	4_F_03,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20211) == 2) {
 		callfunc("DM_PartyMes", "[Doctor Mira Tressa]");
 		if (dm_arc17_admin_running)
@@ -96,8 +96,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20212) == 1 && callfunc("DM_HuntReady", 20212)) {
-		callfunc("DM_HuntCollect", 20212);
+	callfunc("DM_HuntNoteShort", 20212);
+	if (questprogress(20212) == 1 && callfunc("DM_HuntCollect", 20212)) {
 		callfunc("DM_InstanceQuestComplete", 20212);
 		callfunc("DM_PartyExp", 530000, 265000);
 		callfunc("DM_GivePartyZeny", 43000);
@@ -122,8 +122,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20213) == 1 && callfunc("DM_HuntReady", 20213)) {
-		callfunc("DM_HuntCollect", 20213);
+	callfunc("DM_HuntNoteShort", 20213);
+	if (questprogress(20213) == 1 && callfunc("DM_HuntCollect", 20213)) {
 		callfunc("DM_InstanceQuestComplete", 20213);
 		callfunc("DM_PartyExp", 560000, 280000);
 		callfunc("DM_GivePartyZeny", 45000);
@@ -194,7 +194,7 @@ S_TurnIns:
 
 // ── The Administrator — The System That Outlived Its Designer ─────────────
 ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc17_started) {
 		callfunc("DM_PartyMes", "[The Administrator]");
 		callfunc("DM_PartyMes", "Unauthorized access detected. State purpose.");

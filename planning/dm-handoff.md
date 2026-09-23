@@ -42,6 +42,12 @@ updates in `npc/custom/dm_campaign/`.
   every online party member. Arc scripts contain no direct per-character
   `setquest`, `completequest`, or `erasequest` calls; they use the shared party
   helpers exclusively.
+- This is **online-only quest/flag sync**, not completed reconnect support.
+  The SQL party checkpoint and login hook currently sync a checkpoint display
+  mirror, not missed quest/flag events. The `#dm_campaign_checkpoint_*`
+  variables are account-scoped in Hercules, so they must not stand in for a
+  character's story completion. See the active
+  [DM party quest-sync contract](../../korangar/docs/specs/dm-party-quest-sync.md).
 - Private instances are implemented in `shared/dm_instances.txt`.
 - Party-facing quest helpers are implemented in `shared/dm_quests.txt`.
 - Loot rewards are implemented in `shared/dm_rewards.txt`.
@@ -75,10 +81,10 @@ updates in `npc/custom/dm_campaign/`.
 
 ### Single Active Party
 
-For the intended single-DM use case (one game night group), the current design
-is correct and sufficient. This note records what multi-party would actually
-take, because it is a **smaller change than it first appears** — the campaign's
-*game state* is already per-party:
+For an online single-DM group, the party quest helpers already cover shared
+mutations. They are not sufficient for character-specific reconnect catch-up;
+that is a separate S10 change. This note records what simultaneous multi-party
+sessions would take; much of the live game state is already per-party:
 
 - **Story flags** (`dm_arc01_*`) are per-character — `DM_PartyApplyFlag`
   (dm_quests.txt) attaches each party member's RID and `setd`s the flag on them.
@@ -104,9 +110,9 @@ contained change would be:
 3. Update `@dm status`/`@dm reset` and the Session Board to report per-party
    session state rather than the single global slot.
 
-No engine or data-model changes are needed — the per-party plumbing already
-exists. The work is the helper + the gate swap, then an in-client playtest with
-two parties active at once.
+The gate swap is the principal **simultaneous-session** change, but it does not
+solve missed quest/flag replay or character-only checkpoint isolation. Finish
+and test S10 before claiming durable quest synchronization across a group.
 
 ---
 

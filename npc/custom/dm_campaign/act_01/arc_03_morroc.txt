@@ -23,7 +23,7 @@
 
 // Rashid - tomb-guide and Arc 3 quest-giver
 morocc,159,97,4	script	Rashid the Guide#dm	4_M_ORIENT02,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20018) == 2) {
 		if (questprogress(20013) == 1)
 			callfunc("DM_Arc03Complete");
@@ -102,8 +102,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20014) == 1 && callfunc("DM_HuntReady", 20014)) {
-		callfunc("DM_HuntCollect", 20014);
+	callfunc("DM_HuntNoteShort", 20014);
+	if (questprogress(20014) == 1 && callfunc("DM_HuntCollect", 20014)) {
 		callfunc("DM_InstanceQuestComplete", 20014);
 		callfunc("DM_PartyExp", 16000, 7000);
 		callfunc("DM_GivePartyZeny", 3500);
@@ -133,8 +133,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20015) == 1 && callfunc("DM_HuntReady", 20015)) {
-		callfunc("DM_HuntCollect", 20015);
+	callfunc("DM_HuntNoteShort", 20015);
+	if (questprogress(20015) == 1 && callfunc("DM_HuntCollect", 20015)) {
 		callfunc("DM_InstanceQuestComplete", 20015);
 		callfunc("DM_PartyExp", 22000, 9000);
 		callfunc("DM_GivePartyZeny", 4500);
@@ -163,8 +163,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20016) == 1 && callfunc("DM_HuntReady", 20016)) {
-		callfunc("DM_HuntCollect", 20016);
+	callfunc("DM_HuntNoteShort", 20016);
+	if (questprogress(20016) == 1 && callfunc("DM_HuntCollect", 20016)) {
 		callfunc("DM_InstanceQuestComplete", 20016);
 		callfunc("DM_PartyExp", 30000, 12000);
 		callfunc("DM_GivePartyZeny", 5500);
@@ -260,7 +260,7 @@ S_TurnIns:
 
 // Mother Sabra - relief mission leader and human villain
 moc_fild01,84,45,4	script	Mother Sabra#dm	4_F_SISTER,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc03_started) {
 		callfunc("DM_PartyMes", "[Mother Sabra]");
 		callfunc("DM_PartyMes", "If you need water, take water. If you need a sermon, I have no strength left for one.");
@@ -334,7 +334,7 @@ OnInit:
 
 // Osiris - side tomb-court set-piece
 moc_pryd04,91,83,4	script	Osiris's Court#dm	4_M_NFDEADMAN,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20017) != 1) {
 		if (questprogress(20017) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*The sand-drowned court is still. A gold mask lies warm only in memory.*^000000");
@@ -419,7 +419,7 @@ OnInit:
 
 // Amon Ra - main Pyramid set-piece
 moc_pryd06,102,85,4	script	Amon Ra's Lid#dm	4_M_CRU_HEAD,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20018) != 1) {
 		if (questprogress(20018) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*Behind the throne, the cult-cut shaft remains sealed. It breathes cold air from far below.*^000000");
@@ -521,7 +521,11 @@ OnInit:
 }
 
 moc_fild01,80,52,4	script	North Relief Well#dm	4_BOARD3,{
-	if (!callfunc("DM_SessionAllows") || !dm_arc03_started) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc03_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
 	if (dm_arc03_well_inspected & 1) {
 		callfunc("DM_PartyMes", "^3355FF*This well is logged. The water is honest. The dig under the tents is not.*^000000");
 		close();
@@ -539,7 +543,11 @@ OnInit:
 }
 
 moc_fild01,92,38,4	script	South Relief Well#dm	4_BOARD3,{
-	if (!callfunc("DM_SessionAllows") || !dm_arc03_started) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc03_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
 	if ((dm_arc03_well_inspected & 2) && dm_arc03_sabra_exposed && !dm_arc03_relief_secured) {
 		callfunc("DM_PartyMes", "^3355FF*You knock the listening collar off. The well is a public water point now. Truth, and people still drink.*^000000");
 		callfunc("DM_InstanceSetFlag", "dm_arc03_relief_secured", 1);
@@ -574,7 +582,11 @@ OnInit:
 }
 
 moc_fild01,100,58,4	script	Relief Checkpoint#dm	4_M_ORIENT01,{
-	if (!callfunc("DM_SessionAllows") || !dm_arc03_started) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc03_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
 	if (dm_arc03_checkpoint_cleared & 1) {
 		callfunc("DM_PartyMes", "[Runner]");
 		callfunc("DM_PartyMes", "This picket is down. People got through.");
@@ -619,7 +631,11 @@ OnInit:
 }
 
 moc_fild01,112,48,4	script	Relief Checkpoint B#dm	4_M_ORIENT01,{
-	if (!callfunc("DM_SessionAllows") || !dm_arc03_started) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc03_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
 	if (dm_arc03_checkpoint_cleared & 2) {
 		callfunc("DM_PartyMes", "[Runner]");
 		callfunc("DM_PartyMes", "East picket is down.");

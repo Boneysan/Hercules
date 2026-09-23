@@ -22,7 +22,7 @@
 
 // ── Greta Holm — Foundry-council Organizer ───────────────────────
 einbroch,145,230,5	script	Greta Holm#dm	4_F_03,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20111) == 2) {
 		callfunc("DM_PartyMes", "[Greta Holm]");
 		if (dm_arc07_strike_supported)
@@ -92,8 +92,8 @@ S_Introduction:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20113) == 1 && callfunc("DM_HuntReady", 20113)) {
-		callfunc("DM_HuntCollect", 20113);
+	callfunc("DM_HuntNoteShort", 20113);
+	if (questprogress(20113) == 1 && callfunc("DM_HuntCollect", 20113)) {
 		callfunc("DM_InstanceQuestComplete", 20113);
 		callfunc("DM_PartyExp", 200000, 95000);
 		callfunc("DM_GivePartyZeny", 16000);
@@ -119,8 +119,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20114) == 1 && callfunc("DM_HuntReady", 20114)) {
-		callfunc("DM_HuntCollect", 20114);
+	callfunc("DM_HuntNoteShort", 20114);
+	if (questprogress(20114) == 1 && callfunc("DM_HuntCollect", 20114)) {
 		callfunc("DM_InstanceQuestComplete", 20114);
 		callfunc("DM_PartyExp", 200000, 95000);
 		callfunc("DM_GivePartyZeny", 16000);
@@ -146,8 +146,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20115) == 1 && callfunc("DM_HuntReady", 20115)) {
-		callfunc("DM_HuntCollect", 20115);
+	callfunc("DM_HuntNoteShort", 20115);
+	if (questprogress(20115) == 1 && callfunc("DM_HuntCollect", 20115)) {
 		callfunc("DM_InstanceQuestComplete", 20115);
 		callfunc("DM_PartyExp", 150000, 70000);
 		callfunc("DM_GivePartyZeny", 12000);
@@ -224,7 +224,7 @@ S_TurnIns:
 
 // ── Supervisor Kessler — The Company Man ───────────────────────────────
 einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc07_started) {
 		callfunc("DM_PartyMes", "[Supervisor Kessler]");
 		callfunc("DM_PartyMes", "This is a restricted area. Move along.");

@@ -31,7 +31,7 @@
 
 // Sun-Hwa - shrine-medium and Arc 2 quest-giver
 payon,181,104,4	script	Sun-Hwa#dm	4_F_THAISHAMAN,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20012) == 2) {
 		if (questprogress(20007) == 1)
 			callfunc("DM_Arc02Complete");
@@ -113,8 +113,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20008) == 1 && callfunc("DM_HuntReady", 20008)) {
-		callfunc("DM_HuntCollect", 20008);
+	callfunc("DM_HuntNoteShort", 20008);
+	if (questprogress(20008) == 1 && callfunc("DM_HuntCollect", 20008)) {
 		callfunc("DM_InstanceQuestComplete", 20008);
 		callfunc("DM_PartyExp", 7000, 2800);
 		callfunc("DM_GivePartyZeny", 2500);
@@ -142,8 +142,8 @@ S_TurnIns:
 		}
 		next();
 	}
-	if (questprogress(20009) == 1 && callfunc("DM_HuntReady", 20009)) {
-		callfunc("DM_HuntCollect", 20009);
+	callfunc("DM_HuntNoteShort", 20009);
+	if (questprogress(20009) == 1 && callfunc("DM_HuntCollect", 20009)) {
 		callfunc("DM_InstanceQuestComplete", 20009);
 		callfunc("DM_PartyExp", 9000, 3500);
 		callfunc("DM_GivePartyZeny", 3000);
@@ -279,7 +279,7 @@ S_TurnIns:
 
 // Scholar Voss - human villain and Moonlight Flower set-piece
 pay_dun04,120,115,4	script	Scholar Voss#dm	4_M_SCIENCE,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20012) != 1) {
 		if (questprogress(20012) == 2) {
 			callfunc("DM_PartyMes", "^3355FF*The grove is bruised but quiet. Voss's neat chalk circles are scuffed into useless dust.*^000000");
@@ -443,7 +443,11 @@ OnInit:
 }
 
 payon,179,108,4	script	West Memorial#dm	4_BOARD3,{
-	if (!callfunc("DM_SessionAllows") || !dm_arc02_started) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc02_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
 	if ('boss_up) {
 		callfunc("DM_PartyMes", "^3355FF*The name is still here. The unquiet are not finished.*^000000");
 		close();
@@ -479,7 +483,11 @@ OnInit:
 }
 
 payon,185,100,4	script	East Memorial#dm	4_BOARD3,{
-	if (!callfunc("DM_SessionAllows") || !dm_arc02_started) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc02_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
 	callfunc("DM_PartyMes", "^3355FF*Grandmother's stone. Empty. A comb-shaped hollow. Someone took more than a body.*^000000");
 	if (!(dm_arc02_memorial_known & 2)) {
 		callfunc("DM_InstanceSetFlag", "dm_arc02_memorial_known", dm_arc02_memorial_known | 2);
@@ -517,7 +525,11 @@ OnInit:
 }
 
 payon,175,100,4	script	South Memorial#dm	4_BOARD3,{
-	if (!callfunc("DM_SessionAllows") || !dm_arc02_started) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc02_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
 	callfunc("DM_PartyMes", "^3355FF*A child's rubbing: the ancestor's name in a shaky hand. The ink is still damp.*^000000");
 	if (!(dm_arc02_memorial_known & 4)) {
 		callfunc("DM_InstanceSetFlag", "dm_arc02_memorial_known", dm_arc02_memorial_known | 4);
@@ -532,7 +544,11 @@ OnInit:
 }
 
 payon,189,111,4	script	Cliff Family#dm	4_F_01,{
-	if (!callfunc("DM_SessionAllows") || !dm_arc02_started) { close; }
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc02_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
 	if (questprogress(20012) == 2) {
 		callfunc("DM_PartyMes", "[Family]");
 		if (dm_arc02_grove_restored)
@@ -570,7 +586,7 @@ OnInit:
 }
 
 pay_dun04,115,115,4	script	Grove Conduit A#dm	4_ENERGY_BLUE,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (dm_arc02_conduits_severed) {
 		callfunc("DM_PartyMes", "^3355FF*Cut. The blue is gone.*^000000");
 		close();
@@ -598,7 +614,7 @@ OnInit:
 }
 
 pay_dun04,125,115,4	script	Grove Conduit B#dm	4_ENERGY_BLUE,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (dm_arc02_conduits_severed) {
 		callfunc("DM_PartyMes", "^3355FF*Cut. The blue is gone.*^000000");
 		close();
@@ -654,7 +670,10 @@ OnInit:
 
 function	script	DM_Arc02Lantern	{
 	.@bit = getarg(0);
-	if (!callfunc("DM_SessionAllows") || !dm_arc02_started) {
+	if (!callfunc("DM_SessionGate"))
+		return 0;
+	if (!dm_arc02_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
 		close();
 		return 0;
 	}

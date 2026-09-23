@@ -33,6 +33,7 @@
 #include "map/map.h"
 #include "map/messages.h"
 #include "map/mob.h" // struct mob_data
+#include "map/npc.h"
 #include "common/msgtable.h"
 #include "map/pc.h"
 #include "map/skill.h"
@@ -210,6 +211,44 @@ static int party_create(struct map_session_data *sd, const char *name, int item,
 	return 0;
 }
 
+void party_campaign_catchup_others(struct map_session_data *sd)
+{
+	struct party_data *p;
+	int i;
+
+	if (sd == NULL || sd->status.party_id <= 0)
+		return;
+	p = party->search(sd->status.party_id);
+	if (p == NULL)
+		return;
+	for (i = 0; i < MAX_PARTY; i++) {
+		struct map_session_data *member = p->data[i].sd;
+		if (member == NULL || member == sd)
+			continue;
+		// Own script instance. A talk already in progress keeps the event
+		// until that talk ends, instead of losing the conversation.
+		npc->event(member, "DM_CampEvents::OnPCQuestLog", 0);
+	}
+}
+
+void party_campaign_push_others(struct map_session_data *sd)
+{
+	struct party_data *p;
+	int i;
+
+	if (sd == NULL || sd->status.party_id <= 0)
+		return;
+	p = party->search(sd->status.party_id);
+	if (p == NULL)
+		return;
+	for (i = 0; i < MAX_PARTY; i++) {
+		struct map_session_data *member = p->data[i].sd;
+		if (member == NULL || member == sd)
+			continue;
+		npc->event(member, "DM_CampEvents::OnPCPartyPush", 0);
+	}
+}
+
 static void party_created(int account_id, int char_id, int fail, int party_id, const char *name)
 {
 	struct map_session_data *sd;
@@ -226,6 +265,8 @@ static void party_created(int account_id, int char_id, int fail, int party_id, c
 
 	if( !fail ) {
 		sd->status.party_id = party_id;
+		npc->event(sd, "DM_CampEvents::OnPCPartyJoin", 0);
+		party_campaign_catchup_others(sd);
 
 		// EXP sharing has no creation flag at all, so it can only be pushed
 		// after the fact. The hazard it carries is a high level member soaking
@@ -559,6 +600,8 @@ static int party_member_added(int party_id, int account_id, int char_id, int fla
 	}
 
 	sd->status.party_id = party_id;
+	npc->event(sd, "DM_CampEvents::OnPCPartyJoin", 0);
+	party_campaign_catchup_others(sd);
 
 	clif->party_member_info(p,sd);
 	clif->party_info(p,sd);

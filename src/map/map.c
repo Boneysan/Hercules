@@ -1861,6 +1861,7 @@ static int map_addflooritem(const struct block_list *bl, struct item *item_data,
 	fitem->bl.y = y;
 	fitem->bl.id = map->get_new_object_id();
 	fitem->showdropeffect = showdropeffect;
+	fitem->player_dropped = (flags & MAP_ADD_FLOOR_ITEM_PLAYER_DROP) != 0;
 	if(fitem->bl.id==0){
 		ers_free(map->flooritem_ers, fitem);
 		return 0;

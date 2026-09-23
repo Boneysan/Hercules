@@ -43,6 +43,11 @@
 // 2 bytes (header only). See clif_parse_CancelCast.
 packetLen(0x0f00, 2)
 
+// 0x0EFC CZ_SPLIT_INVENTORY_STACK — split a stack into another inventory slot.
+// 2 (header) + 2 (wire inventory index) + 2 (amount) = 6 bytes.
+packetLen(0x0efc, 6)
+packetLen(0x0efb, -1)
+
 // 0x0EFF ZC_PARTY_INVITE_SENDER — companion to ZC_PARTY_JOIN_REQ carrying the
 // inviter's character name, which the official packet does not include.
 // 2 (header) + 4 (party id) + 24 (NAME_LENGTH) = 30. See clif_party_invite.

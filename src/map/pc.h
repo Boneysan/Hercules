@@ -253,6 +253,7 @@ struct map_session_data {
 		unsigned int autoloot;
 		unsigned int autopickup : 2; // Seal Cascade: the CHARACTER's own pickup radius in cells, 0 = off
 		int autolootid[AUTOLOOTITEM_SIZE]; // [Zephyrus]
+		int noautolootid[AUTOLOOTITEM_SIZE]; // Player item-level autoloot exclusions
 		unsigned int autoloottype;
 		unsigned int autolooting : 1; //performance-saver, autolooting state for @alootid
 		unsigned int autobonus; //flag to indicate if an autobonus is activated. [Inkfish]
@@ -1209,6 +1210,7 @@ END_ZEROED_BLOCK; /* End */
 
 	int (*disguise) (struct map_session_data *sd, int class);
 	bool (*isautolooting) (struct map_session_data *sd, int nameid);
+	bool (*isautolootblocked) (struct map_session_data *sd, int nameid);
 
 	void (*overheat) (struct map_session_data *sd, int val);
 
