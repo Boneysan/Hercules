@@ -11745,6 +11745,12 @@ static void clif_parse_LoadEndAck(int fd, struct map_session_data *sd)
 	if (map->list[sd->bl.m].flag.loadevent != 0) // Run OnPCLoadMapEvent labels. [Lance]
 		npc->script_event(sd, NPCE_LOADMAP);
 
+	// Account map discovery is an opt-in Korangar event, not a reason to enable
+	// Hercules' global loadevent mapflag (which runs every OnPCLoadMapEvent
+	// script on every flagged map). Keep ordinary map transitions scoped to the
+	// one account-ledger handler.
+	npc->event(sd, "KorangarDiscovery::OnKorangarMapChange", 0);
+
 	if (pc->checkskill(sd, SG_DEVIL) > 0 && pc->nextjobexp(sd) == 0) // Blindness. [Komurka]
 		clif->sc_end(&sd->bl, sd->bl.id, SELF, status->get_sc_icon(SC_DEVIL1));
 

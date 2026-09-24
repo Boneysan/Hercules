@@ -42,7 +42,7 @@ OnPCLoginEvent:
 	dispbottom "[KORANGAR-MAP-DISCOVERY:v1:end:" + .@account_id + ":" + .@sequence + "]";
 	end;
 
-OnPCLoadMapEvent:
+OnKorangarMapChange:
 	.@account_id = getcharid(CHAR_ID_ACCOUNT);
 	.@map_name$ = strcharinfo(3);
 	.@exists = 0;
