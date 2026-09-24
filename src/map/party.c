@@ -983,7 +983,9 @@ static int party_send_message(struct map_session_data *sd, const char *mes)
 	static const char *korangar_ping_v1 = "[KORANGAR-PING:v1]";
 	static const char *korangar_ping_v2 = "[KORANGAR-PING:v2]";
 	static const char *korangar_session_v1 = "[KORANGAR-SESSION:v1]";
+	const char *message_body;
 	bool is_korangar_session_message;
+	int payload_len;
 	int64 now;
 	nullpo_ret(sd);
 	nullpo_ret(mes);
@@ -997,16 +999,22 @@ static int party_send_message(struct map_session_data *sd, const char *mes)
 		return 0;
 
 	int len = (int)strlen(mes);
-	is_korangar_session_message = strncmp(mes, korangar_ping_v1, strlen(korangar_ping_v1)) == 0
-		|| strncmp(mes, korangar_ping_v2, strlen(korangar_ping_v2)) == 0
-		|| strncmp(mes, korangar_session_v1, strlen(korangar_session_v1)) == 0;
+	message_body = strstr(mes, " : ");
+	if (message_body != NULL)
+		message_body += 3;
+	else
+		message_body = mes;
+	payload_len = (int)strlen(message_body);
+	is_korangar_session_message = strncmp(message_body, korangar_ping_v1, strlen(korangar_ping_v1)) == 0
+		|| strncmp(message_body, korangar_ping_v2, strlen(korangar_ping_v2)) == 0
+		|| strncmp(message_body, korangar_session_v1, strlen(korangar_session_v1)) == 0;
 	if (is_korangar_session_message) {
 		// Korangar uses party chat as a backwards-compatible carrier for
 		// ephemeral map pings and shared destinations. A modified client must
 		// not be able to flood every party member with those hints.
 		// Bound the payload independently of normal chat and enforce one such
 		// message per character per second on the authoritative server.
-		if (len > 128)
+		if (payload_len > 128)
 			return 0;
 		now = timer->gettick();
 		if (sd->korangar_party_session_sent && DIFF_TICK(now, sd->korangar_party_session_tick) < 1000)
