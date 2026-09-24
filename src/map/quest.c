@@ -90,6 +90,18 @@ static int quest_pc_login(struct map_session_data *sd)
 
 	clif->quest_send_list(sd);
 
+#if PACKETVER >= 20150513
+	// Modern clients receive the active quest IDs in the list above, but the
+	// objective-to-mob mapping lives in ZC_HUNTING_QUEST_INFO and is otherwise
+	// only sent when a quest is first added. Resend each active objective on
+	// login so clients can rebuild hunt counters and safe map-level guidance.
+	{
+		int i;
+		for (i = 0; i < sd->avail_quests; i++)
+			clif->quest_notify_objective(sd, &sd->quest_log[i]);
+	}
+#endif
+
 #if PACKETVER < 20141022
 	clif->quest_send_mission(sd);
 	for( i = 0; i < sd->avail_quests; i++ ) {

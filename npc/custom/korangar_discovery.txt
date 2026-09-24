@@ -1,0 +1,74 @@
+// Server-authoritative player Guide discovery ledger.
+// Mechanical reference data stays open; this state only records encounter
+// milestones and is scoped to the player's account, never their party peers.
+
+-	script	KorangarDiscovery	-1,{
+OnInit:
+	query_sql("CREATE TABLE IF NOT EXISTS `korangar_account_discovery` (`account_id` INT UNSIGNED NOT NULL, `mob_id` SMALLINT UNSIGNED NOT NULL, `milestone` TINYINT UNSIGNED NOT NULL DEFAULT 1, `discovered_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`account_id`, `mob_id`), KEY `korangar_account_discovery_mob` (`mob_id`)) ENGINE=InnoDB");
+	query_sql("CREATE TABLE IF NOT EXISTS `korangar_account_map_discovery` (`account_id` INT UNSIGNED NOT NULL, `map_name` VARCHAR(24) NOT NULL, `discovered_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`account_id`, `map_name`), KEY `korangar_account_map_discovery_map` (`map_name`)) ENGINE=InnoDB");
+	end;
+
+OnPCLoginEvent:
+	.@account_id = getcharid(CHAR_ID_ACCOUNT);
+	.@entries = query_sql("SELECT `mob_id`, `milestone` FROM `korangar_account_discovery` WHERE `account_id` = " + .@account_id + " AND `milestone` BETWEEN 1 AND 3 ORDER BY `mob_id`", .@mob_id, .@milestone);
+	.@sequence = gettimetick(2);
+	.@chunk_size = 20;
+	.@chunks = (.@entries + .@chunk_size - 1) / .@chunk_size;
+	dispbottom "[KORANGAR-DISCOVERY:v1:begin:" + .@account_id + ":" + .@sequence + ":" + .@entries + ":" + .@chunks + "]";
+	for (.@i = 0; .@i < .@entries; .@i++) {
+		if ((.@i % .@chunk_size) == 0)
+			.@payload$ = "";
+		else
+			.@payload$ = .@payload$ + ",";
+		.@payload$ = .@payload$ + .@mob_id[.@i] + "=" + .@milestone[.@i];
+		if (((.@i % .@chunk_size) == (.@chunk_size - 1)) || (.@i == (.@entries - 1))) {
+			dispbottom "[KORANGAR-DISCOVERY:v1:chunk:" + .@account_id + ":" + .@sequence + ":" + (.@i / .@chunk_size) + ":" + .@payload$ + "]";
+		}
+	}
+	dispbottom "[KORANGAR-DISCOVERY:v1:end:" + .@account_id + ":" + .@sequence + "]";
+	.@map_entries = query_sql("SELECT `map_name` FROM `korangar_account_map_discovery` WHERE `account_id` = " + .@account_id + " ORDER BY `map_name`", .@map_name$);
+	.@map_chunk_size = 8;
+	.@map_chunks = (.@map_entries + .@map_chunk_size - 1) / .@map_chunk_size;
+	dispbottom "[KORANGAR-MAP-DISCOVERY:v1:begin:" + .@account_id + ":" + .@sequence + ":" + .@map_entries + ":" + .@map_chunks + "]";
+	for (.@i = 0; .@i < .@map_entries; .@i++) {
+		if ((.@i % .@map_chunk_size) == 0)
+			.@map_payload$ = "";
+		else
+			.@map_payload$ = .@map_payload$ + ",";
+		.@map_payload$ = .@map_payload$ + .@map_name$[.@i];
+		if (((.@i % .@map_chunk_size) == (.@map_chunk_size - 1)) || (.@i == (.@map_entries - 1)))
+			dispbottom "[KORANGAR-MAP-DISCOVERY:v1:chunk:" + .@account_id + ":" + .@sequence + ":" + (.@i / .@map_chunk_size) + ":" + .@map_payload$ + "]";
+	}
+	dispbottom "[KORANGAR-MAP-DISCOVERY:v1:end:" + .@account_id + ":" + .@sequence + "]";
+	end;
+
+OnPCLoadMapEvent:
+	.@account_id = getcharid(CHAR_ID_ACCOUNT);
+	.@map_name$ = strcharinfo(3);
+	.@exists = 0;
+	query_sql("SELECT 1 FROM `korangar_account_map_discovery` WHERE `account_id` = " + .@account_id + " AND `map_name` = '" + escape_sql(.@map_name$) + "' LIMIT 1", .@exists);
+	if (.@exists)
+		end;
+	query_sql("INSERT IGNORE INTO `korangar_account_map_discovery` (`account_id`, `map_name`) VALUES (" + .@account_id + ", '" + escape_sql(.@map_name$) + "')");
+	.@stored = 0;
+	query_sql("SELECT 1 FROM `korangar_account_map_discovery` WHERE `account_id` = " + .@account_id + " AND `map_name` = '" + escape_sql(.@map_name$) + "' LIMIT 1", .@stored);
+	if (.@stored)
+		dispbottom "[KORANGAR-MAP-DISCOVERY:v1:visited:" + .@account_id + ":" + .@map_name$ + "]";
+	end;
+
+OnNPCKillEvent:
+	.@mob_id = killedrid;
+	if (.@mob_id <= 0 || .@mob_id > 65535)
+		end;
+	.@account_id = getcharid(CHAR_ID_ACCOUNT);
+	.@existing = 0;
+	query_sql("SELECT `milestone` FROM `korangar_account_discovery` WHERE `account_id` = " + .@account_id + " AND `mob_id` = " + .@mob_id, .@existing);
+	if (.@existing >= 1)
+		end;
+	query_sql("INSERT INTO `korangar_account_discovery` (`account_id`, `mob_id`, `milestone`) VALUES (" + .@account_id + ", " + .@mob_id + ", 1) ON DUPLICATE KEY UPDATE `milestone` = GREATEST(`milestone`, VALUES(`milestone`))");
+	.@stored = 0;
+	query_sql("SELECT `milestone` FROM `korangar_account_discovery` WHERE `account_id` = " + .@account_id + " AND `mob_id` = " + .@mob_id, .@stored);
+	if (.@stored >= 1)
+		dispbottom "[KORANGAR-DISCOVERY:v1:delta:" + .@account_id + ":" + .@mob_id + ":1]";
+	end;
+}

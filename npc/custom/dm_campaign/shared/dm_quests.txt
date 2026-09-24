@@ -69,6 +69,13 @@ function	script	DM_PartyApplyQuest	{
 
 	if (.@quest_id <= 0)
 		return 0;
+	if (callfunc("DM_SessionAllows") && .@party_id == $dm_active_party) {
+		.@event_kind$ = "quest_" + .@action$;
+		if (callfunc("DM_CampaignEventAppend", .@party_id, .@event_kind$, .@quest_id + "", .@quest_id) <= 0) {
+			dispbottom("[DM] Campaign event could not be saved; quest state was not changed.");
+			return 0;
+		}
+	}
 
 	// Solo / no party: apply to the attached character only.
 	if (.@party_id <= 0) {
@@ -144,6 +151,13 @@ function	script	DM_PartyApplyFlag	{
 
 	if (!callfunc("DM_ValidFlagName", .@flag$))
 		return 0;
+	if (callfunc("DM_SessionAllows") && .@party_id == $dm_active_party) {
+		.@event_kind$ = .@value == 0 ? "flag_clear" : "flag_set";
+		if (callfunc("DM_CampaignEventAppend", .@party_id, .@event_kind$, .@flag$, .@value) <= 0) {
+			dispbottom("[DM] Campaign event could not be saved; story flag was not changed.");
+			return 0;
+		}
+	}
 
 	if (.@party_id <= 0) {
 		setd(.@flag$, .@value);
@@ -510,6 +524,73 @@ function	script	DM_ClaimPendingGrants	{
 	return .@rows;
 }
 
+// Replay typed quest/flag transitions for this character. The event cursor is
+// advanced only after the character postcondition is observed; retries are
+// idempotent and this path never issues rewards.
+function	script	DM_ReplayPartyEvents	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@char_id = getcharid(CHAR_ID_CHAR);
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	if (.@party_id <= 0 || .@char_id <= 0 || !callfunc("DM_SessionAllows") || .@party_id != $dm_active_party)
+		return -1;
+
+	callfunc("DM_CheckpointRememberParty", .@party_id);
+	query_sql("INSERT IGNORE INTO `dm_campaign_party_cursor` (`campaign_id`,`char_id`,`party_id`,`last_event_id`) VALUES ('" + .@campaign$ + "'," + .@char_id + "," + .@party_id + ",0)");
+	// A character moving to a different active party gets that party's history,
+	// never a cursor inherited from their prior party.
+	query_sql("UPDATE `dm_campaign_party_cursor` SET `party_id` = " + .@party_id + ", `last_event_id` = 0 WHERE `campaign_id` = '" + .@campaign$ + "' AND `char_id` = " + .@char_id + " AND `party_id` != " + .@party_id);
+	.@rows = query_sql("SELECT `last_event_id` FROM `dm_campaign_party_cursor` WHERE `campaign_id` = '" + .@campaign$ + "' AND `char_id` = " + .@char_id + " AND `party_id` = " + .@party_id, .@after);
+	if (.@rows != 1)
+		return -1;
+
+	.@applied = 0;
+	while (1) {
+		.@rows = query_sql("SELECT `id`, `kind`, `name`, `value` FROM `dm_campaign_party_event` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id + " AND `id` > " + .@after + " ORDER BY `id` LIMIT 128", .@event_id, .@kind$, .@name$, .@value);
+		if (.@rows <= 0)
+			break;
+		for (.@i = 0; .@i < .@rows; ++.@i) {
+			.@ok = 0;
+			if (.@kind$[.@i] == "quest_set" || .@kind$[.@i] == "quest_complete" || .@kind$[.@i] == "quest_erase") {
+				.@quest_id = atoi(.@name$[.@i]);
+				if (.@quest_id <= 0)
+					return -1;
+				if (.@kind$[.@i] == "quest_set") {
+					if (questprogress(.@quest_id) == 0)
+						setquest(.@quest_id);
+					.@ok = questprogress(.@quest_id) > 0;
+				} else if (.@kind$[.@i] == "quest_complete") {
+					if (questprogress(.@quest_id) == 0)
+						setquest(.@quest_id);
+					if (questprogress(.@quest_id) == 1)
+						completequest(.@quest_id);
+					.@ok = questprogress(.@quest_id) == 2;
+				} else {
+					if (questprogress(.@quest_id) > 0)
+						erasequest(.@quest_id);
+					.@ok = questprogress(.@quest_id) == 0;
+				}
+			} else if (.@kind$[.@i] == "flag_set" || .@kind$[.@i] == "flag_clear") {
+				if (!callfunc("DM_ValidFlagName", .@name$[.@i]))
+					return -1;
+				.@expected = .@kind$[.@i] == "flag_clear" ? 0 : .@value[.@i];
+				setd(.@name$[.@i], .@expected);
+				.@ok = getd(.@name$[.@i]) == .@expected;
+			}
+			if (!.@ok)
+				return -1;
+			query_sql("UPDATE `dm_campaign_party_cursor` SET `last_event_id` = " + .@event_id[.@i] + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `char_id` = " + .@char_id + " AND `party_id` = " + .@party_id + " AND `last_event_id` < " + .@event_id[.@i]);
+			.@cursor_rows = query_sql("SELECT `last_event_id` FROM `dm_campaign_party_cursor` WHERE `campaign_id` = '" + .@campaign$ + "' AND `char_id` = " + .@char_id + " AND `party_id` = " + .@party_id, .@cursor);
+			if (.@cursor_rows != 1 || .@cursor < .@event_id[.@i])
+				return -1;
+			.@after = .@event_id[.@i];
+			++.@applied;
+		}
+		if (.@rows < 128)
+			break;
+	}
+	return .@applied;
+}
+
 function	script	DM_CatchUpFromParty	{
 	if (!callfunc("DM_SessionAllows"))
 		return 0;
@@ -525,6 +606,13 @@ function	script	DM_CatchUpFromParty	{
 	// character is left half-copied.
 	freeloop(true);
 	@dm_flag_adopt = getarg(1, 0);
+	.@events = callfunc("DM_ReplayPartyEvents", .@party_id);
+	if (.@events < 0) {
+		@dm_flag_adopt = 0;
+		freeloop(false);
+		dispbottom("[DM] Campaign replay stopped safely. Your event cursor was not advanced past the failed change; it will retry on the next sync.");
+		return 0;
+	}
 	.@grants = callfunc("DM_ClaimPendingGrants");
 	.@copied = callfunc("DM_SyncListedQuests", 20001, 20002, 20003, 20004, 20005, 20006, 20007, 20008, 20009, 20010, 20011, 20012);
 	.@copied = .@copied + callfunc("DM_SyncListedQuests", 20013, 20014, 20015, 20016, 20017, 20018, 20019, 20020, 20021, 20022, 20023, 20024);

@@ -1,0 +1,90 @@
+// Optional player death-recovery rule (GDD server slice S4).
+// Snapshot actual base/job EXP before pc_dead applies any configured penalty,
+// then compare after the death handler returns. Only recorded real losses can
+// be recovered; exemptions, no-penalty maps, and zero-penalty servers record 0.
+
+-	script	KorangarDeathRecovery	-1,{
+OnInit:
+	// Server owners can disable this rule by changing the values below.
+	.enabled = true;
+	.kills_required = 10;
+	.refund_percent = 50;
+	.save_radius = 4;
+	end;
+
+OnPCDieEvent:
+	if (!.enabled)
+		end;
+	korangar_death_before_base = readparam(BaseExp);
+	korangar_death_before_job = readparam(JobExp);
+	getmapxy(korangar_death_map$, .@x, .@y, UNITTYPE_PC);
+	addtimer 1, "KorangarDeathRecovery::OnCaptureActualLoss";
+	end;
+
+OnCaptureActualLoss:
+	.@base_after = readparam(BaseExp);
+	.@job_after = readparam(JobExp);
+	.@base_lost = korangar_death_before_base - .@base_after;
+	.@job_lost = korangar_death_before_job - .@job_after;
+	if (.@base_lost < 0) .@base_lost = 0;
+	if (.@job_lost < 0) .@job_lost = 0;
+	if (.@base_lost == 0 && .@job_lost == 0)
+		end;
+
+	// If an older recovery is pending, this death adds its real loss but resets
+	// the ten-kill streak to the map of the newest death.
+	korangar_recovery_base_pending += .@base_lost;
+	korangar_recovery_job_pending += .@job_lost;
+	korangar_recovery_map$ = korangar_death_map$;
+	korangar_recovery_kills = 0;
+	dispbottom "Korangar recovery: actual loss recorded. Recover half after " + .kills_required + " same-map monster kills or by visiting your save point.";
+	end;
+
+OnNPCKillEvent:
+	if (!.enabled || (korangar_recovery_base_pending <= 0 && korangar_recovery_job_pending <= 0))
+		end;
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	if (.@map$ != korangar_recovery_map$)
+		end;
+	korangar_recovery_kills++;
+	if (korangar_recovery_kills >= .kills_required)
+		callsub S_GrantRecovery;
+	end;
+
+OnPCLoadMapEvent:
+OnPCLoginEvent:
+	if (.enabled)
+		callsub S_CheckSavePoint;
+	end;
+
+S_CheckSavePoint:
+	if (korangar_recovery_base_pending <= 0 && korangar_recovery_job_pending <= 0)
+		return;
+	.@current_map$ = strcharinfo(3);
+	.@save_map$ = getsavepoint(0);
+	if (.@current_map$ != .@save_map$)
+		return;
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	.@dx = .@x - getsavepoint(1);
+	.@dy = .@y - getsavepoint(2);
+	if (.@dx < 0) .@dx = 0 - .@dx;
+	if (.@dy < 0) .@dy = 0 - .@dy;
+	if (.@dx <= .save_radius && .@dy <= .save_radius)
+		callsub S_GrantRecovery;
+	return;
+
+S_GrantRecovery:
+	.@base_refund = korangar_recovery_base_pending * .refund_percent / 100;
+	.@job_refund = korangar_recovery_job_pending * .refund_percent / 100;
+	// Consume the pending ledger before granting EXP so a repeated event cannot
+	// issue the same refund twice.
+	korangar_recovery_base_pending = 0;
+	korangar_recovery_job_pending = 0;
+	korangar_recovery_map$ = "";
+	korangar_recovery_kills = 0;
+	if (.@base_refund > 0 || .@job_refund > 0) {
+		getexp(.@base_refund, .@job_refund);
+		dispbottom "Korangar recovery: restored " + .@base_refund + " base and " + .@job_refund + " job EXP.";
+	}
+	return;
+}

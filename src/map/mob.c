@@ -85,6 +85,32 @@ struct mob_interface *mob;
 #define MAX_MINCHASE 30 //Max minimum chase value to use for mobs.
 #define RUDE_ATTACKED_COUNT 2 //After how many rude-attacks should the skill be used?
 
+#define MAX_MOB_AI_PROFILES 64
+enum mob_ai_profile_role {
+	MOB_AI_PROFILE_AGGRESSOR,
+	MOB_AI_PROFILE_COWARD,
+	MOB_AI_PROFILE_SKIRMISHER,
+	MOB_AI_PROFILE_RANGED_KEEPER,
+};
+
+struct mob_ai_profile {
+	int16 map_id;
+	int mob_id;
+	enum mob_ai_profile_role role;
+	int hp_threshold;
+	int flee_distance;
+	int hit_threshold;
+	int preferred_range;
+	int step_distance;
+	int cooldown;
+	bool avoid_hazards;
+};
+
+static struct mob_ai_profile mob_ai_profiles[MAX_MOB_AI_PROFILES];
+static int mob_ai_profile_count;
+static const struct mob_ai_profile *mob_ai_profile_find(int16 map_id, int mob_id);
+static void mob_read_ai_profiles(void);
+
 //Dynamic item drop ratio database for per-item drop ratio modifiers overriding global drop ratios.
 #define MAX_ITEMRATIO_MOBS 10
 struct item_drop_ratio {
@@ -108,6 +134,50 @@ static struct mob_chat *mob_chat(short id)
 	if(id <= 0 || id > MAX_MOB_CHAT || mob->chat_db[id] == NULL)
 		return NULL;
 	return mob->chat_db[id];
+}
+
+static const struct mob_ai_profile *mob_ai_profile_find(int16 map_id, int mob_id)
+{
+	for (int i = 0; i < mob_ai_profile_count; ++i) {
+		if (mob_ai_profiles[i].map_id == map_id && mob_ai_profiles[i].mob_id == mob_id)
+			return &mob_ai_profiles[i];
+	}
+	return NULL;
+}
+
+static bool mob_is_hazard_aware(struct mob_data *md)
+{
+	const struct mob_ai_profile *profile;
+	nullpo_retr(false, md);
+	profile = mob_ai_profile_find(md->bl.m, md->class_);
+	return profile != NULL && profile->avoid_hazards;
+}
+
+static bool mob_ai_profile_step_away(struct mob_data *md, struct block_list *target, int max_distance)
+{
+	static const int8 step_x[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
+	static const int8 step_y[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
+	int best_x = md->bl.x;
+	int best_y = md->bl.y;
+	int best_distance = (int)distance_bl(&md->bl, target);
+
+	for (int step = 0; step < ARRAYLENGTH(step_x); ++step) {
+		int x = md->bl.x + step_x[step];
+		int y = md->bl.y + step_y[step];
+		int candidate_distance;
+
+		if (map->getcell(md->bl.m, &md->bl, x, y, CELL_CHKNOPASS))
+			continue;
+		candidate_distance = (int)distance_blxy(target, x, y);
+		if (candidate_distance > best_distance && candidate_distance <= max_distance) {
+			best_x = x;
+			best_y = y;
+			best_distance = candidate_distance;
+		}
+	}
+
+	return (best_x != md->bl.x || best_y != md->bl.y)
+	    && unit->walk_toxy(&md->bl, best_x, best_y, 0) == 0;
 }
 
 /*==========================================
@@ -1188,6 +1258,11 @@ static int mob_spawn(struct mob_data *md)
 
 	memset(&md->state, 0, sizeof(md->state));
 	status_calc_mob(md, SCO_FIRST);
+	md->ai_profile_cooldown_tick = 0;
+	md->ai_profile_hit_count = 0;
+	const struct mob_ai_profile *ai_profile = mob_ai_profile_find(md->bl.m, md->class_);
+	if (ai_profile != NULL && ai_profile->role == MOB_AI_PROFILE_AGGRESSOR)
+		md->status.mode |= MD_AGGRESSIVE;
 	md->attacked_id = 0;
 	md->target_id = 0;
 	md->move_fail_count = 0;
@@ -1776,6 +1851,18 @@ static bool mob_ai_sub_hard(struct mob_data *md, int64 tick)
 	mode = status_get_mode(&md->bl);
 
 	can_move = (mode&MD_CANMOVE)&&unit->can_move(&md->bl);
+	const struct mob_ai_profile *ai_profile = mob_ai_profile_find(md->bl.m, md->class_);
+	if (ai_profile != NULL && ai_profile->role == MOB_AI_PROFILE_COWARD && battle_config.mob_skill_rate != 0 && can_move
+	    && get_percentage(md->status.hp, md->status.max_hp) <= ai_profile->hp_threshold
+	    && (md->ai_profile_cooldown_tick == 0 || DIFF_TICK(tick, md->ai_profile_cooldown_tick) >= ai_profile->cooldown)) {
+		int flee_target_id = md->target_id != 0 ? md->target_id : md->attacked_id;
+		struct block_list *flee_target = map->id2bl(flee_target_id);
+		if (flee_target != NULL && flee_target->m == md->bl.m
+		    && unit->skilluse_id2(&md->bl, flee_target->id, NPC_RUN, ai_profile->flee_distance, 0, 1) == 0) {
+			md->ai_profile_cooldown_tick = tick;
+			return true;
+		}
+	}
 
 	if (md->target_id) {
 		//Check validity of current target. [Skotlex]
@@ -1795,6 +1882,27 @@ static bool mob_ai_sub_hard(struct mob_data *md, int64 tick)
 				return true; //Walk at least "mob_chase_refresh" cells before dropping the target unless target is non-existent
 			mob->unlocktarget(md, tick); //Unlock target
 			tbl = NULL;
+		}
+	}
+
+	/* Opt-in profiles take one bounded repositioning step away from a player.
+	 * Skirmishers react to a hit threshold; keepers maintain a configured band.
+	 * Both fall through to stock AI when no legal adjacent cell is available. */
+	if (ai_profile != NULL && tbl != NULL && tbl->type == BL_PC && tbl->m == md->bl.m
+	    && md->ud.walktimer == INVALID_TIMER && can_move
+	    && (md->ai_profile_cooldown_tick == 0
+	        || DIFF_TICK(tick, md->ai_profile_cooldown_tick) >= ai_profile->cooldown)) {
+		if (ai_profile->role == MOB_AI_PROFILE_SKIRMISHER
+		    && md->ai_profile_hit_count >= ai_profile->hit_threshold) {
+			md->ai_profile_hit_count = 0;
+			md->ai_profile_cooldown_tick = tick;
+			if (mob_ai_profile_step_away(md, tbl, ai_profile->step_distance))
+				return true;
+		} else if (ai_profile->role == MOB_AI_PROFILE_RANGED_KEEPER
+		           && distance_bl(&md->bl, tbl) < ai_profile->preferred_range) {
+			md->ai_profile_cooldown_tick = tick;
+			if (mob_ai_profile_step_away(md, tbl, ai_profile->preferred_range))
+				return true;
 		}
 	}
 
@@ -2333,6 +2441,11 @@ static int mob_respawn(int tid, int64 tick, int id, intptr_t data)
 	struct block_list *bl = map->id2bl(id);
 
 	if(!bl) return 0;
+	if (bl->type == BL_MOB) {
+		struct mob_data *md = BL_UCAST(BL_MOB, bl);
+		md->ai_profile_cooldown_tick = 0;
+		md->ai_profile_hit_count = 0;
+	}
 	status->revive(bl, (uint8)data, 0);
 	return 1;
 }
@@ -2471,6 +2584,12 @@ static void mob_damage(struct mob_data *md, struct block_list *src, int damage)
 {
 	nullpo_retv(md);
 	if (damage > 0) { //Store total damage...
+		if (src != NULL && src->type == BL_PC) {
+			const struct mob_ai_profile *ai_profile = mob_ai_profile_find(md->bl.m, md->class_);
+			if (ai_profile != NULL && ai_profile->role == MOB_AI_PROFILE_SKIRMISHER
+			    && md->ai_profile_hit_count < ai_profile->hit_threshold)
+				md->ai_profile_hit_count++;
+		}
 		if (UINT_MAX - (unsigned int)damage > md->tdmg)
 			md->tdmg+=damage;
 		else if (md->tdmg == UINT_MAX)
@@ -5961,6 +6080,98 @@ static bool mob_skill_db_libconfig_sub_skill(struct config_setting_t *it, int n,
 /*==========================================
  * mob_skill_db.txt reading
  *------------------------------------------*/
+static void mob_read_ai_profiles(void)
+{
+	struct config_t profile_conf;
+	struct config_setting_t *profiles, *entry;
+	char filepath[512];
+	int i = 0;
+
+	mob_ai_profile_count = 0;
+	snprintf(filepath, sizeof(filepath), "%s", DBPATH"mob_ai_profile_db.conf");
+	if (!exists(filepath)) {
+		ShowStatus("No map-scoped mob AI profiles configured.\n");
+		return;
+	}
+	if (!libconfig->load_file(&profile_conf, filepath))
+		return;
+	profiles = libconfig->lookup(&profile_conf, "mob_ai_profile_db");
+	while (profiles != NULL && (entry = libconfig->setting_get_elem(profiles, i++)) != NULL) {
+		const char *map_name = NULL, *mob_name = NULL, *role_name = NULL;
+		struct mob_ai_profile profile;
+		memset(&profile, 0, sizeof(profile));
+
+		if (!libconfig->setting_lookup_string(entry, "Map", &map_name)
+		    || !libconfig->setting_lookup_string(entry, "Monster", &mob_name)
+		    || !libconfig->setting_lookup_string(entry, "Role", &role_name)) {
+			ShowWarning("mob_ai_profile_db: profile #%d is missing Map, Monster, or Role; skipped.\n", i);
+			continue;
+		}
+		profile.map_id = map->mapname2mapid(map_name);
+		if (profile.map_id < 0) {
+			ShowWarning("mob_ai_profile_db: unknown map '%s' in profile #%d; skipped.\n", map_name, i);
+			continue;
+		}
+		if (!script->get_constant(mob_name, &profile.mob_id) || profile.mob_id <= 0 || mob->db(profile.mob_id) == mob->dummy) {
+			ShowWarning("mob_ai_profile_db: unknown monster '%s' in profile #%d; skipped.\n", mob_name, i);
+			continue;
+		}
+		if (strcmpi(role_name, "Aggressor") == 0) {
+			profile.role = MOB_AI_PROFILE_AGGRESSOR;
+		} else if (strcmpi(role_name, "Coward") == 0) {
+			profile.role = MOB_AI_PROFILE_COWARD;
+			if (libconfig->setting_lookup_int(entry, "HpThreshold", &profile.hp_threshold) != CONFIG_TRUE
+			    || libconfig->setting_lookup_int(entry, "FleeDistance", &profile.flee_distance) != CONFIG_TRUE
+			    || libconfig->setting_lookup_int(entry, "Cooldown", &profile.cooldown) != CONFIG_TRUE
+			    || profile.hp_threshold < 1 || profile.hp_threshold > 99
+			    || profile.flee_distance < 1 || profile.flee_distance > 10
+			    || profile.cooldown < 1000 || profile.cooldown > 60000) {
+				ShowWarning("mob_ai_profile_db: invalid Coward parameters for %s on %s; skipped.\n", mob_name, map_name);
+				continue;
+			}
+		} else if (strcmpi(role_name, "RangedKeeper") == 0) {
+			profile.role = MOB_AI_PROFILE_RANGED_KEEPER;
+			if (libconfig->setting_lookup_int(entry, "PreferredRange", &profile.preferred_range) != CONFIG_TRUE
+			    || libconfig->setting_lookup_int(entry, "Cooldown", &profile.cooldown) != CONFIG_TRUE
+			    || profile.preferred_range < 2 || profile.preferred_range > 8
+			    || profile.cooldown < 500 || profile.cooldown > 10000) {
+				ShowWarning("mob_ai_profile_db: invalid RangedKeeper parameters for %s on %s; skipped.\n", mob_name, map_name);
+				continue;
+			}
+		} else if (strcmpi(role_name, "Skirmisher") == 0) {
+			profile.role = MOB_AI_PROFILE_SKIRMISHER;
+			if (libconfig->setting_lookup_int(entry, "HitThreshold", &profile.hit_threshold) != CONFIG_TRUE
+			    || libconfig->setting_lookup_int(entry, "StepDistance", &profile.step_distance) != CONFIG_TRUE
+			    || libconfig->setting_lookup_int(entry, "Cooldown", &profile.cooldown) != CONFIG_TRUE
+			    || profile.hit_threshold < 2 || profile.hit_threshold > 10
+			    || profile.step_distance < 2 || profile.step_distance > 5
+			    || profile.cooldown < 1000 || profile.cooldown > 15000) {
+				ShowWarning("mob_ai_profile_db: invalid Skirmisher parameters for %s on %s; skipped.\n", mob_name, map_name);
+				continue;
+			}
+		} else {
+			ShowWarning("mob_ai_profile_db: unknown role '%s' in profile #%d; skipped.\n", role_name, i);
+			continue;
+		}
+		{
+			int avoid_hazards = 0;
+			if (libconfig->setting_lookup_bool(entry, "AvoidHazards", &avoid_hazards) == CONFIG_TRUE)
+				profile.avoid_hazards = avoid_hazards != 0;
+		}
+		if (mob_ai_profile_find(profile.map_id, profile.mob_id) != NULL) {
+			ShowWarning("mob_ai_profile_db: duplicate profile for %s on %s; skipped.\n", mob_name, map_name);
+			continue;
+		}
+		if (mob_ai_profile_count >= MAX_MOB_AI_PROFILES) {
+			ShowError("mob_ai_profile_db: maximum of %d profiles exceeded.\n", MAX_MOB_AI_PROFILES);
+			break;
+		}
+		mob_ai_profiles[mob_ai_profile_count++] = profile;
+	}
+	libconfig->destroy(&profile_conf);
+	ShowStatus("Read %d map-scoped mob AI profiles from '%s'.\n", mob_ai_profile_count, filepath);
+}
+
 static void mob_readskilldb(void)
 {
 
@@ -5969,6 +6180,8 @@ static void mob_readskilldb(void)
 		"mob_skill_db2.conf"
 	};
 	int i;
+
+	mob_read_ai_profiles();
 
 	if (battle_config.mob_skill_rate == 0) {
 		ShowStatus("Mob skill use disabled. Not reading mob skills.\n");
@@ -6266,6 +6479,7 @@ void mob_defaults(void)
 	/* */
 	mob->db = mob_db;
 	mob->chat = mob_chat;
+	mob->is_hazard_aware = mob_is_hazard_aware;
 	mob->makedummymobdb = mob_makedummymobdb;
 	mob->spawn_guardian_sub = mob_spawn_guardian_sub;
 	mob->skill_id2skill_idx = mob_skill_id2skill_idx;

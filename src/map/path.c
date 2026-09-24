@@ -24,6 +24,8 @@
 #include "path.h"
 
 #include "map/map.h"
+#include "map/mob.h"
+#include "map/skill.h"
 #include "map/unit.h"
 #include "common/cbasetypes.h"
 #include "common/db.h"
@@ -81,6 +83,60 @@ static const unsigned char walk_choices [3][3] =
 	{2,-1,6},
 	{3,4,5},
 };
+
+#define HAZARD_CACHE_RADIUS 8
+#define HAZARD_CACHE_SIZE (HAZARD_CACHE_RADIUS * 2 + 1)
+#define HAZARD_AVOIDANCE_COST 100
+
+static bool path_skill_is_ground_hazard(uint16 skill_id)
+{
+	switch (skill_id) {
+		case MG_FIREWALL:
+		case WZ_FIREPILLAR:
+		case WZ_METEOR:
+		case WZ_VERMILION:
+		case WZ_STORMGUST:
+		case WZ_QUAGMIRE:
+		case HT_LANDMINE:
+		case HT_BLASTMINE:
+		case HT_CLAYMORETRAP:
+		case NPC_GROUNDATTACK:
+		case NPC_FIREATTACK:
+			return true;
+		default:
+			return false;
+	}
+}
+
+static int path_hazard_unit_sub(struct block_list *bl, va_list ap)
+{
+	struct skill_unit *su;
+	bool *found = va_arg(ap, bool *);
+	nullpo_ret(bl);
+	if (bl->type != BL_SKILL)
+		return 0;
+	su = BL_UCAST(BL_SKILL, bl);
+	if (su->alive && su->group != NULL && path_skill_is_ground_hazard(su->group->skill_id)) {
+		*found = true;
+		return 1;
+	}
+	return 0;
+}
+
+static int path_hazard_cost(int16 m, int x0, int y0, int x, int y, uint8 cache[HAZARD_CACHE_SIZE][HAZARD_CACHE_SIZE])
+{
+	int cache_x = x - x0 + HAZARD_CACHE_RADIUS;
+	int cache_y = y - y0 + HAZARD_CACHE_RADIUS;
+	bool found = false;
+
+	if (cache_x < 0 || cache_x >= HAZARD_CACHE_SIZE || cache_y < 0 || cache_y >= HAZARD_CACHE_SIZE)
+		return 0;
+	if (cache[cache_y][cache_x] == 0) {
+		map->foreachincell(path_hazard_unit_sub, m, x, y, BL_SKILL, &found);
+		cache[cache_y][cache_x] = found ? 2 : 1;
+	}
+	return cache[cache_y][cache_x] == 2 ? HAZARD_AVOIDANCE_COST : 0;
+}
 
 /*==========================================
  * Find the closest reachable cell, 'count' cells away from (x0,y0) in direction dir.
@@ -257,6 +313,9 @@ static bool path_search(struct walkpath_data *wpd, struct block_list *bl, int16 
 	register int i, x, y, dx, dy;
 	struct map_data *md;
 	struct walkpath_data s_wpd;
+	bool hazard_aware = bl != NULL && bl->type == BL_MOB && mob != NULL
+	                 && mob->is_hazard_aware != NULL && mob->is_hazard_aware(BL_UCAST(BL_MOB, bl));
+	uint8 hazard_cache[HAZARD_CACHE_SIZE][HAZARD_CACHE_SIZE] = {{0}};
 
 	Assert_retr(false, m >= 0 && m < map->count);
 
@@ -281,7 +340,9 @@ static bool path_search(struct walkpath_data *wpd, struct block_list *bl, int16 
 		return true;
 	}
 
-	if (flag&1) {
+	/* Opted-in actors need A* so the local hazard cost can compare alternate
+	 * routes. The hazard cache bounds additional cell scans to a 17x17 region. */
+	if ((flag&1) && !hazard_aware) {
 		// Try finding direct path to target
 		// Direct path goes diagonally first, then in straight line.
 
@@ -335,6 +396,8 @@ static bool path_search(struct walkpath_data *wpd, struct block_list *bl, int16 
 		int j;
 		memset(tp, 0, sizeof(tp));
 
+#define HAZARD_COST_AT(nx, ny) (hazard_aware ? path_hazard_cost(m, x0, y0, (nx), (ny), hazard_cache) : 0)
+
 		// Start node
 		i = calc_index(x0, y0);
 		tp[i].parent = NULL;
@@ -386,27 +449,28 @@ static bool path_search(struct walkpath_data *wpd, struct block_list *bl, int16 
 #define chk_dir(d) ((allowed_dirs & (d)) == (d))
 			// Process neighbors of current node
 			if (chk_dir(DIR_SOUTH|DIR_EAST) && !md->getcellp(md, bl, x+1, y-1, cell))
-				e += add_path(&open_set, tp, x+1, y-1, g_cost + MOVE_DIAGONAL_COST, current, heuristic(x+1, y-1, x1, y1)); // (x+1, y-1) 5
+				e += add_path(&open_set, tp, x+1, y-1, g_cost + MOVE_DIAGONAL_COST + HAZARD_COST_AT(x+1, y-1), current, heuristic(x+1, y-1, x1, y1)); // (x+1, y-1) 5
 			if (chk_dir(DIR_EAST))
-				e += add_path(&open_set, tp, x+1, y, g_cost + MOVE_COST, current, heuristic(x+1, y, x1, y1)); // (x+1, y) 6
+				e += add_path(&open_set, tp, x+1, y, g_cost + MOVE_COST + HAZARD_COST_AT(x+1, y), current, heuristic(x+1, y, x1, y1)); // (x+1, y) 6
 			if (chk_dir(DIR_NORTH|DIR_EAST) && !md->getcellp(md, bl, x+1, y+1, cell))
-				e += add_path(&open_set, tp, x+1, y+1, g_cost + MOVE_DIAGONAL_COST, current, heuristic(x+1, y+1, x1, y1)); // (x+1, y+1) 7
+				e += add_path(&open_set, tp, x+1, y+1, g_cost + MOVE_DIAGONAL_COST + HAZARD_COST_AT(x+1, y+1), current, heuristic(x+1, y+1, x1, y1)); // (x+1, y+1) 7
 			if (chk_dir(DIR_NORTH))
-				e += add_path(&open_set, tp, x, y+1, g_cost + MOVE_COST, current, heuristic(x, y+1, x1, y1)); // (x, y+1) 0
+				e += add_path(&open_set, tp, x, y+1, g_cost + MOVE_COST + HAZARD_COST_AT(x, y+1), current, heuristic(x, y+1, x1, y1)); // (x, y+1) 0
 			if (chk_dir(DIR_NORTH|DIR_WEST) && !md->getcellp(md, bl, x-1, y+1, cell))
-				e += add_path(&open_set, tp, x-1, y+1, g_cost + MOVE_DIAGONAL_COST, current, heuristic(x-1, y+1, x1, y1)); // (x-1, y+1) 1
+				e += add_path(&open_set, tp, x-1, y+1, g_cost + MOVE_DIAGONAL_COST + HAZARD_COST_AT(x-1, y+1), current, heuristic(x-1, y+1, x1, y1)); // (x-1, y+1) 1
 			if (chk_dir(DIR_WEST))
-				e += add_path(&open_set, tp, x-1, y, g_cost + MOVE_COST, current, heuristic(x-1, y, x1, y1)); // (x-1, y) 2
+				e += add_path(&open_set, tp, x-1, y, g_cost + MOVE_COST + HAZARD_COST_AT(x-1, y), current, heuristic(x-1, y, x1, y1)); // (x-1, y) 2
 			if (chk_dir(DIR_SOUTH|DIR_WEST) && !md->getcellp(md, bl, x-1, y-1, cell))
-				e += add_path(&open_set, tp, x-1, y-1, g_cost + MOVE_DIAGONAL_COST, current, heuristic(x-1, y-1, x1, y1)); // (x-1, y-1) 3
+				e += add_path(&open_set, tp, x-1, y-1, g_cost + MOVE_DIAGONAL_COST + HAZARD_COST_AT(x-1, y-1), current, heuristic(x-1, y-1, x1, y1)); // (x-1, y-1) 3
 			if (chk_dir(DIR_SOUTH))
-				e += add_path(&open_set, tp, x, y-1, g_cost + MOVE_COST, current, heuristic(x, y-1, x1, y1)); // (x, y-1) 4
+				e += add_path(&open_set, tp, x, y-1, g_cost + MOVE_COST + HAZARD_COST_AT(x, y-1), current, heuristic(x, y-1, x1, y1)); // (x, y-1) 4
 #undef chk_dir
 			if (e) {
 				BHEAP_CLEAR(open_set);
 				return false;
 			}
 		}
+#undef HAZARD_COST_AT
 
 		for (it = current; it->parent != NULL; it = it->parent, len++);
 		if (len > (int)sizeof(wpd->path)) {

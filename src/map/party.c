@@ -980,6 +980,11 @@ static int party_send_logout(struct map_session_data *sd)
 
 static int party_send_message(struct map_session_data *sd, const char *mes)
 {
+	static const char *korangar_ping_v1 = "[KORANGAR-PING:v1]";
+	static const char *korangar_ping_v2 = "[KORANGAR-PING:v2]";
+	static const char *korangar_session_v1 = "[KORANGAR-SESSION:v1]";
+	bool is_korangar_session_message;
+	int64 now;
 	nullpo_ret(sd);
 	nullpo_ret(mes);
 
@@ -992,6 +997,23 @@ static int party_send_message(struct map_session_data *sd, const char *mes)
 		return 0;
 
 	int len = (int)strlen(mes);
+	is_korangar_session_message = strncmp(mes, korangar_ping_v1, strlen(korangar_ping_v1)) == 0
+		|| strncmp(mes, korangar_ping_v2, strlen(korangar_ping_v2)) == 0
+		|| strncmp(mes, korangar_session_v1, strlen(korangar_session_v1)) == 0;
+	if (is_korangar_session_message) {
+		// Korangar uses party chat as a backwards-compatible carrier for
+		// ephemeral map pings and shared destinations. A modified client must
+		// not be able to flood every party member with those hints.
+		// Bound the payload independently of normal chat and enforce one such
+		// message per character per second on the authoritative server.
+		if (len > 128)
+			return 0;
+		now = timer->gettick();
+		if (sd->korangar_party_session_sent && DIFF_TICK(now, sd->korangar_party_session_tick) < 1000)
+			return 0;
+		sd->korangar_party_session_tick = now;
+		sd->korangar_party_session_sent = 1;
+	}
 
 	clif->party_message(p, sd->status.account_id, mes, len);
 
