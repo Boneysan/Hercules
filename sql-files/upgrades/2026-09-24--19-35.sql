@@ -1,3 +1,5 @@
+#1790300137
+
 -- Account-persistent, server-authoritative player Guide discoveries.
 -- Story quest state is deliberately stored elsewhere, per character.
 CREATE TABLE IF NOT EXISTS `korangar_account_discovery` (
@@ -16,3 +18,5 @@ CREATE TABLE IF NOT EXISTS `korangar_account_map_discovery` (
 	PRIMARY KEY (`account_id`, `map_name`),
 	KEY `korangar_account_map_discovery_map` (`map_name`)
 ) ENGINE=InnoDB;
+
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300137);
