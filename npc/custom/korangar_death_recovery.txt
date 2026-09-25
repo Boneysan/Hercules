@@ -51,7 +51,11 @@ OnNPCKillEvent:
 		callsub S_GrantRecovery;
 	end;
 
-OnPCLoadMapEvent:
+OnKorangarMapChange:
+	if (.enabled)
+		callsub S_CheckSavePoint;
+	end;
+
 OnPCLoginEvent:
 	if (.enabled)
 		callsub S_CheckSavePoint;
