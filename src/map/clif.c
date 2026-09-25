@@ -3113,7 +3113,10 @@ static void clif_send_inventory_order(struct map_session_data *sd)
 	WFIFOW(sd->fd, 2) = 4 + count * 2;
 	for (int i = 0; i < count; ++i)
 		WFIFOW(sd->fd, 4 + i * 2) = indices[i] + 2;
-	WFIFOSET(sd->fd, 4 + count * 2);
+	// This is a server-only fork packet. The socket validator's packet-length
+	// table describes client-to-server opcodes, so validating this outgoing
+	// 0x0efa against that table produces a false fixed-length mismatch.
+	WFIFOSET2(sd->fd, 4 + count * 2);
 }
 
 static void clif_inventoryList(struct map_session_data *sd)
