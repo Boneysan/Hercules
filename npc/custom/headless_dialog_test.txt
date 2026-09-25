@@ -35,7 +35,8 @@ prontera,160,200,4	script	Dialogue Test NPC	4_F_01,{
 
 // Disposable-runner-only quest award fixture. It exercises the same authored
 // DM_PartyExp path as campaign turn-ins without changing a production quest.
-prontera,163,200,4	script	EXP Quest Award Test NPC	4_F_01,{
+// Keep this separate from the Dialogue Test NPC's (160,200) search radius.
+prontera,170,200,4	script	EXP Quest Award Test NPC	4_F_01,{
 	mes "[EXP Quest Award Test]";
 	mes "A small authored quest award fixture.";
 	next;
