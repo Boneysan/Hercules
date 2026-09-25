@@ -86,6 +86,14 @@ function	script	DM_PartyApplyQuest	{
 	// The talker is updated here. Everyone else gets a queued catch-up so an
 	// open conversation is not replaced by this script.
 	callsub(S_Apply, .@action$, .@quest_id, .@party_id);
+	// The actor has already applied this transition locally. Verify it through
+	// the same ordered replay path used by reconnecting members, then advance
+	// this character's cursor instead of waiting for a later catch-up command.
+	if (callfunc("DM_SessionAllows") && .@party_id == $dm_active_party) {
+		.@cursor_result = callfunc("DM_ReplayPartyEvents", .@party_id);
+		if (.@cursor_result < 0)
+			dispbottom("[DM] Campaign quest was applied, but its replay cursor could not be verified; it will retry on the next sync.");
+	}
 	campaigncatchup;
 	return 1;
 
@@ -177,6 +185,11 @@ function	script	DM_PartyApplyFlag	{
 	// Session Board; they are never treated as the authority for progression.
 	if (.@done > 0 && $dm_active_party > 0 && $dm_active_party == .@party_id)
 		callfunc("DM_CheckpointRecordPartyEvent", .@party_id, 1, getcharid(CHAR_ID_CHAR), .@flag$);
+	if (callfunc("DM_SessionAllows") && .@party_id == $dm_active_party) {
+		.@cursor_result = callfunc("DM_ReplayPartyEvents", .@party_id);
+		if (.@cursor_result < 0)
+			dispbottom("[DM] Story flag was applied, but its replay cursor could not be verified; it will retry on the next sync.");
+	}
 
 	return .@done;
 }
