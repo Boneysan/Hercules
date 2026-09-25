@@ -75,7 +75,7 @@ if ! ./tools/check-recovery-paths.sh; then
 fi
 
 echo "Checking durable checkpoint contract ..."
-CHECKPOINT_SQL="sql-files/upgrades/2026-09-16--campaign-checkpoint.sql"
+CHECKPOINT_SQL="sql-files/upgrades/2026-09-24--19-45.sql"
 CHECKPOINT_SCRIPT="npc/custom/dm_campaign/shared/dm_checkpoint.txt"
 CHECKPOINT_EVENTS="npc/custom/dm_campaign/shared/dm_checkpoint_events.txt"
 for required in campaign_id schema_version party_id arc_id step carrier_char_id last_actor_char_id; do

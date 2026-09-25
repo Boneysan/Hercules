@@ -1,3 +1,5 @@
+#1790300825
+
 -- Typed, idempotent replay for DM campaign quest/flag state (GDD S10).
 CREATE TABLE IF NOT EXISTS `dm_campaign_party_event` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -22,4 +24,4 @@ CREATE TABLE IF NOT EXISTS `dm_campaign_party_cursor` (
   KEY `dm_campaign_party_cursor_party` (`campaign_id`, `party_id`)
 ) ENGINE=InnoDB;
 
-INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260924);
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260924), (1790300825);

@@ -1,3 +1,5 @@
+#1790300765
+
 -- Party-wide quest progress and story flags. A character who logs in alone
 -- can restore these without another party member being online.
 CREATE TABLE IF NOT EXISTS `dm_campaign_party_state` (
@@ -23,4 +25,4 @@ CREATE TABLE IF NOT EXISTS `dm_campaign_pending_grant` (
   KEY `dm_campaign_pending_grant_char` (`char_id`, `claimed`)
 ) ENGINE=InnoDB;
 
-INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260922);
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260922), (1790300765);

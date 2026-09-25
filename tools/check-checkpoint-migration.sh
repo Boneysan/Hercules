@@ -50,7 +50,7 @@ sql() {
 
 start_db
 sql -e 'CREATE DATABASE ragnarok; USE ragnarok; CREATE TABLE sql_updates (timestamp INT NOT NULL PRIMARY KEY);'
-sql ragnarok < "$repo/sql-files/upgrades/2026-09-16--campaign-checkpoint.sql"
+sql ragnarok < "$repo/sql-files/upgrades/2026-09-24--19-45.sql"
 sql ragnarok -e "
 INSERT INTO dm_campaign_checkpoint
   (campaign_id, party_id, arc_id, step, carrier_char_id, last_actor_char_id)

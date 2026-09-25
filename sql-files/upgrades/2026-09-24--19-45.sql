@@ -1,3 +1,5 @@
+#1790300705
+
 -- Durable Seal Cascade party checkpoint state (QW-054).
 -- This is deliberately separate from per-character quest and story variables.
 CREATE TABLE IF NOT EXISTS `dm_campaign_checkpoint` (
@@ -15,7 +17,6 @@ CREATE TABLE IF NOT EXISTS `dm_campaign_checkpoint` (
   KEY `dm_campaign_checkpoint_arc` (`arc_id`)
 ) ENGINE=InnoDB;
 
--- Append-only audit trail for forward transitions and explicit recovery.
 CREATE TABLE IF NOT EXISTS `dm_campaign_checkpoint_log` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `campaign_id` VARCHAR(32) NOT NULL,
@@ -28,8 +29,6 @@ CREATE TABLE IF NOT EXISTS `dm_campaign_checkpoint_log` (
   KEY `dm_campaign_checkpoint_log_lookup` (`campaign_id`, `party_id`, `id`)
 ) ENGINE=InnoDB;
 
--- Stable campaign membership survives a party leave/rejoin and records which
--- character ids are eligible for the current checkpoint.
 CREATE TABLE IF NOT EXISTS `dm_campaign_checkpoint_member` (
   `campaign_id` VARCHAR(32) NOT NULL,
   `char_id` INT UNSIGNED NOT NULL,
@@ -40,4 +39,4 @@ CREATE TABLE IF NOT EXISTS `dm_campaign_checkpoint_member` (
   KEY `dm_campaign_checkpoint_member_party` (`campaign_id`, `party_id`)
 ) ENGINE=InnoDB;
 
-INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260916);
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260916), (1790300705);
