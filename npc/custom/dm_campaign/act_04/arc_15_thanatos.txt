@@ -22,7 +22,7 @@
 
 // ── Keeper Lysandra — The Archivist ────────────────────────────────────────
 aldebaran,100,100,5	script	Keeper Lysandra#dm	4_F_01,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20191) == 2) {
 		callfunc("DM_PartyMes", "[Keeper Lysandra]");
 		if (dm_arc15_pratt_challenged)
@@ -96,8 +96,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20192) == 1 && callfunc("DM_HuntReady", 20192)) {
-		callfunc("DM_HuntCollect", 20192);
+	callfunc("DM_HuntNoteShort", 20192);
+	if (questprogress(20192) == 1 && callfunc("DM_HuntCollect", 20192)) {
 		callfunc("DM_InstanceQuestComplete", 20192);
 		callfunc("DM_PartyExp", 500000, 250000);
 		callfunc("DM_GivePartyZeny", 40000);
@@ -122,8 +122,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20193) == 1 && callfunc("DM_HuntReady", 20193)) {
-		callfunc("DM_HuntCollect", 20193);
+	callfunc("DM_HuntNoteShort", 20193);
+	if (questprogress(20193) == 1 && callfunc("DM_HuntCollect", 20193)) {
 		callfunc("DM_InstanceQuestComplete", 20193);
 		callfunc("DM_PartyExp", 500000, 250000);
 		callfunc("DM_GivePartyZeny", 40000);
@@ -194,7 +194,7 @@ S_TurnIns:
 
 // ── Scholar Pratt — The Method Without the Cost ────────────────────────────
 aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc15_started) {
 		callfunc("DM_PartyMes", "[Scholar Pratt]");
 		callfunc("DM_PartyMes", "The Tower's archives are restricted to approved researchers. I suggest you speak to Keeper Lysandra.");

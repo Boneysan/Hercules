@@ -157,6 +157,19 @@ function	script	DM_RewardArcLevel	{
 	return 99;
 }
 
+function	script	DM_QueueGrant	{
+	.@char_id = getarg(0);
+	.@kind$ = getarg(1);
+	.@amount = getarg(2);
+	.@amount2 = getarg(3, 0);
+	.@party_id = getarg(4, 0);
+	if (.@char_id <= 0 || .@kind$ == "" || .@party_id <= 0)
+		return 0;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	query_sql("INSERT INTO `dm_campaign_pending_grant` (`campaign_id`,`party_id`,`char_id`,`kind`,`amount`,`amount2`) VALUES ('" + .@campaign$ + "'," + .@party_id + "," + .@char_id + ",'" + .@kind$ + "'," + .@amount + "," + .@amount2 + ")");
+	return 1;
+}
+
 function	script	DM_GivePartyItem	{
 	.@item_id = getarg(0);
 	.@amount = getarg(1, 1);
@@ -177,6 +190,8 @@ function	script	DM_GivePartyItem	{
 			if (!.@dryrun)
 				getitem2(.@item_id, .@amount, 1, 0, 0, 0, 0, 0, 0, .@accid[.@i]);
 			++.@given;
+		} else if (!.@dryrun) {
+			callfunc("DM_QueueGrant", .@charid[.@i], "item", .@item_id, .@amount, .@party_id);
 		}
 	}
 
@@ -187,8 +202,6 @@ function	script	DM_GivePartyZeny	{
 	.@amount = getarg(0);
 	.@party_id = getarg(1, getcharid(CHAR_ID_PARTY));
 	.@dryrun = getarg(2, 0);
-	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
-
 	if (.@party_id <= 0) {
 		if (!.@dryrun)
 			Zeny += .@amount;
@@ -200,31 +213,25 @@ function	script	DM_GivePartyZeny	{
 
 	for (.@i = 0; .@i < .@count; ++.@i) {
 		if (isloggedin(.@accid[.@i], .@charid[.@i])) {
-			if (.@dryrun) {
+			if (.@dryrun)
 				++.@given;
-			} else if (attachrid(.@accid[.@i])) {
-				Zeny += .@amount;
-				detachrid();
+			else if (givecharzeny(.@charid[.@i], .@amount))
 				++.@given;
-			}
+		} else if (!.@dryrun) {
+			callfunc("DM_QueueGrant", .@charid[.@i], "zeny", .@amount, 0, .@party_id);
 		}
 	}
-
-	if (.@origin_aid)
-		attachrid(.@origin_aid);
 
 	return .@given;
 }
 
-// Grants base/job EXP to every online party member. getexp() only affects the
-// attached character, so we loop the party (attaching each RID) and restore the
-// caller's attachment afterward. Returns how many members were credited.
+// Grants base/job EXP to every online party member without taking over
+// their conversation. Returns how many members were credited.
 function	script	DM_PartyExp	{
 	.@base = getarg(0, 0);
 	.@job = getarg(1, 0);
 	.@party_id = getarg(2, getcharid(CHAR_ID_PARTY));
 	.@dryrun = getarg(3, 0);
-	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
 
 	if (.@base < 0)
 		.@base = 0;
@@ -245,18 +252,14 @@ function	script	DM_PartyExp	{
 
 	for (.@i = 0; .@i < .@count; ++.@i) {
 		if (isloggedin(.@accid[.@i], .@charid[.@i])) {
-			if (.@dryrun) {
+			if (.@dryrun)
 				++.@given;
-			} else if (attachrid(.@accid[.@i])) {
-				getexp(.@base, .@job);
-				detachrid();
+			else if (givecharexp(.@charid[.@i], .@base, .@job))
 				++.@given;
-			}
+		} else if (!.@dryrun) {
+			callfunc("DM_QueueGrant", .@charid[.@i], "exp", .@base, .@job, .@party_id);
 		}
 	}
-
-	if (.@origin_aid)
-		attachrid(.@origin_aid);
 
 	return .@given;
 }

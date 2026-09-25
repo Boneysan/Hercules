@@ -33,6 +33,7 @@
 #include "map/map.h"
 #include "map/messages.h"
 #include "map/mob.h" // struct mob_data
+#include "map/npc.h"
 #include "common/msgtable.h"
 #include "map/pc.h"
 #include "map/skill.h"
@@ -188,6 +189,19 @@ static int party_create(struct map_session_data *sd, const char *name, int item,
 
 	sd->party_creating = true;
 
+	// korangar creates every party with both share flags at zero
+	// (`create_party` sends CreatePartyPacket::new(name, 0, 0)), so a party
+	// formed here starts out keeping each drop for whoever touched it first --
+	// which turns automatic pickup into a race between friends rather than a
+	// group feature. The options CAN be changed afterwards (the client has
+	// set_party_options and a window for it), but nothing should depend on a
+	// player finding that, so the server decides the starting value instead.
+	// party_default_share in party.conf.
+	if ((battle_config.party_default_share & 1) != 0)
+		item = 1;   // any member may take a drop still reserved for a teammate
+	if ((battle_config.party_default_share & 2) != 0)
+		item2 = 1;  // loot is handed out by party_item_share_type, not kept
+
 	party->fill_member(&leader, sd, 1);
 
 	intif->create_party(&leader,name,item,item2);
@@ -195,6 +209,44 @@ static int party_create(struct map_session_data *sd, const char *name, int item,
 	achievement->validate_party_create(sd); //Achievements (Smokexyz)
 
 	return 0;
+}
+
+void party_campaign_catchup_others(struct map_session_data *sd)
+{
+	struct party_data *p;
+	int i;
+
+	if (sd == NULL || sd->status.party_id <= 0)
+		return;
+	p = party->search(sd->status.party_id);
+	if (p == NULL)
+		return;
+	for (i = 0; i < MAX_PARTY; i++) {
+		struct map_session_data *member = p->data[i].sd;
+		if (member == NULL || member == sd)
+			continue;
+		// Own script instance. A talk already in progress keeps the event
+		// until that talk ends, instead of losing the conversation.
+		npc->event(member, "DM_CampEvents::OnPCQuestLog", 0);
+	}
+}
+
+void party_campaign_push_others(struct map_session_data *sd)
+{
+	struct party_data *p;
+	int i;
+
+	if (sd == NULL || sd->status.party_id <= 0)
+		return;
+	p = party->search(sd->status.party_id);
+	if (p == NULL)
+		return;
+	for (i = 0; i < MAX_PARTY; i++) {
+		struct map_session_data *member = p->data[i].sd;
+		if (member == NULL || member == sd)
+			continue;
+		npc->event(member, "DM_CampEvents::OnPCPartyPush", 0);
+	}
 }
 
 static void party_created(int account_id, int char_id, int fail, int party_id, const char *name)
@@ -213,6 +265,19 @@ static void party_created(int account_id, int char_id, int fail, int party_id, c
 
 	if( !fail ) {
 		sd->status.party_id = party_id;
+		npc->event(sd, "DM_CampEvents::OnPCPartyJoin", 0);
+		party_campaign_catchup_others(sd);
+
+		// EXP sharing has no creation flag at all, so it can only be pushed
+		// after the fact. The hazard it carries is a high level member soaking
+		// an even share; this table's DM plays at the party's own level, so
+		// bit 4 is set and this runs. The char server still refuses when the
+		// members' level spread is wider than party_share_level
+		// (conf/common/inter-server.conf, 15 here), which is the backstop if
+		// that ever stops being true.
+		if ((battle_config.party_default_share & 4) != 0)
+			intif->party_changeoption(party_id, account_id, 1, battle_config.party_default_share & 3);
+
 		clif->party_created(sd,0); //Success message
 		//We don't do any further work here because the char-server sends a party info packet right after creating the party.
 	} else {
@@ -535,6 +600,8 @@ static int party_member_added(int party_id, int account_id, int char_id, int fla
 	}
 
 	sd->status.party_id = party_id;
+	npc->event(sd, "DM_CampEvents::OnPCPartyJoin", 0);
+	party_campaign_catchup_others(sd);
 
 	clif->party_member_info(p,sd);
 	clif->party_info(p,sd);
@@ -913,6 +980,13 @@ static int party_send_logout(struct map_session_data *sd)
 
 static int party_send_message(struct map_session_data *sd, const char *mes)
 {
+	static const char *korangar_ping_v1 = "[KORANGAR-PING:v1]";
+	static const char *korangar_ping_v2 = "[KORANGAR-PING:v2]";
+	static const char *korangar_session_v1 = "[KORANGAR-SESSION:v1]";
+	const char *message_body;
+	bool is_korangar_session_message;
+	int payload_len;
+	int64 now;
 	nullpo_ret(sd);
 	nullpo_ret(mes);
 
@@ -925,6 +999,29 @@ static int party_send_message(struct map_session_data *sd, const char *mes)
 		return 0;
 
 	int len = (int)strlen(mes);
+	message_body = strstr(mes, " : ");
+	if (message_body != NULL)
+		message_body += 3;
+	else
+		message_body = mes;
+	payload_len = (int)strlen(message_body);
+	is_korangar_session_message = strncmp(message_body, korangar_ping_v1, strlen(korangar_ping_v1)) == 0
+		|| strncmp(message_body, korangar_ping_v2, strlen(korangar_ping_v2)) == 0
+		|| strncmp(message_body, korangar_session_v1, strlen(korangar_session_v1)) == 0;
+	if (is_korangar_session_message) {
+		// Korangar uses party chat as a backwards-compatible carrier for
+		// ephemeral map pings and shared destinations. A modified client must
+		// not be able to flood every party member with those hints.
+		// Bound the payload independently of normal chat and enforce one such
+		// message per character per second on the authoritative server.
+		if (payload_len > 128)
+			return 0;
+		now = timer->gettick();
+		if (sd->korangar_party_session_sent && DIFF_TICK(now, sd->korangar_party_session_tick) < 1000)
+			return 0;
+		sd->korangar_party_session_tick = now;
+		sd->korangar_party_session_sent = 1;
+	}
 
 	clif->party_message(p, sd->status.account_id, mes, len);
 

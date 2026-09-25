@@ -20,7 +20,7 @@
 
 // ── The Familiar Dead — The Witness ───────────────────────────────────────
 niflheim,100,100,5	script	The Familiar Dead#dm	4_M_03,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20221) == 2) {
 		callfunc("DM_PartyMes", "[The Familiar Dead]");
 		if (dm_arc18_himmelmez_bargained)
@@ -96,8 +96,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20222) == 1 && callfunc("DM_HuntReady", 20222)) {
-		callfunc("DM_HuntCollect", 20222);
+	callfunc("DM_HuntNoteShort", 20222);
+	if (questprogress(20222) == 1 && callfunc("DM_HuntCollect", 20222)) {
 		callfunc("DM_InstanceQuestComplete", 20222);
 		callfunc("DM_PartyExp", 450000, 220000);
 		callfunc("DM_GivePartyZeny", 36000);
@@ -122,8 +122,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20223) == 1 && callfunc("DM_HuntReady", 20223)) {
-		callfunc("DM_HuntCollect", 20223);
+	callfunc("DM_HuntNoteShort", 20223);
+	if (questprogress(20223) == 1 && callfunc("DM_HuntCollect", 20223)) {
 		callfunc("DM_InstanceQuestComplete", 20223);
 		callfunc("DM_PartyExp", 450000, 220000);
 		callfunc("DM_GivePartyZeny", 36000);
@@ -178,7 +178,7 @@ S_TurnIns:
 
 // ── Himmelmez — The Queen the Drowned Chose ───────────────────────────────
 nif_in,150,150,5	script	Himmelmez#dm	4_F_02,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20221) == 2) {
 		callfunc("DM_PartyMes", "[Himmelmez]");
 		if (dm_arc18_himmelmez_bargained)

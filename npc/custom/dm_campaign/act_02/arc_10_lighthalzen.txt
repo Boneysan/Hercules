@@ -22,7 +22,7 @@
 
 // ── Doctor Sabine Reuter — The Whistleblower ───────────────────────────────
 lighthalzen,120,120,5	script	Doctor Sabine Reuter#dm	4_F_05,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20141) == 2) {
 		callfunc("DM_PartyMes", "[Doctor Reuter]");
 		if (dm_arc10_echo_freed)
@@ -102,8 +102,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20142) == 1 && callfunc("DM_HuntReady", 20142)) {
-		callfunc("DM_HuntCollect", 20142);
+	callfunc("DM_HuntNoteShort", 20142);
+	if (questprogress(20142) == 1 && callfunc("DM_HuntCollect", 20142)) {
 		callfunc("DM_InstanceQuestComplete", 20142);
 		callfunc("DM_PartyExp", 280000, 135000);
 		callfunc("DM_GivePartyZeny", 24000);
@@ -128,8 +128,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20143) == 1 && callfunc("DM_HuntReady", 20143)) {
-		callfunc("DM_HuntCollect", 20143);
+	callfunc("DM_HuntNoteShort", 20143);
+	if (questprogress(20143) == 1 && callfunc("DM_HuntCollect", 20143)) {
 		callfunc("DM_InstanceQuestComplete", 20143);
 		callfunc("DM_PartyExp", 300000, 145000);
 		callfunc("DM_GivePartyZeny", 25000);
@@ -219,7 +219,7 @@ S_TurnIns:
 
 // ── Director Hallan Reise — The Architect ──────────────────────────────────
 lighthalzen,130,120,5	script	Director Hallan Reise#dm	4_M_06,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc10_started) {
 		callfunc("DM_PartyMes", "[Director Reise]");
 		callfunc("DM_PartyMes", "Lighthalzen's executive facilities are not open to the public.");

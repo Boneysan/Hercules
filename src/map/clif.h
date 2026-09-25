@@ -1132,6 +1132,7 @@ struct clif_interface {
 	void (*skillcastcancel) (struct block_list* bl);
 	void (*skill_fail) (struct map_session_data *sd, uint16 skill_id, enum useskill_fail_cause cause, int btype, int32 item_id);
 	void (*skill_fail_reason) (struct map_session_data *sd, uint16 skill_id, enum skill_fail_reason reason);
+	void (*recovery_state) (struct map_session_data *sd, uint8 mode, uint8 block);
 	void (*skill_cooldown) (struct map_session_data *sd, uint16 skill_id, unsigned int duration);
 	void (*skill_memomessage) (struct map_session_data* sd, int type);
 	void (*skill_mapinfomessage) (struct map_session_data *sd, int type);
@@ -1626,6 +1627,8 @@ struct clif_interface {
 	void (*pStopAttack) (int fd,struct map_session_data *sd);
 	/// Korangar fork addition (0x0F00) — see clif_parse_CancelCast.
 	void (*pCancelCast) (int fd,struct map_session_data *sd);
+	void (*pSplitInventoryStack) (int fd,struct map_session_data *sd);
+	void (*pReorderInventory) (int fd,struct map_session_data *sd);
 	void (*pPutItemToCart) (int fd,struct map_session_data *sd);
 	void (*pGetItemFromCart) (int fd,struct map_session_data *sd);
 	void (*pRemoveOption) (int fd,struct map_session_data *sd);

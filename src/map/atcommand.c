@@ -6373,6 +6373,70 @@ ACMD(autoloot)
 }
 
 /*==========================================
+ * Automatic pickup: floor loot within a couple of cells walks into the bag
+ * without a click. On by default (battle_config autopickup_radius) and a
+ * group 0 command, unlike @autoloot -- this is the switch a player owns.
+ *
+ * The choice is per character and persists (globalreg AUTOPICKUP, stored as
+ * radius + 1 so that OFF is distinguishable from never-chosen). Being in a
+ * party overrides it: see pc_autopickup_radius.
+ *
+ * Every reply reports the radius actually IN FORCE and opens with a fixed
+ * "Automatic pickup: " so a client can read its own state back rather than
+ * guessing at a toggle. `@autopickup status` reports without changing
+ * anything, which is what makes an honest button possible.
+ *------------------------------------------*/
+ACMD(autopickup)
+{
+	int radius;
+	int in_force;
+
+	if (*message == '\0') {
+		if (sd->state.autopickup != 0) {
+			radius = 0;
+		} else {
+			// Back on at the server's radius -- or at the game's own pickup
+			// reach, if the server default is "off".
+			radius = cap_value(battle_config.autopickup_radius, 0, 2);
+			if (radius == 0)
+				radius = 2;
+		}
+	} else if (strcmpi(message, "status") == 0) {
+		radius = (int)sd->state.autopickup;
+	} else {
+		if (message[0] < '0' || message[0] > '2' || message[1] != '\0') {
+			clif->message(fd, "Please use @autopickup, @autopickup status, or @autopickup 0, 1 or 2 (squares).");
+			return false;
+		}
+		radius = message[0] - '0';
+	}
+
+	if (strcmpi(message, "status") != 0) {
+		sd->state.autopickup = radius;
+		pc_setglobalreg(sd, script->add_variable("AUTOPICKUP"), radius + 1);
+	}
+
+	in_force = pc_autopickup_radius(sd);
+
+	if (in_force == 0) {
+		clif->message(fd, "Automatic pickup: off. Click items to pick them up.");
+	} else if (in_force != radius) {
+		// Only a party can differ from what the character asked for.
+		snprintf(atcmd_output, sizeof(atcmd_output),
+				"Automatic pickup: on (%d square%s) -- your party shares loot, so it stays on until you leave.",
+				in_force, (in_force == 1) ? "" : "s");
+		clif->message(fd, atcmd_output);
+	} else {
+		snprintf(atcmd_output, sizeof(atcmd_output),
+				"Automatic pickup: on (%d square%s). Loot goes straight into your bag.",
+				in_force, (in_force == 1) ? "" : "s");
+		clif->message(fd, atcmd_output);
+	}
+
+	return true;
+}
+
+/*==========================================
  * @alootid
  *------------------------------------------*/
 ACMD(autolootitem)
@@ -6463,6 +6527,84 @@ ACMD(autolootitem)
 			memset(sd->state.autolootid, 0, sizeof(sd->state.autolootid));
 			clif->message(fd, msg_fd(fd, MSGTBL_AUTOLOOTITEM_RESET_SUCCESS)); // Your autolootitem list has been reset.
 			sd->state.autolooting = 0;
+			break;
+	}
+	return true;
+}
+
+/*==========================================
+ * @noautolootid: exclude a specific item even if it meets the autoloot rate
+ * or appears in an @alootid/@autoloottype allowlist.
+ *------------------------------------------*/
+ACMD(autolootexclude)
+{
+	struct item_data *item_data = NULL;
+	int i;
+	int action = 3; /* add, remove, list, reset */
+
+	if (*message) {
+		if (message[0] == '+') {
+			message++;
+			action = 1;
+		} else if (message[0] == '-') {
+			message++;
+			action = 2;
+		} else if (!strcmpi(message, "reset")) {
+			action = 4;
+		}
+		if (action < 3) {
+			if ((item_data = itemdb->exists(atoi(message))) == NULL)
+				item_data = itemdb->search_name(message);
+			if (item_data == NULL) {
+				clif->message(fd, "Item not found.");
+				return false;
+			}
+		}
+	}
+
+	switch (action) {
+		case 1:
+			ARR_FIND(0, AUTOLOOTITEM_SIZE, i, sd->state.noautolootid[i] == item_data->nameid);
+			if (i != AUTOLOOTITEM_SIZE) {
+				clif->message(fd, "That item is already excluded from autoloot.");
+				return false;
+			}
+			ARR_FIND(0, AUTOLOOTITEM_SIZE, i, sd->state.noautolootid[i] == 0);
+			if (i == AUTOLOOTITEM_SIZE) {
+				clif->message(fd, "Your exclusion list is full. Remove one with @noautolootid -<item>.");
+				return false;
+			}
+			sd->state.noautolootid[i] = item_data->nameid;
+			snprintf(atcmd_output, sizeof(atcmd_output), "Autoloot will skip %s.", item_data->jname);
+			clif->message(fd, atcmd_output);
+			break;
+		case 2:
+			ARR_FIND(0, AUTOLOOTITEM_SIZE, i, sd->state.noautolootid[i] == item_data->nameid);
+			if (i == AUTOLOOTITEM_SIZE) {
+				clif->message(fd, "That item is not excluded from autoloot.");
+				return false;
+			}
+			sd->state.noautolootid[i] = 0;
+			snprintf(atcmd_output, sizeof(atcmd_output), "Autoloot may pick up %s again.", item_data->jname);
+			clif->message(fd, atcmd_output);
+			break;
+		case 3:
+			clif->message(fd, "Use @noautolootid +<item>, -<item>, or reset. Items on the exclusion list are never autolooted.");
+			ARR_FIND(0, AUTOLOOTITEM_SIZE, i, sd->state.noautolootid[i] != 0);
+			if (i == AUTOLOOTITEM_SIZE) {
+				clif->message(fd, "Your autoloot exclusion list is empty.");
+			} else {
+				for (i = 0; i < AUTOLOOTITEM_SIZE; i++) {
+					if (sd->state.noautolootid[i] == 0 || (item_data = itemdb->exists(sd->state.noautolootid[i])) == NULL)
+						continue;
+					snprintf(atcmd_output, sizeof(atcmd_output), "%s {%d}", item_data->jname, item_data->nameid);
+					clif->message(fd, atcmd_output);
+				}
+			}
+			break;
+		case 4:
+			memset(sd->state.noautolootid, 0, sizeof(sd->state.noautolootid));
+			clif->message(fd, "Your autoloot exclusion list has been cleared.");
 			break;
 	}
 	return true;
@@ -8939,6 +9081,22 @@ ACMD(resetskill)
 	return true;
 }
 
+ACMD(refundskill)
+{
+	int skill_id = atoi(message);
+
+	if (skill_id <= 0) {
+		clif->message(fd, "Usage: @refundskill <skill id>");
+		return false;
+	}
+	if (!pc->skilldown(sd, (uint16)skill_id)) {
+		clif->message(fd, "Could not refund that skill.");
+		return false;
+	}
+	clif->message(fd, "Skill point refunded.");
+	return true;
+}
+
 /*==========================================
  * #storagelist: Displays the items list of a player's storage.
  * #cartlist: Displays contents of target's cart.
@@ -10911,7 +11069,9 @@ static void atcommand_basecommands(void)
 		ACMD_DEF(disguiseall),
 		ACMD_DEF(changelook),
 		ACMD_DEF(autoloot),
+		ACMD_DEF(autopickup),
 		ACMD_DEF2("alootid", autolootitem),
+		ACMD_DEF2("noautolootid", autolootexclude),
 		ACMD_DEF(autoloottype),
 		ACMD_DEF(mobinfo),
 		ACMD_DEF(exp),
@@ -10967,6 +11127,7 @@ static void atcommand_basecommands(void)
 		ACMD_DEF(agitstart2),
 		ACMD_DEF(agitend2),
 		ACMD_DEF2("skreset", resetskill),
+		ACMD_DEF(refundskill),
 		ACMD_DEF2("streset", resetstat),
 		ACMD_DEF2("storagelist", itemlist),
 		ACMD_DEF2("cartlist", itemlist),

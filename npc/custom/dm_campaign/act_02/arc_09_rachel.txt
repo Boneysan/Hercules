@@ -21,7 +21,7 @@
 
 // ── Acolyte Naima — The Believer Who Looked Too Closely ────────────────────
 rachel,120,120,5	script	Acolyte Naima#dm	4_F_04,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20131) == 2) {
 		callfunc("DM_PartyMes", "[Acolyte Naima]");
 		if (dm_arc09_karsh_exposed)
@@ -95,8 +95,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20132) == 1 && callfunc("DM_HuntReady", 20132)) {
-		callfunc("DM_HuntCollect", 20132);
+	callfunc("DM_HuntNoteShort", 20132);
+	if (questprogress(20132) == 1 && callfunc("DM_HuntCollect", 20132)) {
 		callfunc("DM_InstanceQuestComplete", 20132);
 		callfunc("DM_PartyExp", 250000, 120000);
 		callfunc("DM_GivePartyZeny", 20000);
@@ -122,8 +122,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20133) == 1 && callfunc("DM_HuntReady", 20133)) {
-		callfunc("DM_HuntCollect", 20133);
+	callfunc("DM_HuntNoteShort", 20133);
+	if (questprogress(20133) == 1 && callfunc("DM_HuntCollect", 20133)) {
 		callfunc("DM_InstanceQuestComplete", 20133);
 		callfunc("DM_PartyExp", 270000, 130000);
 		callfunc("DM_GivePartyZeny", 22000);
@@ -218,7 +218,7 @@ S_TurnIns:
 
 // ── High Prelate Karsh — The Church's Secret Keeper ────────────────────────
 rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc09_started) {
 		callfunc("DM_PartyMes", "[High Prelate Karsh]");
 		callfunc("DM_PartyMes", "The Sanctuary is not a public venue. Present credentials or leave.");

@@ -21,7 +21,7 @@
 
 // ── Sir Aldric the Unfrocked — Survivor of the Holy Kingdom ────────────────
 geffen,120,120,5	script	Sir Aldric Unfrocked#dm	4_M_03,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20121) == 2) {
 		callfunc("DM_PartyMes", "[Sir Aldric]");
 		callfunc("DM_PartyMes", "The Dark Lord sleeps again. I would call it victory if I did not know we are the ones who made it possible in the first place.");
@@ -88,8 +88,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20122) == 1 && callfunc("DM_HuntReady", 20122)) {
-		callfunc("DM_HuntCollect", 20122);
+	callfunc("DM_HuntNoteShort", 20122);
+	if (questprogress(20122) == 1 && callfunc("DM_HuntCollect", 20122)) {
 		callfunc("DM_InstanceQuestComplete", 20122);
 		callfunc("DM_PartyExp", 240000, 115000);
 		callfunc("DM_GivePartyZeny", 20000);
@@ -114,8 +114,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20123) == 1 && callfunc("DM_HuntReady", 20123)) {
-		callfunc("DM_HuntCollect", 20123);
+	callfunc("DM_HuntNoteShort", 20123);
+	if (questprogress(20123) == 1 && callfunc("DM_HuntCollect", 20123)) {
 		callfunc("DM_InstanceQuestComplete", 20123);
 		callfunc("DM_PartyExp", 260000, 125000);
 		callfunc("DM_GivePartyZeny", 22000);
@@ -186,7 +186,7 @@ S_TurnIns:
 
 // ── Brother Manfred — The Last Bishop ──────────────────────────────────────
 gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc08_started) {
 		callfunc("DM_PartyMes", "[Brother Manfred]");
 		callfunc("DM_PartyMes", "This is holy ground. Outsiders are not welcome in the Kingdom's halls.");

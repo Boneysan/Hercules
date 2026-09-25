@@ -22,6 +22,7 @@
 #include "rodex.h"
 
 #include "map/battle.h"
+#include "map/combat_state.h"
 #include "map/date.h"
 #include "map/intif.h"
 #include "map/itemdb.h"
@@ -538,7 +539,7 @@ static void rodex_get_items(struct map_session_data *sd, int8 opentype, int64 ma
 {
 	nullpo_retv(sd);
 
-	int weight = 0;
+	int64 weight = 0;
 	int empty_slots = 0;
 
 	struct rodex_message *msg = rodex->get_mail(sd, mail_id);
@@ -555,11 +556,11 @@ static void rodex_get_items(struct map_session_data *sd, int8 opentype, int64 ma
 
 	for (int i = 0; i < RODEX_MAX_ITEM; ++i) {
 		if (msg->items[i].item.nameid != 0) {
-			weight += itemdb->search(msg->items[i].item.nameid)->weight * msg->items[i].item.amount;
+			weight += (int64)itemdb->search(msg->items[i].item.nameid)->weight * msg->items[i].item.amount;
 		}
 	}
 
-	if ((sd->weight + weight > sd->max_weight)) {
+	if (status_encumbrance_blocks_pickup(sd, weight)) {
 		clif->rodex_request_items(sd, opentype, mail_id, RODEX_GET_ITEM_FULL_ERROR);
 		return;
 	}

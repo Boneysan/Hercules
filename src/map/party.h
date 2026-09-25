@@ -156,6 +156,10 @@ struct party_interface {
 	void (*agency_request_join)(struct map_session_data *sd, struct map_session_data *tsd);
 };
 
+struct map_session_data;
+void party_campaign_catchup_others(struct map_session_data *sd);
+void party_campaign_push_others(struct map_session_data *sd);
+
 #ifdef HERCULES_CORE
 void party_defaults(void);
 #endif // HERCULES_CORE

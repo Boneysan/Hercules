@@ -278,6 +278,8 @@ struct mob_data {
 
 	int8 skill_idx;// key of array
 	int64 skilldelay[MAX_MOBSKILL];
+	int64 ai_profile_cooldown_tick;
+	uint8 ai_profile_hit_count;
 	char npc_event[EVENT_NAME_LENGTH];
 	/**
 	 * Did this monster summon something?
@@ -514,6 +516,7 @@ struct mob_interface {
 	/* */
 	struct mob_db* (*db) (int index);
 	struct mob_chat* (*chat) (short id);
+	bool (*is_hazard_aware) (struct mob_data *md);
 	int (*makedummymobdb) (int);
 	int (*spawn_guardian_sub) (int tid, int64 tick, int id, intptr_t data);
 	int (*skill_id2skill_idx) (int class_, uint16 skill_id);

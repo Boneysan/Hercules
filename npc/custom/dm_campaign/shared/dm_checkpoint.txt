@@ -1,0 +1,347 @@
+// Durable party campaign checkpoint primitives (QW-054).
+//
+// The canonical row lives in SQL, not in quest flags or transient $ variables.
+// Unprefixed character variables are only a durable per-member mirror used by the
+// reconciliation helper; the row remains authoritative for advancement and
+// carried-item ownership.
+
+// Stable campaign namespace. Party ids remain useful for the current roster,
+// but are never the sole durable identity: the SQL key is (campaign_id,
+// party_id), and the member's character mirror carries ownership across a
+// leave/rejoin cycle.
+function	script	DM_CheckpointCampaign	{
+	return "seal_cascade";
+}
+
+// Append a typed transition before the caller mutates character quest/flag
+// state. Event rows are authoritative for recovery; they never contain rewards.
+function	script	DM_CampaignEventAppend	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@kind$ = getarg(1, "");
+	.@name$ = getarg(2, "");
+	.@value = getarg(3, 0);
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	if (!callfunc("DM_SessionAllows") || .@party_id <= 0 || .@party_id != $dm_active_party || .@name$ == "")
+		return 0;
+	if (.@kind$ != "quest_set" && .@kind$ != "quest_complete" && .@kind$ != "quest_erase" && .@kind$ != "flag_set" && .@kind$ != "flag_clear")
+		return 0;
+	// query_sql returns zero rows for INSERT/UPDATE by design; use the insert
+	// connection's LAST_INSERT_ID() to distinguish success from an absent row.
+	query_sql("INSERT INTO `dm_campaign_party_event` (`campaign_id`,`party_id`,`kind`,`name`,`value`,`actor_char_id`) VALUES ('" + .@campaign$ + "'," + .@party_id + ",'" + .@kind$ + "','" + .@name$ + "'," + .@value + "," + getcharid(CHAR_ID_CHAR) + ")");
+	.@rows = query_sql("SELECT LAST_INSERT_ID()", .@event_id);
+	return .@rows == 1 && .@event_id > 0;
+}
+
+// Keep campaign membership keyed by character, not by the party id assigned
+// by the server. When a returning member is in a newly-created party, move the
+// durable checkpoint row to that current roster before the next operation.
+function	script	DM_CheckpointRememberParty	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	if (.@party_id <= 0)
+		return 0;
+	.@self = getcharid(CHAR_ID_CHAR);
+	.@rows = query_sql("SELECT `party_id` FROM `dm_campaign_checkpoint_member` WHERE `campaign_id` = '" + .@campaign$ + "' AND `char_id` = " + .@self + " AND `eligible` = 1", .@old_party);
+	if (.@rows == 1 && .@old_party != .@party_id) {
+		.@current = query_sql("SELECT `party_id` FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id, .@ignored);
+		if (.@current != 1) {
+			query_sql("UPDATE `dm_campaign_checkpoint` SET `party_id` = " + .@party_id + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@old_party);
+			query_sql("UPDATE `dm_campaign_checkpoint_member` SET `party_id` = " + .@party_id + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@old_party);
+			query_sql("UPDATE `dm_campaign_party_state` SET `party_id` = " + .@party_id + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@old_party);
+			query_sql("UPDATE `dm_campaign_pending_grant` SET `party_id` = " + .@party_id + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@old_party);
+			query_sql("UPDATE `dm_campaign_party_event` SET `party_id` = " + .@party_id + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@old_party);
+			query_sql("UPDATE `dm_campaign_party_cursor` SET `party_id` = " + .@party_id + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@old_party);
+		}
+	}
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	for (.@i = 0; .@i < .@count; ++.@i)
+		query_sql("INSERT INTO `dm_campaign_checkpoint_member` (`campaign_id`,`char_id`,`party_id`,`eligible`) VALUES ('" + .@campaign$ + "'," + .@charid[.@i] + "," + .@party_id + ",1) ON DUPLICATE KEY UPDATE `party_id` = VALUES(`party_id`), `eligible` = 1, `last_seen_at` = CURRENT_TIMESTAMP");
+	return .@count;
+}
+
+function	script	DM_CheckpointStart	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@arc_id = getarg(1, 1);
+	if (.@party_id <= 0 || .@arc_id <= 0)
+		return 0;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	callfunc("DM_CheckpointRememberParty", .@party_id);
+	query_sql("INSERT IGNORE INTO `dm_campaign_checkpoint` (`campaign_id`,`schema_version`,`party_id`,`arc_id`,`step`,`carrier_char_id`,`last_actor_char_id`) VALUES ('" + .@campaign$ + "',1," + .@party_id + "," + .@arc_id + ",0,0,0)");
+	return 1;
+}
+
+function	script	DM_CheckpointStep	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	if (.@party_id <= 0)
+		return -1;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	.@rows = query_sql("SELECT `step` FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id, .@step);
+	if (.@rows != 1)
+		return -1;
+	return .@step;
+}
+
+function	script	DM_CheckpointAdvance	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@expected = getarg(1, -1);
+	.@actor = getarg(2, getcharid(CHAR_ID_CHAR));
+	if (.@party_id <= 0 || .@expected < 0 || .@actor <= 0)
+		return 0;
+	if ($dm_active_party > 0 && $dm_active_party != .@party_id)
+		return 0;
+	callfunc("DM_CheckpointStart", .@party_id, getarg(3, 1));
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	// The compare-and-increment is atomic at the database boundary. A stale
+	// branch cannot advance the checkpoint or claim carried-item ownership.
+	query_sql("UPDATE `dm_campaign_checkpoint` SET `step` = `step` + 1, `carrier_char_id` = " + .@actor + ", `last_actor_char_id` = " + .@actor + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id + " AND `step` = " + .@expected);
+	.@rows = query_sql("SELECT `step`, `carrier_char_id` FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id, .@step, .@carrier);
+	if (.@rows == 1 && .@step == .@expected + 1 && .@carrier == .@actor) {
+		query_sql("INSERT INTO `dm_campaign_checkpoint_log` (`campaign_id`,`party_id`,`step`,`actor_char_id`,`event`) VALUES ('" + .@campaign$ + "'," + .@party_id + "," + .@step + "," + .@actor + ",'advance')");
+		return 1;
+	}
+	return 0;
+}
+
+// Record one party-authoritative story/flag transition. The numeric step is
+// intentionally an ordered checkpoint sequence, not a quest id: multiple
+// branches can share a quest while every accepted transition must still be
+// forward-only and restart-safe.
+function	script	DM_CheckpointRecordPartyEvent	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@arc_id = getarg(1, 1);
+	.@actor = getarg(2, getcharid(CHAR_ID_CHAR));
+	.@flag$ = getarg(3, "");
+	if (.@party_id <= 0 || ($dm_active_party > 0 && $dm_active_party != .@party_id))
+		return 0;
+	callfunc("DM_CheckpointStart", .@party_id, .@arc_id);
+	.@step = callfunc("DM_CheckpointStep", .@party_id);
+	if (.@step < 0)
+		return 0;
+	if (!callfunc("DM_CheckpointAdvance", .@party_id, .@step, .@actor, .@arc_id))
+		return 0;
+	callfunc("DM_CheckpointSyncSelf", .@party_id);
+	return 1;
+}
+
+function	script	DM_CheckpointConsume	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@actor = getarg(1, getcharid(CHAR_ID_CHAR));
+	if (.@party_id <= 0 || .@actor <= 0)
+		return 0;
+	if ($dm_active_party > 0 && $dm_active_party != .@party_id)
+		return 0;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	query_sql("UPDATE `dm_campaign_checkpoint` SET `carrier_char_id` = 0 WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id + " AND `carrier_char_id` = " + .@actor);
+	.@rows = query_sql("SELECT `carrier_char_id` FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id, .@carrier);
+	if (.@rows == 1 && .@carrier == 0) {
+		.@step = callfunc("DM_CheckpointStep", .@party_id);
+		query_sql("INSERT INTO `dm_campaign_checkpoint_log` (`campaign_id`,`party_id`,`step`,`actor_char_id`,`event`) VALUES ('" + .@campaign$ + "'," + .@party_id + "," + .@step + "," + .@actor + ",'consume')");
+		// A successful turn-in changes authoritative carried-item state. Push the
+		// cleared carrier to every eligible online member immediately; otherwise
+		// the Session Board would retain a stale owner until the next transition.
+		callfunc("DM_CheckpointSyncSelf", .@party_id);
+		return 1;
+	}
+	return 0;
+}
+
+// Administrative rollback used by `@dm reset confirm`. This is deliberately
+// separate from forward progression: a reset removes the authoritative row
+// and clears every online member mirror so a later Session Board preview cannot
+// resurrect the old step.
+function	script	DM_CheckpointReset	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	if (.@party_id <= 0)
+		return 0;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	.@step = callfunc("DM_CheckpointStep", .@party_id);
+	if (.@step >= 0)
+		query_sql("INSERT INTO `dm_campaign_checkpoint_log` (`campaign_id`,`party_id`,`step`,`actor_char_id`,`event`) VALUES ('" + .@campaign$ + "'," + .@party_id + "," + .@step + "," + getcharid(CHAR_ID_CHAR) + ",'reset')");
+	query_sql("DELETE FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
+	query_sql("DELETE FROM `dm_campaign_party_state` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
+	query_sql("DELETE FROM `dm_campaign_pending_grant` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
+	query_sql("DELETE FROM `dm_campaign_party_event` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
+	query_sql("DELETE FROM `dm_campaign_party_cursor` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i]) || !attachrid(.@accid[.@i]))
+			continue;
+		dm_campaign_checkpoint_party = 0;
+		dm_campaign_checkpoint_step = 0;
+		dm_campaign_checkpoint_carrier = 0;
+		// Reset is an explicit administrative transition, so the client must
+		// clear its monotonic state before the next arc-1 step is emitted.
+		dispbottom("[DMJ]{\"t\":\"reset\",\"v\":1,\"seq\":100000}");
+		detachrid();
+		++.@done;
+	}
+	return .@done;
+}
+
+// Update only the character who is attached. Login and map changes use this
+// so they do not take over anyone else's conversation.
+function	script	DM_CheckpointSyncSelf	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	if (.@party_id <= 0)
+		return 0;
+	if ($dm_active_party > 0 && $dm_active_party != .@party_id)
+		return 0;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	.@rows = query_sql("SELECT `arc_id`, `step`, `carrier_char_id` FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id, .@arc, .@step, .@carrier);
+	if (.@rows != 1)
+		return 0;
+	if (dm_campaign_checkpoint_step > .@step)
+		return 0;
+	if (dm_campaign_checkpoint_step == .@step && dm_campaign_checkpoint_party == .@party_id)
+		return 0;
+	dm_campaign_checkpoint_party = .@party_id;
+	dm_campaign_checkpoint_step = .@step;
+	dm_campaign_checkpoint_carrier = .@carrier;
+	return 1;
+}
+
+function	script	DM_CheckpointSyncParty	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@flag$ = getarg(1, "");
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	if (.@party_id <= 0)
+		return 0;
+	if ($dm_active_party > 0 && $dm_active_party != .@party_id)
+		return 0;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	.@rows = query_sql("SELECT `arc_id`, `step`, `carrier_char_id` FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id, .@arc, .@step, .@carrier);
+	if (.@rows != 1)
+		return 0;
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i])) {
+			dispbottom("[DM] checkpoint member " + .@charid[.@i] + ": offline (no mutation)");
+			continue;
+		}
+		if (!attachrid(.@accid[.@i])) {
+			dispbottom("[DM] checkpoint member " + .@charid[.@i] + ": unavailable (no mutation)");
+			continue;
+		}
+		.@member_step = dm_campaign_checkpoint_step;
+		if (.@member_step > .@step) {
+			dispbottom("[DM] checkpoint member " + .@charid[.@i] + ": " + .@member_step + " -> " + .@step + " REFUSED (ahead)");
+			detachrid();
+			if (.@origin_aid)
+				attachrid(.@origin_aid);
+			continue;
+		}
+		dm_campaign_checkpoint_party = .@party_id;
+		dm_campaign_checkpoint_step = .@step;
+		dm_campaign_checkpoint_carrier = .@carrier;
+		.@seq = .@arc * 100000 + .@step;
+		dispbottom("[DMJ]{\"t\":\"checkpoint\",\"v\":1,\"seq\":" + .@seq + ",\"arc\":" + .@arc + ",\"step\":" + .@step + ",\"carrier\":" + .@carrier + "}");
+		if (.@flag$ != "")
+			dispbottom("[DMJ]{\"t\":\"flag\",\"v\":1,\"seq\":" + .@seq + ",\"name\":\"" + .@flag$ + "\",\"value\":" + callfunc("DM_GetFlag", .@flag$) + "}");
+		dispbottom("[DM] checkpoint member " + .@charid[.@i] + ": " + .@member_step + " -> " + .@step + " synchronized");
+		++.@done;
+		detachrid();
+		if (.@origin_aid)
+			attachrid(.@origin_aid);
+	}
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+	return .@done;
+}
+
+function	script	DM_CheckpointPreview	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	if (.@party_id <= 0)
+		return 0;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	.@rows = query_sql("SELECT `arc_id`, `step`, `carrier_char_id` FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id, .@arc, .@step, .@carrier);
+	if (.@rows != 1) {
+		dispbottom("[DM] No durable checkpoint exists for this party.");
+		return 0;
+	}
+	dispbottom("[DM] Checkpoint preview: party=" + .@party_id + " step=" + .@step + " carrier=" + .@carrier);
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	.@eligible = 0;
+	.@ahead = 0;
+	.@offline = 0;
+	.@unavailable = 0;
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i])) {
+			++.@offline;
+			dispbottom("[DM] member " + .@charid[.@i] + ": offline (no mutation)");
+			continue;
+		}
+		if (!attachrid(.@accid[.@i])) {
+			++.@unavailable;
+			continue;
+		}
+		.@member_step = dm_campaign_checkpoint_step;
+		if (.@member_step > .@step)
+			++.@ahead;
+		else
+			++.@eligible;
+		dispbottom("[DM] member " + .@charid[.@i] + ": " + .@member_step + " -> " + .@step + ((.@member_step > .@step) ? " REFUSED (ahead)" : " eligible"));
+		detachrid();
+		if (.@origin_aid)
+			attachrid(.@origin_aid);
+	}
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+	callfunc("DM_DMJReconcile", .@party_id, .@arc, .@step, "preview", .@eligible, .@ahead, .@offline, .@unavailable, 0, .@arc * 100000 + .@step);
+	return 1;
+}
+
+function	script	DM_CheckpointReconcile	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@confirm$ = strtolower(getarg(1, "preview"));
+	if (.@confirm$ != "confirm") {
+		callfunc("DM_CheckpointPreview", .@party_id);
+		dispbottom("[DM] No changes made. Use @dm reconcile confirm to apply eligible forward sync.");
+		return 0;
+	}
+	// Count the same guarded outcomes that SyncParty will evaluate. This keeps
+	// the typed confirm result useful even when a member changes state between
+	// preview and confirmation; SyncParty still revalidates every member.
+	.@eligible = 0;
+	.@ahead = 0;
+	.@offline = 0;
+	.@unavailable = 0;
+	.@target_step = callfunc("DM_CheckpointStep", .@party_id);
+	if (.@target_step < 0)
+		return 0;
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (!isloggedin(.@accid[.@i], .@charid[.@i])) {
+			++.@offline;
+			continue;
+		}
+		if (!attachrid(.@accid[.@i])) {
+			++.@unavailable;
+			continue;
+		}
+		.@member_step = dm_campaign_checkpoint_step;
+		if (.@member_step > .@target_step)
+			++.@ahead;
+		else
+			++.@eligible;
+		detachrid();
+		if (.@origin_aid)
+			attachrid(.@origin_aid);
+	}
+	.@done = callfunc("DM_CheckpointSyncParty", .@party_id);
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	.@rows = query_sql("SELECT `arc_id`, `step` FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id, .@arc, .@step);
+	if (.@rows == 1)
+		callfunc("DM_DMJReconcile", .@party_id, .@arc, .@step, "confirm", .@eligible, .@ahead, .@offline, .@unavailable, .@done, .@arc * 100000 + .@step + 1);
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+	dispbottom("[DM] Reconciled " + .@done + " eligible online member(s); ahead members and offline members were not changed.");
+	return .@done;
+}

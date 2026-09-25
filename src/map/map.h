@@ -509,7 +509,11 @@ struct flooritem_data {
 	int64 first_get_tick,second_get_tick,third_get_tick;
 	struct item item_data;
 	bool showdropeffect;
+	bool player_dropped; ///< Suppress automatic pickup for manually dropped items.
 };
+
+/// Internal map->addflooritem flag; player-dropped items are excluded from autoloot.
+#define MAP_ADD_FLOOR_ITEM_PLAYER_DROP (1 << 30)
 
 enum status_point_types { //we better clean up this enum and change it name [Hemagx]
 	SP_NONE = -1,

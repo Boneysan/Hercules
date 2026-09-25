@@ -26,6 +26,7 @@
 #include "map/battle.h" // battle_config.*
 #include "map/chrif.h"
 #include "map/clif.h" // clif-"buyingstore_*
+#include "map/combat_state.h"
 #include "map/log.h" // log_pick_pc, log_zeny
 #include "map/pc.h" // struct map_session_data
 #include "common/cbasetypes.h"
@@ -84,7 +85,8 @@ static bool buyingstore_setup(struct map_session_data *sd, unsigned char slots)
 
 static void buyingstore_create(struct map_session_data *sd, int zenylimit, unsigned char result, const char *storename, const struct PACKET_CZ_REQ_OPEN_BUYING_STORE_sub *itemlist, unsigned int count)
 {
-	unsigned int i, weight, listidx;
+	unsigned int i, listidx;
+	int64 weight = 0;
 
 	nullpo_retv(sd);
 	if (!result || count == 0) {
@@ -171,7 +173,7 @@ static void buyingstore_create(struct map_session_data *sd, int zenylimit, unsig
 			}
 		}
 
-		weight+= id->weight*amount;
+		weight += (int64)id->weight * amount;
 		sd->buyingstore.items[i].nameid = nameid;
 		sd->buyingstore.items[i].amount = amount;
 		sd->buyingstore.items[i].price  = price;
@@ -184,10 +186,11 @@ static void buyingstore_create(struct map_session_data *sd, int zenylimit, unsig
 		return;
 	}
 
-	if( (sd->max_weight*90)/100 < weight )
+	if (status_encumbrance_blocks_at_percent(sd, weight, 90))
 	{// not able to carry all wanted items without getting overweight (90%)
+		unsigned int reported_weight = weight > 0xFFFFFFFFLL ? 0xFFFFFFFFU : (unsigned int)weight;
 		sd->buyingstore.slots = 0;
-		clif->buyingstore_open_failed(sd, BUYINGSTORE_CREATE_OVERWEIGHT, weight);
+		clif->buyingstore_open_failed(sd, BUYINGSTORE_CREATE_OVERWEIGHT, reported_weight);
 		return;
 	}
 
@@ -248,7 +251,8 @@ static void buyingstore_open(struct map_session_data *sd, int account_id)
 static void buyingstore_trade(struct map_session_data* sd, int account_id, unsigned int buyer_id, const struct PACKET_CZ_REQ_TRADE_BUYING_STORE_sub* itemlist, unsigned int count)
 {
 	int zeny = 0;
-	unsigned int i, weight, listidx, k;
+	unsigned int i, listidx, k;
+	int64 weight = 0;
 	struct map_session_data* pl_sd;
 
 	nullpo_retv(sd);
@@ -288,8 +292,6 @@ static void buyingstore_trade(struct map_session_data* sd, int account_id, unsig
 	{// buyer lost zeny in the mean time? fix the limit
 		pl_sd->buyingstore.zenylimit = pl_sd->status.zeny;
 	}
-	weight = pl_sd->weight;
-
 	// check item list
 	for( i = 0; i < count; i++ )
 	{// itemlist: <index>.W <name id>.W <amount>.W
@@ -347,13 +349,14 @@ static void buyingstore_trade(struct map_session_data* sd, int account_id, unsig
 			return;
 		}
 
-		if( amount*(unsigned int)sd->inventory_data[index]->weight > pl_sd->max_weight-weight )
+		if (status_encumbrance_blocks_at_percent(pl_sd,
+			weight + (int64)amount * sd->inventory_data[index]->weight, 100))
 		{// normally this is not supposed to happen, as the total weight is
 		 // checked upon creation, but the buyer could have gained items
 			clif->buyingstore_trade_failed_seller(sd, BUYINGSTORE_TRADE_SELLER_FAILED, nameid);
 			return;
 		}
-		weight+= amount*sd->inventory_data[index]->weight;
+		weight += (int64)amount * sd->inventory_data[index]->weight;
 
 		if( amount*pl_sd->buyingstore.items[listidx].price > pl_sd->buyingstore.zenylimit-zeny )
 		{// buyer does not have enough zeny

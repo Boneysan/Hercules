@@ -1,0 +1,50 @@
+// Reconcile a campaign member as soon as Hercules has restored the character
+// and party context. This is deliberately guarded by DM_SessionAllows: a
+// normal login must never query or mutate campaign state for another party.
+
+-	script	DM_CampEvents	-1,{
+OnInit:
+	query_sql("CREATE TABLE IF NOT EXISTS `dm_campaign_party_state` (`campaign_id` VARCHAR(32) NOT NULL, `party_id` INT UNSIGNED NOT NULL, `kind` VARCHAR(8) NOT NULL, `name` VARCHAR(64) NOT NULL, `value` INT NOT NULL DEFAULT 0, `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`campaign_id`, `party_id`, `kind`, `name`)) ENGINE=InnoDB");
+	query_sql("CREATE TABLE IF NOT EXISTS `dm_campaign_party_event` (`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, `campaign_id` VARCHAR(32) NOT NULL, `party_id` INT UNSIGNED NOT NULL, `kind` VARCHAR(16) NOT NULL, `name` VARCHAR(64) NOT NULL, `value` INT NOT NULL DEFAULT 0, `actor_char_id` INT UNSIGNED NOT NULL DEFAULT 0, `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`), KEY `dm_campaign_party_event_replay` (`campaign_id`, `party_id`, `id`)) ENGINE=InnoDB");
+	query_sql("CREATE TABLE IF NOT EXISTS `dm_campaign_party_cursor` (`campaign_id` VARCHAR(32) NOT NULL, `char_id` INT UNSIGNED NOT NULL, `party_id` INT UNSIGNED NOT NULL, `last_event_id` BIGINT UNSIGNED NOT NULL DEFAULT 0, `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`campaign_id`, `char_id`), KEY `dm_campaign_party_cursor_party` (`campaign_id`, `party_id`)) ENGINE=InnoDB");
+	query_sql("CREATE TABLE IF NOT EXISTS `dm_campaign_pending_grant` (`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, `campaign_id` VARCHAR(32) NOT NULL, `party_id` INT UNSIGNED NOT NULL, `char_id` INT UNSIGNED NOT NULL, `kind` VARCHAR(8) NOT NULL, `amount` INT NOT NULL, `amount2` INT NOT NULL DEFAULT 0, `claimed` TINYINT UNSIGNED NOT NULL DEFAULT 0, PRIMARY KEY (`id`), KEY `dm_campaign_pending_grant_char` (`char_id`, `claimed`)) ENGINE=InnoDB");
+	end;
+
+OnPCPartyPush:
+	// A choice was just made. Take the stored party value even when this
+	// character already had an older one. Queued until a current talk ends.
+	if (callfunc("DM_SessionAllows")) {
+		callfunc("DM_CatchUpFromParty", 1, 1);
+		callfunc("DM_CheckpointSyncSelf", $dm_active_party);
+	}
+	end;
+
+OnPCQuestLog:
+	if (callfunc("DM_SessionAllows"))
+		callfunc("DM_CatchUpFromParty", 1);
+	end;
+
+OnPCLoginEvent:
+	// Quest catch-up waits for OnPCQuestLog. The saved log arrives after this
+	// event and would replace any quests written here.
+	if (callfunc("DM_SessionAllows"))
+		callfunc("DM_CheckpointSyncSelf", $dm_active_party);
+	end;
+
+OnPCPartyJoin:
+	if (callfunc("DM_SessionAllows")) {
+		callfunc("DM_CheckpointSyncSelf", $dm_active_party);
+		callfunc("DM_CatchUpFromParty", 1);
+		dispbottom("[DM] Party progress copied. Quests and story flags you did not already have are filled in.");
+	}
+	end;
+
+OnPCLoadMapEvent:
+	// Login can precede party restoration on some map-server paths. The map
+	// event is the retry point for late joins and reconnects in that case.
+	if (callfunc("DM_SessionAllows")) {
+		callfunc("DM_CheckpointSyncSelf", $dm_active_party);
+		callfunc("DM_CatchUpFromParty");
+	}
+	end;
+}

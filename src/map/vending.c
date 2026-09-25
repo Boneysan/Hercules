@@ -26,6 +26,7 @@
 #include "map/battle.h"
 #include "map/chrif.h"
 #include "map/clif.h"
+#include "map/combat_state.h"
 #include "map/itemdb.h"
 #include "map/log.h"
 #include "map/map.h"
@@ -93,7 +94,8 @@ static void vending_vendinglistreq(struct map_session_data *sd, unsigned int id)
  *------------------------------------------*/
 static void vending_purchasereq(struct map_session_data *sd, int aid, unsigned int uid, const struct CZ_PURCHASE_ITEM_FROMMC *data, int count)
 {
-	int i, j, cursor, w, new_ = 0, blank, vend_list[MAX_VENDING];
+	int i, j, cursor, new_ = 0, blank, vend_list[MAX_VENDING];
+	int64 w = 0;
 	int64 z;
 	struct s_vending vend[MAX_VENDING]; // against duplicate packets
 	struct map_session_data* vsd = map->id2sd(aid);
@@ -151,8 +153,8 @@ static void vending_purchasereq(struct map_session_data *sd, int aid, unsigned i
 			return;
 
 		}
-		w += itemdb_weight(vsd->status.cart[idx].nameid) * amount;
-		if( w + sd->weight > sd->max_weight ) {
+		w += (int64)itemdb_weight(vsd->status.cart[idx].nameid) * amount;
+		if (status_encumbrance_blocks_pickup(sd, w)) {
 			clif->buyvending(sd, idx, amount, 2); // you can not buy, because overweight
 			return;
 		}

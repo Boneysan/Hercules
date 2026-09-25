@@ -5,6 +5,62 @@
 // restore the original attachment. Use them from boss-death labels and DM
 // tools so quest credit lands on the whole party, not just the killer.
 
+// Remember one party quest or story flag. `name` is a quest id or a dm_* flag.
+function	script	DM_StatePut	{
+	.@party_id = getarg(0);
+	.@kind$ = getarg(1);
+	.@name$ = getarg(2);
+	.@value = getarg(3);
+	if (.@party_id <= 0 || .@kind$ == "" || .@name$ == "")
+		return 0;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	// A later "start" must not replace a stored "complete". Erase passes 0 and
+	// does replace. Flags always replace, because a choice can change.
+	// A positive quest value never replaces a higher one. Zero and negative
+	// values replace, so an erase (-1) cannot be undone by an old copy.
+	if (.@value > 0 && (.@kind$ == "quest" || .@name$ == "dm_story_beat" || .@name$ == "dm_catechism_tally"))
+		query_sql("INSERT INTO `dm_campaign_party_state` (`campaign_id`,`party_id`,`kind`,`name`,`value`) VALUES ('" + .@campaign$ + "'," + .@party_id + ",'quest','" + .@name$ + "'," + .@value + ") ON DUPLICATE KEY UPDATE `value` = GREATEST(`value`, " + .@value + ")");
+	else
+		query_sql("INSERT INTO `dm_campaign_party_state` (`campaign_id`,`party_id`,`kind`,`name`,`value`) VALUES ('" + .@campaign$ + "'," + .@party_id + ",'" + .@kind$ + "','" + .@name$ + "'," + .@value + ") ON DUPLICATE KEY UPDATE `value` = " + .@value);
+	return 1;
+}
+// Write every online member's quests and flags into the party store, then
+// copy that store onto anyone who is still missing it.
+function	script	DM_PublishOnlineParty	{
+	.@party_id = $dm_active_party;
+	if (.@party_id <= 0)
+		.@party_id = getcharid(CHAR_ID_PARTY);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	if (.@party_id <= 0 || .@origin_aid <= 0)
+		return 0;
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	.@done = 0;
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (isloggedin(.@accid[.@i], .@charid[.@i]))
+			++.@done;
+	}
+	freeloop(true);
+	callfunc("DM_CatchUpFromParty", 1);
+	campaigncatchup;
+	freeloop(false);
+	return .@done;
+}
+
+function	script	DM_StateGet	{
+	.@party_id = getarg(0);
+	.@kind$ = getarg(1);
+	.@name$ = getarg(2);
+	if (.@party_id <= 0)
+		return 0;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	.@rows = query_sql("SELECT `value` FROM `dm_campaign_party_state` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id + " AND `kind` = '" + .@kind$ + "' AND `name` = '" + .@name$ + "'", .@value);
+	if (.@rows != 1)
+		return 0;
+	return .@value;
+}
+
 function	script	DM_PartyApplyQuest	{
 	.@action$   = getarg(0);                                   // "set" | "complete" | "erase"
 	.@quest_id  = getarg(1);
@@ -13,52 +69,48 @@ function	script	DM_PartyApplyQuest	{
 
 	if (.@quest_id <= 0)
 		return 0;
+	if (callfunc("DM_SessionAllows") && .@party_id == $dm_active_party) {
+		.@event_kind$ = "quest_" + .@action$;
+		if (callfunc("DM_CampaignEventAppend", .@party_id, .@event_kind$, .@quest_id + "", .@quest_id) <= 0) {
+			dispbottom("[DM] Campaign event could not be saved; quest state was not changed.");
+			return 0;
+		}
+	}
 
 	// Solo / no party: apply to the attached character only.
 	if (.@party_id <= 0) {
-		callsub(S_Apply, .@action$, .@quest_id);
+		callsub(S_Apply, .@action$, .@quest_id, 0);
 		return 1;
 	}
 
-	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
-	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
-
-	for (.@i = 0; .@i < .@count; ++.@i) {
-		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
-			continue;
-		if (!attachrid(.@accid[.@i]))
-			continue;
-		callsub(S_Apply, .@action$, .@quest_id);
-		detachrid();
-		++.@done;
-	}
-
-	// Re-attach the original caller so the calling script keeps its context.
-	if (.@origin_aid)
-		attachrid(.@origin_aid);
-
-	return .@done;
+	// The talker is updated here. Everyone else gets a queued catch-up so an
+	// open conversation is not replaced by this script.
+	callsub(S_Apply, .@action$, .@quest_id, .@party_id);
+	campaigncatchup;
+	return 1;
 
 S_Apply:
 	.@a$ = getarg(0);
 	.@q = getarg(1);
+	.@party_id = getarg(2, 0);
 
 	if (.@a$ == "set") {
 		if (questprogress(.@q) == 0)
 			setquest(.@q);
-		return;
-	}
-	if (.@a$ == "complete") {
+	} else if (.@a$ == "complete") {
 		if (questprogress(.@q) == 0)
 			setquest(.@q);
 		if (questprogress(.@q) == 1)
 			completequest(.@q);
-		return;
-	}
-	if (.@a$ == "erase") {
+	} else if (.@a$ == "erase") {
 		if (questprogress(.@q) > 0)
 			erasequest(.@q);
-		return;
+	}
+	if (.@party_id > 0) {
+		if (.@a$ == "erase")
+			callfunc("DM_StatePut", .@party_id, "quest", .@q + "", -1);
+		else
+			callfunc("DM_StatePut", .@party_id, "quest", .@q + "", questprogress(.@q));
 	}
 	return;
 }
@@ -99,27 +151,32 @@ function	script	DM_PartyApplyFlag	{
 
 	if (!callfunc("DM_ValidFlagName", .@flag$))
 		return 0;
+	if (callfunc("DM_SessionAllows") && .@party_id == $dm_active_party) {
+		.@event_kind$ = .@value == 0 ? "flag_clear" : "flag_set";
+		if (callfunc("DM_CampaignEventAppend", .@party_id, .@event_kind$, .@flag$, .@value) <= 0) {
+			dispbottom("[DM] Campaign event could not be saved; story flag was not changed.");
+			return 0;
+		}
+	}
 
 	if (.@party_id <= 0) {
 		setd(.@flag$, .@value);
 		return 1;
 	}
 
-	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
-	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	setd(.@flag$, .@value);
+	if (.@value == 0)
+		callfunc("DM_StatePut", .@party_id, "flag", .@flag$, -1);
+	else
+		callfunc("DM_StatePut", .@party_id, "flag", .@flag$, .@value);
+	campaignpush;
+	.@done = 1;
 
-	for (.@i = 0; .@i < .@count; ++.@i) {
-		if (!isloggedin(.@accid[.@i], .@charid[.@i]))
-			continue;
-		if (!attachrid(.@accid[.@i]))
-			continue;
-		setd(.@flag$, .@value);
-		detachrid();
-		++.@done;
-	}
-
-	if (.@origin_aid)
-		attachrid(.@origin_aid);
+	// The durable SQL checkpoint advances once per accepted party flag event.
+	// Character variables above remain the per-member mirror used by the
+	// Session Board; they are never treated as the authority for progression.
+	if (.@done > 0 && $dm_active_party > 0 && $dm_active_party == .@party_id)
+		callfunc("DM_CheckpointRecordPartyEvent", .@party_id, 1, getcharid(CHAR_ID_CHAR), .@flag$);
 
 	return .@done;
 }
@@ -147,12 +204,88 @@ function	script	DM_InstanceClearFlag	{
 // list lives in the generated dm_hunts.txt table (see tools/gen-hunts.py);
 // these helpers are the only thing the arc scripts should call.
 //
-// Items are per-character, so the ledger and the hand-in both act on the
-// player actually talking to the NPC. Quest credit and payment stay
-// party-wide, which is what makes a party pool its drops before turning in.
+// Items stay in each character's inventory. A turn-in counts the whole party,
+// including people who are logged out, and takes from them only when that
+// total is enough. Nothing is removed on a short hand-in. Quest credit stays
+// party-wide. Offline stacks are unequipped rows in the inventory table.
 // ---------------------------------------------------------------------------
 
-// Does the attached character hold everything this contract asks for?
+// The talker has the contract open and is short. Says so and prints the
+// ledger. Returns 1 when it spoke. Does not take items.
+function	script	DM_HuntNoteShort	{
+	.@quest_id = getarg(0);
+	if (questprogress(.@quest_id) != 1)
+		return 0;
+	if (callfunc("DM_HuntReady", .@quest_id))
+		return 0;
+
+	mes("This contract is not ready. Nothing was taken.");
+	mes(callfunc("DM_HuntName", .@quest_id) + ": " + callfunc("DM_HuntBrief", .@quest_id));
+	callfunc("DM_HuntLedger", .@quest_id);
+	next();
+	return 1;
+}
+
+// Unequipped stacks for a character who is logged out. Online characters are
+// counted with countitem instead, because their live inventory is ahead of SQL.
+function	script	DM_HuntOfflineHave	{
+	.@char_id = getarg(0);
+	.@item = getarg(1);
+	if (.@char_id <= 0 || .@item <= 0)
+		return 0;
+	.@rows = query_sql("SELECT IFNULL(SUM(`amount`),0) FROM `inventory` WHERE `char_id` = " + .@char_id + " AND `nameid` = " + .@item + " AND `equip` = 0", .@sum);
+	if (.@rows != 1)
+		return 0;
+	return .@sum;
+}
+
+// Remove up to `need` of an item from a logged-out character. Returns how many
+// were removed. Equipped rows are left alone.
+function	script	DM_HuntOfflineTake	{
+	.@char_id = getarg(0);
+	.@item = getarg(1);
+	.@need = getarg(2);
+	.@left = .@need;
+	if (.@char_id <= 0 || .@item <= 0 || .@need <= 0)
+		return 0;
+	.@rows = query_sql("SELECT `id`, `amount` FROM `inventory` WHERE `char_id` = " + .@char_id + " AND `nameid` = " + .@item + " AND `equip` = 0 AND `amount` > 0 ORDER BY `id`", .@id, .@amount);
+	for (.@i = 0; .@i < .@rows && .@left > 0; ++.@i) {
+		.@take = .@amount[.@i];
+		if (.@take > .@left)
+			.@take = .@left;
+		if (.@take >= .@amount[.@i])
+			query_sql("DELETE FROM `inventory` WHERE `id` = " + .@id[.@i] + " AND `char_id` = " + .@char_id + " AND `equip` = 0");
+		else
+			query_sql("UPDATE `inventory` SET `amount` = `amount` - " + .@take + " WHERE `id` = " + .@id[.@i] + " AND `char_id` = " + .@char_id + " AND `equip` = 0 AND `amount` >= " + .@take);
+		.@left = .@left - .@take;
+	}
+	return .@need - .@left;
+}
+
+// How many of this item the whole party holds, online or not.
+function	script	DM_HuntHave	{
+	.@item = getarg(0);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@sum = countitem(.@item);
+
+	if (.@party_id <= 0 || .@origin_aid <= 0)
+		return .@sum;
+
+	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+	.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		if (.@accid[.@i] == .@origin_aid)
+			continue;
+		.@have = countcharitem(.@charid[.@i], .@item);
+		if (.@have < 0)
+			.@have = callfunc("DM_HuntOfflineHave", .@charid[.@i], .@item);
+		.@sum = .@sum + .@have;
+	}
+	return .@sum;
+}
+
+// Does the party, including logged-out members, hold everything this contract asks for?
 function	script	DM_HuntReady	{
 	.@quest_id = getarg(0);
 	.@n = callfunc("DM_HuntSpec", .@quest_id, .@item, .@need);
@@ -161,26 +294,61 @@ function	script	DM_HuntReady	{
 		return 0;
 
 	for (.@i = 0; .@i < .@n; ++.@i) {
-		if (countitem(.@item[.@i]) < .@need[.@i])
+		if (callfunc("DM_HuntHave", .@item[.@i]) < .@need[.@i])
 			return 0;
 	}
 	return 1;
 }
 
-// Take the contract's items from the attached character. Returns 0 without
-// removing anything if they are short, so a partial hand-in can never eat
-// items and leave the contract open.
+// Take the contract's items from the whole party. Returns 0 without
+// removing anything if they are short together. Logged-out members lose the
+// items from their saved inventory.
 function	script	DM_HuntCollect	{
 	.@quest_id = getarg(0);
 	.@n = callfunc("DM_HuntSpec", .@quest_id, .@item, .@need);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
 
 	if (.@n <= 0)
 		return 0;
 	if (!callfunc("DM_HuntReady", .@quest_id))
 		return 0;
 
-	for (.@i = 0; .@i < .@n; ++.@i)
-		delitem(.@item[.@i], .@need[.@i]);
+	if (.@party_id > 0) {
+		getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
+		.@count = getpartymember(.@party_id, PT_MEMBER_ACCID, .@accid);
+	}
+
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		.@left = .@need[.@i];
+		.@take = countitem(.@item[.@i]);
+		if (.@take > .@left)
+			.@take = .@left;
+		if (.@take > 0) {
+			delitem(.@item[.@i], .@take);
+			.@left = .@left - .@take;
+		}
+		if (.@party_id > 0) {
+			for (.@m = 0; .@m < .@count && .@left > 0; ++.@m) {
+				if (.@accid[.@m] == .@origin_aid)
+					continue;
+				.@take = delcharitem(.@charid[.@m], .@item[.@i], .@left);
+				if (.@take < 0)
+					.@take = callfunc("DM_HuntOfflineTake", .@charid[.@m], .@item[.@i], .@left);
+				.@left = .@left - .@take;
+			}
+		}
+		if (.@left > 0) {
+			dispbottom("[DM] The hand-in stopped short. Nothing further was marked complete.");
+			return 0;
+		}
+	}
+
+	// Hunt collection is the authoritative item-consumption boundary. If this
+	// character owns the party checkpoint's carried item, clear that ownership
+	// only after every required item was successfully removed. A different
+	// member cannot consume the checkpoint owner through this path.
+	callfunc("DM_CheckpointConsume", getcharid(CHAR_ID_PARTY), getcharid(CHAR_ID_CHAR));
 
 	return 1;
 }
@@ -196,7 +364,7 @@ function	script	DM_HuntLedger	{
 		return 0;
 
 	for (.@i = 0; .@i < .@n; ++.@i) {
-		.@have = countitem(.@item[.@i]);
+		.@have = callfunc("DM_HuntHave", .@item[.@i]);
 		if (.@have >= .@need[.@i])
 			mes("  ^008000" + getitemname(.@item[.@i]) + " " + .@have + " / " + .@need[.@i] + "^000000");
 		else
@@ -206,6 +374,50 @@ function	script	DM_HuntLedger	{
 }
 
 // The one-line summary an arc uses when it offers a contract.
+// Copy quest progress onto this character when the party or the stored row
+// is further along. Progress never moves backwards. Arguments are quest ids.
+function	script	DM_SyncListedQuests	{
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	.@n = getargcount();
+
+	if (.@party_id <= 0 || .@origin_aid <= 0 || .@n <= 0)
+		return 0;
+
+	for (.@q = 0; .@q < .@n; ++.@q) {
+		.@quest = getarg(.@q);
+		if (.@quest <= 0)
+			continue;
+		if (!attachrid(.@origin_aid))
+			return .@copied;
+		.@stored = callfunc("DM_StateGet", .@party_id, "quest", .@quest + "");
+		if (.@stored < 0) {
+			if (questprogress(.@quest) > 0)
+				erasequest(.@quest);
+			continue;
+		}
+		.@mine = questprogress(.@quest);
+		.@best = .@mine;
+		if (.@stored > .@best)
+			.@best = .@stored;
+		if (!attachrid(.@origin_aid))
+			return .@copied;
+		if (.@best > .@mine) {
+			if (questprogress(.@quest) == 0 && .@best >= 1)
+				setquest(.@quest);
+			if (questprogress(.@quest) == 1 && .@best == 2)
+				completequest(.@quest);
+			++.@copied;
+		}
+		if (.@best > 0)
+			callfunc("DM_StatePut", .@party_id, "quest", .@quest + "", .@best);
+	}
+
+	if (.@origin_aid)
+		attachrid(.@origin_aid);
+	return .@copied;
+}
+
 function	script	DM_HuntBrief	{
 	.@quest_id = getarg(0);
 	.@n = callfunc("DM_HuntSpec", .@quest_id, .@item, .@need);
@@ -238,4 +450,381 @@ function	script	DM_HuntStanding	{
 		++.@shown;
 	}
 	return .@shown;
+}
+
+// Login catch-up. Copies quest progress and story flags from an
+// online party member onto a character who does not have them yet.
+// Does not overwrite a value this character already has.
+function	script	DM_CopyOneFlag	{
+	.@flag$ = getarg(0);
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	.@origin_aid = getcharid(CHAR_ID_ACCOUNT);
+	if (.@party_id <= 0 || .@origin_aid <= 0)
+		return 0;
+	if (!callfunc("DM_ValidFlagName", .@flag$))
+		return 0;
+	.@mine = getd(.@flag$);
+	.@stored = callfunc("DM_StateGet", .@party_id, "flag", .@flag$);
+	// -1 is a cleared flag. A character who still has the old value must drop
+	// it, and must not write that value back over the clear.
+	if (.@stored < 0) {
+		if (.@mine != 0)
+			setd(.@flag$, 0);
+		return .@mine != 0;
+	}
+	// The story beat only moves forward. A character who was offline for a
+	// later chapter must catch up, and must not publish the old beat back.
+	if (.@flag$ == "dm_story_beat" || .@flag$ == "dm_catechism_tally") {
+		.@best = .@mine;
+		if (.@stored > .@best)
+			.@best = .@stored;
+		if (.@best > .@mine)
+			setd(.@flag$, .@best);
+		if (getd(.@flag$) > 0)
+			callfunc("DM_StatePut", .@party_id, "flag", .@flag$, getd(.@flag$));
+		return .@best > .@mine;
+	}
+	if (@dm_flag_adopt && .@stored > 0 && .@stored != .@mine) {
+		setd(.@flag$, .@stored);
+		return 1;
+	}
+	if (.@mine != 0) {
+		// Keep this character's choice. Only fill an empty party row from it.
+		// A later party choice already in the store is not replaced.
+		if (.@stored == 0)
+			callfunc("DM_StatePut", .@party_id, "flag", .@flag$, .@mine);
+		return 0;
+	}
+	.@val = .@stored;
+	if (.@val != 0 && getd(.@flag$) == 0) {
+		setd(.@flag$, .@val);
+		return 1;
+	}
+	return 0;
+}
+
+// Pay item, zeny, and experience grants that were queued while this
+// character was offline. Each row is marked claimed before the next, so a
+// disconnect mid-loop cannot pay the same row twice.
+function	script	DM_ClaimPendingGrants	{
+	.@char_id = getcharid(CHAR_ID_CHAR);
+	if (.@char_id <= 0)
+		return 0;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	.@rows = query_sql("SELECT `id`, `kind`, `amount`, `amount2` FROM `dm_campaign_pending_grant` WHERE `campaign_id` = '" + .@campaign$ + "' AND `char_id` = " + .@char_id + " AND `claimed` = 0", .@id, .@kind$, .@amount, .@amount2);
+	for (.@i = 0; .@i < .@rows; ++.@i) {
+		query_sql("UPDATE `dm_campaign_pending_grant` SET `claimed` = 1 WHERE `id` = " + .@id[.@i] + " AND `claimed` = 0");
+		if (.@kind$[.@i] == "item" && .@amount[.@i] > 0 && .@amount2[.@i] > 0)
+			getitem(.@amount[.@i], .@amount2[.@i]);
+		else if (.@kind$[.@i] == "zeny" && .@amount[.@i] > 0)
+			Zeny += .@amount[.@i];
+		else if (.@kind$[.@i] == "exp")
+			getexp(.@amount[.@i], .@amount2[.@i]);
+	}
+	return .@rows;
+}
+
+// Replay typed quest/flag transitions for this character. The event cursor is
+// advanced only after the character postcondition is observed; retries are
+// idempotent and this path never issues rewards.
+function	script	DM_ReplayPartyEvents	{
+	.@party_id = getarg(0, getcharid(CHAR_ID_PARTY));
+	.@char_id = getcharid(CHAR_ID_CHAR);
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	if (.@party_id <= 0 || .@char_id <= 0 || !callfunc("DM_SessionAllows") || .@party_id != $dm_active_party)
+		return -1;
+
+	callfunc("DM_CheckpointRememberParty", .@party_id);
+	query_sql("INSERT IGNORE INTO `dm_campaign_party_cursor` (`campaign_id`,`char_id`,`party_id`,`last_event_id`) VALUES ('" + .@campaign$ + "'," + .@char_id + "," + .@party_id + ",0)");
+	// A character moving to a different active party gets that party's history,
+	// never a cursor inherited from their prior party.
+	query_sql("UPDATE `dm_campaign_party_cursor` SET `party_id` = " + .@party_id + ", `last_event_id` = 0 WHERE `campaign_id` = '" + .@campaign$ + "' AND `char_id` = " + .@char_id + " AND `party_id` != " + .@party_id);
+	.@rows = query_sql("SELECT `last_event_id` FROM `dm_campaign_party_cursor` WHERE `campaign_id` = '" + .@campaign$ + "' AND `char_id` = " + .@char_id + " AND `party_id` = " + .@party_id, .@after);
+	if (.@rows != 1)
+		return -1;
+
+	.@applied = 0;
+	while (1) {
+		.@rows = query_sql("SELECT `id`, `kind`, `name`, `value` FROM `dm_campaign_party_event` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id + " AND `id` > " + .@after + " ORDER BY `id` LIMIT 128", .@event_id, .@kind$, .@name$, .@value);
+		if (.@rows <= 0)
+			break;
+		for (.@i = 0; .@i < .@rows; ++.@i) {
+			.@ok = 0;
+			if (.@kind$[.@i] == "quest_set" || .@kind$[.@i] == "quest_complete" || .@kind$[.@i] == "quest_erase") {
+				.@quest_id = atoi(.@name$[.@i]);
+				if (.@quest_id <= 0)
+					return -1;
+				if (.@kind$[.@i] == "quest_set") {
+					if (questprogress(.@quest_id) == 0)
+						setquest(.@quest_id);
+					.@ok = questprogress(.@quest_id) > 0;
+				} else if (.@kind$[.@i] == "quest_complete") {
+					if (questprogress(.@quest_id) == 0)
+						setquest(.@quest_id);
+					if (questprogress(.@quest_id) == 1)
+						completequest(.@quest_id);
+					.@ok = questprogress(.@quest_id) == 2;
+				} else {
+					if (questprogress(.@quest_id) > 0)
+						erasequest(.@quest_id);
+					.@ok = questprogress(.@quest_id) == 0;
+				}
+			} else if (.@kind$[.@i] == "flag_set" || .@kind$[.@i] == "flag_clear") {
+				if (!callfunc("DM_ValidFlagName", .@name$[.@i]))
+					return -1;
+				.@expected = .@kind$[.@i] == "flag_clear" ? 0 : .@value[.@i];
+				setd(.@name$[.@i], .@expected);
+				.@ok = getd(.@name$[.@i]) == .@expected;
+			}
+			if (!.@ok)
+				return -1;
+			query_sql("UPDATE `dm_campaign_party_cursor` SET `last_event_id` = " + .@event_id[.@i] + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `char_id` = " + .@char_id + " AND `party_id` = " + .@party_id + " AND `last_event_id` < " + .@event_id[.@i]);
+			.@cursor_rows = query_sql("SELECT `last_event_id` FROM `dm_campaign_party_cursor` WHERE `campaign_id` = '" + .@campaign$ + "' AND `char_id` = " + .@char_id + " AND `party_id` = " + .@party_id, .@cursor);
+			if (.@cursor_rows != 1 || .@cursor < .@event_id[.@i])
+				return -1;
+			.@after = .@event_id[.@i];
+			++.@applied;
+		}
+		if (.@rows < 128)
+			break;
+	}
+	return .@applied;
+}
+
+function	script	DM_CatchUpFromParty	{
+	if (!callfunc("DM_SessionAllows"))
+		return 0;
+	// Map changes pass 0 and skip when this character already caught up for
+	// this party. The mark is per character, not per account. Login and
+	// joining the party pass 1. Other online members are updated by the map
+	// server, each in their own script, so a talk in progress is not stolen.
+	.@party_id = getcharid(CHAR_ID_PARTY);
+	if (!getarg(0, 0) && dm_catchup_party == .@party_id)
+		return 0;
+	// Same bound as @dm reset: one pass over a fixed quest and flag list.
+	// Without this, Hercules aborts the script at check_gotocount and the
+	// character is left half-copied.
+	freeloop(true);
+	@dm_flag_adopt = getarg(1, 0);
+	.@events = callfunc("DM_ReplayPartyEvents", .@party_id);
+	if (.@events < 0) {
+		@dm_flag_adopt = 0;
+		freeloop(false);
+		dispbottom("[DM] Campaign replay stopped safely. Your event cursor was not advanced past the failed change; it will retry on the next sync.");
+		return 0;
+	}
+	.@grants = callfunc("DM_ClaimPendingGrants");
+	.@copied = callfunc("DM_SyncListedQuests", 20001, 20002, 20003, 20004, 20005, 20006, 20007, 20008, 20009, 20010, 20011, 20012);
+	.@copied = .@copied + callfunc("DM_SyncListedQuests", 20013, 20014, 20015, 20016, 20017, 20018, 20019, 20020, 20021, 20022, 20023, 20024);
+	.@copied = .@copied + callfunc("DM_SyncListedQuests", 20025, 20026, 20027, 20028, 20029, 20030, 20101, 20102, 20103, 20104, 20105, 20111);
+	.@copied = .@copied + callfunc("DM_SyncListedQuests", 20112, 20113, 20114, 20115, 20121, 20122, 20123, 20124, 20131, 20132, 20133, 20134);
+	.@copied = .@copied + callfunc("DM_SyncListedQuests", 20141, 20142, 20143, 20144, 20151, 20153, 20154, 20155, 20161, 20163, 20164, 20165);
+	.@copied = .@copied + callfunc("DM_SyncListedQuests", 20171, 20173, 20174, 20175, 20181, 20183, 20184, 20185, 20191, 20192, 20193, 20194);
+	.@copied = .@copied + callfunc("DM_SyncListedQuests", 20201, 20202, 20203, 20204, 20211, 20212, 20213, 20214, 20221, 20222, 20223, 20231);
+	.@copied = .@copied + callfunc("DM_SyncListedQuests", 20232, 20233);
+	callfunc("DM_CopyOneFlag", "dm_arc01_started");
+	callfunc("DM_CopyOneFlag", "dm_arc01_hero_type");
+	callfunc("DM_CopyOneFlag", "dm_arc01_clue_mask");
+	callfunc("DM_CopyOneFlag", "dm_arc01_child_found");
+	callfunc("DM_CopyOneFlag", "dm_arc01_rescue_route");
+	callfunc("DM_CopyOneFlag", "dm_arc01_tibbets_befriended");
+	callfunc("DM_CopyOneFlag", "dm_arc01_refugees_helped");
+	callfunc("DM_CopyOneFlag", "dm_arc01_key_access");
+	callfunc("DM_CopyOneFlag", "dm_arc01_chamber_drained");
+	callfunc("DM_CopyOneFlag", "dm_arc01_binding_applied");
+	callfunc("DM_CopyOneFlag", "dm_arc01_holt_approach");
+	callfunc("DM_CopyOneFlag", "dm_arc01_holt_fate");
+	callfunc("DM_CopyOneFlag", "dm_arc01_holt_spared");
+	callfunc("DM_CopyOneFlag", "dm_arc01_holt_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc01_sigil_ring_obtained");
+	callfunc("DM_CopyOneFlag", "dm_mira_lives");
+	callfunc("DM_CopyOneFlag", "dm_arc02_started");
+	callfunc("DM_CopyOneFlag", "dm_arc02_rite_path");
+	callfunc("DM_CopyOneFlag", "dm_arc02_mushroom_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc02_bone_tags_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc02_lantern_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc02_ancestor_helped");
+	callfunc("DM_CopyOneFlag", "dm_arc02_sunhwa_marked");
+	callfunc("DM_CopyOneFlag", "dm_arc02_voss_spared");
+	callfunc("DM_CopyOneFlag", "dm_arc02_voss_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc02_conduits_severed");
+	callfunc("DM_CopyOneFlag", "dm_arc02_grove_restored");
+	callfunc("DM_CopyOneFlag", "dm_arc02_grove_burned");
+	callfunc("DM_CopyOneFlag", "dm_arc02_notebook_obtained");
+	callfunc("DM_CopyOneFlag", "dm_arc02_memorial_known");
+	callfunc("DM_CopyOneFlag", "dm_arc02_conduit_a");
+	callfunc("DM_CopyOneFlag", "dm_arc02_conduit_b");
+	callfunc("DM_CopyOneFlag", "dm_arc02_voss_approach");
+	callfunc("DM_CopyOneFlag", "dm_arc02_lantern_mask");
+	callfunc("DM_CopyOneFlag", "dm_arc03_started");
+	callfunc("DM_CopyOneFlag", "dm_arc03_rashid_trust");
+	callfunc("DM_CopyOneFlag", "dm_arc03_rashid_route");
+	callfunc("DM_CopyOneFlag", "dm_arc03_rashid_mocked");
+	callfunc("DM_CopyOneFlag", "dm_arc03_ward_charm");
+	callfunc("DM_CopyOneFlag", "dm_arc03_water_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc03_refugee_turnout");
+	callfunc("DM_CopyOneFlag", "dm_arc03_cult_maps_found");
+	callfunc("DM_CopyOneFlag", "dm_arc03_ant_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc03_forbidden_route_marked");
+	callfunc("DM_CopyOneFlag", "dm_arc03_sphinx_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc03_shaft_heard");
+	callfunc("DM_CopyOneFlag", "dm_arc03_osiris_restored");
+	callfunc("DM_CopyOneFlag", "dm_arc03_osiris_looted");
+	callfunc("DM_CopyOneFlag", "dm_arc03_funeral_mask");
+	callfunc("DM_CopyOneFlag", "dm_arc03_sabra_exposed");
+	callfunc("DM_CopyOneFlag", "dm_arc03_sabra_deal");
+	callfunc("DM_CopyOneFlag", "dm_arc03_refugees_protected");
+	callfunc("DM_CopyOneFlag", "dm_arc03_sabra_marked_party");
+	callfunc("DM_CopyOneFlag", "dm_arc03_sabra_revealed_cascade");
+	callfunc("DM_CopyOneFlag", "dm_arc03_cult_diggers_cleared");
+	callfunc("DM_CopyOneFlag", "dm_arc03_lidstone_obtained");
+	callfunc("DM_CopyOneFlag", "dm_arc03_shaft_seen");
+	callfunc("DM_CopyOneFlag", "dm_arc03_relief_route");
+	callfunc("DM_CopyOneFlag", "dm_arc03_relief_secured");
+	callfunc("DM_CopyOneFlag", "dm_arc03_well_inspected");
+	callfunc("DM_CopyOneFlag", "dm_arc03_checkpoint_cleared");
+	callfunc("DM_CopyOneFlag", "dm_arc04_started");
+	callfunc("DM_CopyOneFlag", "dm_arc04_elsbeth_protected");
+	callfunc("DM_CopyOneFlag", "dm_arc04_elsbeth_with_party");
+	callfunc("DM_CopyOneFlag", "dm_arc04_ward_key");
+	callfunc("DM_CopyOneFlag", "dm_arc04_elsbeth_hurt");
+	callfunc("DM_CopyOneFlag", "dm_arc04_drills_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc04_students_warned");
+	callfunc("DM_CopyOneFlag", "dm_arc04_forbidden_diagrams");
+	callfunc("DM_CopyOneFlag", "dm_arc04_orc_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc04_villagers_armed");
+	callfunc("DM_CopyOneFlag", "dm_arc04_cult_bait_used");
+	callfunc("DM_CopyOneFlag", "dm_arc04_silk_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc04_seal_pattern_evidence");
+	callfunc("DM_CopyOneFlag", "dm_arc04_ritual_thread_kept");
+	callfunc("DM_CopyOneFlag", "dm_arc04_doran_confronted");
+	callfunc("DM_CopyOneFlag", "dm_arc04_doran_fought");
+	callfunc("DM_CopyOneFlag", "dm_arc04_doran_stood_down");
+	callfunc("DM_CopyOneFlag", "dm_arc04_doran_taught");
+	callfunc("DM_CopyOneFlag", "dm_arc04_cassell_unmasked");
+	callfunc("DM_CopyOneFlag", "dm_arc04_seal_reinforced");
+	callfunc("DM_CopyOneFlag", "dm_arc04_city_dimmed");
+	callfunc("DM_CopyOneFlag", "dm_arc04_overflow_kept");
+	callfunc("DM_CopyOneFlag", "dm_arc04_keystone_shard");
+	callfunc("DM_CopyOneFlag", "dm_arc04_doppelganger_stronger");
+	callfunc("DM_CopyOneFlag", "dm_arc04_catechism_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc04_pilgrim_catechism");
+	callfunc("DM_CopyOneFlag", "dm_arc04_tamper_sense");
+	callfunc("DM_CopyOneFlag", "dm_arc04_puzzle_1");
+	callfunc("DM_CopyOneFlag", "dm_arc04_puzzle_2");
+	callfunc("DM_CopyOneFlag", "dm_arc04_puzzle_3");
+	callfunc("DM_CopyOneFlag", "dm_arc04_configuration_committed");
+	callfunc("DM_CopyOneFlag", "dm_arc05_started");
+	callfunc("DM_CopyOneFlag", "dm_arc05_mara_trust");
+	callfunc("DM_CopyOneFlag", "dm_arc05_mara_network");
+	callfunc("DM_CopyOneFlag", "dm_arc05_mara_pragmatic");
+	callfunc("DM_CopyOneFlag", "dm_arc05_mara_insulted");
+	callfunc("DM_CopyOneFlag", "dm_arc05_ferry_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc05_refugees_moved");
+	callfunc("DM_CopyOneFlag", "dm_arc05_supplies_moved");
+	callfunc("DM_CopyOneFlag", "dm_arc05_spies_moved");
+	callfunc("DM_CopyOneFlag", "dm_arc05_byalan_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc05_divers_rescued");
+	callfunc("DM_CopyOneFlag", "dm_arc05_sea_cult_evidence");
+	callfunc("DM_CopyOneFlag", "dm_arc05_manifest_choice");
+	callfunc("DM_CopyOneFlag", "dm_arc05_records_returned");
+	callfunc("DM_CopyOneFlag", "dm_arc05_brode_exposed_early");
+	callfunc("DM_CopyOneFlag", "dm_arc05_brode_ruined");
+	callfunc("DM_CopyOneFlag", "dm_arc05_brode_sold_manifest");
+	callfunc("DM_CopyOneFlag", "dm_arc05_brode_threatened");
+	callfunc("DM_CopyOneFlag", "dm_arc05_brode_enemy");
+	callfunc("DM_CopyOneFlag", "dm_arc05_manifest_taken");
+	callfunc("DM_CopyOneFlag", "dm_arc05_northern_account");
+	callfunc("DM_CopyOneFlag", "dm_arc05_cassell_courier_drop");
+	callfunc("DM_CopyOneFlag", "dm_arc05_hold_quiet");
+	callfunc("DM_CopyOneFlag", "dm_arc05_hold_loud");
+	callfunc("DM_CopyOneFlag", "dm_arc05_sabra_refugees_safe");
+	callfunc("DM_CopyOneFlag", "dm_arc05_sabra_refugees_starved");
+	callfunc("DM_CopyOneFlag", "dm_arc05_refugees_freed");
+	callfunc("DM_CopyOneFlag", "dm_arc05_relic_crates_recovered");
+	callfunc("DM_CopyOneFlag", "dm_arc05_relic_crates_ignored");
+	callfunc("DM_CopyOneFlag", "dm_arc05_relics_surrendered");
+	callfunc("DM_CopyOneFlag", "dm_arc05_relics_kept");
+	callfunc("DM_CopyOneFlag", "dm_arc05_sodden_crate_seal");
+	callfunc("DM_CopyOneFlag", "dm_act01_complete");
+	callfunc("DM_CopyOneFlag", "dm_arc05_departures_used");
+	callfunc("DM_CopyOneFlag", "dm_arc05_diver_groups_saved");
+	callfunc("DM_CopyOneFlag", "dm_arc05_diver_mask");
+	callfunc("DM_CopyOneFlag", "dm_arc06_started");
+	callfunc("DM_CopyOneFlag", "dm_arc06_vahl_trust");
+	callfunc("DM_CopyOneFlag", "dm_arc06_krenn_bribed");
+	callfunc("DM_CopyOneFlag", "dm_arc06_krenn_exposed");
+	callfunc("DM_CopyOneFlag", "dm_arc06_mistress_spared");
+	callfunc("DM_CopyOneFlag", "dm_arc06_mistress_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc07_started");
+	callfunc("DM_CopyOneFlag", "dm_arc07_strike_supported");
+	callfunc("DM_CopyOneFlag", "dm_arc07_strike_broken");
+	callfunc("DM_CopyOneFlag", "dm_arc07_kessler_confronted");
+	callfunc("DM_CopyOneFlag", "dm_arc07_rsx_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc08_started");
+	callfunc("DM_CopyOneFlag", "dm_arc08_manfred_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc08_manfred_spared");
+	callfunc("DM_CopyOneFlag", "dm_arc08_darklord_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc09_started");
+	callfunc("DM_CopyOneFlag", "dm_arc09_karsh_exposed");
+	callfunc("DM_CopyOneFlag", "dm_arc09_karsh_deal");
+	callfunc("DM_CopyOneFlag", "dm_arc09_gloom_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc10_started");
+	callfunc("DM_CopyOneFlag", "dm_arc10_reise_confronted");
+	callfunc("DM_CopyOneFlag", "dm_arc10_echo_freed");
+	callfunc("DM_CopyOneFlag", "dm_arc10_kiel_killed");
+	callfunc("DM_CopyOneFlag", "dm_act02_complete");
+	callfunc("DM_CopyOneFlag", "dm_arc11_started");
+	callfunc("DM_CopyOneFlag", "dm_arc11_bjorn_subdued");
+	callfunc("DM_CopyOneFlag", "dm_arc11_bjorn_joined");
+	callfunc("DM_CopyOneFlag", "dm_arc11_randgris_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc12_started");
+	callfunc("DM_CopyOneFlag", "dm_arc12_vance_exposed");
+	callfunc("DM_CopyOneFlag", "dm_arc12_vance_helped");
+	callfunc("DM_CopyOneFlag", "dm_arc12_naght_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc13_started");
+	callfunc("DM_CopyOneFlag", "dm_arc13_carrion_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc13_carrion_bribed");
+	callfunc("DM_CopyOneFlag", "dm_arc13_beelzebub_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc13_coalition_deal_honored");
+	callfunc("DM_CopyOneFlag", "dm_arc14_started");
+	callfunc("DM_CopyOneFlag", "dm_arc14_hesma_exposed");
+	callfunc("DM_CopyOneFlag", "dm_arc14_hesma_bribed");
+	callfunc("DM_CopyOneFlag", "dm_arc14_ifrit_killed");
+	callfunc("DM_CopyOneFlag", "dm_act03_complete");
+	callfunc("DM_CopyOneFlag", "dm_arc15_started");
+	callfunc("DM_CopyOneFlag", "dm_arc15_pratt_exposed");
+	callfunc("DM_CopyOneFlag", "dm_arc15_pratt_delayed");
+	callfunc("DM_CopyOneFlag", "dm_arc15_pratt_challenged");
+	callfunc("DM_CopyOneFlag", "dm_arc15_thanatos_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc16_started");
+	callfunc("DM_CopyOneFlag", "dm_arc16_rina_exposed");
+	callfunc("DM_CopyOneFlag", "dm_arc16_rina_rolled");
+	callfunc("DM_CopyOneFlag", "dm_arc16_rina_defected");
+	callfunc("DM_CopyOneFlag", "dm_arc16_bijou_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc16_maret_freed");
+	callfunc("DM_CopyOneFlag", "dm_arc17_started");
+	callfunc("DM_CopyOneFlag", "dm_arc17_admin_purged");
+	callfunc("DM_CopyOneFlag", "dm_arc17_admin_negotiated");
+	callfunc("DM_CopyOneFlag", "dm_arc17_admin_running");
+	callfunc("DM_CopyOneFlag", "dm_arc17_beta_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc18_started");
+	callfunc("DM_CopyOneFlag", "dm_arc18_himmelmez_killed");
+	callfunc("DM_CopyOneFlag", "dm_arc18_himmelmez_bargained");
+	callfunc("DM_CopyOneFlag", "dm_arc19_started");
+	callfunc("DM_CopyOneFlag", "dm_arc19_surt_defeated");
+	callfunc("DM_CopyOneFlag", "dm_finale_shared_seal");
+	callfunc("DM_CopyOneFlag", "dm_finale_reforged_seal");
+	callfunc("DM_CopyOneFlag", "dm_finale_queens_bargain");
+	callfunc("DM_CopyOneFlag", "dm_finale_thanatos_road");
+	callfunc("DM_CopyOneFlag", "dm_finale_ragnarok_unbound");
+	callfunc("DM_CopyOneFlag", "dm_campaign_complete");
+	callfunc("DM_CopyOneFlag", "dm_story_beat");
+	callfunc("DM_CopyOneFlag", "dm_catechism_tally");
+	if (.@copied > 0 || .@grants > 0)
+		dispbottom("[DM] Campaign progress updated to match the party.");
+	dm_catchup_party = .@party_id;
+	@dm_flag_adopt = 0;
+	freeloop(false);
+	return 1;
 }

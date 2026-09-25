@@ -21,7 +21,7 @@
 
 // ── Priest Eadric — The Faithful Witness ───────────────────────────────────
 hugel,100,100,5	script	Priest Eadric#dm	4_M_01,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20151) == 2) {
 		callfunc("DM_PartyMes", "[Priest Eadric]");
 		if (dm_arc11_bjorn_joined)
@@ -97,8 +97,8 @@ S_StartArc:
 
 S_TurnIns:
 	.@paid = 0;
-	if (questprogress(20153) == 1 && callfunc("DM_HuntReady", 20153)) {
-		callfunc("DM_HuntCollect", 20153);
+	callfunc("DM_HuntNoteShort", 20153);
+	if (questprogress(20153) == 1 && callfunc("DM_HuntCollect", 20153)) {
 		callfunc("DM_InstanceQuestComplete", 20153);
 		callfunc("DM_PartyExp", 300000, 145000);
 		callfunc("DM_GivePartyZeny", 25000);
@@ -123,8 +123,8 @@ S_TurnIns:
 		next();
 	}
 
-	if (questprogress(20154) == 1 && callfunc("DM_HuntReady", 20154)) {
-		callfunc("DM_HuntCollect", 20154);
+	callfunc("DM_HuntNoteShort", 20154);
+	if (questprogress(20154) == 1 && callfunc("DM_HuntCollect", 20154)) {
 		callfunc("DM_InstanceQuestComplete", 20154);
 		callfunc("DM_PartyExp", 300000, 145000);
 		callfunc("DM_GivePartyZeny", 25000);
@@ -207,7 +207,7 @@ S_TurnIns:
 
 // ── Zealot Bjorn — The Man Who Was Right for the Wrong Reasons ─────────────
 hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
-	if (!callfunc("DM_SessionAllows")) { close; }
+	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc11_started) {
 		callfunc("DM_PartyMes", "[Zealot Bjorn]");
 		callfunc("DM_PartyMes", "Midgard sleeps. The reckoning approaches and no one watches the horizon.");

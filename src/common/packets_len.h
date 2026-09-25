@@ -43,10 +43,19 @@
 // 2 bytes (header only). See clif_parse_CancelCast.
 packetLen(0x0f00, 2)
 
+// 0x0EFC CZ_SPLIT_INVENTORY_STACK — split a stack into another inventory slot.
+// 2 (header) + 2 (wire inventory index) + 2 (amount) = 6 bytes.
+packetLen(0x0efc, 6)
+packetLen(0x0efb, -1)
+
 // 0x0EFF ZC_PARTY_INVITE_SENDER — companion to ZC_PARTY_JOIN_REQ carrying the
 // inviter's character name, which the official packet does not include.
 // 2 (header) + 4 (party id) + 24 (NAME_LENGTH) = 30. See clif_party_invite.
 packetLen(0x0eff, 30)
+
+// 0x0EFD ZC_RECOVERY_STATE — campaign recovery HUD (mode + block reason).
+// 2 (header) + 1 (mode) + 1 (block) = 4. See clif_recovery_state.
+packetLen(0x0efd, 4)
 
 // 0x0EFE ZC_SKILL_FAIL_REASON — companion to ZC_ACK_TOUSESKILL naming the runtime
 // outcome behind a cause-0 failure, which the official cause enum has no code for.

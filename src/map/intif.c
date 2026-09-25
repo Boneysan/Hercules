@@ -36,6 +36,7 @@
 #include "map/map.h"
 #include "map/mapiif.h"
 #include "map/mercenary.h"
+#include "map/npc.h"
 #include "map/party.h"
 #include "map/pc.h"
 #include "map/pet.h"
@@ -1772,6 +1773,10 @@ static void intif_parse_QuestLog(int fd)
 	}
 
 	quest->pc_login(sd);
+	// The saved log arrives after OnPCLoginEvent and replaces the in-memory
+	// list. Catch-up that ran at login would be discarded. Run it again now.
+	npc->event(sd, "DM_CampEvents::OnPCQuestLog", 0);
+	party_campaign_catchup_others(sd);
 }
 
 /**
