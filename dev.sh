@@ -42,9 +42,24 @@ sqlval() {
 	sed -n "s/^[[:space:]]*$1:[[:space:]]*\"\(.*\)\".*/\1/p" "$SQL_CONF" | head -1
 }
 
-# stat is not portable: BSD/macOS wants -f %m, GNU/WSL wants -c %Y.
+# stat is not portable, and the naive fix (try BSD's `-f %m`, fall back to
+# GNU's `-c %Y` on failure) is not enough: GNU stat's `-f` means "filesystem"
+# (not "format"). It does not reject a BSD-style call -- it prints unrelated
+# filesystem info to stdout and only then exits nonzero, so `||`'s fallback
+# still runs and its correct output lands concatenated after the garbage.
+# `eval "before_map_server=$(mtime "$srv")"` then chokes on the garbage's
+# first line ("eval: File:: not found") on every Linux/WSL host. Validate the
+# result is a bare number before trusting it, rather than trusting the exit
+# code alone.
 mtime() {
-	stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0
+	value=$(stat -f %m "$1" 2>/dev/null)
+	case "$value" in
+	*[!0-9]* | '') value=$(stat -c %Y "$1" 2>/dev/null) ;;
+	esac
+	case "$value" in
+	*[!0-9]* | '') value=0 ;;
+	esac
+	echo "$value"
 }
 
 case $1 in
