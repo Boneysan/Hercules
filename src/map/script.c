@@ -31245,4 +31245,7 @@ void script_defaults(void)
 
 	script->sellitemcurrency_add = script_sellitemcurrency_add;
 	script->declare_conditional_feature = script_declare_conditional_feature;
+	// Korangar fork additions.
+	script->party_quest_credit_sub = script_party_quest_credit_sub;
+	script->party_quest_credit = script_party_quest_credit;
 }

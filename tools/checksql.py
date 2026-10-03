@@ -26,6 +26,9 @@ insert_str_start1 = "INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES ("
 insert_str_middle1 = "); -- "
 insert_str_start2 = "INSERT INTO `sql_updates` (`timestamp`) VALUES ("
 insert_str_start3 = "INSERT INTO `sql_updates` (`timestamp`, `ignored`) VALUES ("
+# Fork upgrades must stay re-runnable over a main.sql that already records
+# them (korangar run-integration-tests.sh applies them after main.sql).
+insert_str_start4 = "INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES ("
 insert_str_middle2 = ")"
 insert_str_middle3 = ", 'No')"
 
@@ -72,6 +75,9 @@ class UpdateParser:
         if idx < 0:
             idx = line.find(insert_str_start3)
             sz = len(insert_str_start3)
+        if idx < 0:
+            idx = line.find(insert_str_start4)
+            sz = len(insert_str_start4)
         if idx < 0:
             return False
         line = line[sz:].strip()

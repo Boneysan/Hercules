@@ -967,6 +967,14 @@ INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1599908598); -- 2020-09-1
 INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1613840320); -- 2021-02-20--19-57.sql
 INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1618058468); -- 2021-04-10--15-36.sql
 INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1653155461); -- 2022-05-21--29-49.sql
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300137); -- 2026-09-24--19-35.sql
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300705); -- 2026-09-24--19-45.sql
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300765); -- 2026-09-24--19-46.sql
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300825); -- 2026-09-24--19-47.sql
+-- Fork migration markers the upgrades also record; tools/check-checkpoint-migration.sh reads 20260916.
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260916);
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260922);
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260924);
 
 --
 -- Table structure for table `storage`
@@ -1151,3 +1159,139 @@ CREATE TABLE IF NOT EXISTS `adventurer_agency` (
   PRIMARY KEY (`char_id`),
   UNIQUE KEY `party` (`party_id`)
 ) CHARACTER SET utf8mb4 ENGINE=MyISAM;
+
+--
+-- Table structure for table `korangar_account_discovery` (fork; upgrades/2026-09-24--19-35.sql)
+--
+
+CREATE TABLE IF NOT EXISTS `korangar_account_discovery` (
+	`account_id` INT UNSIGNED NOT NULL,
+	`mob_id` SMALLINT UNSIGNED NOT NULL,
+	`milestone` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+	`discovered_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (`account_id`, `mob_id`),
+	KEY `korangar_account_discovery_mob` (`mob_id`)
+) ENGINE=InnoDB;
+
+--
+-- Table structure for table `korangar_account_map_discovery` (fork; upgrades/2026-09-24--19-35.sql)
+--
+
+CREATE TABLE IF NOT EXISTS `korangar_account_map_discovery` (
+	`account_id` INT UNSIGNED NOT NULL,
+	`map_name` VARCHAR(24) NOT NULL,
+	`discovered_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (`account_id`, `map_name`),
+	KEY `korangar_account_map_discovery_map` (`map_name`)
+) ENGINE=InnoDB;
+
+--
+-- Table structure for table `dm_campaign_checkpoint` (fork; upgrades/2026-09-24--19-45.sql)
+--
+
+CREATE TABLE IF NOT EXISTS `dm_campaign_checkpoint` (
+  `campaign_id` VARCHAR(32) NOT NULL,
+  `schema_version` SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+  `party_id` INT UNSIGNED NOT NULL,
+  `arc_id` SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+  `step` INT UNSIGNED NOT NULL DEFAULT 0,
+  `carrier_char_id` INT UNSIGNED NOT NULL DEFAULT 0,
+  `last_actor_char_id` INT UNSIGNED NOT NULL DEFAULT 0,
+  `last_transition_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`campaign_id`, `party_id`),
+  KEY `dm_campaign_checkpoint_party` (`party_id`),
+  KEY `dm_campaign_checkpoint_arc` (`arc_id`)
+) ENGINE=InnoDB;
+
+--
+-- Table structure for table `dm_campaign_checkpoint_log` (fork; upgrades/2026-09-24--19-45.sql)
+--
+
+CREATE TABLE IF NOT EXISTS `dm_campaign_checkpoint_log` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `campaign_id` VARCHAR(32) NOT NULL,
+  `party_id` INT UNSIGNED NOT NULL,
+  `step` INT UNSIGNED NOT NULL,
+  `actor_char_id` INT UNSIGNED NOT NULL DEFAULT 0,
+  `event` VARCHAR(32) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `dm_campaign_checkpoint_log_lookup` (`campaign_id`, `party_id`, `id`)
+) ENGINE=InnoDB;
+
+--
+-- Table structure for table `dm_campaign_checkpoint_member` (fork; upgrades/2026-09-24--19-45.sql)
+--
+
+CREATE TABLE IF NOT EXISTS `dm_campaign_checkpoint_member` (
+  `campaign_id` VARCHAR(32) NOT NULL,
+  `char_id` INT UNSIGNED NOT NULL,
+  `party_id` INT UNSIGNED NOT NULL,
+  `eligible` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `last_seen_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`campaign_id`, `char_id`),
+  KEY `dm_campaign_checkpoint_member_party` (`campaign_id`, `party_id`)
+) ENGINE=InnoDB;
+
+--
+-- Table structure for table `dm_campaign_party_state` (fork; upgrades/2026-09-24--19-46.sql)
+--
+
+CREATE TABLE IF NOT EXISTS `dm_campaign_party_state` (
+  `campaign_id` VARCHAR(32) NOT NULL,
+  `party_id` INT UNSIGNED NOT NULL,
+  `kind` VARCHAR(8) NOT NULL,
+  `name` VARCHAR(64) NOT NULL,
+  `value` INT NOT NULL DEFAULT 0,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`campaign_id`, `party_id`, `kind`, `name`)
+) ENGINE=InnoDB;
+
+--
+-- Table structure for table `dm_campaign_pending_grant` (fork; upgrades/2026-09-24--19-46.sql)
+--
+
+CREATE TABLE IF NOT EXISTS `dm_campaign_pending_grant` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `campaign_id` VARCHAR(32) NOT NULL,
+  `party_id` INT UNSIGNED NOT NULL,
+  `char_id` INT UNSIGNED NOT NULL,
+  `kind` VARCHAR(8) NOT NULL,
+  `amount` INT NOT NULL,
+  `amount2` INT NOT NULL DEFAULT 0,
+  `claimed` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `dm_campaign_pending_grant_char` (`char_id`, `claimed`)
+) ENGINE=InnoDB;
+
+--
+-- Table structure for table `dm_campaign_party_event` (fork; upgrades/2026-09-24--19-47.sql)
+--
+
+CREATE TABLE IF NOT EXISTS `dm_campaign_party_event` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `campaign_id` VARCHAR(32) NOT NULL,
+  `party_id` INT UNSIGNED NOT NULL,
+  `kind` VARCHAR(16) NOT NULL,
+  `name` VARCHAR(64) NOT NULL,
+  `value` INT NOT NULL DEFAULT 0,
+  `actor_char_id` INT UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `dm_campaign_party_event_replay` (`campaign_id`, `party_id`, `id`)
+) ENGINE=InnoDB;
+
+--
+-- Table structure for table `dm_campaign_party_cursor` (fork; upgrades/2026-09-24--19-47.sql)
+--
+
+CREATE TABLE IF NOT EXISTS `dm_campaign_party_cursor` (
+  `campaign_id` VARCHAR(32) NOT NULL,
+  `char_id` INT UNSIGNED NOT NULL,
+  `party_id` INT UNSIGNED NOT NULL,
+  `last_event_id` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`campaign_id`, `char_id`),
+  KEY `dm_campaign_party_cursor_party` (`campaign_id`, `party_id`)
+) ENGINE=InnoDB;

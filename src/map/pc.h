@@ -1309,6 +1309,11 @@ END_ZEROED_BLOCK; /* End */
 	bool (*is_own_skill) (struct map_session_data *sd, uint16 skill_id);
 	void (*clear_existing_cloneskill) (struct map_session_data *sd, bool clear_vars);
 	void (*clear_existing_reproduceskill) (struct map_session_data *sd, bool clear_vars);
+	// Korangar fork additions (registered for tools/validateinterfaces.py).
+	int (*autopickup_radius) (const struct map_session_data *sd);
+	int (*autopickup_sub) (struct block_list *bl, va_list ap);
+	int (*autopickup_pc) (struct map_session_data *sd, va_list ap);
+	int (*autopickup_timer) (int tid, int64 tick, int id, intptr_t data);
 };
 
 #ifdef HERCULES_CORE

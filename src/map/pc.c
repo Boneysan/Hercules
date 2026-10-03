@@ -13539,4 +13539,9 @@ void pc_defaults(void)
 	pc->is_own_skill = pc_is_own_skill;
 	pc->clear_existing_cloneskill = pc_clear_existing_cloneskill;
 	pc->clear_existing_reproduceskill = pc_clear_existing_reproduceskill;
+	// Korangar fork additions.
+	pc->autopickup_radius = pc_autopickup_radius;
+	pc->autopickup_sub = pc_autopickup_sub;
+	pc->autopickup_pc = pc_autopickup_pc;
+	pc->autopickup_timer = pc_autopickup_timer;
 }

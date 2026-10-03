@@ -1734,4 +1734,7 @@ void party_defaults(void)
 	party->db_final = party_db_final;
 	party->is_leader = party_is_leader;
 	party->agency_request_join = party_agency_request_join;
+	// Korangar fork additions.
+	party->campaign_catchup_others = party_campaign_catchup_others;
+	party->campaign_push_others = party_campaign_push_others;
 }

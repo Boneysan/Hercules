@@ -56,6 +56,10 @@ struct shootpath_data {
 #define distance_client_blxy(bl, x1, y1) (path->distance_client((bl)->x-(x1), (bl)->y-(y1)))
 #define distance_client_xy(x0, y0, x1, y1) (path->distance_client((x0)-(x1), (y0)-(y1)))
 
+// Local hazard-cost window around a path origin (Korangar fork; path.c).
+#define HAZARD_CACHE_RADIUS 8
+#define HAZARD_CACHE_SIZE (HAZARD_CACHE_RADIUS * 2 + 1)
+
 struct path_interface {
 	// calculates destination cell for knockback
 	int (*blownpos) (struct block_list *bl, int16 m, int16 x0, int16 y0, enum unit_dir dir, int count);
@@ -67,6 +71,10 @@ struct path_interface {
 	unsigned int (*distance) (int dx, int dy);
 	bool (*check_distance_client) (int dx, int dy, int distance);
 	int (*distance_client) (int dx, int dy);
+	// Korangar fork additions (registered for tools/validateinterfaces.py).
+	bool (*skill_is_ground_hazard) (uint16 skill_id);
+	int (*hazard_unit_sub) (struct block_list *bl, va_list ap);
+	int (*hazard_cost) (int16 m, int x0, int y0, int x, int y, uint8 cache[HAZARD_CACHE_SIZE][HAZARD_CACHE_SIZE]);
 };
 
 #ifdef HERCULES_CORE

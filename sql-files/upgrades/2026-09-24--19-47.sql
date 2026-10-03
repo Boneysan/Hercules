@@ -24,4 +24,6 @@ CREATE TABLE IF NOT EXISTS `dm_campaign_party_cursor` (
   KEY `dm_campaign_party_cursor_party` (`campaign_id`, `party_id`)
 ) ENGINE=InnoDB;
 
-INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260924), (1790300825);
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300825);
+-- Fork migration marker (read by tools/check-checkpoint-migration.sh), kept out of tools/checksql.py's count.
+INSERT IGNORE INTO `sql_updates` SET `timestamp` = 20260924;

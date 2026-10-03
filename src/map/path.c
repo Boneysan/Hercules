@@ -84,8 +84,6 @@ static const unsigned char walk_choices [3][3] =
 	{3,4,5},
 };
 
-#define HAZARD_CACHE_RADIUS 8
-#define HAZARD_CACHE_SIZE (HAZARD_CACHE_RADIUS * 2 + 1)
 #define HAZARD_AVOIDANCE_COST 100
 
 static bool path_skill_is_ground_hazard(uint16 skill_id)
@@ -579,4 +577,8 @@ void path_defaults(void)
 	path->distance = distance;
 	path->check_distance_client = check_distance_client;
 	path->distance_client = distance_client;
+	// Korangar fork additions.
+	path->skill_is_ground_hazard = path_skill_is_ground_hazard;
+	path->hazard_unit_sub = path_hazard_unit_sub;
+	path->hazard_cost = path_hazard_cost;
 }
