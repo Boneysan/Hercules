@@ -4,10 +4,12 @@ The checker exists because the AI profile file once never loaded and every other
 check passed. These pin the cases that were first proven by hand: a profile the
 loader would reject, and a boot log showing the server never read the file."""
 
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.resolve()))
 import check_mob_ai_profiles as checker
 
 
@@ -109,7 +111,28 @@ class RealFiles(unittest.TestCase):
         valid = checker.check_profiles(problems)
         checker.check_switch(problems)
         self.assertEqual(problems, [])
-        self.assertGreater(valid, 0)
+        self.assertGreaterEqual(valid, 29)
+
+    def test_expanded_boss_pilot_skills_are_valid_and_include_mvps(self):
+        problems = []
+        checker.check_pilot_skills(problems)
+        self.assertEqual(problems, [])
+        skills_text = checker.read(checker.PILOT_SKILLS)
+        expected_bosses = (
+            "EDDGA", "MOONLIGHT", "GOLDEN_BUG", "ORK_HERO", "MAYA", "BAPHOMET",
+            "PHREEONI", "MISTRESS", "DRAKE", "DOPPELGANGER", "OSIRIS",
+        )
+        for boss in expected_bosses:
+            self.assertIn(f"\t{boss}: {{", skills_text, f"{boss} must be configured in pilot skills")
+
+    def test_tactical_profiles_cover_all_four_roles_and_progression_zones(self):
+        entries = checker.parse_profiles(checker.read(checker.PROFILES))
+        roles_present = {e["Role"].lower() for e in entries}
+        self.assertEqual(roles_present, {"aggressor", "coward", "rangedkeeper", "skirmisher"})
+        maps_present = {e["Map"].lower() for e in entries}
+        expected_zones = {"prt_fild08", "prt_sewb1", "prt_sewb2", "prt_sewb3", "pay_dun00", "pay_dun01", "pay_dun02", "moc_fild01", "moc_fild12", "iz_dun00", "iz_dun01", "iz_dun02", "orcsdun01", "orcsdun02", "gl_knt01", "gl_prison"}
+        for zone in expected_zones:
+            self.assertIn(zone, maps_present, f"Zone {zone} must have tactical AI profile coverage")
 
 
 if __name__ == "__main__":
