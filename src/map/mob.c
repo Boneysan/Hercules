@@ -153,6 +153,20 @@ static bool mob_is_hazard_aware(struct mob_data *md)
 	return profile != NULL && profile->avoid_hazards;
 }
 
+/// The mode a monster runs with once its map-scoped profile is applied.
+/// Aggressors gain MD_AGGRESSIVE. Called at spawn and from status_calc_bl_main
+/// whenever the mode is recomputed from the base status (SC_MODECHANGE), which
+/// would otherwise drop the bonus until the next respawn.
+static uint32 mob_ai_profile_mode(struct mob_data *md, uint32 mode)
+{
+	const struct mob_ai_profile *profile;
+	nullpo_retr(mode, md);
+	profile = mob_ai_profile_find(md->bl.m, md->class_);
+	if (profile != NULL && profile->role == MOB_AI_PROFILE_AGGRESSOR)
+		mode |= MD_AGGRESSIVE;
+	return mode;
+}
+
 static bool mob_ai_profile_step_away(struct mob_data *md, struct block_list *target, int max_distance)
 {
 	static const int8 step_x[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
@@ -1260,9 +1274,7 @@ static int mob_spawn(struct mob_data *md)
 	status_calc_mob(md, SCO_FIRST);
 	md->ai_profile_cooldown_tick = 0;
 	md->ai_profile_hit_count = 0;
-	const struct mob_ai_profile *ai_profile = mob_ai_profile_find(md->bl.m, md->class_);
-	if (ai_profile != NULL && ai_profile->role == MOB_AI_PROFILE_AGGRESSOR)
-		md->status.mode |= MD_AGGRESSIVE;
+	md->status.mode = mob_ai_profile_mode(md, md->status.mode);
 	md->attacked_id = 0;
 	md->target_id = 0;
 	md->move_fail_count = 0;
@@ -6609,4 +6621,5 @@ void mob_defaults(void)
 	mob->ai_profile_find = mob_ai_profile_find;
 	mob->read_ai_profiles = mob_read_ai_profiles;
 	mob->ai_profile_step_away = mob_ai_profile_step_away;
+	mob->ai_profile_mode = mob_ai_profile_mode;
 }

@@ -3360,6 +3360,10 @@ static void status_calc_bl_main(struct block_list *bl, e_scb_flag flag)
 
 	if(flag&SCB_MODE) {
 		st->mode = status->calc_mode(bl, sc, bst->mode);
+		// Korangar fork: a map-scoped AI profile is not part of the base mode,
+		// so re-apply it here or SC_MODECHANGE would erase it until respawn.
+		if (bl->type == BL_MOB)
+			st->mode = mob->ai_profile_mode(BL_UCAST(BL_MOB, bl), st->mode);
 		//Since mode changed, reset their state.
 		if (!(st->mode&MD_CANATTACK))
 			unit->stop_attack(bl);
