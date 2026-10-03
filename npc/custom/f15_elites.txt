@@ -8,7 +8,7 @@
 
 -	script	F15Elites	FAKE_NPC,{
 OnInit:
-	.map$ = "orcsdun01";
+	.elite_map$ = "orcsdun01";
 	.mob = 20901;
 	.max = 2;
 	bindatcmd("setmobhp", strnpcinfo(NPC_NAME_UNIQUE) + "::OnSetMobHP", 1, 99, 1);
@@ -28,11 +28,11 @@ OnSetMobHP:
 OnTimer60000:
 	stopnpctimer;
 	if (getbattleflag("mob_pilot_version") < 1) {
-		killmonster(.map$, strnpcinfo(NPC_NAME) + "::OnEliteDead");
+		killmonster(.elite_map$, strnpcinfo(NPC_NAME) + "::OnEliteDead");
 	} else {
-		.@n = mobcount(.map$, strnpcinfo(NPC_NAME) + "::OnEliteDead");
+		.@n = mobcount(.elite_map$, strnpcinfo(NPC_NAME) + "::OnEliteDead");
 		for (.@i = .@n; .@i < .max; ++.@i)
-			monster(.map$, 0, 0, "[Elite] Orc Skeleton", .mob, 1, strnpcinfo(NPC_NAME) + "::OnEliteDead");
+			monster(.elite_map$, 0, 0, "[Elite] Orc Skeleton", .mob, 1, strnpcinfo(NPC_NAME) + "::OnEliteDead");
 	}
 	initnpctimer;
 	end;
