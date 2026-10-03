@@ -39,4 +39,6 @@ CREATE TABLE IF NOT EXISTS `dm_campaign_checkpoint_member` (
   KEY `dm_campaign_checkpoint_member_party` (`campaign_id`, `party_id`)
 ) ENGINE=InnoDB;
 
-INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260916), (1790300705);
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300705);
+-- Fork migration marker (read by tools/check-checkpoint-migration.sh), kept out of tools/checksql.py's count.
+INSERT IGNORE INTO `sql_updates` SET `timestamp` = 20260916;

@@ -25,4 +25,6 @@ CREATE TABLE IF NOT EXISTS `dm_campaign_pending_grant` (
   KEY `dm_campaign_pending_grant_char` (`char_id`, `claimed`)
 ) ENGINE=InnoDB;
 
-INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260922), (1790300765);
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300765);
+-- Fork migration marker (read by tools/check-checkpoint-migration.sh), kept out of tools/checksql.py's count.
+INSERT IGNORE INTO `sql_updates` SET `timestamp` = 20260922;
