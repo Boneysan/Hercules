@@ -492,6 +492,8 @@ VECTOR_STRUCT_DECL(mob_group, int);
 #define mob_is_gvg(md) (map->list[(md)->bl.m].flag.gvg_castle && ( (md)->class_ == MOBID_EMPELIUM || (md)->class_ == MOBID_BARRICADE || (md)->class_ == MOBID_S_EMPEL_1 || (md)->class_ == MOBID_S_EMPEL_2))
 #define mob_is_treasure(md) (((md)->class_ >= MOBID_TREASURE_BOX1 && (md)->class_ <= MOBID_TREASURE_BOX40) || ((md)->class_ >= MOBID_TREASURE_BOX41 && (md)->class_ <= MOBID_TREASURE_BOX49))
 
+struct mob_ai_profile; // defined in mob.c (Korangar fork map-scoped AI profiles)
+
 struct mob_interface {
 	// Dynamic mob database, allows saving of memory when there's big gaps in the mob_db [Skotlex]
 	struct mob_db *db_data[MAX_MOB_DB + 1];
@@ -636,6 +638,10 @@ struct mob_interface {
 	bool (*read_group_db_libconfig) (const char *filename);
 	bool (*read_group_db_libconfig_sub) (struct config_setting_t *it, const char *source);
 	bool (*read_group_db_libconfig_sub_group) (struct config_setting_t *it, enum mob_groups group_id, const char *source);
+	// Korangar fork additions (registered for tools/validateinterfaces.py).
+	const struct mob_ai_profile *(*ai_profile_find) (int16 map_id, int mob_id);
+	void (*read_ai_profiles) (void);
+	bool (*ai_profile_step_away) (struct mob_data *md, struct block_list *target, int max_distance);
 };
 
 #ifdef HERCULES_CORE

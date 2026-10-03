@@ -2034,6 +2034,9 @@ struct clif_interface {
 	void (*adventurerAgencyResult) (struct map_session_data *sd, enum adventurer_agency_result result, const char *player_name, const char *party_name);
 	void (*adventurerAgencyJoinReq) (struct map_session_data *sd, struct map_session_data *tsd);
 	void (*pAdventuterAgencyJoinResult) (int fd, struct map_session_data *sd);
+	// Korangar fork additions (registered for tools/validateinterfaces.py).
+	void (*init_inventory_order_registry) (void);
+	void (*send_inventory_order) (struct map_session_data *sd);
 };
 
 #ifdef HERCULES_CORE

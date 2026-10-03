@@ -15381,4 +15381,19 @@ void status_defaults(void)
 	status->base_matk_min = status_base_matk_min;
 	status->base_matk_max = status_base_matk_max;
 	status->check_job_bonus = status_check_job_bonus;
+	// Korangar fork additions.
+	status->clear_combat_and_sit = status_clear_combat_and_sit;
+	status->apply_combat_from_damage = status_apply_combat_from_damage;
+	status->apply_skill_combat = status_apply_skill_combat;
+	status->apply_sitting_recovery = status_apply_sitting_recovery;
+	status->apply_respawn_fill = status_apply_respawn_fill;
+	status->recovery_ui_state = status_recovery_ui_state;
+	status->encumbrance_band = status_encumbrance_band;
+	status->encumbrance_blocks_at_percent = status_encumbrance_blocks_at_percent;
+	status->encumbrance_blocks_pickup = status_encumbrance_blocks_pickup;
+	status->cart_weight_blocks = status_cart_weight_blocks;
+	status->encumbrance_blocks_attack = status_encumbrance_blocks_attack;
+	status->encumbrance_blocks_skill = status_encumbrance_blocks_skill;
+	status->encumbrance_blocks_movement = status_encumbrance_blocks_movement;
+	status->notify_recovery_ui = status_notify_recovery_ui;
 }

@@ -154,6 +154,9 @@ struct party_interface {
 
 	bool (*is_leader) (struct map_session_data *sd, const struct party_data *p);
 	void (*agency_request_join)(struct map_session_data *sd, struct map_session_data *tsd);
+	// Korangar fork additions (registered for tools/validateinterfaces.py).
+	void (*campaign_catchup_others) (struct map_session_data *sd);
+	void (*campaign_push_others) (struct map_session_data *sd);
 };
 
 struct map_session_data;

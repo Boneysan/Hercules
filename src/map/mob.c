@@ -6605,4 +6605,8 @@ void mob_defaults(void)
 	mob->read_group_db_libconfig = mob_read_group_db_libconfig;
 	mob->read_group_db_libconfig_sub = mob_read_group_db_libconfig_sub;
 	mob->read_group_db_libconfig_sub_group = mob_read_group_db_libconfig_sub_group;
+	// Korangar fork additions.
+	mob->ai_profile_find = mob_ai_profile_find;
+	mob->read_ai_profiles = mob_read_ai_profiles;
+	mob->ai_profile_step_away = mob_ai_profile_step_away;
 }

@@ -1161,6 +1161,9 @@ struct script_interface {
 	void (*run_item_lapineupgrade_script) (struct map_session_data *sd, struct item_data *data, int oid);
 	bool (*sellitemcurrency_add) (struct npc_data *nd, struct script_state* st, int argIndex);
 	void (*declare_conditional_feature) (const char *feature, bool enabled);
+	// Korangar fork additions (registered for tools/validateinterfaces.py).
+	int (*party_quest_credit_sub) (struct block_list *bl, va_list ap);
+	int (*party_quest_credit) (struct script_state *st, int new_id_arg_index, int old_id, int new_id);
 };
 
 #ifdef HERCULES_CORE

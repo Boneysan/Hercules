@@ -27942,4 +27942,7 @@ void clif_defaults(void)
 	clif->format_navigation = clif_format_navigation;
 	clif->format_url = clif_format_url;
 	clif->format_tipbox = clif_format_tipbox;
+	// Korangar fork additions.
+	clif->init_inventory_order_registry = clif_init_inventory_order_registry;
+	clif->send_inventory_order = clif_send_inventory_order;
 }

@@ -22,6 +22,7 @@
 #define MAP_STATUS_H
 
 #include "common/hercules.h"
+#include "map/combat_state.h" // enum encumbrance_band (Korangar fork)
 #include "common/mmo.h" // NEW_CARTS
 
 struct block_list;
@@ -1592,6 +1593,21 @@ struct status_interface {
 	int (*base_matk_min) (const struct status_data *st);
 	int (*base_matk_max) (const struct status_data *st);
 	void (*check_job_bonus) (int idx, const char *name, int class);
+	// Korangar fork additions (registered for tools/validateinterfaces.py).
+	void (*clear_combat_and_sit) (struct map_session_data *sd);
+	void (*apply_combat_from_damage) (struct block_list *src, struct block_list *target, int hp);
+	void (*apply_skill_combat) (struct block_list *src, struct block_list *target, bool offensive, bool support);
+	bool (*apply_sitting_recovery) (struct map_session_data *sd, int max_hp, int max_sp, int diff_tick, int *add_hp, int *add_sp);
+	bool (*apply_respawn_fill) (struct map_session_data *sd, int max_hp, int max_sp, int64 now, int diff_tick, int *add_hp, int *add_sp, bool *complete);
+	void (*recovery_ui_state) (struct map_session_data *sd, int block_reason, uint8 *mode, uint8 *block);
+	enum encumbrance_band (*encumbrance_band) (const struct map_session_data *sd);
+	bool (*encumbrance_blocks_at_percent) (const struct map_session_data *sd, int64 extra_weight, unsigned int percent);
+	bool (*encumbrance_blocks_pickup) (const struct map_session_data *sd, int64 extra_weight);
+	bool (*cart_weight_blocks) (const struct map_session_data *sd, int64 extra_weight);
+	bool (*encumbrance_blocks_attack) (const struct map_session_data *sd);
+	bool (*encumbrance_blocks_skill) (const struct map_session_data *sd);
+	bool (*encumbrance_blocks_movement) (const struct map_session_data *sd);
+	void (*notify_recovery_ui) (struct map_session_data *sd, int block_reason);
 };
 
 #ifdef HERCULES_CORE
