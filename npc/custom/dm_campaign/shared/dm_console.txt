@@ -752,8 +752,12 @@ S_Reset:
 	for (.@q = 20211; .@q <= 20214; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
 	for (.@q = 20221; .@q <= 20223; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
 	for (.@q = 20231; .@q <= 20233; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
-	if (.@party_id > 0)
+	if (.@party_id > 0) {
 		setd("$dm_inst_" + .@party_id, 0);
+		setd("$dm_arc19_vol_aid_" + .@party_id, 0);
+		setd("$dm_arc19_vol_cid_" + .@party_id, 0);
+		setd("$dm_arc19_vol_name_" + .@party_id + "$", "");
+	}
 	$dm_mode = 0;
 	$dm_active_party = 0;
 	freeloop(false);

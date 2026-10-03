@@ -6,28 +6,102 @@
 //= The Nameless Island's seals are failing. The demon lords
 //= are not leaking through randomly — they are coordinating.
 //= Father Quill has held the wards alone for years. The Broker
-//= Carrion is offering a deal that is obviously a trap.
+//= Carrion is offering a treaty, and the treaty is worth reading.
+//=
+//= REBUILT 2026-10-02 (handoff A3-13). Questions to Carrion never
+//= change anything. The party inspects two ward failures and recovers
+//= a treaty witness, reads three authored clauses (containment
+//= boundary, civilian passage, who monitors breaches), then accepts,
+//= accepts with a monitoring condition, or rejects. A treaty only
+//= counts once a supervised containment demonstration is completed.
+//=
+//= Preparations (all three open the decision):
+//=   dm_arc13_ward_mask   bits 1,2: ward failures A and B (a ward
+//=       record from either reveals the clause-3 loophole)
+//=   dm_arc13_witness     the treaty witness, recovered
+//= Decision (dm_arc13_treaty_terms, final, equal base EXP):
+//=   1 accept as written (knowingly accepts the monitoring risk)
+//=   2 accept with Quill's wards monitoring (needs a ward record)
+//=   3 reject -> Beelzebub's sanctum, existing encounter
+//= Accepting is not completing it: the demonstration is. Only
+//= dm_arc13_treaty_verified resolves the arc without the boss.
+//= Derived for later arcs: carrion_bribed (a treaty was agreed, shown
+//= to players as "treaty agreed"), coalition_deal_honored (verified),
+//= beelzebub_killed (the boss was actually fought and killed).
 //=
 //= Quests (db/quest_db.conf):
 //=   20171 The Council of the Drowned  (arc tracker / Beelzebub)
-//=   20173 Abbey Bell Silencing (Old White Cloth x6, Skull x8, Monster's Feed x8)
-//=   20174 Sanctum Sweep (Clattering Skull x9, Skel-Bone x6, Torn Magic Book x3)
-//=   20175 The Broker's Terms          (Broker Carrion)
+//=   20173 Abbey Bell Silencing  (optional salvage)
+//=   20174 Sanctum Sweep         (optional salvage)
+//=   20175 The Broker's Terms          (opens when preparations are done)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc13_started, dm_arc13_carrion_killed,
-//=   dm_arc13_carrion_bribed, dm_arc13_beelzebub_killed
+//=   dm_arc13_started, dm_arc13_ward_mask, dm_arc13_witness,
+//=   dm_arc13_treaty_terms, dm_arc13_treaty_verified,
+//=   dm_arc13_carrion_killed, dm_arc13_carrion_bribed,
+//=   dm_arc13_coalition_deal_honored, dm_arc13_beelzebub_killed
 //===========================================================
+
+// ── Shared Arc 13 helpers ──────────────────────────────────────────────────
+
+// One preparation done. Opens the Broker's Terms once all three are.
+function	script	DM_Arc13Prep	{
+	.@n = callfunc("DM_CountBits", dm_arc13_ward_mask) + (dm_arc13_witness ? 1 : 0);
+	callfunc("DM_DMJStoryObjective", 20171, 2, "Explore", .@n, 3, (.@n >= 3), getcharid(CHAR_ID_PARTY));
+	if (.@n >= 3) {
+		if (callfunc("DM_ClaimGrant", "arc13_prep"))
+			callfunc("DM_InstanceQuestStart", 20175);
+		callfunc("DM_PartyMes", "^3355FF[Two ward failures inspected, witness recovered. Carrion's terms can be put to a decision.]^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF[" + .@n + " of 3: two ward failures, the treaty witness.]^000000");
+	}
+	return .@n;
+}
+
+// mode: 1 accept as written, 2 accept with monitoring, 3 reject. Final.
+function	script	DM_Arc13Commit	{
+	.@mode = getarg(0);
+	if (dm_arc13_treaty_terms)
+		return 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc13_treaty_terms", .@mode);
+	if (.@mode == 3) {
+		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_bribed");
+	} else {
+		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_killed");
+		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_bribed", 1);
+	}
+	callfunc("DM_InstanceQuestComplete", 20175);
+	callfunc("DM_DMJStoryObjective", 20175, 1, "Interact", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc13_resolution"))
+		callfunc("DM_PartyExp", 200000, 97000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1305);
+	return 1;
+}
+
+// The demonstration succeeded: the treaty is real, the boss is skipped, and
+// the arc resolves at the same base reward as the fight.
+function	script	DM_Arc13Verified	{
+	if (dm_arc13_treaty_verified)
+		return 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc13_treaty_verified", 1);
+	callfunc("DM_InstanceSetFlag", "dm_arc13_coalition_deal_honored", 1);
+	callfunc("DM_InstanceQuestComplete", 20171);
+	if (callfunc("DM_ClaimGrant", "arc13_beelzebub"))
+		callfunc("DM_PartyExp", 1600000, 900000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1399);
+	callfunc("DM_MapStory", "The demonstration holds. Beelzebub withdraws from the Abbey. The treaty is in force, and so is every term in it.");
+	return 1;
+}
 
 // ── Father Quill the Doorkeeper — The Last Ward ────────────────────────────
 nameless_i,100,100,5	script	Father Quill#dm	4_M_04,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20171) == 2) {
 		callfunc("DM_PartyMes", "[Father Quill]");
-		if (dm_arc13_carrion_bribed)
-			callfunc("DM_PartyMes", "Beelzebub is gone. Carrion's deal will cost us something later. I know how his contracts work. But the island is quiet tonight. I will take that.");
+		if (dm_arc13_treaty_verified)
+			callfunc("DM_PartyMes", "The demonstration held. Beelzebub is gone from the Abbey and the treaty is in force. I know how Brokers' contracts work. This one cost us exactly what it said it would.");
 		else
-			callfunc("DM_PartyMes", "Beelzebub is gone. Carrion is gone. The island is not safe — it never was — but the coordination is broken. My vigil may be pointless for a while. I have forgotten what that feels like.");
+			callfunc("DM_PartyMes", "Beelzebub is gone. The wards stand, for now. The island is quiet tonight. I do not trust it.");
 		close();
 	}
 
@@ -36,10 +110,11 @@ nameless_i,100,100,5	script	Father Quill#dm	4_M_04,{
 		end;
 	}
 
-	callsub(S_TurnIns);
+	callsub(S_Progress);
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20171, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -48,262 +123,409 @@ OnInit:
 
 S_StartArc:
 	callfunc("DM_PartyMes", "[Father Quill]");
-	callfunc("DM_PartyMes", "You found the island. That means something. Most people who find it were already dead before they arrived.");
+	callfunc("DM_PartyMes", "You came by boat. Nobody comes by boat. Sit, and do not touch the wards. I have held them alone for eleven years and I would like to keep the habit.");
 	next();
-	if (dm_arc08_darklord_killed) {
+	if (dm_arc12_survey_agreement == 1) {
 		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "The dark thing in Glast Heim. The Dark Lord. The dead of that kingdom found their way here eventually — everything that falls tends to wash up on this shore. I recognized some of them.");
-		next();
-	}
-	if (dm_arc11_bjorn_joined) {
-		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "A zealot walks with you. I can tell by the crook. This island was built by people who believed too completely in things that could not hold. He should be careful.");
+		callfunc("DM_PartyMes", "Aelith's envoy sent word that you made an agreement with a surveyor about limits. I did not think anyone still did that. It is a small thing and I am glad of it.");
 		next();
 	}
 	callfunc("DM_PartyMes", "[Quill]");
-	callfunc("DM_PartyMes", "I have been maintaining the wards since the incident. Before that there were twelve of us. Attrition happens.");
+	callfunc("DM_PartyMes", "The demon lords are not leaking through at random. They are coordinating. Something is organizing them. And a Broker named Carrion arrived last week offering to arrange a treaty.");
 	next();
-	callfunc("DM_PartyMes", "[Quill]");
-	callfunc("DM_PartyMes", "The problem is not that the demons are breaking through. The problem is that they have stopped trying to break through independently. Something has organized them.");
-	next();
-	switch (select("What organized them?", "How are the wards failing?", "What do you need from us?")) {
-	case 1:
-		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "I believe the cascade. The cascade fills the space between intentions with noise. Demons that were individually chaotic now share a frequency. They have accidentally found consensus through the noise they all receive equally.");
-		break;
-	case 2:
-		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "The cascade is providing them with a counter-resonance to the ward's sealing frequency. Like a key made of static. The wards were not built for this. Nothing was built for this.");
-		break;
-	case 3:
-		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "The Banshee in the outer passages are the remnants of the island's clerics — fallen, but tied to the old wards. They must be silenced before the wards can be recalibrated. The Zombie Slaughter in the sanctum are more recent casualties.");
-		break;
+	.@ready = 0;
+	while (!.@ready) {
+		switch (select("What organized them?", "How are the wards failing?", "Who is Carrion?", "We are ready. Where do we start?")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "Beelzebub. The one in the Abbey sanctum. He is not the strongest of them. He is the one the others will follow.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "From the middle outward. Two wards at the inner ring went first. There is a record at each of them of how, and what failed. I have not been able to reach either.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Quill]");
+			callfunc("DM_PartyMes", "A broker of arrangements between powers that do not speak. His terms are always real. That is what makes them dangerous. Read them before you answer.");
+			break;
+		case 4:
+			.@ready = 1;
+			break;
+		}
+		next();
 	}
-	next();
 	callfunc("DM_PartyMes", "[Quill]");
-	callfunc("DM_PartyMes", "And there is Carrion. The Broker. He arrived two days ago and he is waiting by the inner gate. He says he has a proposition. I have not spoken to him. I do not negotiate with demons.");
-	next();
-	callfunc("DM_PartyMes", "[Quill]");
-	callfunc("DM_PartyMes", "I am told you are different. You can decide for yourselves.");
+	callfunc("DM_PartyMes", "Three things before you answer him. Inspect the two failed wards. Find the witness, because he will not ratify anything without one and neither should you. Then hear his terms.");
 	callfunc("DM_InstanceSetFlag", "dm_arc13_started", 1);
 	callfunc("DM_InstanceQuestStart", 20171);
-	callfunc("DM_InstanceQuestStart", 20173);
-	callfunc("DM_InstanceQuestStart", 20174);
+	callfunc("DM_DMJStoryObjective", 20171, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Council of the Drowned]^000000");
-	callfunc("DM_PartyMes", "^3355FFAbbey Bell Silencing - out of the outer passages: " + callfunc("DM_HuntBrief", 20173) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFSanctum Sweep - cleared out of the inner sanctum: " + callfunc("DM_HuntBrief", 20174) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFInspect the two failed wards, recover the treaty witness, then hear Carrion's terms.^000000");
 	close();
 
-S_TurnIns:
-	.@paid = 0;
+S_Progress:
+	callfunc("DM_PartyMes", "[Quill]");
+	callfunc("DM_PartyMes", ((dm_arc13_ward_mask & 1) ? "Ward A: inspected." : "Ward A: not yet. The inner ring, west of the abbey path."));
+	callfunc("DM_PartyMes", ((dm_arc13_ward_mask & 2) ? "Ward B: inspected." : "Ward B: not yet. The inner ring, north."));
+	callfunc("DM_PartyMes", (dm_arc13_witness ? "Treaty witness: recovered." : "Treaty witness: not yet. A drowned notary, in the lower ground."));
+	if (dm_arc13_ward_mask)
+		callfunc("DM_PartyMes", "^3355FFA ward record from either failure shows how the wards were meant to be monitored. It matters when you read Carrion's third clause.^000000");
+	next();
+	switch (select("Ask about the optional salvage.", "Thank you. We are on it.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		break;
+	}
+	close();
+
+S_Optional:
+	callfunc("DM_PartyMes", "[Quill]");
+	callfunc("DM_PartyMes", "Cloth and bone and torn pages from around the abbey. Salvage. I will pay for it, but none of it is the treaty.");
+	next();
+	if (questprogress(20173) == 0) {
+		callfunc("DM_InstanceQuestStart", 20173);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Abbey Bell Silencing - " + callfunc("DM_HuntBrief", 20173) + "]^000000");
+	}
+	if (questprogress(20174) == 0) {
+		callfunc("DM_InstanceQuestStart", 20174);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Sanctum Sweep - " + callfunc("DM_HuntBrief", 20174) + "]^000000");
+	}
 	callfunc("DM_HuntNoteShort", 20173);
 	if (questprogress(20173) == 1 && callfunc("DM_HuntCollect", 20173)) {
 		callfunc("DM_InstanceQuestComplete", 20173);
-		callfunc("DM_PartyExp", 380000, 185000);
-		callfunc("DM_GivePartyZeny", 32000);
-		.@paid = 1;
+		callfunc("DM_PartyExp", 120000, 58000);
+		callfunc("DM_GivePartyZeny", 27000);
 		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "The outer passage is quiet. The Banshee were singing — not screaming. The old ward harmonics. They were trying to maintain the seals by resonating with them. They just could not stop anymore.");
-		next();
-		switch (select("Give them release. The seals stand without them now.", "Document what they were singing. It is ward lore.", "They were still protecting this place in their way.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Quill]");
-			callfunc("DM_PartyMes", "I said the words over the outer passage. It felt presumptuous. I said them anyway.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Quill]");
-			callfunc("DM_PartyMes", "I can transcribe it from memory. The old resonance forms. Some of them predate the incident by centuries. Useful knowledge.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Quill]");
-			callfunc("DM_PartyMes", "Yes. I have been alone here long enough that I had started to think of them as neighbors. That is probably not healthy.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The bells are quiet. They were not ringing for the dead, you know. They were ringing for whoever is still listening on the other side.");
 		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20174);
 	if (questprogress(20174) == 1 && callfunc("DM_HuntCollect", 20174)) {
 		callfunc("DM_InstanceQuestComplete", 20174);
-		callfunc("DM_PartyExp", 390000, 190000);
-		callfunc("DM_GivePartyZeny", 33000);
-		.@paid = 1;
+		callfunc("DM_PartyExp", 127000, 62000);
+		callfunc("DM_GivePartyZeny", 28000);
 		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "The sanctum is clear. The Zombie Slaughter were recent. Last year or two. People who came to investigate the island and encountered the seal's breakdown rather than the island's normal defenses.");
-		next();
-		switch (select("This island draws the curious and kills them.", "Were any of them from the Church?", "The coordinated demons are the greater danger. These were just in the way.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Quill]");
-			callfunc("DM_PartyMes", "Always. The island does not advertise. But the absence of a name makes it a mystery, and mysteries draw people. I have been burying the curious for years.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Quill]");
-			callfunc("DM_PartyMes", "Two of them. Investigating the old heresy trials. The Church's memory is long and its curiosity is persistent.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Quill]");
-			callfunc("DM_PartyMes", "They were. But they are cleared now. The sanctum holds. You can pass to the inner gate.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The sanctum approach is clearer for it. Some of those were Church. I will say a prayer for them, and one for the people who sent them.");
 		next();
 	}
-
-	if (questprogress(20173) == 2 && questprogress(20174) == 2 && questprogress(20175) == 0) {
-		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "The passages are clear. Carrion is still at the inner gate. He has been there for two days. He brought chairs.");
-		next();
-		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "I will tell you what I know of him. He is a Broker. A demon of the second tier — not a lord but not an errand runner. He profits from the chaos that demon lords generate. He does not want the lords to be destroyed. He wants them to be... redistributed.");
-		next();
-		switch (select("What does a Broker's deal usually cost?", "We will hear what he offers.", "Carrion talks while Beelzebub moves. We go straight to Beelzebub.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Quill]");
-			callfunc("DM_PartyMes", "More than you think. Less than you fear. And always something that will be useful to him later in a way that was not apparent at signing.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Quill]");
-			callfunc("DM_PartyMes", "Understand what you are walking into. A Broker's offer is always real. The catch is always real too. The catch is just harder to see than the offer.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Quill]");
-			callfunc("DM_PartyMes", "The direct approach. Beelzebub is the logistics coordinator. Without him the coalition loses its coherence. That is the objective.");
-			break;
-		}
-		callfunc("DM_InstanceQuestStart", 20175);
-		next();
-		callfunc("DM_PartyMes", "^3355FF[Quest started: The Broker's Terms]^000000");
-		callfunc("DM_PartyMes", "^3355FFConfront Broker Carrion at the inner gate. Then descend to abbey03 and face Beelzebub.^000000");
-		close();
-	}
-
-	if (questprogress(20175) == 1 && !dm_arc13_carrion_killed && !dm_arc13_carrion_bribed) {
-		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "Carrion is at the inner gate. Still waiting.");
-		close();
-	}
-
-	if (questprogress(20175) == 1 && (dm_arc13_carrion_killed || dm_arc13_carrion_bribed)) {
-		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "Carrion is dealt with. Beelzebub waits in the abbey's deepest sanctum. abbey03. He knows you are coming — Beelzebub always knows.");
-		close();
-	}
-
-	if (.@paid) {
-		callfunc("DM_PartyMes", "[Quill]");
-		callfunc("DM_PartyMes", "Clear both the outer passages and the sanctum first. Carrion is patient.");
-		close();
-	}
-
-	callfunc("DM_PartyMes", "[Quill]");
-	if (questprogress(20173) == 1 && questprogress(20174) == 1)
-		callfunc("DM_PartyMes", "The Bell Silencing and Sanctum Sweep are both still active.");
-	else if (questprogress(20173) == 1)
-		callfunc("DM_PartyMes", "Abbey Bell Silencing is still open. The Banshee in the outer passages.");
-	else if (questprogress(20174) == 1)
-		callfunc("DM_PartyMes", "Sanctum Sweep is still open. Zombie Slaughter in the inner sanctum.");
-	else
-		callfunc("DM_PartyMes", "The passages are clear. Carrion waits at the inner gate.");
 	callfunc("DM_HuntStanding", 20173, 20174);
-	close();
+	return;
 }
 
-// ── The Broker Carrion — The Deal That Shouldn't Be Tempting ───────────────
+// ── The Broker Carrion — The Man With the Contract ─────────────────────────
 nameless_i,110,100,5	script	The Broker Carrion#dm	4_M_05,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc13_started) {
 		callfunc("DM_PartyMes", "[The Broker Carrion]");
-		callfunc("DM_PartyMes", "Not yet. Come back when you have seen what Father Quill is protecting.");
+		callfunc("DM_PartyMes", "I am not taking visitors. Come back when Father Quill has told you what you are walking into.");
+		close();
+	}
+	if (dm_arc13_treaty_terms) {
+		callfunc("DM_PartyMes", "[The Broker Carrion]");
+		switch (dm_arc13_treaty_terms) {
+		case 1:
+		case 2:
+			if (dm_arc13_treaty_verified)
+				callfunc("DM_PartyMes", "The demonstration held and the treaty is in force. I will keep the boundary. I would be grateful if you would remember that I did.");
+			else
+				callfunc("DM_PartyMes", "The terms are agreed. The demonstration is at the abbey gate whenever you are ready to supervise it. Until it holds, this is only a promise.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "You rejected it. That is a legitimate answer. I will be at the Abbey. Beelzebub will be too.");
+			break;
+		}
 		close();
 	}
 
-	if (questprogress(20171) == 2) {
-		callfunc("DM_PartyMes", "[Broker Carrion]");
-		if (dm_arc13_carrion_bribed)
-			callfunc("DM_PartyMes", "A deal is a deal. We will honor the terms. The lords are... not pleased. But they respect contractual obligation.");
-		else
-			callfunc("DM_PartyMes", "Beelzebub is gone. So is the coordination. You understand what comes next is messier, not safer? Uncoordinated demon pressure on a hundred seals simultaneously instead of one organized push. Messier.");
-		close();
-	}
-
-	if (dm_arc13_carrion_killed || dm_arc13_carrion_bribed) {
-		callfunc("DM_PartyMes", "[Broker Carrion]");
-		if (dm_arc13_carrion_bribed)
-			callfunc("DM_PartyMes", "The terms stand. We will be watching.");
-		else
-			callfunc("DM_PartyMes", "...");
-		close();
-	}
-
-	callfunc("DM_PartyMes", "[Broker Carrion]");
-	callfunc("DM_PartyMes", "You made it past the old doorkeeper. Good. I was beginning to think you would be here until the seals finished failing on their own.");
+	callfunc("DM_PartyMes", "[The Broker Carrion]");
+	callfunc("DM_PartyMes", "The party Quill has been fretting about. I will be plain. The coalition wants the cascade to run its course. I would like to arrange for it not to cost this island.");
 	next();
 	callfunc("DM_PartyMes", "[Carrion]");
-	callfunc("DM_PartyMes", "I represent the Demon Lords' Coalition. Not all of them — the reasonable fraction. The ones who understand that a destroyed Midgard produces no chaos, and demons need chaos the way plants need light.");
+	callfunc("DM_PartyMes", "My terms are three. One: the coalition stays inside the Abbey gate and does not cross it. Two: the ferry keeps running, and no one on the island is harmed in transit. Three: breaches of either are monitored by my coalition, and I report them to you.");
 	next();
-	callfunc("DM_PartyMes", "[Carrion]");
-	callfunc("DM_PartyMes", "The offer: withdraw from this island. Do not interfere with Beelzebub's coordination. In exchange, the coalition agrees to maintain the seals themselves — keep the unaffiliated demons contained. A self-enforcing containment treaty.");
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What is the catch?", "What happens to the cascade if we take it?", "Who monitors the boundary in clause three?", "We have heard the terms.", "We are done talking.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Carrion]");
+			callfunc("DM_PartyMes", "That the coalition does not stop the cascade. It stops using this island as its way through. The cascade is somebody else's problem. I would call that an improvement.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Carrion]");
+			callfunc("DM_PartyMes", "It continues. It did before I arrived. What changes is where the demon lords stand while it does. Where they stand matters to Quill, so I have bothered to ask.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Carrion]");
+			if (dm_arc13_ward_mask)
+				callfunc("DM_PartyMes", "...I see you have been to the wards. Yes. Clause three has a hole in it, and the hole is that the party who breaches would also be the party who reports it. That is how I wrote it. I am being open about it because you can see it anyway.");
+			else
+				callfunc("DM_PartyMes", "My coalition does, and reports to you. I am told that is a weak arrangement. I would not know. I wrote it.");
+			break;
+		case 4:
+			.@done = 1;
+			break;
+		case 5:
+			close();
+		}
+		if (!.@done)
+			next();
+	}
 	next();
-	switch (select("Kill the messenger. This deal does not exist.", "What is the catch?", "If we take the deal, what happens to the cascade?")) {
-	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_bribed");
-		callfunc("DM_InstanceClearFlag", "dm_arc13_coalition_deal_honored");
-		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20175);
+	if ((callfunc("DM_CountBits", dm_arc13_ward_mask) < 2) || !dm_arc13_witness) {
 		callfunc("DM_PartyMes", "[Carrion]");
-		callfunc("DM_PartyMes", "Mm. The direct approach. I respect it.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Carrion dissolves into a scatter of flies. He will reform elsewhere. The inner gate is open.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Encounter: Beelzebub will fight with full coalition support.]^000000");
+		callfunc("DM_PartyMes", "A treaty without a witness is a promise. And a promise from me, signed by a party that has not even looked at the wards, is a worse one. Inspect the two failed wards and recover the notary, then come back.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Carrion]");
+	callfunc("DM_PartyMes", "You have the witness and you have seen the wards. Then you can answer. Accept the treaty as written. Accept it with a monitoring condition of your own. Or reject it, and see Beelzebub.");
+	next();
+	switch (select("Accept the treaty as written.", "Accept it, with Quill's wards monitoring breaches.", "Reject the treaty.", "Not yet. We want to talk it over.")) {
+	case 1:
+		.@mode = 1;
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_bribed");
-		callfunc("DM_InstanceClearFlag", "dm_arc13_coalition_deal_honored");
-		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20175);
-		callfunc("DM_PartyMes", "[Carrion]");
-		callfunc("DM_PartyMes", "The catch is that Beelzebub remains. The cascade remains. The coalition's containment holds only while it suits us. Which is to say: until Loki makes a better offer.");
-		next();
-		callfunc("DM_PartyMes", "[Carrion]");
-		callfunc("DM_PartyMes", "You have identified the catch. Congratulations. The offer still stands, if you want it.");
-		next();
-		callfunc("DM_PartyMes", "[Broker Carrion]");
-		callfunc("DM_PartyMes", "No? Then I will let you through. I will be watching.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Carrion dissolves. The inner gate is open. He was always going to let you through.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Encounter: Beelzebub will fight at full strength.]^000000");
+		.@mode = 2;
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc13_carrion_killed");
-		callfunc("DM_InstanceClearFlag", "dm_arc13_beelzebub_killed");
-		callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_bribed", 1);
-		callfunc("DM_InstanceQuestComplete", 20175);
-		callfunc("DM_PartyMes", "[Carrion]");
-		callfunc("DM_PartyMes", "Nothing. The cascade is not our department. We exist within it the same way you do. The coalition wants the cascade to slow down — a world in the middle of an extinction event generates less productive chaos than a world in ordinary distress.");
-		next();
-		callfunc("DM_PartyMes", "[Carrion]");
-		callfunc("DM_PartyMes", "Which is, I recognize, an alignment of interests that should make you suspicious. You are right to be suspicious. And the offer still stands.");
-		next();
-		callfunc("DM_PartyMes", "[Carrion]");
-		callfunc("DM_PartyMes", "Do we have a deal?");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*The deal is struck. The coalition maintains the seals.*^000000");
-		callfunc("DM_PartyMes", "^3355FF*Beelzebub is withdrawn rather than fought. The coordination is dissolved by agreement.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Encounter: the Beelzebub fight is skipped if the coalition deal is honored.]^000000");
+		.@mode = 3;
 		break;
+	case 4:
+		callfunc("DM_PartyMes", "[Carrion]");
+		callfunc("DM_PartyMes", "Of course.");
+		close();
 	}
 	next();
-	callfunc("DM_PartyMes", "^3355FF[The Broker's Terms resolved.]^000000");
+	callfunc("DM_PartyMes", "[Carrion]");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "As written. The breach is monitored by those who might breach it, and you are agreeing to that knowingly. Confirm, and then supervise the demonstration.");
+	else if (.@mode == 2)
+		callfunc("DM_PartyMes", "With the wards watching, then. It costs me. I will agree to it if you will supervise the demonstration. Confirm, and I sign.");
+	else
+		callfunc("DM_PartyMes", "You will not have the treaty. I will take no offence. Confirm, and I leave.");
+	next();
+	if (select("Confirm.", "Wait.") != 1) {
+		callfunc("DM_PartyMes", "[Carrion]");
+		callfunc("DM_PartyMes", "Better to wait than to say yes to me in a hurry.");
+		close();
+	}
+	if (!callfunc("DM_Arc13Commit", .@mode))
+		close();
+	callfunc("DM_PartyMes", "[Carrion]");
+	if (.@mode == 3) {
+		callfunc("DM_PartyMes", "Then there is no treaty. Beelzebub is at the Abbey, and the coalition will be at his back.");
+		callfunc("DM_PartyMes", "^3355FF[The Broker's Terms resolved. Beelzebub is at the Abbey sanctum.]^000000");
+	} else {
+		callfunc("DM_PartyMes", "Signed, witnessed, and sealed. The demonstration is at the abbey gate, when you are ready. Only then does it bind. I will be watching it as closely as you.");
+		callfunc("DM_PartyMes", "^3355FF[The treaty is agreed, not yet in force. Supervise the containment demonstration at the abbey gate.]^000000");
+	}
 	close();
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20175, 1;
 	end;
 }
 
-// ── Beelzebub Sanctum Set-piece ────────────────────────────────────────────
+// ── Ward failure A ─────────────────────────────────────────────────────────
+nameless_i,95,104,4	script	Failed Ward West#dm	4_ENERGY_BLUE,{
+	callsub(S_Ward, 1);
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc13_ward_west");
+	end;
+S_Ward:
+	.@bit = getarg(0);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc13_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc13_ward_mask & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*You have copied what this ward kept.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The shades the ward was holding are still loose.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A ward stone, cracked clean through. The record it kept is still cut in the base.*^000000");
+	next();
+	if (select("Read the ward record.", "Leave it.") == 2) close();
+	if (!'guard_cleared && callfunc("DM_CheckRoll", "arcana", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_PartyMes", "^3355FF*The crack widens. What the ward was holding shakes loose.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc13_ward_west", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Loosed Shade", BANSHEE, .@self$ + "::OnGuardDead", 72, 100, 2, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The record comes clear. A ward only holds if someone other than the party it contains watches it. That is how it was built.*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc13_ward_mask", dm_arc13_ward_mask | .@bit);
+	if (callfunc("DM_ClaimGrant", "arc13_ward_" + .@bit))
+		callfunc("DM_PartyExp", 90000, 44000);
+	callfunc("DM_Arc13Prep");
+	close();
+}
+
+// ── Ward failure B ─────────────────────────────────────────────────────────
+nameless_i,104,94,4	script	Failed Ward North#dm	4_ENERGY_BLUE,{
+	callsub(S_Ward, 2);
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc13_ward_north");
+	end;
+S_Ward:
+	.@bit = getarg(0);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc13_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc13_ward_mask & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*You have copied what this ward kept.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The shades the ward was holding are still loose.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A ward stone, cracked clean through. The record it kept is still cut in the base.*^000000");
+	next();
+	if (select("Read the ward record.", "Leave it.") == 2) close();
+	if (!'guard_cleared && callfunc("DM_CheckRoll", "lore", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_PartyMes", "^3355FF*The crack widens. What the ward was holding shakes loose.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc13_ward_north", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Loosed Shade", BANSHEE, .@self$ + "::OnGuardDead", 72, 100, 2, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The record comes clear. The second ward failed the same way: the thing inside was the thing that reported on it.*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc13_ward_mask", dm_arc13_ward_mask | .@bit);
+	if (callfunc("DM_ClaimGrant", "arc13_ward_" + .@bit))
+		callfunc("DM_PartyExp", 90000, 44000);
+	callfunc("DM_Arc13Prep");
+	close();
+}
+
+// ── The treaty witness ─────────────────────────────────────────────────────
+nameless_i,104,108,4	script	Drowned Notary#dm	4_M_03,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc13_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc13_witness) {
+		callfunc("DM_PartyMes", "[Drowned Notary]");
+		callfunc("DM_PartyMes", "I will witness it. I have witnessed worse. Bring me the terms when the Broker is ready.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Drowned Notary]");
+	callfunc("DM_PartyMes", "You are not Church. You are not coalition. Then I will answer one question, because no one has asked me anything in a very long time.");
+	next();
+	switch (select("Will you witness a treaty for us?", "Why are you here?")) {
+	case 1:
+		callfunc("DM_PartyMes", "[Drowned Notary]");
+		callfunc("DM_PartyMes", "On one condition. I do not witness a thing that I do not believe the signatories will keep. Tell me you will keep it.");
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "[Drowned Notary]");
+		callfunc("DM_PartyMes", "I witnessed the first treaty, and the first breach. Nobody asked me then either. Ask your question again.");
+		next();
+		callfunc("DM_PartyMes", "[Drowned Notary]");
+		callfunc("DM_PartyMes", "On one condition. Tell me you will keep it.");
+		break;
+	}
+	next();
+	if (select("We will keep it.", "We cannot promise that.") != 1) {
+		callfunc("DM_PartyMes", "[Drowned Notary]");
+		callfunc("DM_PartyMes", "Then I cannot witness. Come back when you can.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Drowned Notary]");
+	callfunc("DM_PartyMes", "Good. I will stand with you at the table. Be careful what you say to the Broker. He means all of it.");
+	callfunc("DM_InstanceSetFlag", "dm_arc13_witness", 1);
+	if (callfunc("DM_ClaimGrant", "arc13_witness"))
+		callfunc("DM_PartyExp", 120000, 57000);
+	callfunc("DM_Arc13Prep");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── The containment demonstration (a treaty counts only once this holds) ───
+nameless_i,113,101,4	script	Containment Gate#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!(dm_arc13_treaty_terms == 1 || dm_arc13_treaty_terms == 2)) {
+		callfunc("DM_PartyMes", "^3355FF*The abbey gate. Nothing is happening here. There is no treaty to demonstrate.*^000000");
+		close();
+	}
+	if (dm_arc13_treaty_verified) {
+		callfunc("DM_PartyMes", "^3355FF*The gate holds. The coalition stays where the treaty puts it.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The demonstration is under way. Contain the breach.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The abbey gate. Carrion stands on the far side with his coalition. The notary stands on this one. Both are waiting for you to start.*^000000");
+	next();
+	if (select("Begin the demonstration.", "Not yet.") == 2) close();
+	if (dm_arc13_treaty_terms == 2)
+		callfunc("DM_PartyMes", "^3355FF*Quill's wards flare along the wall. Carrion's side is watched. A single test breach slips through.*^000000");
+	else
+		callfunc("DM_PartyMes", "^3355FF*Nobody watches the breach but the coalition. The test breach is larger than the terms said it would be. Carrion does not look surprised.*^000000");
+	.@map$ = strnpcinfo(NPC_MAP);
+	getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+	.@self$ = strnpcinfo(NPC_NAME);
+	'boss_up = 1;
+	callfunc("DM_EncStart", "arc13_demo", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnDemoDead", .@self$ + "::OnDemoDead", .@self$);
+	callfunc("DM_EncMonster", .@map$, .@x, .@y, "Breaching Shade", BANSHEE, .@self$ + "::OnDemoDead", 72, 100, (dm_arc13_treaty_terms == 2 ? 2 : 3), 3);
+	if (dm_arc13_treaty_terms == 1)
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Unwatched Necromancer", NECROMANCER, .@self$ + "::OnDemoDead", 72, 100, 1, 2);
+	close();
+
+OnDemoDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnDemoDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	callfunc("DM_EncCleanup", "arc13_demo");
+	callfunc("DM_Arc13Verified");
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Beelzebub Sanctum Set-piece (the rejected-treaty route) ────────────────
 abbey03,150,150,0	script	Beelzebub Sanctum#dm	HIDDEN_NPC,{
 	end;
 
@@ -314,7 +536,7 @@ OnBeelzebubDead:
 	killmonster strnpcinfo(NPC_MAP), "Beelzebub Sanctum#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20171);
 	callfunc("DM_InstanceSetFlag", "dm_arc13_beelzebub_killed", 1);
-	callfunc("DM_PartyExp", 1600000, 900000);
+	callfunc("DM_PartyExp", 1600000, 900000, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1399);
 	instance_announce(instance_id(), "^3355FF[DM] Beelzebub falls. The coalition's coordination shatters into a hundred independent grudges.^000000", bc_all);
 	sleep(2000);

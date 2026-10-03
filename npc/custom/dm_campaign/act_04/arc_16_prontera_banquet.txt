@@ -8,25 +8,124 @@
 //= the network from the Underground Prison. The court has
 //= been steering policy toward inaction on the cascade.
 //=
+//= REBUILT 2026-10-02 (handoff A4-16): return to people who
+//= remember. A three-station social investigation replaces the
+//= errands: a witness interview, the seating record, an
+//= intercepted instruction. Any two identify the infiltration
+//= route; the third protects one more witness. A returning ally
+//= from earlier acts is present at a station when the record says
+//= they exist; a palace clerk fills in when not.
+//=
+//= State:
+//=   dm_arc16_evidence_mask   bits 1 (witness), 2 (seating record),
+//=       4 (intercepted instruction). A weak read costs discretion
+//=       (dm_arc16_discretion_lost): the clue is still gained, and the
+//=       vault is watched more closely.
+//=   dm_arc16_rina_resolution (final, equal EXP; opens at two clues):
+//=       1 expose her publicly        -> rina_exposed
+//=       2 monitored dismantling      -> rina_rolled
+//=       3 defection with protection terms -> rina_defected, and she
+//=         tells the party how Maret can be freed (dm_arc16_release_known)
+//=   dm_arc16_release_completed: Maret's Cell opened by an actual
+//=       interaction in the vault. Rescue is never inferred from having
+//=       chosen defection. Bijou-killed and Maret-freed are exclusive.
+//=
 //= Quests (db/quest_db.conf):
 //=   20201 The Royal Banquet           (arc tracker / Bijou)
-//=   20202 Underground Prison Cleanup (Worn-out Prison Uniform x10, Manacles x5, Cyfar x5)
-//=   20203 Terra Gloria (Bear's Footskin x13, Garlet x4, Clover x10)
-//=   20204 Royal House Audience Rounds (Matron Rina)
+//=   20202 Underground Prison Cleanup (optional salvage)
+//=   20203 Terra Gloria               (optional salvage)
+//=   20204 Royal House Audience Rounds (opens at two clues)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc16_started, dm_arc16_rina_exposed,
-//=   dm_arc16_rina_rolled, dm_arc16_rina_defected,
+//=   dm_arc16_started, dm_arc16_evidence_mask,
+//=   dm_arc16_discretion_lost, dm_arc16_rina_resolution,
+//=   dm_arc16_release_known, dm_arc16_release_completed,
+//=   dm_arc16_rina_exposed, dm_arc16_rina_rolled,
+//=   dm_arc16_rina_defected, dm_arc16_maret_freed,
 //=   dm_arc16_bijou_killed
 //===========================================================
+
+// ── Shared Arc 16 helpers ──────────────────────────────────────────────────
+
+function	script	DM_Arc16AddClue	{
+	.@bit = getarg(0);
+	if (!(dm_arc16_evidence_mask & .@bit))
+		callfunc("DM_InstanceSetFlag", "dm_arc16_evidence_mask", dm_arc16_evidence_mask | .@bit);
+	.@n = callfunc("DM_CountBits", dm_arc16_evidence_mask);
+	callfunc("DM_DMJStoryObjective", 20201, 2, "Explore", .@n, 3, (.@n >= 3), getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc16_clue_" + .@bit))
+		callfunc("DM_PartyExp", 200000, 100000);
+	if (.@n >= 2 && questprogress(20204) == 0)
+		callfunc("DM_InstanceQuestStart", 20204);
+	if (.@n >= 3)
+		callfunc("DM_PartyMes", "^3355FF[All three clues. The route into the vault is known, and one more witness is out of Heine's reach of the cult.]^000000");
+	else if (.@n == 2)
+		callfunc("DM_PartyMes", "^3355FF[Two clues. The infiltration route is clear. Matron Rina can be answered.]^000000");
+	else
+		callfunc("DM_PartyMes", "^3355FF[One clue recorded.]^000000");
+	return .@n;
+}
+
+// mode: 1 expose, 2 monitored dismantling, 3 defection with protection terms. Final.
+function	script	DM_Arc16Commit	{
+	.@mode = getarg(0);
+	if (dm_arc16_rina_resolution)
+		return 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc16_rina_resolution", .@mode);
+	callfunc("DM_InstanceClearFlag", "dm_arc16_rina_exposed");
+	callfunc("DM_InstanceClearFlag", "dm_arc16_rina_rolled");
+	callfunc("DM_InstanceClearFlag", "dm_arc16_rina_defected");
+	if (.@mode == 1) {
+		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_exposed", 1);
+	} else if (.@mode == 2) {
+		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_rolled", 1);
+	} else {
+		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_defected", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc16_release_known", 1);
+	}
+	callfunc("DM_InstanceQuestComplete", 20204);
+	callfunc("DM_DMJStoryObjective", 20204, 1, "Interact", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc16_resolution"))
+		callfunc("DM_PartyExp", 400000, 200000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1605);
+	return 1;
+}
+
+// The arc closes one of two ways, never both. freed=1 only after Maret's Cell
+// was opened; otherwise Bijou was killed.
+function	script	DM_Arc16Finish	{
+	.@freed = getarg(0);
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc16_bijou", .@party))
+		return 0;
+	callfunc("DM_InstanceQuestComplete", 20201);
+	if (.@freed) {
+		callfunc("DM_InstanceClearFlag", "dm_arc16_bijou_killed");
+		callfunc("DM_InstanceSetFlag", "dm_arc16_maret_freed", 1);
+	} else {
+		callfunc("DM_InstanceClearFlag", "dm_arc16_maret_freed");
+		callfunc("DM_InstanceSetFlag", "dm_arc16_bijou_killed", 1);
+	}
+	callfunc("DM_PartyExp", 2000000, 1000000, .@party);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1699);
+	if (.@freed)
+		instance_announce(instance_id(), "^3355FF[DM] Maret is out of the cell. The cascade signal in the prison breaks. She surfaces for the first time in three years and does not know what month it is.^000000", bc_all);
+	else
+		instance_announce(instance_id(), "^3355FF[DM] Bijou falls silent. The cascade loses its court-facing relay. The royal army is secured, what remains of it, for the final war.^000000", bc_all);
+	sleep(2000);
+	instance_announce(instance_id(), "^FF6600[DM] The court is secured. Varmundt's research is the last piece before Morroc's ruins.^000000", bc_all);
+	return 1;
+}
 
 // ── Kronecker G Heine — The Intelligence Director ─────────────────────────
 prontera,150,150,5	script	Kronecker G Heine#dm	4_M_01,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20201) == 2) {
 		callfunc("DM_PartyMes", "[Kronecker G Heine]");
-		if (dm_arc16_rina_defected)
-			callfunc("DM_PartyMes", "Rina's briefing was thorough. We understand the network's reach now. The King has been told what he needs to know, which is not everything, but it is enough.");
+		if (dm_arc16_maret_freed)
+			callfunc("DM_PartyMes", "Maret is alive and awake, and she has asked to speak to no one for a week. I told her she can have a month. We will want her account, and we will wait for it.");
+		else if (dm_arc16_rina_defected)
+			callfunc("DM_PartyMes", "Rina's briefing was thorough. We understand the network's reach now. The King has been told what he needs to know.");
 		else if (dm_arc16_rina_exposed)
 			callfunc("DM_PartyMes", "The King knows. The court is... quieter than it was. Some of that quiet is relief. Some of it is people waiting to see who else gets exposed.");
 		else
@@ -39,10 +138,11 @@ prontera,150,150,5	script	Kronecker G Heine#dm	4_M_01,{
 		end;
 	}
 
-	callsub(S_TurnIns);
+	callsub(S_Progress);
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20201, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -60,147 +160,196 @@ S_StartArc:
 	}
 	if (dm_arc10_echo_freed) {
 		callfunc("DM_PartyMes", "[Kronecker]");
-		callfunc("DM_PartyMes", "The laboratory prototype — Echo. It surfaced in Prontera three weeks ago. The Whisperers tried to recruit it. It declined. Then it disappeared again. I would like to know where it went.");
+		callfunc("DM_PartyMes", "The laboratory prototype, Echo. It surfaced in Prontera three weeks ago. The Whisperers tried to recruit it. It declined. Then it disappeared again. I would like to know where it went.");
 		next();
 	}
 	callfunc("DM_PartyMes", "[Kronecker]");
 	callfunc("DM_PartyMes", "The Whisperers believe the cascade's completion is desirable. They call it the Great Opening. They have been placing agents in the advisory council for eighteen months, steering policy toward doing nothing useful.");
 	next();
-	switch (select("How many agents are in the court?", "Who is Bijou?", "What do you need from us?")) {
-	case 1:
-		callfunc("DM_PartyMes", "[Kronecker]");
-		callfunc("DM_PartyMes", "Seven confirmed. Three probable. I have been unable to act because I cannot determine where the information goes after they receive it. If I expose one, the others vanish. I need the source.");
-		break;
-	case 2:
-		callfunc("DM_PartyMes", "[Kronecker]");
-		callfunc("DM_PartyMes", "Their oracle. Someone in the Underground Prison who reads the cascade's 'intent' and translates it for the cult. The previous warden converted the lower levels to a coordination center. The new warden does not know.");
-		break;
-	case 3:
-		callfunc("DM_PartyMes", "[Kronecker]");
-		callfunc("DM_PartyMes", "The Disguise creatures in the prison corridors are Whisperer agents in a cascade-altered state — they have worn their disguises so long the shape has become permanent. And the Bloody Murderers in the deeper levels are former zealots who completed what the cult calls 'full surrender.' Clear both.");
-		break;
+	.@ready = 0;
+	while (!.@ready) {
+		switch (select("How many agents are in the court?", "Who is Bijou?", "What do you need from us?", "We are ready. Where do we start?")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "Seven confirmed. Three probable. I have been unable to act because I cannot determine where the information goes after they receive it. If I expose one, the others vanish. I need the source.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "Their oracle. Someone in the Underground Prison who reads the cascade's 'intent' and translates it for the cult. The previous warden converted the lower levels to a coordination center. The new warden does not know.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Kronecker]");
+			callfunc("DM_PartyMes", "Three stations in the palace district: a witness who will talk, the banquet seating record, and a courier's satchel the guards have not yet opened. Any two will show how the network gets in and out of the prison. The third keeps one more witness safe.");
+			break;
+		case 4:
+			.@ready = 1;
+			break;
+		}
+		next();
 	}
-	next();
 	callfunc("DM_PartyMes", "[Kronecker]");
-	callfunc("DM_PartyMes", "After the prison is clear, Matron Rina will have no shelter and no assets. She coordinates between Bijou and the court. She is in the east wing of the prison. She is the only one who knows how Bijou works.");
+	callfunc("DM_PartyMes", "After that, Matron Rina has no shelter. She coordinates between Bijou and the court. She is in the east wing of the prison, and she is the only one who knows how Bijou works. If you are clever about it, she will tell you.");
 	callfunc("DM_InstanceSetFlag", "dm_arc16_started", 1);
 	callfunc("DM_InstanceQuestStart", 20201);
-	callfunc("DM_InstanceQuestStart", 20202);
-	callfunc("DM_InstanceQuestStart", 20203);
+	callfunc("DM_DMJStoryObjective", 20201, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Royal Banquet]^000000");
-	callfunc("DM_PartyMes", "^3355FFUnderground Prison Cleanup - off the prison corridors: " + callfunc("DM_HuntBrief", 20202) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFTerra Gloria - for the banquet table: " + callfunc("DM_HuntBrief", 20203) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFVisit any two of the three stations: the witness, the seating record, the intercepted instruction.^000000");
 	close();
 
-S_TurnIns:
-	.@paid = 0;
+S_Progress:
+	callfunc("DM_PartyMes", "[Kronecker]");
+	callfunc("DM_PartyMes", ((dm_arc16_evidence_mask & 1) ? "Witness: interviewed." : "Witness: not yet. A palace clerk, in the west corner of the palace square."));
+	callfunc("DM_PartyMes", ((dm_arc16_evidence_mask & 2) ? "Seating record: copied." : "Seating record: not yet. The banquet ledger, on the north terrace."));
+	callfunc("DM_PartyMes", ((dm_arc16_evidence_mask & 4) ? "Intercepted instruction: read." : "Intercepted instruction: not yet. A courier's satchel, by the south gate."));
+	if (dm_arc16_discretion_lost)
+		callfunc("DM_PartyMes", "^3355FFA clerk noticed you asking. The vault will be watched more closely than it was. That is a cost, not a lock.^000000");
+	next();
+	switch (select("Ask about the optional salvage.", "Thank you. We are on it.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		break;
+	}
+	close();
+
+S_Optional:
+	callfunc("DM_PartyMes", "[Kronecker]");
+	callfunc("DM_PartyMes", "Prison clean-up and the banquet table supplies. Not evidence. I will pay for either.");
+	next();
+	if (questprogress(20202) == 0) {
+		callfunc("DM_InstanceQuestStart", 20202);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Underground Prison Cleanup - " + callfunc("DM_HuntBrief", 20202) + "]^000000");
+	}
+	if (questprogress(20203) == 0) {
+		callfunc("DM_InstanceQuestStart", 20203);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Terra Gloria - " + callfunc("DM_HuntBrief", 20203) + "]^000000");
+	}
 	callfunc("DM_HuntNoteShort", 20202);
 	if (questprogress(20202) == 1 && callfunc("DM_HuntCollect", 20202)) {
 		callfunc("DM_InstanceQuestComplete", 20202);
-		callfunc("DM_PartyExp", 520000, 260000);
+		callfunc("DM_PartyExp", 173000, 86000);
 		callfunc("DM_GivePartyZeny", 42000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[Kronecker]");
-		callfunc("DM_PartyMes", "The Disguise. The cascade accelerated their transformation — they cannot change back. They were once people. That is the cult's argument for 'full surrender': at the end, the transformation is complete and there is no returning. They call that freedom.");
-		next();
-		switch (select("They were not free. They were consumed.", "Document what they looked like before. Someone may want to know.", "The cult recruits people by calling the end of self a liberation.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Kronecker]");
-			callfunc("DM_PartyMes", "That is the distinction the cult does not make. They consider consumption and liberation synonymous when the cascade is the consuming thing.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Kronecker]");
-			callfunc("DM_PartyMes", "I have records from when they entered the prison. Pre-transformation. I will hold those.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Kronecker]");
-			callfunc("DM_PartyMes", "Precisely. And the cascade's frequency does feel like release to certain attunements. It is not incorrect that there is no self left to suffer after complete surrender. The cult is not lying about the experience. It is lying about whether that is a good thing.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The Disguise. The cascade accelerated their transformation. They cannot change back. They were once people. That is the cult's argument for 'full surrender': at the end, the transformation is complete and there is no return.");
 		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20203);
 	if (questprogress(20203) == 1 && callfunc("DM_HuntCollect", 20203)) {
 		callfunc("DM_InstanceQuestComplete", 20203);
-		callfunc("DM_PartyExp", 540000, 270000);
-		callfunc("DM_GivePartyZeny", 44000);
-		.@paid = 1;
+		callfunc("DM_PartyExp", 180000, 90000);
+		callfunc("DM_GivePartyZeny", 45000);
 		callfunc("DM_PartyMes", "[Kronecker]");
-		callfunc("DM_PartyMes", "The Bloody Murderers. Terra Gloria — that is the cult's name for the deeper prison. They believed the underground held Prontera's original consecration seal. They were not entirely wrong. The prison was built on an old blessing site.");
-		next();
-		switch (select("The cascade corrupted the blessing into a recruitment tool.", "The site is clear now. Is it recoverable?", "The cult knows exactly where to establish itself.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Kronecker]");
-			callfunc("DM_PartyMes", "The blessing amplified the cascade's frequency in the prison. The Bloody Murderers felt it as certainty. As divine confirmation. They were certain they were right. That is very hard to argue with.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Kronecker]");
-			callfunc("DM_PartyMes", "The Acolytes' Guild is sending a team. Whether the original blessing can be restored or whether it is now a cascade scar — I do not know. But the Bloody Murderers are no longer using it.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Kronecker]");
-			callfunc("DM_PartyMes", "They have been doing this for longer than I have been an intelligence director. The cascade reveals pre-existing weakness in consecrated sites. The Whisperers map those sites before they recruit.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The banquet table will be set properly for once. I want the court to sit down to it believing nothing is wrong. It keeps them predictable.");
 		next();
 	}
-
-	if (questprogress(20202) == 2 && questprogress(20203) == 2 && questprogress(20204) == 0) {
-		callfunc("DM_PartyMes", "[Kronecker]");
-		callfunc("DM_PartyMes", "The prison is clear. Matron Rina is in the east wing, room seven. She has not tried to leave. She is either very calm or she was expecting you to reach her eventually.");
-		next();
-		switch (select("What does she want?", "How much does she actually know about Bijou?", "Is she dangerous?")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Kronecker]");
-			callfunc("DM_PartyMes", "I believe she wants to complete the transition. The cult's prophecy says the Great Opening requires a specific sequence of events. She believes she has set that sequence in motion and is now waiting for it to conclude.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Kronecker]");
-			callfunc("DM_PartyMes", "More than anyone else alive, I think. She has been coordinating with Bijou for four years. She may be the only person who can explain what Bijou actually is — as distinct from what the cult claims it is.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Kronecker]");
-			callfunc("DM_PartyMes", "Physically, no. She is sixty-one. But she is calm in a way that makes me uncomfortable. People who are calm when they should not be either know something you do not or have already accepted an outcome you have not.");
-			break;
-		}
-		callfunc("DM_InstanceQuestStart", 20204);
-		next();
-		callfunc("DM_PartyMes", "^3355FF[Quest started: Royal House Audience Rounds]^000000");
-		callfunc("DM_PartyMes", "^3355FFConfront Matron Rina in the east wing of prt_q. Then find Bijou below.^000000");
-		close();
-	}
-
-	if (questprogress(20204) == 1 && !dm_arc16_rina_exposed && !dm_arc16_rina_rolled && !dm_arc16_rina_defected) {
-		callfunc("DM_PartyMes", "[Kronecker]");
-		callfunc("DM_PartyMes", "Matron Rina is in the east wing. She is waiting.");
-		close();
-	}
-
-	if (questprogress(20204) == 1 && (dm_arc16_rina_exposed || dm_arc16_rina_rolled || dm_arc16_rina_defected)) {
-		callfunc("DM_PartyMes", "[Kronecker]");
-		callfunc("DM_PartyMes", "Rina is handled. Bijou is in the deepest level of prt_q. You understand what Bijou is now. Go find out if understanding is enough.");
-		close();
-	}
-
-	if (.@paid) {
-		callfunc("DM_PartyMes", "[Kronecker]");
-		callfunc("DM_PartyMes", "Both prison contracts need to be complete before you face Rina. She knows if we are still distracted.");
-		close();
-	}
-
-	callfunc("DM_PartyMes", "[Kronecker]");
-	if (questprogress(20202) == 1 && questprogress(20203) == 1)
-		callfunc("DM_PartyMes", "The Underground Prison Cleanup and Terra Gloria are both still active.");
-	else if (questprogress(20202) == 1)
-		callfunc("DM_PartyMes", "Underground Prison Cleanup is still open. The Disguise in the prison corridors.");
-	else if (questprogress(20203) == 1)
-		callfunc("DM_PartyMes", "Terra Gloria is still open. Bloody Murderer in the deeper levels.");
-	else
-		callfunc("DM_PartyMes", "Both done. Matron Rina is in the east wing of prt_q.");
 	callfunc("DM_HuntStanding", 20202, 20203);
+	return;
+}
+
+// ── Station 1: the witness interview ───────────────────────────────────────
+prontera,146,154,4	script	Palace Clerk#dm	4_F_01,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc16_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc16_evidence_mask & 1) {
+		callfunc("DM_PartyMes", "[Palace Clerk]");
+		callfunc("DM_PartyMes", "I told you what I saw. I am not going to say it twice, and I am going to be very busy for the next month.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Palace Clerk]");
+	if (dm_arc09_witness_secured) {
+		callfunc("DM_PartyMes", "You are the people who brought a witness out of Rachel. Naima sent word. If you vouch for it, I will talk.");
+	} else {
+		callfunc("DM_PartyMes", "I keep the seating plans. I keep my head down. Why should I talk to you?");
+	}
+	next();
+	if (select("Ask her what she has seen.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", "charm", 11) < 2 && !callfunc("DM_IsDM") && !dm_arc09_witness_secured) {
+		callfunc("DM_InstanceSetFlag", "dm_arc16_discretion_lost", 1);
+		callfunc("DM_PartyMes", "[Palace Clerk]");
+		callfunc("DM_PartyMes", "...Not here. Walk with me. Quietly. Somebody was looking at us.");
+	} else {
+		callfunc("DM_PartyMes", "[Palace Clerk]");
+		callfunc("DM_PartyMes", "Four of the seven court agents leave the banquet hall by the east service door, always before the second course. The door is guarded by a man who does not check what they are carrying.");
+	}
+	next();
+	if (dm_arc06_krenn_bribed) {
+		callfunc("DM_PartyMes", "[Palace Clerk]");
+		callfunc("DM_PartyMes", "One of them was in Yuno last quarter, I heard. A clerk there said the Director's office was suddenly very accommodating to visitors from Prontera.");
+	} else if (dm_arc06_krenn_exposed || dm_arc06_krenn_cooperated) {
+		callfunc("DM_PartyMes", "[Palace Clerk]");
+		callfunc("DM_PartyMes", "One of them came back from Yuno angry. Something about a Director's report becoming public. They stopped using the east door for a week and then started again.");
+	}
+	callfunc("DM_Arc16AddClue", 1);
 	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Station 2: the seating record ──────────────────────────────────────────
+prontera,154,146,4	script	Seating Ledger#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc16_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc16_evidence_mask & 2) {
+		callfunc("DM_PartyMes", "^3355FF*You have the copy. The original is back where you found it.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The banquet's seating ledger, open on a table on the north terrace. A tide chart is pinned beside it.*^000000");
+	if (dm_arc06_vahl_trust) {
+		callfunc("DM_PartyMes", "^3355FF*Doctor Vahl's hand is on the chart: a marginal note about resonance timing, mailed ahead. It lines up with the guest list.*^000000");
+	}
+	next();
+	if (select("Copy the ledger.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", "perceive", 11) < 2 && !callfunc("DM_IsDM") && !dm_arc06_vahl_trust) {
+		callfunc("DM_InstanceSetFlag", "dm_arc16_discretion_lost", 1);
+		callfunc("DM_PartyMes", "^3355FF*You copy it, with a steward watching you do it. He does not say anything. He does not need to.*^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*The seating tells you who sits next to whom, and who has been moved at the last minute. Seven names stand out. Each one sits within reach of the service door.*^000000");
+	}
+	callfunc("DM_Arc16AddClue", 2);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Station 3: the intercepted instruction ─────────────────────────────────
+prontera,150,158,4	script	Courier Satchel#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc16_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc16_evidence_mask & 4) {
+		callfunc("DM_PartyMes", "^3355FF*The satchel is empty. You have the instruction.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A courier's satchel, left against the south gate while its owner has a drink. The seal on it is unbroken.*^000000");
+	next();
+	if (select("Read the instruction inside.", "Leave it.") == 2) close();
+	if (dm_arc10_echo_freed) {
+		callfunc("DM_PartyMes", "^3355FF*Echo is at your elbow, as she said she would be. She reads the cipher aloud, flatly, and does not ask whether you want the answer.*^000000");
+	} else if (callfunc("DM_CheckRoll", "lore", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_InstanceSetFlag", "dm_arc16_discretion_lost", 1);
+		callfunc("DM_PartyMes", "^3355FF*You break the cipher too slowly. The courier is already walking back.*^000000");
+	}
+	callfunc("DM_PartyMes", "^3355FF*The instruction is one line: 'The oracle is not yet silent. Do not move until she is.' It is the first thing you have read that sounds frightened.*^000000");
+	callfunc("DM_Arc16AddClue", 4);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
 }
 
 // ── Matron Rina — The Coordinator ─────────────────────────────────────────
@@ -211,7 +360,6 @@ prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
 		callfunc("DM_PartyMes", "This part of the prison is not open to visitors.");
 		close();
 	}
-
 	if (questprogress(20201) == 2) {
 		callfunc("DM_PartyMes", "[Matron Rina]");
 		if (dm_arc16_rina_defected)
@@ -222,64 +370,102 @@ prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
 			callfunc("DM_PartyMes", "The network is gone. I will do what was agreed. The cascade does not require the network anymore.");
 		close();
 	}
-
-	if (dm_arc16_rina_exposed || dm_arc16_rina_rolled || dm_arc16_rina_defected) {
+	if (dm_arc16_rina_resolution) {
 		callfunc("DM_PartyMes", "[Matron Rina]");
 		callfunc("DM_PartyMes", "Bijou is below. Through the deepest gate. You already know what you need to know.");
+		if (dm_arc16_release_known)
+			callfunc("DM_PartyMes", "The cell is on the east side of the vault. You will need to open it yourselves. I cannot do it from here.");
 		close();
 	}
 
 	callfunc("DM_PartyMes", "[Matron Rina]");
-	callfunc("DM_PartyMes", "You cleared the prison. I wondered if you would come yourself or send soldiers. The cascade said you would come yourself.");
+	callfunc("DM_PartyMes", "You found my route. I wondered if you would come yourself or send soldiers. The cascade said you would come yourself.");
 	next();
 	callfunc("DM_PartyMes", "[Rina]");
 	callfunc("DM_PartyMes", "Bijou is not what the cult calls it. They call it an oracle. A prophet. A window into the cascade's intention. What Bijou actually is: a person who was attuned to the cascade so completely that the attrition took a different form. Not full surrender. Something else.");
 	next();
-	switch (select("You are exposed. Heine's people are outside.", "Dismantle the network quietly. On our timeline.", "Defect. Tell us how Bijou works and walk free.")) {
+	if (callfunc("DM_CountBits", dm_arc16_evidence_mask) < 2) {
+		callfunc("DM_PartyMes", "[Rina]");
+		callfunc("DM_PartyMes", "You are guessing at the route. Come back when you are not. I will not bargain with a guess.");
+		close();
+	}
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What does exposing you cost?", "What would monitored dismantling look like?", "What do protection terms mean?", "We are ready to decide.", "We need to discuss this.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Rina]");
+			callfunc("DM_PartyMes", "A public trial, large, loud, and as informative to the cascade as it is to the King. I do not mind. The court will be shaken. It may deserve to be.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Rina]");
+			callfunc("DM_PartyMes", "I give Heine the full ledger, every name, and nothing is announced. The court rebuilds itself without knowing. It is cleaner and it is dishonest, and I would not have it any other way.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Rina]");
+			callfunc("DM_PartyMes", "I tell you how Bijou works and how the woman inside her can be freed. In return I walk, under Heine's protection, and no one asks me to name the people I trained. It is the only thing I will not give up.");
+			break;
+		case 4:
+			.@done = 1;
+			break;
+		case 5:
+			callfunc("DM_PartyMes", "[Rina]");
+			callfunc("DM_PartyMes", "Take your time. I have been in this room for three years. I can be in it another hour.");
+			close();
+		}
+		if (!.@done)
+			next();
+	}
+	next();
+	switch (select("Expose her publicly.", "Compel a monitored dismantling.", "Accept her defection, with protection terms.", "Not yet. We want to talk it over.")) {
 	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_rolled");
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_defected");
-		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_exposed", 1);
-		callfunc("DM_InstanceQuestComplete", 20204);
+		.@mode = 1;
+		break;
+	case 2:
+		.@mode = 2;
+		break;
+	case 3:
+		.@mode = 3;
+		break;
+	case 4:
 		callfunc("DM_PartyMes", "[Rina]");
-		callfunc("DM_PartyMes", "Yes. I expected this. The King will want to understand the scale of the infiltration. The trial will be public and it will be large and it will tell the cascade exactly how well it worked.");
-		next();
+		callfunc("DM_PartyMes", "Of course.");
+		close();
+	}
+	next();
+	callfunc("DM_PartyMes", "[Rina]");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "Public, then. Heine's people are outside. Confirm, and I put my hands on the table.");
+	else if (.@mode == 2)
+		callfunc("DM_PartyMes", "Monitored. The ledger goes to Heine and nothing goes to the court. Confirm, and I hand it over.");
+	else
+		callfunc("DM_PartyMes", "A defection, with terms. I walk, and no one asks me to name the people I trained. Confirm, and I will tell you everything.");
+	next();
+	if (select("Confirm.", "Wait.") != 1) {
 		callfunc("DM_PartyMes", "[Rina]");
-		callfunc("DM_PartyMes", "But yes. I cooperate. The cult does not require my loyalty anymore. The sequence is in motion.");
-		next();
+		callfunc("DM_PartyMes", "Better to wait than to bargain badly.");
+		close();
+	}
+	if (!callfunc("DM_Arc16Commit", .@mode))
+		close();
+	callfunc("DM_PartyMes", "[Rina]");
+	switch (.@mode) {
+	case 1:
+		callfunc("DM_PartyMes", "The King will want to understand the scale of the infiltration. The trial will be public and it will be large and it will tell the cascade exactly how well it worked. But yes. I cooperate.");
 		callfunc("DM_PartyMes", "^3355FF*Rina places her hands on the table and waits.*^000000");
 		callfunc("DM_PartyMes", "^3355FF[Encounter: Bijou remains a hostile relay and must be silenced.]^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_exposed");
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_defected");
-		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_rolled", 1);
-		callfunc("DM_InstanceQuestComplete", 20204);
-		callfunc("DM_PartyMes", "[Rina]");
-		callfunc("DM_PartyMes", "Quietly. Yes. I understand quiet. The court does not know how many of them were being managed. That is probably better for the court's functioning.");
-		next();
-		callfunc("DM_PartyMes", "[Rina]");
-		callfunc("DM_PartyMes", "I will give Heine the full list. Every name. I have been keeping records — I expected this conversation eventually.");
-		next();
+		callfunc("DM_PartyMes", "I will give Heine the full list. Every name. I have been keeping records. I expected this conversation eventually.");
 		callfunc("DM_PartyMes", "^3355FF*Rina produces a ledger from her jacket. It is organized by court position.*^000000");
 		callfunc("DM_PartyMes", "^3355FF[Encounter: Bijou remains a hostile relay, but the court network is already unraveling.]^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_exposed");
-		callfunc("DM_InstanceClearFlag", "dm_arc16_rina_rolled");
-		callfunc("DM_InstanceSetFlag", "dm_arc16_rina_defected", 1);
-		callfunc("DM_InstanceQuestComplete", 20204);
-		callfunc("DM_PartyMes", "[Rina]");
-		callfunc("DM_PartyMes", "Bijou. What Bijou is. Yes. I can tell you that.");
+		callfunc("DM_PartyMes", "Bijou was a woman named Maret. A court musician. She was attuned to the cascade, and instead of full surrender, the cascade began using her as a relay. She is still herself. She just cannot stop receiving. She has been trying to introduce errors. Small ones. The kind that slow a sequence down.");
 		next();
 		callfunc("DM_PartyMes", "[Rina]");
-		callfunc("DM_PartyMes", "Bijou was a woman named Maret. A court musician. She was attuned to the cascade and instead of full surrender, the cascade began using her as a relay — she hears the cascade's frequency the way a radio hears a signal. She is still herself. She just cannot stop receiving.");
-		next();
-		callfunc("DM_PartyMes", "[Rina]");
-		callfunc("DM_PartyMes", "She does not want to be Bijou. She has not wanted to be Bijou for three years. The cult does not know that because the cascade's transmissions still come through her correctly. She has been trying to introduce errors. Small ones. The kind that slow a sequence down.");
-		next();
+		callfunc("DM_PartyMes", "She is in a cell on the east side of the vault, with the relay beside her. You can open it. It takes someone with steady hands and a reason to be there. If you do it before you fight, there is nothing to fight.");
 		callfunc("DM_PartyMes", "^3355FF*Rina slides the ledger across the table with Maret's real name written on the first page.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Encounter: Bijou can be resolved as Maret freed instead of a simple kill.]^000000");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: Maret's Cell in the vault can be opened by hand. It is the only way she comes out alive.]^000000");
 		break;
 	}
 	next();
@@ -287,8 +473,41 @@ prt_q,100,100,5	script	Matron Rina#dm	4_F_02,{
 	close();
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20204, 1;
+	end;
+}
+
+// ── Maret's Cell (the release interaction) ─────────────────────────────────
+prt_q,146,150,4	script	Maret's Cell#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (dm_arc16_release_completed) {
+		callfunc("DM_PartyMes", "^3355FF*The cell is open and empty. Somebody has wrapped a blanket round a woman on the floor outside.*^000000");
+		close();
+	}
+	if (!dm_arc16_release_known) {
+		callfunc("DM_PartyMes", "^3355FF*A reinforced door in the east side of the vault. A low hum behind it, steady, like a held note. You have no idea what is on the other side.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The cell Rina described. The lock is old; the relay beside it is not. A woman sits inside with her hands over her ears, listening to something none of you can hear.*^000000");
+	next();
+	if (select("Open the cell.", "Not yet.") == 2) close();
+	if (callfunc("DM_CheckRoll", "lockpick", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_PartyMes", "^3355FF*The lock holds and the relay shrieks. The woman flinches. A pulse rolls out. Try again.*^000000");
+		callfunc("DM_HazardArea", strnpcinfo(NPC_MAP), 146, 150, 5, 4, SC_CONFUSION, 3000, getcharid(CHAR_ID_PARTY));
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The lock turns. The woman looks up. 'Is it quiet?' she asks. It is not yet. It will be.*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc16_release_completed", 1);
+	// Bijou stands down: silent kill so the death event does not also fire.
+	killmonster strnpcinfo(NPC_MAP), "Prison Vault#dm::OnBijouDead";
+	close2;
+	callfunc("DM_Arc16Finish", 1);
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
 	end;
 }
 
@@ -296,22 +515,8 @@ OnInit:
 prt_q,150,150,0	script	Prison Vault#dm	HIDDEN_NPC,{
 	end;
 
+// Bijou killed in combat: never counts as a rescue.
 OnBijouDead:
-	.@party = callfunc("DM_SessionParty");
-	if (!callfunc("DM_ClaimGrant", "arc16_bijou", .@party))
-		end;
-	callfunc("DM_InstanceQuestComplete", 20201);
-	if (dm_arc16_rina_defected)
-		callfunc("DM_InstanceSetFlag", "dm_arc16_maret_freed", 1);
-	else
-		callfunc("DM_InstanceSetFlag", "dm_arc16_bijou_killed", 1);
-	callfunc("DM_PartyExp", 2000000, 1000000);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1699);
-	if (dm_arc16_rina_defected)
-		instance_announce(instance_id(), "^3355FF[DM] Bijou is freed. The cascade signal in the prison breaks. Maret surfaces for the first time in three years and does not know what month it is.^000000", bc_all);
-	else
-		instance_announce(instance_id(), "^3355FF[DM] Bijou falls silent. The cascade loses its court-facing relay. The royal army is secured — what remains of it — for the final war.^000000", bc_all);
-	sleep(2000);
-	instance_announce(instance_id(), "^FF6600[DM] The court is secured. Varmundt's research is the last piece before Morroc's ruins.^000000", bc_all);
+	callfunc("DM_Arc16Finish", 0);
 	end;
 }

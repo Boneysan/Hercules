@@ -1,0 +1,144 @@
+//===== Seal Cascade Campaign ================================
+//= DM tool: finale preview presets (GDD A4-19 test support)
+//===== Description: =========================================
+//= `@dmpreset <name>` sets the earlier-arc state the finale reads, on the
+//= whole party, so the finale can be exercised without playing 18 arcs.
+//= DM-only (same gate as the other @dm tools). It only sets campaign
+//= flags; it grants nothing and moves nobody.
+//=
+//=   @dmpreset list
+//=   @dmpreset finale-all           a generous world: every route can be made ready
+//=   @dmpreset finale-bare          a thin world: only Ragnarok Unbound is reachable at once
+//=   @dmpreset finale-queen-dead    all-good, but Himmelmez fell (Queen unavailable)
+//=   @dmpreset finale-contradiction all-good, but pact_valid AND killed (DM repair case)
+//=   @dmpreset finale-no-cost       all-good, but the Tower's cost was never disclosed
+//=   @dmpreset finale-reset         clears the finale's own state and the commit latch
+//=
+//= Runbook: planning/design/finale-test-script.md
+//===========================================================
+
+-	script	DM_FinalePresets	FAKE_NPC,{
+OnInit:
+	bindatcmd("dmpreset", strnpcinfo(NPC_NAME_UNIQUE)+"::OnPreset", 1, 99, 1);
+	end;
+
+OnPreset:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	// A preset sets ~65 flags, each through SQL-backed helpers: without this the
+	// instruction guard aborts the script ("run_script: infinity loop !") and the
+	// command answers nothing at all. Ends with the script.
+	freeloop(true);
+	.@name$ = .@atcmd_parameters$[0];
+	if (.@name$ == "list" || .@name$ == "") {
+		dispbottom("[DM] @dmpreset finale-all | finale-bare | finale-queen-dead | finale-contradiction | finale-no-cost | finale-reset");
+		end;
+	}
+	if (.@name$ == "finale-reset") {
+		callsub(S_Reset);
+		dispbottom("[DM] Finale state cleared. Run '@dm mode off' then '@dm mode on' to clear the party's once-only grants.");
+		end;
+	}
+	if (.@name$ == "finale-bare") {
+		callsub(S_Reset);
+		callsub(S_ArcState, 0);
+		callfunc("DM_InstanceSetFlag", "dm_arc19_started", 1);
+		dispbottom("[DM] finale-bare set: almost nothing from earlier arcs, finale started.");
+		end;
+	}
+	if (.@name$ == "finale-all" || .@name$ == "finale-queen-dead" || .@name$ == "finale-contradiction" || .@name$ == "finale-no-cost") {
+		callsub(S_Reset);
+		callsub(S_ArcState, 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc19_started", 1);
+		if (.@name$ == "finale-queen-dead") {
+			callfunc("DM_InstanceClearFlag", "dm_arc18_pact_valid");
+			callfunc("DM_InstanceClearFlag", "dm_arc18_himmelmez_bargained");
+			callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_killed", 1);
+			callfunc("DM_InstanceSetFlag", "dm_arc18_resolution", 3);
+		}
+		if (.@name$ == "finale-contradiction")
+			callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_killed", 1);
+		if (.@name$ == "finale-no-cost") {
+			callfunc("DM_InstanceClearFlag", "dm_arc15_cost_disclosed");
+			callfunc("DM_InstanceClearFlag", "dm_arc15_memory_mask");
+		}
+		dispbottom("[DM] " + .@name$ + " set for the party. Check with @dmflag arc06 .. arc19 or the board at the ruins.");
+		end;
+	}
+	dispbottom("[DM] Unknown preset '" + .@name$ + "'. Try @dmpreset list.");
+	end;
+
+// The finale's own state and the once-only commit latch.
+S_Reset:
+	callfunc("DM_InstanceClearFlag", "dm_arc19_started");
+	callfunc("DM_InstanceClearFlag", "dm_arc19_briefed");
+	callfunc("DM_InstanceClearFlag", "dm_arc19_groups_agreed");
+	callfunc("DM_InstanceClearFlag", "dm_arc19_prepared_mask");
+	callfunc("DM_InstanceClearFlag", "dm_arc19_volunteer_kind");
+	callfunc("DM_InstanceClearFlag", "dm_arc19_final_choice");
+	callfunc("DM_InstanceClearFlag", "dm_arc19_surt_defeated");
+	callfunc("DM_InstanceClearFlag", "dm_finale_shared_seal");
+	callfunc("DM_InstanceClearFlag", "dm_finale_reforged_seal");
+	callfunc("DM_InstanceClearFlag", "dm_finale_queens_bargain");
+	callfunc("DM_InstanceClearFlag", "dm_finale_thanatos_road");
+	callfunc("DM_InstanceClearFlag", "dm_finale_ragnarok_unbound");
+	callfunc("DM_InstanceClearFlag", "dm_finale_road_volunteer");
+	callfunc("DM_InstanceClearFlag", "dm_campaign_complete");
+	.@party = getcharid(CHAR_ID_PARTY);
+	if (.@party > 0) {
+		setd("$dm_arc19_vol_aid_" + .@party, 0);
+		setd("$dm_arc19_vol_cid_" + .@party, 0);
+		setd("$dm_arc19_vol_name_" + .@party + "$", "");
+	}
+	return;
+
+// Earlier-arc state. mode 1 = a generous world, mode 0 = a thin one (all cleared).
+S_ArcState:
+	.@v = getarg(0);
+	callfunc("DM_InstanceSetFlag", "dm_arc06_disclosure_mode", .@v ? 1 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc06_evidence_mask", .@v ? 7 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc06_vahl_trust", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc07_labor_resolution", .@v ? 1 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc09_disclosure_schedule", .@v ? 1 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc09_witness_secured", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_exposed", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc10_echo_freed", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc10_echo_exit", .@v ? 2 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc10_lab_resolution", .@v ? 1 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_outcome", .@v ? 1 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc11_civilian_pact", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_joined", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc12_survey_agreement", .@v ? 1 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc12_vance_helped", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc12_naga_passage", .@v ? 1 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc12_anchor_mask", .@v ? 7 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc13_treaty_terms", .@v ? 2 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc13_carrion_bribed", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc13_treaty_verified", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc14_evacuation_stage", .@v ? 3 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc14_authorization", .@v ? 1 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc15_memory_mask", .@v ? 7 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc15_cost_disclosed", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_resolution", .@v ? 3 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_challenged", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc16_rina_resolution", .@v ? 3 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc16_rina_defected", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc16_release_completed", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc16_maret_freed", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc17_design_recovered", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc17_chamber_isolated", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc17_fault_mask", .@v ? 7 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc17_prototype_verified", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc17_maintenance_secured", .@v ? 1 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc17_design_exported", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc17_admin_resolution", .@v ? 2 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc17_admin_negotiated", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc18_audience_mask", .@v ? 3 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc18_resolution", .@v ? 1 : 0);
+	callfunc("DM_InstanceSetFlag", "dm_arc18_pact_valid", .@v);
+	callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_bargained", .@v);
+	callfunc("DM_InstanceClearFlag", "dm_arc18_himmelmez_killed");
+	return;
+}

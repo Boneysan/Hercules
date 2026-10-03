@@ -110,19 +110,20 @@ function	script	DM_ClearPartyGrants	{
 		"arc03_osiris", "arc03_amon", "arc03_survey", "arc03_relief",
 		"arc04_baphomet", "arc04_doppel", "arc04_glyphs",
 		"arc05_tao", "arc05_crew", "arc05_ferry", "arc05_divers",
-		"arc06_krenn_zeny", "arc06_mistress",
-		"arc07_rsx",
-		"arc08_darklord",
-		"arc09_gloom",
-		"arc10_kiel",
-		"arc11_randgris",
-		"arc12_naght",
-		"arc13_beelzebub",
-		"arc14_ifrit",
-		"arc15_thanatos",
-		"arc16_bijou",
-		"arc17_beta",
-		"arc19_surt", "arc19_finale";
+		"arc06_krenn_zeny", "arc06_mistress", "arc06_evidence", "arc06_resolution",
+		"arc07_rsx", "arc07_prep", "arc07_prep_bonus", "arc07_resolution",
+		"arc08_darklord", "arc08_memories", "arc08_memories_third", "arc08_resolution",
+		"arc09_gloom", "arc09_record", "arc09_witness", "arc09_resolution",
+		"arc10_kiel", "arc10_route", "arc10_echo", "arc10_resolution",
+		"arc11_randgris", "arc11_trial_1", "arc11_trial_2", "arc11_resolution",
+		"arc12_naght", "arc12_survey", "arc12_naga", "arc12_anchor_1", "arc12_anchor_2", "arc12_anchor_4", "arc12_resolution",
+		"arc13_beelzebub", "arc13_prep", "arc13_ward_1", "arc13_ward_2", "arc13_witness", "arc13_resolution",
+		"arc14_ifrit", "arc14_stage_1", "arc14_stage_2", "arc14_stage_3", "arc14_resolution",
+		"arc15_thanatos", "arc15_memory_1", "arc15_memory_2", "arc15_memory_4", "arc15_resolution",
+		"arc16_bijou", "arc16_clue_1", "arc16_clue_2", "arc16_clue_4", "arc16_resolution",
+		"arc17_beta", "arc17_design", "arc17_chamber", "arc17_fault_1", "arc17_fault_2", "arc17_fault_4", "arc17_prototype", "arc17_maintenance", "arc17_resolution",
+		"arc18_audience_1", "arc18_audience_2", "arc18_himmelmez",
+		"arc19_surt", "arc19_finale", "arc19_choice";
 	.@n = getarraysize(.@keys$);
 	for (.@i = 0; .@i < .@n; ++.@i)
 		setd("$dm_paid_" + .@party_id + "_" + .@keys$[.@i], 0);

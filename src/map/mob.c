@@ -177,7 +177,7 @@ static bool mob_ai_profile_step_away(struct mob_data *md, struct block_list *tar
 	}
 
 	return (best_x != md->bl.x || best_y != md->bl.y)
-	    && unit->walk_toxy(&md->bl, best_x, best_y, 0) == 0;
+	    && unit->walk_toxy(&md->bl, best_x, best_y, 2) == 0;
 }
 
 /*==========================================
@@ -1889,7 +1889,8 @@ static bool mob_ai_sub_hard(struct mob_data *md, int64 tick)
 	 * Skirmishers react to a hit threshold; keepers maintain a configured band.
 	 * Both fall through to stock AI when no legal adjacent cell is available. */
 	if (ai_profile != NULL && tbl != NULL && tbl->type == BL_PC && tbl->m == md->bl.m
-	    && md->ud.walktimer == INVALID_TIMER && can_move
+	    && md->ud.walktimer == INVALID_TIMER && (mode & MD_CANMOVE)
+	    && md->ud.skilltimer == INVALID_TIMER
 	    && (md->ai_profile_cooldown_tick == 0
 	        || DIFF_TICK(tick, md->ai_profile_cooldown_tick) >= ai_profile->cooldown)) {
 		if (ai_profile->role == MOB_AI_PROFILE_SKIRMISHER
@@ -6088,7 +6089,7 @@ static void mob_read_ai_profiles(void)
 	int i = 0;
 
 	mob_ai_profile_count = 0;
-	snprintf(filepath, sizeof(filepath), "%s", DBPATH"mob_ai_profile_db.conf");
+	snprintf(filepath, sizeof(filepath), "%s/%s", map->db_path, DBPATH"mob_ai_profile_db.conf");
 	if (!exists(filepath)) {
 		ShowStatus("No map-scoped mob AI profiles configured.\n");
 		return;
@@ -6181,7 +6182,11 @@ static void mob_readskilldb(void)
 	};
 	int i;
 
-	mob_read_ai_profiles();
+	// F15 rollback switch: mob_pilot_version 0 skips both pilot layers.
+	if (battle_config.mob_pilot_version >= 1)
+		mob_read_ai_profiles();
+	else
+		mob_ai_profile_count = 0;
 
 	if (battle_config.mob_skill_rate == 0) {
 		ShowStatus("Mob skill use disabled. Not reading mob skills.\n");
@@ -6191,6 +6196,8 @@ static void mob_readskilldb(void)
 	for (i = 0; i < ARRAYLENGTH(filename); ++i) {
 		mob->skill_db_libconfig(filename[i], i > 0 ? true : false);
 	}
+	if (battle_config.mob_pilot_version >= 1)
+		mob->skill_db_libconfig(DBPATH"mob_pilot_skill_db.conf", true);
 }
 
 /**

@@ -32,6 +32,24 @@ function	script	DM_CampaignEventAppend	{
 	return .@rows == 1 && .@event_id > 0;
 }
 
+// Party ids are not stable run identities: the server hands an id out again
+// once its party is gone (and restarts can start counting from 1). Rows left
+// under an id by a dead run must not reach whoever is given that id next --
+// neither by being inherited as progress, nor by colliding with the rows a
+// re-key moves in (which aborted `@dm mode on` on a duplicate key). Callers
+// only purge an id that has NO checkpoint row, which proves no run owns it.
+function	script	DM_CheckpointPurgeParty	{
+	.@party_id = getarg(0, 0);
+	if (.@party_id <= 0)
+		return 0;
+	.@campaign$ = callfunc("DM_CheckpointCampaign");
+	query_sql("DELETE FROM `dm_campaign_party_state` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
+	query_sql("DELETE FROM `dm_campaign_party_event` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
+	query_sql("DELETE FROM `dm_campaign_party_cursor` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
+	query_sql("DELETE FROM `dm_campaign_pending_grant` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
+	return 1;
+}
+
 // Keep campaign membership keyed by character, not by the party id assigned
 // by the server. When a returning member is in a newly-created party, move the
 // durable checkpoint row to that current roster before the next operation.
@@ -45,6 +63,8 @@ function	script	DM_CheckpointRememberParty	{
 	if (.@rows == 1 && .@old_party != .@party_id) {
 		.@current = query_sql("SELECT `party_id` FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id, .@ignored);
 		if (.@current != 1) {
+			// No run owns the new id: whatever is stored under it is a dead run's.
+			callfunc("DM_CheckpointPurgeParty", .@party_id);
 			query_sql("UPDATE `dm_campaign_checkpoint` SET `party_id` = " + .@party_id + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@old_party);
 			query_sql("UPDATE `dm_campaign_checkpoint_member` SET `party_id` = " + .@party_id + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@old_party);
 			query_sql("UPDATE `dm_campaign_party_state` SET `party_id` = " + .@party_id + " WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@old_party);
@@ -67,6 +87,10 @@ function	script	DM_CheckpointStart	{
 		return 0;
 	.@campaign$ = callfunc("DM_CheckpointCampaign");
 	callfunc("DM_CheckpointRememberParty", .@party_id);
+	// A brand-new run takes its id fresh. (A re-key above has just given this id
+	// a checkpoint row, so a returning run is never purged here.)
+	if (query_sql("SELECT `party_id` FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id, .@owner) != 1)
+		callfunc("DM_CheckpointPurgeParty", .@party_id);
 	query_sql("INSERT IGNORE INTO `dm_campaign_checkpoint` (`campaign_id`,`schema_version`,`party_id`,`arc_id`,`step`,`carrier_char_id`,`last_actor_char_id`) VALUES ('" + .@campaign$ + "',1," + .@party_id + "," + .@arc_id + ",0,0,0)");
 	return 1;
 }

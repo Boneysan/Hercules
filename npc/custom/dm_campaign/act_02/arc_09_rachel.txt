@@ -8,16 +8,75 @@
 //= Karsh has known for twenty years. Gloom Under Night was not
 //= summoned — it was the first thing that heard the prayers.
 //=
+//= REBUILT 2026-10-02 (handoff A2-09). Yuno was about assembling
+//= evidence; Rachel is about keeping a witness alive while the
+//= truth comes out. The party extracts the ice-core record, gets
+//= Naima's testimony through, then decides when and whether it
+//= is disclosed.
+//=
+//= Steps:
+//=   1 extract the ice-core record (ice_dun01 archive, guarded)
+//=       dm_arc09_record
+//=   2 choose how Naima testifies (dm_arc09_witness_route):
+//=       1 public briefing, guard-protected (a defense scene at the pulpit)
+//=       2 discreet transfer through two checkpoints (concealment checks;
+//=         a failed check brings a defense fight, never a dead witness)
+//=       -> dm_arc09_witness_secured
+//=   3 decide disclosure (dm_arc09_disclosure_schedule, final, equal EXP):
+//=       1 disclose now        -> public support: a recovery point in town
+//=       2 supervised evacuation, then disclose -> a safe approach to
+//=         Gloom; publication happens when Gloom falls (explicit event)
+//=       3 keep it secret (Karsh's managed transition) -> accountability
+//=         cost recorded (dm_arc09_secret_kept)
+//= Derived for later arcs: karsh_exposed (1, and 2 once Gloom falls),
+//= karsh_deal (3). Never both.
+//=
 //= Quests (db/quest_db.conf):
 //=   20131 The Bleeding Blessing       (arc tracker / Gloom)
-//=   20132 Ice Core Samples (Glacial Heart x9, Ice Cubic x2, Cold Ice x2)
-//=   20133 Hollow Blessings (Ice Piece x3, Crystal Blue x2, Ice Crystal x3)
-//=   20134 The Prelate's Record        (Karsh confrontation)
+//=   20132 Ice Core Samples   (optional collaboration with Vahl)
+//=   20133 Hollow Blessings   (optional collaboration with Vahl)
+//=   20134 The Prelate's Record        (testimony and disclosure)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc09_started, dm_arc09_karsh_exposed,
-//=   dm_arc09_karsh_deal, dm_arc09_gloom_killed
+//=   dm_arc09_started, dm_arc09_record, dm_arc09_witness_route,
+//=   dm_arc09_witness_secured, dm_arc09_checkpoints,
+//=   dm_arc09_disclosure_schedule, dm_arc09_approach_safe,
+//=   dm_arc09_secret_kept, dm_arc09_karsh_exposed, dm_arc09_karsh_deal,
+//=   dm_arc09_gloom_killed
 //===========================================================
+
+// ── Shared Arc 9 helpers ───────────────────────────────────────────────────
+
+function	script	DM_Arc09SecureWitness	{
+	callfunc("DM_InstanceSetFlag", "dm_arc09_witness_secured", getarg(0));
+	callfunc("DM_DMJStoryObjective", 20134, 2, "Interact", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc09_witness"))
+		callfunc("DM_PartyExp", 156000, 75000);
+	callfunc("DM_PartyMes", "^3355FF[Naima is secured and her testimony is on record. Return to her.]^000000");
+	return 1;
+}
+
+// mode: 1 disclose now, 2 supervised evacuation then disclose, 3 keep the secret.
+function	script	DM_Arc09Commit	{
+	.@mode = getarg(0);
+	if (dm_arc09_disclosure_schedule)
+		return 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc09_disclosure_schedule", .@mode);
+	if (.@mode == 1) {
+		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_exposed", 1);
+	} else if (.@mode == 2) {
+		callfunc("DM_InstanceSetFlag", "dm_arc09_approach_safe", 1);
+	} else {
+		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_deal", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc09_secret_kept", 1);
+	}
+	callfunc("DM_InstanceQuestComplete", 20134);
+	callfunc("DM_DMJStoryObjective", 20134, 3, "Interact", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc09_resolution"))
+		callfunc("DM_PartyExp", 208000, 100000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 905);
+	return 1;
+}
 
 // ── Acolyte Naima — The Believer Who Looked Too Closely ────────────────────
 rachel,120,120,5	script	Acolyte Naima#dm	4_F_04,{
@@ -36,10 +95,26 @@ rachel,120,120,5	script	Acolyte Naima#dm	4_F_04,{
 		end;
 	}
 
-	callsub(S_TurnIns);
+	if (dm_arc09_disclosure_schedule) {
+		callsub(S_AfterDisclosure);
+		end;
+	}
+
+	if (dm_arc09_witness_secured) {
+		callsub(S_Disclosure);
+		end;
+	}
+
+	if (dm_arc09_record) {
+		callsub(S_Testimony);
+		end;
+	}
+
+	callsub(S_Progress);
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20131, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -57,7 +132,7 @@ S_StartArc:
 	}
 	if (dm_arc08_darklord_killed) {
 		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "What the cascade did to Glast Heim — amplifying a kingdom's collective despair into something that walks around — I think it is doing something similar here. Except the thing under the ice has been listening to prayers instead of grief.");
+		callfunc("DM_PartyMes", "What the cascade did to Glast Heim, amplifying a kingdom's collective despair into something that walks around, I think it is doing something similar here.");
 		next();
 	}
 	callfunc("DM_PartyMes", "[Naima]");
@@ -66,165 +141,244 @@ S_StartArc:
 	callfunc("DM_PartyMes", "[Naima]");
 	callfunc("DM_PartyMes", "I took ice core samples three months ago. The rift is not divine. It is dimensional. It matches every measurement I have of the Ash Vacuum.");
 	next();
-	switch (select("How long has the church known?", "What is Gloom Under Night?", "What do you need us to do?")) {
-	case 1:
-		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "Karsh has been sitting on my predecessor's identical findings for twenty years. The paperwork exists. He archived it under a false classification code. I found it.");
-		break;
-	case 2:
-		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "The first thing that heard the prayers. When an entire civilization prays into a dimensional rift for four hundred years, something eventually answers. Gloom Under Night is that answer.");
-		break;
-	case 3:
-		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "Ice cores from the deep ice formations — they record the rift's dimensional resonance going back centuries. And the pilgrims who camped in the outer sanctum. Something followed them home. I need evidence of the effect, not just the cause.");
-		break;
+	.@ready = 0;
+	while (!.@ready) {
+		switch (select("How long has the church known?", "What is Gloom Under Night?", "What do you need from us?", "We are ready. Where do we start?")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Naima]");
+			callfunc("DM_PartyMes", "Karsh has been sitting on my predecessor's identical findings for twenty years. The paperwork exists. He archived it under a false classification code. I found it.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Naima]");
+			callfunc("DM_PartyMes", "The first thing that heard the prayers. When an entire civilization prays into a dimensional rift for four hundred years, something eventually answers. Gloom Under Night is that answer.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Naima]");
+			callfunc("DM_PartyMes", "I need the original ice-core record out of the cave where the church had it sealed. And then I need to say what is in it out loud, to someone who can act, without anyone making me stop.");
+			break;
+		case 4:
+			.@ready = 1;
+			break;
+		}
+		next();
 	}
-	next();
 	callfunc("DM_PartyMes", "[Naima]");
-	callfunc("DM_PartyMes", "Ice Titan cores from the third ice level give the deepest resonance readings. And the Snowier in the outer sanctum — they have absorbed dimensional bleed through proximity to the rift. Their biology shows it.");
+	callfunc("DM_PartyMes", "First, the record. It is in an archive at the mouth of the ice cave, and the Snowier have been living around it. Bring it out. After that, we will decide how I say it.");
 	callfunc("DM_InstanceSetFlag", "dm_arc09_started", 1);
 	callfunc("DM_InstanceQuestStart", 20131);
-	callfunc("DM_InstanceQuestStart", 20132);
-	callfunc("DM_InstanceQuestStart", 20133);
+	callfunc("DM_DMJStoryObjective", 20131, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Bleeding Blessing]^000000");
-	callfunc("DM_PartyMes", "^3355FFIce Core Samples - cored out of the deep ice: " + callfunc("DM_HuntBrief", 20132) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFHollow Blessings - off the ice around the outer sanctum: " + callfunc("DM_HuntBrief", 20133) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFExtract the ice-core record from the archive at the ice cave.^000000");
 	close();
 
-S_TurnIns:
-	.@paid = 0;
+S_Progress:
+	callfunc("DM_PartyMes", "[Naima]");
+	callfunc("DM_PartyMes", "The record is still in the archive at the mouth of the ice cave. The Snowier will not let you take it without an argument.");
+	next();
+	switch (select("Ask about the optional sample work for Vahl.", "Thank you. We are on it.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		break;
+	}
+	close();
+
+S_Optional:
+	callfunc("DM_PartyMes", "[Naima]");
+	callfunc("DM_PartyMes", "Samples that Doctor Vahl in Yuno would want to cross-reference against her cascade readings. Not evidence. Collaboration.");
+	next();
+	if (questprogress(20132) == 0) {
+		callfunc("DM_InstanceQuestStart", 20132);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Ice Core Samples - " + callfunc("DM_HuntBrief", 20132) + "]^000000");
+	}
+	if (questprogress(20133) == 0) {
+		callfunc("DM_InstanceQuestStart", 20133);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Hollow Blessings - " + callfunc("DM_HuntBrief", 20133) + "]^000000");
+	}
 	callfunc("DM_HuntNoteShort", 20132);
 	if (questprogress(20132) == 1 && callfunc("DM_HuntCollect", 20132)) {
 		callfunc("DM_InstanceQuestComplete", 20132);
-		callfunc("DM_PartyExp", 250000, 120000);
+		callfunc("DM_PartyExp", 83000, 40000);
 		callfunc("DM_GivePartyZeny", 20000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "The deep core samples. These go back three centuries. The rift has been here far longer than the church. The Twelve did not create it. The church was built around something that was already here.");
-		next();
-		switch (select("Publish the historical data immediately.", "Add it to the case file against Karsh.", "Keep it. Let the church make its own peace with this.")) {
-		case 1:
-			callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_exposed", 1);
-			callfunc("DM_PartyMes", "[Naima]");
-			callfunc("DM_PartyMes", "The university scribes in Juno can distribute it within a week. Karsh cannot recall every copy. This becomes a matter of public record.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Naima]");
-			callfunc("DM_PartyMes", "Good. When we have the Snowier data as well, Karsh's suppression becomes indefensible.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Naima]");
-			callfunc("DM_PartyMes", "I understand the instinct. But the church will be the last institution to make peace with it. Someone else has to put the truth in circulation first.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The deep core samples. These go back three centuries. The church was built around something that was already here.");
 		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20133);
 	if (questprogress(20133) == 1 && callfunc("DM_HuntCollect", 20133)) {
 		callfunc("DM_InstanceQuestComplete", 20133);
-		callfunc("DM_PartyExp", 270000, 130000);
+		callfunc("DM_PartyExp", 90000, 43000);
 		callfunc("DM_GivePartyZeny", 22000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "The Snowier tissue shows active dimensional absorption. They have been changed by proximity to the rift over generations. The outer sanctum has been bleeding into local fauna for at least forty years.");
-		next();
-		switch (select("Document the fauna effect and file it with the ice core data.", "Send samples to Vahl in Yuno — she would want to see this.", "This is the evidence. Karsh knew what he was sitting on.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Naima]");
-			callfunc("DM_PartyMes", "Filed. Together the two datasets constitute the most comprehensive documentation of a dimensional rift's environmental impact I know of.");
-			break;
-		case 2:
-			if (dm_arc06_vahl_trust) {
-				callfunc("DM_PartyMes", "[Naima]");
-				callfunc("DM_PartyMes", "Vahl's cascade measurements and our rift biology data together... yes. That cross-reference would be powerful. I will send a copy to Yuno.");
-			} else {
-				callfunc("DM_PartyMes", "[Naima]");
-				callfunc("DM_PartyMes", "I don't know this Vahl. But if she has cascade data from Yuno, the cross-reference with our rift biology would be significant. I'll reach out.");
-			}
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Naima]");
-			callfunc("DM_PartyMes", "He knew. His predecessor documented the first signs forty years ago. Karsh inherited the knowledge and the silence. We have the paper trail.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The Snowier tissue shows active dimensional absorption. The outer sanctum has been bleeding into local fauna for at least forty years.");
+		if (dm_arc06_vahl_trust)
+			callfunc("DM_PartyMes", "Vahl's cascade measurements and this, together. Yes. I will send her a copy.");
 		next();
 	}
-
-	if (questprogress(20132) == 2 && questprogress(20133) == 2 && questprogress(20134) == 0) {
-		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "Both datasets are in. The ice cores and the fauna samples together constitute an undeniable record of what the Blessing actually is.");
-		next();
-		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "Karsh knows I have this. He has been waiting for me to either disappear or make a move. I think you are the move he did not plan for.");
-		next();
-		switch (select("We go to Karsh directly. Force his hand.", "We publish everything first, then confront him.", "Let's find out what he's actually protecting.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Naima]");
-			callfunc("DM_PartyMes", "Directly. He will have a prepared response. But he will not have seen you coming. That may be enough.");
-			break;
-		case 2:
-			callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_exposed", 1);
-			callfunc("DM_PartyMes", "[Naima]");
-			callfunc("DM_PartyMes", "Published before he can act. He will know. But he will not be able to bury it.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Naima]");
-			callfunc("DM_PartyMes", "The official explanation has changed three times. What he is protecting is the institution. What he is afraid of is that the institution cannot survive the truth. He may be right.");
-			break;
-		}
-		callfunc("DM_InstanceQuestStart", 20134);
-		next();
-		callfunc("DM_PartyMes", "^3355FF[Quest started: The Prelate's Record]^000000");
-		callfunc("DM_PartyMes", "^3355FFConfront High Prelate Karsh. Then descend to ice_dun03 and face Gloom Under Night.^000000");
-		close();
-	}
-
-	if (questprogress(20134) == 1 && !dm_arc09_karsh_exposed && !dm_arc09_karsh_deal) {
-		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "Karsh is at his study in the Sanctuary. He will be expecting something. He is always expecting something.");
-		close();
-	}
-
-	if (questprogress(20134) == 1 && (dm_arc09_karsh_exposed || dm_arc09_karsh_deal)) {
-		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "Karsh is resolved. Whatever he chose, the record is what it is.");
-		next();
-		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "Gloom Under Night remains. It does not care about Karsh or the data or what we choose. It is four hundred years of answered prayers. It will take something harder than truth to quiet it.");
-		close();
-	}
-
-	if (.@paid) {
-		callfunc("DM_PartyMes", "[Naima]");
-		callfunc("DM_PartyMes", "We need both the ice cores and the fauna samples. The case is not complete without both.");
-		close();
-	}
-
-	callfunc("DM_PartyMes", "[Naima]");
-	if (questprogress(20132) == 1 && questprogress(20133) == 1)
-		callfunc("DM_PartyMes", "The ice core samples and the Snowier documentation are both still open.");
-	else if (questprogress(20132) == 1)
-		callfunc("DM_PartyMes", "Ice Core Samples is still open. Ice Titan in the deep ice, third level.");
-	else if (questprogress(20133) == 1)
-		callfunc("DM_PartyMes", "Hollow Blessings is still open. Snowier in the outer sanctum.");
-	else
-		callfunc("DM_PartyMes", "The data is waiting. Come back when you have both contracts.");
 	callfunc("DM_HuntStanding", 20132, 20133);
+	return;
+
+// Record in hand: choose how Naima testifies. Inert questions first.
+S_Testimony:
+	callfunc("DM_PartyMes", "[Naima]");
+	callfunc("DM_PartyMes", "You have it. Then the next part is mine to survive, and yours to choose how. Karsh knows I have been asking. He will not let me say it twice.");
+	next();
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What are the two ways?", "What goes wrong in each?", "We are ready to choose.", "We need to discuss this.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Naima]");
+			callfunc("DM_PartyMes", "A public briefing at the Sanctuary pulpit, with the guards Karsh cannot refuse to lend because the whole nave will see him refuse. Or a quiet transfer: two checkpoints on the way out of the city, no crowd, no guards, just you and whoever is watching.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Naima]");
+			callfunc("DM_PartyMes", "Public: Karsh's zealots will try to stop me in front of everyone, and the party defends the pulpit. Quiet: if a checkpoint is noticed, there is a fight on the road. Neither is the end of me. Both are a fight.");
+			break;
+		case 3:
+			.@done = 1;
+			break;
+		case 4:
+			callfunc("DM_PartyMes", "[Naima]");
+			callfunc("DM_PartyMes", "Of course. I have been waiting three months. I can wait an hour.");
+			close();
+		}
+		if (!.@done)
+			next();
+	}
+	next();
+	switch (select("A public briefing at the Sanctuary pulpit.", "A discreet transfer through two checkpoints.", "Not yet. We want to talk it over.")) {
+	case 1:
+		.@route = 1;
+		break;
+	case 2:
+		.@route = 2;
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "[Naima]");
+		callfunc("DM_PartyMes", "Take your time.");
+		close();
+	}
+	next();
+	callfunc("DM_PartyMes", "[Naima]");
+	if (.@route == 1)
+		callfunc("DM_PartyMes", "The pulpit, then. Speak to me there when you are ready, and I will begin. Confirm, and I will walk up.");
+	else
+		callfunc("DM_PartyMes", "The checkpoints, then. North road and south road. Meet me at each. Confirm, and I will start moving.");
+	next();
+	if (select("Confirm.", "Wait.") != 1) {
+		callfunc("DM_PartyMes", "[Naima]");
+		callfunc("DM_PartyMes", "Better to wait than to choose wrong with me standing in the open.");
+		close();
+	}
+	callfunc("DM_InstanceSetFlag", "dm_arc09_witness_route", .@route);
+	callfunc("DM_PartyMes", "[Naima]");
+	callfunc("DM_PartyMes", ((.@route == 1) ? "Then the Sanctuary pulpit. Speak when I am in place." : "Then the two checkpoints: the north road and the south road."));
+	close();
+
+S_Disclosure:
+	callfunc("DM_PartyMes", "[Naima]");
+	callfunc("DM_PartyMes", "It is on the record. Karsh knows it is. Now what is said to the city, and when? That is the part I will not decide for you.");
+	next();
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What does each choice cost?", "What is lost if we wait?", "What if we keep it secret?", "We are ready to decide.", "We need to discuss this.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Naima]");
+			callfunc("DM_PartyMes", "Disclose now: Karsh is removed, the church enters a crisis it may not survive, and the pilgrims will know what the Blessing is by the end of the week. Supervised evacuation first: the pilgrims are moved out of the sanctum before anyone says it, Karsh signs the order, and the truth is told when the thing under the ice is dealt with. Keep it secret: nobody panics, nobody learns, and I will not stand next to you afterward.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Naima]");
+			callfunc("DM_PartyMes", "While we wait, Karsh's people can burn the archive copies. The original is safe because you took it. The sixty years of indexed duplicates are not.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Naima]");
+			callfunc("DM_PartyMes", "Then it stays what it is. It will be on the record that you chose that, because I will write it down. Not as an accusation. As a record.");
+			break;
+		case 4:
+			.@done = 1;
+			break;
+		case 5:
+			callfunc("DM_PartyMes", "[Naima]");
+			callfunc("DM_PartyMes", "Do. The sanctum is quiet tonight. It will not stay that way.");
+			close();
+		}
+		if (!.@done)
+			next();
+	}
+	next();
+	switch (select("Disclose it now.", "Evacuate the sanctum first, then disclose.", "Keep it secret.", "Not yet. We want to talk it over.")) {
+	case 1:
+		.@mode = 1;
+		break;
+	case 2:
+		.@mode = 2;
+		break;
+	case 3:
+		.@mode = 3;
+		break;
+	case 4:
+		callfunc("DM_PartyMes", "[Naima]");
+		callfunc("DM_PartyMes", "Of course.");
+		close();
+	}
+	next();
+	callfunc("DM_PartyMes", "[Naima]");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "Now, then. The scribes in Juno can have it out within a week, and I will be standing in the open when it does. Confirm, and it goes.");
+	else if (.@mode == 2)
+		callfunc("DM_PartyMes", "Evacuate first. Karsh will sign the order, because the alternative is worse for him. The truth is told once Gloom Under Night is quiet. Confirm, and I start moving people.");
+	else
+		callfunc("DM_PartyMes", "Secret. It becomes the church's to manage, on the church's timeline, and I will carry what I know for the rest of my life. Confirm, if that is the choice.");
+	next();
+	if (select("Confirm.", "Wait.") != 1) {
+		callfunc("DM_PartyMes", "[Naima]");
+		callfunc("DM_PartyMes", "Better to wait than to have said it badly.");
+		close();
+	}
+	if (!callfunc("DM_Arc09Commit", .@mode))
+		close();
+	callfunc("DM_PartyMes", "[Naima]");
+	switch (.@mode) {
+	case 1:
+		callfunc("DM_PartyMes", "It is out. The Council has it. There is a crowd outside the Sanctuary, and half of them are praying and half of them are shouting. Both are the right response.");
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "The pilgrims are leaving the sanctum in groups, in the dark, by the south stair. Karsh signed. Go. The approach to the ice is clear. When it is over, I will make the announcement.");
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "Then it is a secret. I do not forgive it. I also will not unmake it. I will keep the original. Go and quiet the thing under the ice.");
+		break;
+	}
+	next();
+	callfunc("DM_PartyMes", "^3355FF[The Prelate's Record resolved. Descend to ice_dun03 and face Gloom Under Night.]^000000");
+	close();
+
+S_AfterDisclosure:
+	callfunc("DM_PartyMes", "[Naima]");
+	switch (dm_arc09_disclosure_schedule) {
+	case 1:
+		callfunc("DM_PartyMes", "Karsh is resigned and the Council is in session. There is an aid post set up for the pilgrims by the south road. Go and use it before you go down.");
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "The sanctum is empty. Nobody is hurt. I will announce it when you come back, and not before. Gloom Under Night is below. The way is clear.");
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "You chose it. I wrote it down. Go.");
+		break;
+	}
 	close();
 }
 
 // ── High Prelate Karsh — The Church's Secret Keeper ────────────────────────
-rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
+rachel,129,119,5	script	High Prelate Karsh#dm	4_M_05,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc09_started) {
 		callfunc("DM_PartyMes", "[High Prelate Karsh]");
 		callfunc("DM_PartyMes", "The Sanctuary is not a public venue. Present credentials or leave.");
 		close();
 	}
-
 	if (questprogress(20131) == 2) {
 		callfunc("DM_PartyMes", "[High Prelate Karsh]");
 		if (dm_arc09_karsh_exposed)
@@ -233,13 +387,21 @@ rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
 			callfunc("DM_PartyMes", "An arrangement was reached. The church will manage the transition in its own way.");
 		close();
 	}
-
-	if (dm_arc09_karsh_exposed || dm_arc09_karsh_deal) {
+	if (dm_arc09_disclosure_schedule) {
 		callfunc("DM_PartyMes", "[High Prelate Karsh]");
-		callfunc("DM_PartyMes", "We have concluded our business. Whatever you believe you have accomplished, consider carefully what happens to institutions when they are publicly embarrassed.");
+		switch (dm_arc09_disclosure_schedule) {
+		case 1:
+			callfunc("DM_PartyMes", "We have concluded our business. Whatever you believe you have accomplished, consider carefully what happens to institutions when they are publicly embarrassed.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "I signed the evacuation order. Do not mistake it for contrition. The sanctum is empty because I do not want a martyr in it.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "You kept it. We have more in common than I had hoped. I will remember that you chose the church over the city, and I will not thank you for it.");
+			break;
+		}
 		close();
 	}
-
 	callfunc("DM_PartyMes", "[High Prelate Karsh]");
 	callfunc("DM_PartyMes", "Naima sent you. Of course she did.");
 	next();
@@ -257,52 +419,258 @@ rachel,130,120,5	script	High Prelate Karsh#dm	4_M_05,{
 	callfunc("DM_PartyMes", "I have the documentation Naima's predecessor produced. I have Naima's own notes from three months ago. I have twenty years of archives that say exactly what she claims they say.");
 	next();
 	callfunc("DM_PartyMes", "[Karsh]");
-	callfunc("DM_PartyMes", "The question is what you intend to do with that fact.");
-	next();
-	switch (select("Sign a public confession. The people of Arunafeltz deserve the truth.", "What would it take for you to manage this transition yourself?", "We are not interested in the church. We need Gloom Under Night stopped.")) {
-	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_exposed", 1);
-		callfunc("DM_PartyMes", "[Karsh]");
-		callfunc("DM_PartyMes", "A public confession. Signed, dated, distributed. The Council will remove me. The church will enter a crisis it may not survive.");
-		next();
-		callfunc("DM_PartyMes", "[Karsh]");
-		callfunc("DM_PartyMes", "...");
-		next();
-		callfunc("DM_PartyMes", "[Karsh]");
-		callfunc("DM_PartyMes", "Give me the paper.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Karsh signs. His hand does not tremble.*^000000");
-		break;
-	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_deal", 1);
-		callfunc("DM_PartyMes", "[Karsh]");
-		callfunc("DM_PartyMes", "A managed transition. I formally reclassify the Blessing as a dimensional anomaly under theological study. The Council is briefed privately. No public confession. The institution survives.");
-		next();
-		callfunc("DM_PartyMes", "[Karsh]");
-		callfunc("DM_PartyMes", "In return, Naima's findings are incorporated into official doctrine on a five-year timeline. And I retire from active duty at year's end.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*The deal is struck. The truth moves at the church's pace. That may be the best available outcome.*^000000");
-		break;
-	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_deal", 1);
-		callfunc("DM_PartyMes", "[Karsh]");
-		callfunc("DM_PartyMes", "Then we have more in common than I expected. Gloom Under Night is what happens when four hundred years of prayer hits a dimensional aperture with nothing on the other side to receive it. I need it gone as much as you do.");
-		next();
-		callfunc("DM_PartyMes", "[Karsh]");
-		callfunc("DM_PartyMes", "I will cooperate with whatever you need to descend into ice_dun03. The theology is a separate question. One problem at a time.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Karsh's cooperation is practical rather than principled. But it opens the ice dungeon approach.*^000000");
-		break;
-	}
-	callfunc("DM_InstanceQuestComplete", 20134);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 905);
-	next();
-	callfunc("DM_PartyMes", "^3355FF[The Prelate's Record resolved. Descend to ice_dun03 and face Gloom Under Night.]^000000");
+	callfunc("DM_PartyMes", "The question is what you intend to do with that fact. I will tell you what I intend: to be present at whatever you do, and to be seen helping. It costs me less than being seen refusing.");
+	if (dm_arc09_witness_route == 1 && !dm_arc09_witness_secured)
+		callfunc("DM_PartyMes", "The guards at the pulpit are mine. I will lend them. Do not read it as loyalty.");
 	close();
 
 OnInit:
-	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20134, 1;
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Extraction: the ice-core archive (guarded by Snowier) ──────────────────
+ice_dun01,60,60,4	script	Ice Core Archive#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc09_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc09_record) {
+		callfunc("DM_PartyMes", "^3355FF*The archive is empty. You have the record.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The Snowier are still between you and the archive.*^000000");
+		close();
+	}
+	if (!'guard_cleared) {
+		callfunc("DM_PartyMes", "^3355FF*A sealed archive at the cave mouth, frost-furred and old. The Snowier that live around it turn toward you, all together.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc09_archive", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Rift-touched Snowier", SNOWIER, .@self$ + "::OnGuardDead", 62, 100, 3, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The seal breaks. Three centuries of ice cores, indexed in the church's own hand, and a classification stamp that does not match the contents.*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc09_record", 1);
+	callfunc("DM_DMJStoryObjective", 20131, 2, "Explore", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc09_record"))
+		callfunc("DM_PartyExp", 156000, 75000);
+	callfunc("DM_InstanceQuestStart", 20134);
+	callfunc("DM_PartyMes", "^3355FF[Record extracted. Return to Naima.]^000000");
+	close();
+
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc09_archive");
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Route 1: the public briefing at the pulpit ─────────────────────────────
+rachel,124,116,4	script	Sanctuary Pulpit#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc09_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc09_witness_secured) {
+		callfunc("DM_PartyMes", "^3355FF*The pulpit is empty. The testimony is on the record.*^000000");
+		close();
+	}
+	if (dm_arc09_witness_route != 1) {
+		callfunc("DM_PartyMes", "^3355FF*The Sanctuary pulpit. Nobody is speaking from it.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The zealots have not been put down yet. Naima is behind you.*^000000");
+		close();
+	}
+	if (!'guard_cleared) {
+		callfunc("DM_PartyMes", "^3355FF*Naima begins. Karsh's guards stand at the doors, watching. Halfway through the second page, the zealots in the nave stand up.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc09_pulpit", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Sanctuary Zealot", DARK_PRIEST, .@self$ + "::OnGuardDead", 60, 100, 3, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The nave is quiet. Naima finishes. Karsh's guards do not move. The record is read into the Sanctuary minutes, in the open, in front of everyone.*^000000");
+	callfunc("DM_Arc09SecureWitness", 1);
+	close();
+
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc09_pulpit");
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Route 2: the discreet transfer (two fixed checkpoints) ─────────────────
+rachel,110,112,4	script	Checkpoint North#dm	4_ENERGY_BLUE,{
+	callsub(S_Checkpoint, 1, "deceive");
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc09_cp_north");
+	end;
+
+S_Checkpoint:
+	.@bit = getarg(0);
+	.@tag$ = getarg(1);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc09_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc09_witness_secured) {
+		callfunc("DM_PartyMes", "^3355FF*The checkpoint is behind you. The transfer is done.*^000000");
+		close();
+	}
+	if (dm_arc09_witness_route != 2) {
+		callfunc("DM_PartyMes", "^3355FF*A road checkpoint. Nothing is moving through it.*^000000");
+		close();
+	}
+	if (dm_arc09_checkpoints & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*Cleared. Naima has already passed this one.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The watchers have found you. Naima is behind you.*^000000");
+		close();
+	}
+	if (!'guard_cleared && !'passed) {
+		callfunc("DM_PartyMes", "^3355FF*A checkpoint on the road out. Naima waits behind you in a hood. Watchers at the gate.*^000000");
+		next();
+		if (select("Walk her through.", "Wait.") == 2) close();
+		if (callfunc("DM_CheckRoll", .@tag$, 11) < 2 && !callfunc("DM_IsDM")) {
+			callfunc("DM_PartyMes", "^3355FF*Someone at the gate looks twice. The watchers come off the wall.*^000000");
+			.@map$ = strnpcinfo(NPC_MAP);
+			getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+			.@self$ = strnpcinfo(NPC_NAME);
+			'boss_up = 1;
+			callfunc("DM_EncStart", "arc09_cp_north", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+			callfunc("DM_EncMonster", .@map$, .@x, .@y, "Sanctuary Watcher", DARK_PRIEST, .@self$ + "::OnGuardDead", 60, 100, 2, 3);
+			close();
+		}
+		'passed = 1;
+	}
+	callfunc("DM_PartyMes", "^3355FF*The gate opens. Naima walks through with her head down. One checkpoint behind you.*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc09_checkpoints", dm_arc09_checkpoints | .@bit);
+	if ((dm_arc09_checkpoints & 3) == 3)
+		callfunc("DM_Arc09SecureWitness", 2);
+	else
+		callfunc("DM_PartyMes", "^3355FF[One checkpoint cleared. The south road is the other.]^000000");
+	close();
+}
+
+rachel,124,134,4	script	Checkpoint South#dm	4_ENERGY_BLUE,{
+	callsub(S_Checkpoint, 2, "sleight");
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc09_cp_south");
+	end;
+
+S_Checkpoint:
+	.@bit = getarg(0);
+	.@tag$ = getarg(1);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc09_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc09_witness_secured) {
+		callfunc("DM_PartyMes", "^3355FF*The checkpoint is behind you. The transfer is done.*^000000");
+		close();
+	}
+	if (dm_arc09_witness_route != 2) {
+		callfunc("DM_PartyMes", "^3355FF*A road checkpoint. Nothing is moving through it.*^000000");
+		close();
+	}
+	if (dm_arc09_checkpoints & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*Cleared. Naima has already passed this one.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The watchers have found you. Naima is behind you.*^000000");
+		close();
+	}
+	if (!'guard_cleared && !'passed) {
+		callfunc("DM_PartyMes", "^3355FF*A checkpoint on the road out. Naima waits behind you in a hood. Watchers at the gate.*^000000");
+		next();
+		if (select("Walk her through.", "Wait.") == 2) close();
+		if (callfunc("DM_CheckRoll", .@tag$, 11) < 2 && !callfunc("DM_IsDM")) {
+			callfunc("DM_PartyMes", "^3355FF*Someone at the gate looks twice. The watchers come off the wall.*^000000");
+			.@map$ = strnpcinfo(NPC_MAP);
+			getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+			.@self$ = strnpcinfo(NPC_NAME);
+			'boss_up = 1;
+			callfunc("DM_EncStart", "arc09_cp_south", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+			callfunc("DM_EncMonster", .@map$, .@x, .@y, "Sanctuary Watcher", DARK_PRIEST, .@self$ + "::OnGuardDead", 60, 100, 2, 3);
+			close();
+		}
+		'passed = 1;
+	}
+	callfunc("DM_PartyMes", "^3355FF*The gate opens. Naima walks through with her head down. One checkpoint behind you.*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc09_checkpoints", dm_arc09_checkpoints | .@bit);
+	if ((dm_arc09_checkpoints & 3) == 3)
+		callfunc("DM_Arc09SecureWitness", 2);
+	else
+		callfunc("DM_PartyMes", "^3355FF[One checkpoint cleared. The north road is the other.]^000000");
+	close();
+}
+
+// ── Disclosure payoff 1: the pilgrims' aid post (public support) ───────────
+rachel,140,128,4	script	Pilgrim Aid Post#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (dm_arc09_disclosure_schedule != 1) {
+		callfunc("DM_PartyMes", "^3355FF*A folding table, a blanket, nobody attending.*^000000");
+		close();
+	}
+	if ('uses >= 3) {
+		callfunc("DM_PartyMes", "^3355FF*The aid post has given what it had. The pilgrims have gone home.*^000000");
+		close();
+	}
+	'uses += 1;
+	percentheal 50, 40;
+	callfunc("DM_PartyMes", "^3355FF*Pilgrims who heard the truth and stayed, setting up a table and handing round what they have. (" + (3 - 'uses) + " left.)*^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
 	end;
 }
 
@@ -316,13 +684,19 @@ OnGloomDead:
 		end;
 	callfunc("DM_InstanceQuestComplete", 20131);
 	callfunc("DM_InstanceSetFlag", "dm_arc09_gloom_killed", 1);
-	callfunc("DM_PartyExp", 800000, 450000);
+	// Delayed disclosure resolves on this explicit scene event.
+	if (dm_arc09_disclosure_schedule == 2 && !dm_arc09_karsh_exposed)
+		callfunc("DM_InstanceSetFlag", "dm_arc09_karsh_exposed", 1);
+	callfunc("DM_PartyExp", 800000, 450000, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 999);
 	if (dm_arc09_karsh_exposed)
-		instance_announce(instance_id(), "^3355FF[DM] Gloom disperses. The rift goes quiet. Arunafeltz will have to learn a new theology.^000000", bc_all);
+		instance_announce(instance_id(), "^3355FF[DM] Gloom disperses. The rift goes quiet. Naima's announcement goes out as promised. Arunafeltz will have to learn a new theology.^000000", bc_all);
 	else
 		instance_announce(instance_id(), "^3355FF[DM] Gloom disperses. The rift goes quiet. Whether the church finds the truth on its own schedule remains to be seen.^000000", bc_all);
 	sleep(2000);
 	instance_announce(instance_id(), "^FF6600[DM] Act II's thread ends here. The cascade has been measured, witnessed, and prayed at. Now it leads to Lighthalzen — where it is being manufactured.^000000", bc_all);
+	end;
+
+OnGloomAddDead:
 	end;
 }

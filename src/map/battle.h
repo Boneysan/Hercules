@@ -401,6 +401,7 @@ struct Battle_Config {
 	int party_update_interval;
 	int party_even_share_bonus;
 	int campaign_combat_timeout_ms;
+	int mob_pilot_version;
 	int campaign_sit_recovery_interval_ms;
 	int campaign_sit_recovery_percent;
 	int campaign_respawn_percent;

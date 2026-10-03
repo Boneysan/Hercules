@@ -8,19 +8,86 @@
 //= bishop refuses to accept the evidence. The Dark Lord feeds
 //= on the faith still burning in the ruins.
 //=
+//= REBUILT 2026-10-02 (handoff A2-08): reconstruct the last watch.
+//= The party recovers three memories, learns who altered the
+//= evacuation order, and decides what happens to the watch. No
+//= conversation opinion alone starts a resolution.
+//=
+//= Memories (dm_arc08_memory_mask bits; any order, each guarded by a
+//= different small fight; two open the decision, three say who):
+//=   1 the watch post (glast_01)      3 archers
+//=   2 the chapel record (gl_church)  2 wraiths and a library ghost
+//=   4 the evacuation marker (glast_01, far side) 2 oathbound knights
+//=
+//= Decision (dm_arc08_watch_resolution, final, equal base EXP):
+//=   1 release the watch from its oath  -> a smaller court
+//=   2 rebind it for one last defense   -> a recovery banner
+//=   3 leave Manfred and the watch as they are -> a larger court
+//= Derived for later arcs: manfred_spared (1, 2), manfred_killed (3,
+//= meaning his faith died alone, as Arcs 9 and 11 already describe).
+//=
 //= Quests (db/quest_db.conf):
 //=   20121 A Kingdom Unmade           (arc tracker / Dark Lord)
-//=   20122 Outer Garrison (Brigan x8, Worn Out Page x8, Reins x9)
-//=   20123 Fallen Choir (Fabric x9, Zargon x8, Skull x6)
-//=   20124 The Weight of Faith        (Brother Manfred)
+//=   20122 Outer Garrison   (optional contract)
+//=   20123 Fallen Choir     (optional contract)
+//=   20124 The Weight of Faith        (opens at two memories)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc08_started, dm_arc08_manfred_spared,
+//=   dm_arc08_started, dm_arc08_memory_mask, dm_arc08_watch_resolution,
+//=   dm_arc08_manfred_confessed, dm_arc08_manfred_spared,
 //=   dm_arc08_manfred_killed, dm_arc08_darklord_killed
 //===========================================================
 
+// ── Shared Arc 8 helpers ───────────────────────────────────────────────────
+
+function	script	DM_Arc08AddMemory	{
+	.@bit = getarg(0);
+	if (!(dm_arc08_memory_mask & .@bit))
+		callfunc("DM_InstanceSetFlag", "dm_arc08_memory_mask", dm_arc08_memory_mask | .@bit);
+	.@n = callfunc("DM_CountBits", dm_arc08_memory_mask);
+	callfunc("DM_DMJStoryObjective", 20121, 2, "Explore", .@n, 2, (.@n >= 2), getcharid(CHAR_ID_PARTY));
+	if (.@n == 2) {
+		if (callfunc("DM_ClaimGrant", "arc08_memories")) {
+			callfunc("DM_PartyExp", 300000, 144000);
+			callfunc("DM_InstanceQuestStart", 20124);
+			callfunc("DM_PartyMes", "^3355FF[Two memories. You can tell the evacuation order from the command that overrode it. Brother Manfred will talk about the watch now.]^000000");
+		}
+	} else if (.@n >= 3) {
+		if (callfunc("DM_ClaimGrant", "arc08_memories_third"))
+			callfunc("DM_PartyExp", 40000, 19000);
+		callfunc("DM_PartyMes", "^3355FF[Three memories. The command was altered by hand: Manfred's seal on it, and the courier's mark beside it. Aldric's.]^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF[One memory recovered. Another opens the decision.]^000000");
+	}
+	return .@n;
+}
+
+// mode: 1 release, 2 rebind, 3 leave them. First commitment is final.
+function	script	DM_Arc08Commit	{
+	.@mode = getarg(0);
+	if (dm_arc08_watch_resolution)
+		return 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc08_watch_resolution", .@mode);
+	if (.@mode == 3) {
+		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_spared");
+		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_killed", 1);
+	} else {
+		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_killed");
+		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
+	}
+	// Going in knowing who altered the order is on the record.
+	if ((dm_arc08_memory_mask & 7) == 7)
+		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_confessed", 1);
+	callfunc("DM_InstanceQuestComplete", 20124);
+	callfunc("DM_DMJStoryObjective", 20124, 1, "Interact", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc08_resolution"))
+		callfunc("DM_PartyExp", 200000, 96000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 805);
+	return 1;
+}
+
 // ── Sir Aldric the Unfrocked — Survivor of the Holy Kingdom ────────────────
-geffen,120,120,5	script	Sir Aldric Unfrocked#dm	4_M_03,{
+geffen,118,115,5	script	Sir Aldric Unfrocked#dm	4_M_03,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20121) == 2) {
 		callfunc("DM_PartyMes", "[Sir Aldric]");
@@ -33,10 +100,11 @@ geffen,120,120,5	script	Sir Aldric Unfrocked#dm	4_M_03,{
 		end;
 	}
 
-	callsub(S_TurnIns);
+	callsub(S_Progress);
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20121, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -59,129 +127,92 @@ S_StartArc:
 	callfunc("DM_PartyMes", "[Sir Aldric]");
 	callfunc("DM_PartyMes", "Glast Heim was the capital. A kingdom built on absolute faith in the Twelve. Not metaphorical faith. They legislated it. Doubt was a crime.");
 	next();
-	switch (select("What destroyed it?", "What is the Dark Lord?", "What do you need from us?")) {
-	case 1:
-		callfunc("DM_PartyMes", "[Sir Aldric]");
-		callfunc("DM_PartyMes", "The faith. Pure, complete, and utterly without mercy. When the Holy War came, they prayed harder instead of fighting smarter. The Dead Sea Project was born from that same desperation.");
-		break;
-	case 2:
-		callfunc("DM_PartyMes", "[Sir Aldric]");
-		callfunc("DM_PartyMes", "The collective will of a kingdom that refused to accept it had failed. Made manifest by the cascade's pressure on this place. The Dark Lord is not a demon. It is a mirror.");
-		break;
-	case 3:
-		callfunc("DM_PartyMes", "[Sir Aldric]");
-		callfunc("DM_PartyMes", "Clear the outer garrison. The undead patrol routes have moved closer to the cathedral walls — they are being drawn inward. Then clear the abbey itself.");
-		break;
+	.@ready = 0;
+	while (!.@ready) {
+		switch (select("What destroyed it?", "What is the Dark Lord?", "What do you need from us?", "We are ready. Where do we start?")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Sir Aldric]");
+			callfunc("DM_PartyMes", "The faith. Pure, complete, and utterly without mercy. When the Holy War came, they prayed harder instead of fighting smarter. The Dead Sea Project was born from that same desperation.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Sir Aldric]");
+			callfunc("DM_PartyMes", "The collective will of a kingdom that refused to accept it had failed. Made manifest by the cascade's pressure on this place. The Dark Lord is not a demon. It is a mirror.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Sir Aldric]");
+			callfunc("DM_PartyMes", "The last watch of Glast Heim is still standing its post. I want to know what they were told, and by whom. Not what the legends say. What they were ordered to do on the last night.");
+			break;
+		case 4:
+			.@ready = 1;
+			break;
+		}
+		next();
 	}
+	callfunc("DM_PartyMes", "[Sir Aldric]");
+	callfunc("DM_PartyMes", "Three places keep a piece of it. The watch post on the outer wall. The chapel record in the abbey. An evacuation marker on the far side of the walls. Each one is guarded by something that still believes the order.");
 	next();
 	callfunc("DM_PartyMes", "[Sir Aldric]");
-	callfunc("DM_PartyMes", "And there is Brother Manfred. The last bishop of the Holy Kingdom. He lives in the ruins and believes this is all a holy test. He is wrong, and he is dangerous, and you will have to decide what to do with him.");
+	callfunc("DM_PartyMes", "Any two will tell you what was ordered. All three will tell you who changed it. And there is Brother Manfred, the last bishop. He lives in the ruins and thinks this is a holy test. Whatever you decide about the watch, he will be the one you decide it with.");
 	callfunc("DM_InstanceSetFlag", "dm_arc08_started", 1);
 	callfunc("DM_InstanceQuestStart", 20121);
-	callfunc("DM_InstanceQuestStart", 20122);
-	callfunc("DM_InstanceQuestStart", 20123);
+	callfunc("DM_DMJStoryObjective", 20121, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: A Kingdom Unmade]^000000");
-	callfunc("DM_PartyMes", "^3355FFOuter Garrison - off the dead on the outer walls: " + callfunc("DM_HuntBrief", 20122) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFFallen Choir - out of the abbey passages: " + callfunc("DM_HuntBrief", 20123) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFRecover any two memories: the watch post, the chapel record, the evacuation marker.^000000");
 	close();
 
-S_TurnIns:
-	.@paid = 0;
+S_Progress:
+	callfunc("DM_PartyMes", "[Sir Aldric]");
+	callfunc("DM_PartyMes", ((dm_arc08_memory_mask & 1) ? "Watch post: recovered. They were ordered to hold the gate." : "Watch post: not yet. The outer wall, past the archers."));
+	callfunc("DM_PartyMes", ((dm_arc08_memory_mask & 2) ? "Chapel record: recovered. The order as it was first written." : "Chapel record: not yet. In the abbey, where the clergy still sing."));
+	callfunc("DM_PartyMes", ((dm_arc08_memory_mask & 4) ? "Evacuation marker: recovered. The road that should have been taken." : "Evacuation marker: not yet. The far side of the walls."));
+	if ((dm_arc08_memory_mask & 7) == 7) {
+		next();
+		callfunc("DM_PartyMes", "[Aldric]");
+		callfunc("DM_PartyMes", "...The courier's mark. That was mine. I carried it. I thought I was carrying the evacuation. I did not read it. I have been telling myself for thirty years that I did not read it.");
+	}
+	next();
+	switch (select("Ask about the optional contracts.", "Thank you. We will keep going.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		break;
+	}
+	close();
+
+S_Optional:
+	callfunc("DM_PartyMes", "[Sir Aldric]");
+	callfunc("DM_PartyMes", "Clearing the walls and the choir passages. Not evidence. Just safer ground, and I will pay for it.");
+	next();
+	if (questprogress(20122) == 0) {
+		callfunc("DM_InstanceQuestStart", 20122);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Outer Garrison - " + callfunc("DM_HuntBrief", 20122) + "]^000000");
+	}
+	if (questprogress(20123) == 0) {
+		callfunc("DM_InstanceQuestStart", 20123);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Fallen Choir - " + callfunc("DM_HuntBrief", 20123) + "]^000000");
+	}
 	callfunc("DM_HuntNoteShort", 20122);
 	if (questprogress(20122) == 1 && callfunc("DM_HuntCollect", 20122)) {
 		callfunc("DM_InstanceQuestComplete", 20122);
-		callfunc("DM_PartyExp", 240000, 115000);
+		callfunc("DM_PartyExp", 80000, 38000);
 		callfunc("DM_GivePartyZeny", 20000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[Sir Aldric]");
-		callfunc("DM_PartyMes", "The outer patrol routes are clear. The Raydric were not random undead — they were marching in formation. Something is still giving orders out there.");
-		next();
-		switch (select("Consecrate the cleared ground.", "Document the patrol patterns.", "Leave them. We have bigger problems inside.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Sir Aldric]");
-			callfunc("DM_PartyMes", "The words don't work the way they used to in a place like this. But the gesture matters. You'll understand why when you're inside.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Sir Aldric]");
-			callfunc("DM_PartyMes", "The formations match the old garrison maps. The Dark Lord is using institutional memory to command the dead. That is remarkably specific evil.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Sir Aldric]");
-			callfunc("DM_PartyMes", "Efficient. The garrison was bought time, not resolved. But you're not wrong.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The outer patrol routes are clear. The Raydric were not random undead. They were marching in formation. Something is still giving orders out there.");
 		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20123);
 	if (questprogress(20123) == 1 && callfunc("DM_HuntCollect", 20123)) {
 		callfunc("DM_InstanceQuestComplete", 20123);
-		callfunc("DM_PartyExp", 260000, 125000);
+		callfunc("DM_PartyExp", 87000, 42000);
 		callfunc("DM_GivePartyZeny", 22000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[Sir Aldric]");
-		callfunc("DM_PartyMes", "The Wraith were clergy. You can tell by the habits on what's left. They're still singing. A hymn with no words.");
-		next();
-		switch (select("Give them last rites.", "This is what the cascade amplifies — a kingdom's dying echo.", "The only mercy here is silence.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Sir Aldric]");
-			callfunc("DM_PartyMes", "I am not a priest. But I remember the words. Somewhere in there I think something hears them.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Sir Aldric]");
-			callfunc("DM_PartyMes", "Exactly that. The cascade does not create these things. It magnifies what was already dying. Glast Heim was dying for a century before the Dead Sea Project.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Sir Aldric]");
-			callfunc("DM_PartyMes", "It is. And you gave it to them. I'll mark this in my record.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The Wraith were clergy. You can tell by the habits on what is left. They are still singing. A hymn with no words.");
 		next();
 	}
-
-	if (questprogress(20122) == 2 && questprogress(20123) == 2 && questprogress(20124) == 0) {
-		callfunc("DM_PartyMes", "[Sir Aldric]");
-		callfunc("DM_PartyMes", "The garrison and choir are done. Manfred remains. He holds the cathedral approach and he will not let you pass to the Dark Lord without a confrontation.");
-		next();
-		callfunc("DM_PartyMes", "[Sir Aldric]");
-		callfunc("DM_PartyMes", "He is not beyond reason. He was a good bishop once. But the cascade is giving his faith a frequency it was never meant to carry. Approach with open hands.");
-		callfunc("DM_InstanceQuestStart", 20124);
-		next();
-		callfunc("DM_PartyMes", "^3355FF[Quest started: The Weight of Faith]^000000");
-		callfunc("DM_PartyMes", "^3355FFFind Brother Manfred inside Glast Heim. Decide what his faith is worth.^000000");
-		close();
-	}
-
-	if (questprogress(20124) == 1 && !dm_arc08_manfred_spared && !dm_arc08_manfred_killed) {
-		callfunc("DM_PartyMes", "[Sir Aldric]");
-		callfunc("DM_PartyMes", "Manfred is at the cathedral steps. He is the last obstacle before the Dark Lord.");
-		close();
-	}
-
-	if (questprogress(20124) == 1 && (dm_arc08_manfred_spared || dm_arc08_manfred_killed)) {
-		callfunc("DM_PartyMes", "[Sir Aldric]");
-		callfunc("DM_PartyMes", "Manfred is resolved. The cathedral is open. The Dark Lord awaits in the deepest chamber. When it dies, this arc of history finally closes.");
-		close();
-	}
-
-	if (.@paid) {
-		callfunc("DM_PartyMes", "[Sir Aldric]");
-		callfunc("DM_PartyMes", "Both the garrison and the choir need to be cleared before you face Manfred. The Dark Lord has to come last.");
-		close();
-	}
-
-	callfunc("DM_PartyMes", "[Sir Aldric]");
-	if (questprogress(20122) == 1 && questprogress(20123) == 1)
-		callfunc("DM_PartyMes", "The outer garrison and the fallen choir are both still active. The ruins between here and the cathedral are not safe.");
-	else if (questprogress(20122) == 1)
-		callfunc("DM_PartyMes", "The outer garrison is still open. Raydric on the outer walls.");
-	else if (questprogress(20123) == 1)
-		callfunc("DM_PartyMes", "The fallen choir is still open. Wraith in the abbey passages.");
-	else
-		callfunc("DM_PartyMes", "The contracts are done. Manfred waits at the cathedral steps.");
 	callfunc("DM_HuntStanding", 20122, 20123);
-	close();
+	return;
 }
 
 // ── Brother Manfred — The Last Bishop ──────────────────────────────────────
@@ -193,12 +224,19 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 		close();
 	}
 
-	if (dm_arc08_manfred_spared || dm_arc08_manfred_killed) {
+	if (dm_arc08_watch_resolution) {
 		callfunc("DM_PartyMes", "[Brother Manfred]");
-		if (dm_arc08_manfred_spared)
-			callfunc("DM_PartyMes", "Go then. Face what our faith made. I will pray that you succeed where the kingdom failed.");
-		else
+		switch (dm_arc08_watch_resolution) {
+		case 1:
+			callfunc("DM_PartyMes", "They are at rest. I did not think I would be glad of it. Go. Face what our faith made.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "They are standing with you, because you asked and they agreed. That is not how I would have done it thirty years ago.");
+			break;
+		case 3:
 			callfunc("DM_PartyMes", "...");
+			break;
+		}
 		close();
 	}
 
@@ -208,42 +246,90 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 	callfunc("DM_PartyMes", "[Manfred]");
 	callfunc("DM_PartyMes", "The Dark Lord is not evil. It is the test. Midgard turned away from the Twelve. The cascade is their answer. I will not let heretics unmake what the Twelve have sent.");
 	next();
-	switch (select("The kingdom is gone, Manfred. The faith killed it.", "What would the Twelve actually want here?", "Stand with us. Help us put this to rest.")) {
-	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_spared");
-		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20124);
+	if (callfunc("DM_CountBits", dm_arc08_memory_mask) < 2) {
 		callfunc("DM_PartyMes", "[Manfred]");
-		callfunc("DM_PartyMes", "Then I am already dead. Take your heresy into the cathedral. The Twelve will judge you there.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Manfred stands aside, hollow. His prayers will feed the court's unrest.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Encounter: the Dark Lord will summon a larger undead court.]^000000");
+		callfunc("DM_PartyMes", "You speak of the watch as though you knew what it was ordered. You do not. Come back when you do.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Manfred]");
+	callfunc("DM_PartyMes", "You have been at the old posts. You have read what the watch was told. Then you know the question is not whether I am right. It is what you intend to do to them.");
+	next();
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What does each choice cost the watch?", "What does it cost you?", "Who altered the order?", "We are ready to decide.", "We need to discuss this.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Manfred]");
+			callfunc("DM_PartyMes", "Release them: they lay down their arms and sleep, the court loses them, and I lose the only thing that has made sense of thirty years. Rebind them: they stand once more, with their own consent, until the Dark Lord falls, and then they are released. If you walk away, they stay as they are, and so do I.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Manfred]");
+			callfunc("DM_PartyMes", "My purpose. If they sleep, I have nothing to guard. If they stand, I am only their witness. I am not asking you to spare me that.");
+			break;
+		case 3:
+			if ((dm_arc08_memory_mask & 7) == 7) {
+				callfunc("DM_PartyMes", "[Manfred]");
+				callfunc("DM_PartyMes", "I did. The evacuation order and the command to hold in prayer were two sheets, and I put one over the other and sealed it. I believed the Twelve would hold the gate. The courier did not read it. I did not tell him to.");
+			} else {
+				callfunc("DM_PartyMes", "[Manfred]");
+				callfunc("DM_PartyMes", "You do not have all of it yet. I will not hand you the last piece for free.");
+			}
+			break;
+		case 4:
+			.@done = 1;
+			break;
+		case 5:
+			callfunc("DM_PartyMes", "[Manfred]");
+			callfunc("DM_PartyMes", "Talk. The watch has waited this long. It can wait for people who are thinking.");
+			close();
+		}
+		if (!.@done)
+			next();
+	}
+	next();
+	switch (select("Release the watch from its oath.", "Ask the watch to stand once more, with their consent.", "Leave them as they are.", "Not yet. We want to talk it over.")) {
+	case 1:
+		.@mode = 1;
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_killed");
-		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
-		callfunc("DM_InstanceQuestComplete", 20124);
-		callfunc("DM_PartyMes", "[Manfred]");
-		callfunc("DM_PartyMes", "...");
-		next();
-		callfunc("DM_PartyMes", "[Manfred]");
-		callfunc("DM_PartyMes", "I have been asking myself that question for thirty years. I never liked the answer. They would want it to stop.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Something in Manfred's bearing changes. He steps aside.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Encounter: Manfred's faith will suppress part of the Dark Lord's court.]^000000");
+		.@mode = 2;
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc08_manfred_killed");
-		callfunc("DM_InstanceSetFlag", "dm_arc08_manfred_spared", 1);
-		callfunc("DM_InstanceQuestComplete", 20124);
+		.@mode = 3;
+		break;
+	case 4:
 		callfunc("DM_PartyMes", "[Manfred]");
-		callfunc("DM_PartyMes", "No outsider has ever asked me that. Help you. The cathedral was mine. The kingdom was mine. The dead are mine.");
-		next();
+		callfunc("DM_PartyMes", "Of course.");
+		close();
+	}
+	next();
+	callfunc("DM_PartyMes", "[Manfred]");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "They will sleep, and I will not stop you. Confirm it, and the oath is lifted.");
+	else if (.@mode == 2)
+		callfunc("DM_PartyMes", "They will be asked, not commanded. If they say yes, they stand until the Dark Lord falls and then they rest. Confirm it, and I ask them.");
+	else
+		callfunc("DM_PartyMes", "You will walk past. They will stand, and I will pray, and the Dark Lord will have a larger court for it. Confirm it, and that is how it is.");
+	next();
+	if (select("Confirm.", "Wait.") != 1) {
 		callfunc("DM_PartyMes", "[Manfred]");
-		callfunc("DM_PartyMes", "Let me walk ahead. If the faith has any weight left in this place, it will clear your path.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Manfred leads the way into the cathedral. His prayers hold the adds at bay.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Encounter: Manfred's faith will suppress part of the Dark Lord's court.]^000000");
+		callfunc("DM_PartyMes", "Better to wait than to be wrong in front of the dead.");
+		close();
+	}
+	if (!callfunc("DM_Arc08Commit", .@mode))
+		close();
+	callfunc("DM_PartyMes", "[Manfred]");
+	switch (.@mode) {
+	case 1:
+		callfunc("DM_PartyMes", "I release them. Go and rest, all of you. It was the wrong order, and you obeyed it faithfully.");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: the Dark Lord's court is smaller; the watch will not stand against you.]^000000");
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "They said yes. Not all of them. Enough. Take the banner they carried and set it where you can reach it.");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: a recovery banner stands in the abbey; the watch helps hold the court.]^000000");
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "Then go. I will keep praying.");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: Manfred's despair joins the Dark Lord's court.]^000000");
 		break;
 	}
 	next();
@@ -251,8 +337,180 @@ gl_in01,120,120,5	script	Brother Manfred#dm	4_M_04,{
 	close();
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20124, 1;
+	end;
+}
+
+// ── Memory 1: the watch post ───────────────────────────────────────────────
+glast_01,130,130,4	script	Watch Post#dm	4_BOARD3,{
+	callsub(S_Memory, 1, RAYDRIC_ARCHER, "Archers of the Watch", 3, "^3355FF*A scrap of the standing orders, still pinned: HOLD THE GATE. NO ONE LEAVES. THE TWELVE WILL PROVIDE.*^000000");
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc08_watch");
+	end;
+
+S_Memory:
+	.@bit = getarg(0);
+	.@mob = getarg(1);
+	.@label$ = getarg(2);
+	.@count = getarg(3);
+	.@text$ = getarg(4);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc08_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc08_memory_mask & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*Nothing more here. You have what it kept.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The guard is still on its feet.*^000000");
+		close();
+	}
+	if (!'guard_cleared) {
+		callfunc("DM_PartyMes", "^3355FF*Something here still believes the order. It turns toward you.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc08_watch", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, .@label$, .@mob, .@self$ + "::OnGuardDead", 60, 100, .@count, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", .@text$);
+	callfunc("DM_Arc08AddMemory", .@bit);
+	close();
+}
+
+// ── Memory 2: the chapel record ────────────────────────────────────────────
+gl_church,146,149,4	script	Chapel Record#dm	4_BOARD3,{
+	callsub(S_Memory, 2, WRAITH_DEAD, "Singing Clergy", 3, "^3355FF*The evacuation order as first written, in a clean hand: 'All civilians to Prontera. The watch to withdraw at dawn.'*^000000");
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc08_chapel");
+	end;
+
+S_Memory:
+	.@bit = getarg(0);
+	.@mob = getarg(1);
+	.@label$ = getarg(2);
+	.@count = getarg(3);
+	.@text$ = getarg(4);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc08_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc08_memory_mask & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*Nothing more here. You have what it kept.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The guard is still on its feet.*^000000");
+		close();
+	}
+	if (!'guard_cleared) {
+		callfunc("DM_PartyMes", "^3355FF*Something here still believes the order. It turns toward you.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc08_chapel", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, .@label$, .@mob, .@self$ + "::OnGuardDead", 60, 100, .@count, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", .@text$);
+	callfunc("DM_Arc08AddMemory", .@bit);
+	close();
+}
+
+// ── Memory 4: the evacuation marker ────────────────────────────────────────
+glast_01,200,200,4	script	Evacuation Marker#dm	4_BOARD3,{
+	callsub(S_Memory, 4, KHALITZBURG, "Oathbound Knights", 2, "^3355FF*A waystone on the road out, carved to mark the way for carts. A second hand has scratched across it: 'HOLD. Do not leave the walls.'*^000000");
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc08_marker");
+	end;
+
+S_Memory:
+	.@bit = getarg(0);
+	.@mob = getarg(1);
+	.@label$ = getarg(2);
+	.@count = getarg(3);
+	.@text$ = getarg(4);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc08_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc08_memory_mask & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*Nothing more here. You have what it kept.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The guard is still on its feet.*^000000");
+		close();
+	}
+	if (!'guard_cleared) {
+		callfunc("DM_PartyMes", "^3355FF*Something here still believes the order. It turns toward you.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc08_marker", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, .@label$, .@mob, .@self$ + "::OnGuardDead", 60, 100, .@count, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", .@text$);
+	callfunc("DM_Arc08AddMemory", .@bit);
+	close();
+}
+
+// ── Rebind payoff: the recovery banner ─────────────────────────────────────
+gl_church,145,148,4	script	Oathbound Banner#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (dm_arc08_watch_resolution != 2) {
+		callfunc("DM_PartyMes", "^3355FF*A scrap of cloth on a broken pole. It means nothing to anyone now.*^000000");
+		close();
+	}
+	if ('uses >= 3) {
+		callfunc("DM_PartyMes", "^3355FF*The banner hangs still. The watch has given what it can.*^000000");
+		close();
+	}
+	'uses += 1;
+	percentheal 50, 40;
+	callfunc("DM_PartyMes", "^3355FF*The watch that agreed to stand gives what it has. A steadying hand, a few words of the old liturgy. (" + (3 - 'uses) + " left.)*^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
 	end;
 }
 
@@ -267,9 +525,11 @@ OnDarkLordDead:
 	killmonster strnpcinfo(NPC_MAP), "Glast Heim Abbey#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20121);
 	callfunc("DM_InstanceSetFlag", "dm_arc08_darklord_killed", 1);
-	callfunc("DM_PartyExp", 700000, 400000);
+	callfunc("DM_PartyExp", 700000, 400000, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 899);
-	if (dm_arc08_manfred_spared)
+	if (dm_arc08_watch_resolution == 2)
+		instance_announce(instance_id(), "^3355FF[DM] The Dark Lord disperses. The watch lowers its banners and, one by one, lies down. Their oath is finished.^000000", bc_all);
+	else if (dm_arc08_manfred_spared)
 		instance_announce(instance_id(), "^3355FF[DM] The Dark Lord disperses. In the quiet after, Manfred's voice is the only sound.^000000", bc_all);
 	else
 		instance_announce(instance_id(), "^3355FF[DM] The Dark Lord is banished. The cursed kingdom finally falls silent.^000000", bc_all);

@@ -8,25 +8,75 @@
 //= this throne by Loki, in exchange for keeping the dead from
 //= walking north. Now Loki is silent and the dead walk anyway.
 //=
+//= REBUILT 2026-10-02 (handoff A4-18): hear the dead, then
+//= negotiate. Two short audiences (a returned memory, and the
+//= burden of containment) come first. Himmelmez is then offered a
+//= pact with explicit obligations, a refusal that leaves her alive,
+//= or a challenge that is announced as a DM-resolved confrontation.
+//= Refusal is never a death. Questions never commit anything.
+//=
+//= State:
+//=   dm_arc18_audience_mask   bits 1 (the lost soul), 2 (the keeper)
+//=   dm_arc18_resolution:
+//=       1 pact agreed   (dm_arc18_pact_valid, bargained)
+//=       2 refused and left, she lives. The pact can still be taken
+//=         later, from the same spot, while she is available.
+//=       3 challenged: the DM resolves the confrontation. Only when it
+//=         is resolved as her fall is himmelmez_killed set.
+//=   Equal base EXP (2,000,000 / 1,200,000) whichever way: violence is
+//=   not the default optimization.
+//= The Queen's Bargain ending needs pact_valid AND her availability.
+//=
 //= Quests (db/quest_db.conf):
 //=   20221 The Queen the Drowned Chose  (arc tracker / Himmelmez)
-//=   20222 The Dead You Failed (Armor Piece of Dullahan x9, Ectoplasm x5, Bat Cage x5)
-//=   20223 Banquet Hall Procession (Decomposed Rope x10, Spool x5, Red Muffler x4)
+//=   20222 The Dead You Failed    (optional)
+//=   20223 Banquet Hall Procession (optional)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc18_started, dm_arc18_himmelmez_killed,
+//=   dm_arc18_started, dm_arc18_audience_mask, dm_arc18_resolution,
+//=   dm_arc18_pact_valid, dm_arc18_himmelmez_killed,
 //=   dm_arc18_himmelmez_bargained
 //===========================================================
 
+// ── Shared Arc 18 helpers ──────────────────────────────────────────────────
+
+function	script	DM_Arc18AddAudience	{
+	.@bit = getarg(0);
+	if (!(dm_arc18_audience_mask & .@bit))
+		callfunc("DM_InstanceSetFlag", "dm_arc18_audience_mask", dm_arc18_audience_mask | .@bit);
+	.@n = callfunc("DM_CountBits", dm_arc18_audience_mask);
+	callfunc("DM_DMJStoryObjective", 20221, 2, "Talk", .@n, 2, (.@n >= 2), getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc18_audience_" + .@bit))
+		callfunc("DM_PartyExp", 450000, 220000);
+	if (.@n >= 2)
+		callfunc("DM_PartyMes", "^3355FF[Both audiences heard. Himmelmez will receive you.]^000000");
+	else
+		callfunc("DM_PartyMes", "^3355FF[One audience heard.]^000000");
+	return .@n;
+}
+
+// The one place the arc closes and pays, once, whichever way it went.
+function	script	DM_Arc18Close	{
+	.@party = callfunc("DM_SessionParty");
+	if (!callfunc("DM_ClaimGrant", "arc18_himmelmez", .@party))
+		return 0;
+	callfunc("DM_InstanceQuestComplete", 20221);
+	callfunc("DM_PartyExp", 2000000, 1200000, .@party);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1899);
+	return 1;
+}
+
 // ── The Familiar Dead — The Witness ───────────────────────────────────────
-niflheim,100,100,5	script	The Familiar Dead#dm	4_M_03,{
+niflheim,95,95,5	script	The Familiar Dead#dm	4_M_03,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20221) == 2) {
 		callfunc("DM_PartyMes", "[The Familiar Dead]");
 		if (dm_arc18_himmelmez_bargained)
 			callfunc("DM_PartyMes", "She walks with you. The dead of Niflheim are quiet for now. Loki's silence has not changed. But the direction you face has.");
-		else
+		else if (dm_arc18_himmelmez_killed)
 			callfunc("DM_PartyMes", "Himmelmez is gone. Niflheim has no queen. The dead walk regardless. What has changed is that they walk into a world that is about to make a decision about all of them.");
+		else
+			callfunc("DM_PartyMes", "You left her on the throne. She is still there, and the dead still hear her, and nothing has been promised. That is a different thing from nothing having been done.");
 		close();
 	}
 
@@ -35,10 +85,11 @@ niflheim,100,100,5	script	The Familiar Dead#dm	4_M_03,{
 		end;
 	}
 
-	callsub(S_TurnIns);
+	callsub(S_Progress);
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20221, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -49,137 +100,211 @@ S_StartArc:
 	callfunc("DM_PartyMes", "[The Familiar Dead]");
 	callfunc("DM_PartyMes", "You made it this far. That means something. Most things that cross the cascade's shadow do not.");
 	next();
-	if (dm_arc17_beta_killed) {
+	if (dm_arc17_prototype_verified) {
 		callfunc("DM_PartyMes", "[The Familiar Dead]");
-		callfunc("DM_PartyMes", "Varmundt's Biolabs. The research extracted. The dead here know Varmundt — he spent time in Niflheim toward the end, working. He wanted to know what frequency the dead heard. His notes on that are not in the archive. They are in the walls here.");
+		callfunc("DM_PartyMes", "Varmundt's Biolabs. The design tested. The dead here know Varmundt. He spent time in Niflheim toward the end, working. He wanted to know what frequency the dead heard. His notes on that are not in the archive. They are in the walls here.");
 		next();
 	}
-	if (dm_arc15_pratt_challenged) {
+	if (dm_arc15_cost_disclosed) {
 		callfunc("DM_PartyMes", "[The Familiar Dead]");
-		callfunc("DM_PartyMes", "Pratt's documentation. The full cost of the Thanatos method. Thanatos is still in the seal. He has been here, in a sense, since the sacrifice. The dead of Niflheim know his frequency. It is a frequency of someone who chose to stop being available.");
+		callfunc("DM_PartyMes", "You have seen what Thanatos paid. The dead of Niflheim know his frequency. It is the frequency of someone who chose to stop being available. They do not hold it against him. They only recognize it.");
 		next();
 	}
-	if (dm_arc16_rina_defected) {
+	if (dm_arc16_maret_freed) {
 		callfunc("DM_PartyMes", "[The Familiar Dead]");
-		callfunc("DM_PartyMes", "Bijou. Maret. The dead here knew her before the attunement. She came to Niflheim three years ago to ask Himmelmez if there was a way to stop hearing. Himmelmez told her no. They were both right.");
+		callfunc("DM_PartyMes", "Maret came to Niflheim three years ago to ask Himmelmez if there was a way to stop hearing. Himmelmez told her no. You got her out of the vault alive, which is the kind of thing the dead remark on to each other for a long time.");
+		next();
+	} else if (dm_arc16_bijou_killed) {
+		callfunc("DM_PartyMes", "[The Familiar Dead]");
+		callfunc("DM_PartyMes", "The frequency that stopped in Prontera had a person under it. Her name was Maret. She is here now. Nobody has told her what happened. She has asked to speak to whoever did it.");
 		next();
 	}
 	callfunc("DM_PartyMes", "[The Familiar Dead]");
 	callfunc("DM_PartyMes", "Niflheim is overflowing. The boundary between death and the living world was already thin. The cascade has made it a suggestion. The dead do not push through maliciously. They push through because the suggestion is simply insufficient to stop them.");
 	next();
-	switch (select("What does Himmelmez have to do with this?", "What is the cascade doing to Niflheim specifically?", "What can we do here?")) {
-	case 1:
-		callfunc("DM_PartyMes", "[The Familiar Dead]");
-		callfunc("DM_PartyMes", "She was given this throne by Loki, in exchange for keeping the dead from walking north. She accepted. Now they walk anyway and Loki is silent. She has been sitting on the throne for three years waiting for instructions that have not come.");
-		break;
-	case 2:
-		callfunc("DM_PartyMes", "[The Familiar Dead]");
-		callfunc("DM_PartyMes", "It is providing a frequency the boundary cannot resist. The dead hear it as permission. The living do not hear it at all. The cascade's signal and the boundary's signal are at almost exactly the same frequency, except the cascade's is louder.");
-		break;
-	case 3:
-		callfunc("DM_PartyMes", "[The Familiar Dead]");
-		callfunc("DM_PartyMes", "Find Himmelmez. She knows what Loki asked of her and what the cascade has changed. Whether you fight her or talk to her, what you decide together here will matter at the seal.");
-		break;
+	.@ready = 0;
+	while (!.@ready) {
+		switch (select("What does Himmelmez have to do with this?", "What is the cascade doing to Niflheim specifically?", "What can we do here?", "We are ready. Where do we start?")) {
+		case 1:
+			callfunc("DM_PartyMes", "[The Familiar Dead]");
+			callfunc("DM_PartyMes", "She was given this throne by Loki, in exchange for keeping the dead from walking north. She accepted. Now they walk anyway and Loki is silent. She has been sitting on the throne for three years waiting for instructions that have not come.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[The Familiar Dead]");
+			callfunc("DM_PartyMes", "It is providing a frequency the boundary cannot resist. The dead hear it as permission. The living do not hear it at all.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[The Familiar Dead]");
+			callfunc("DM_PartyMes", "Listen. Two of the dead have asked to be heard before anyone speaks to her. One wants an acknowledgment. One wants to say what holding the line was like. They are not asking you to agree. They are asking you to hear.");
+			break;
+		case 4:
+			.@ready = 1;
+			break;
+		}
+		next();
 	}
-	next();
 	callfunc("DM_PartyMes", "[The Familiar Dead]");
-	callfunc("DM_PartyMes", "The Dullahan in the outer reaches are the recently dead who have not settled — the overflow is loudest at the boundary and they are caught in it. The Gibbet in the Banquet Hall have been here much longer. They are part of Niflheim's structure. The overflow has unsettled them too.");
+	callfunc("DM_PartyMes", "Hear them both. Then go in. Whether you negotiate, refuse, or challenge her, she has been alone on that throne for three years waiting for a conversation to happen. This is it.");
 	callfunc("DM_InstanceSetFlag", "dm_arc18_started", 1);
 	callfunc("DM_InstanceQuestStart", 20221);
-	callfunc("DM_InstanceQuestStart", 20222);
-	callfunc("DM_InstanceQuestStart", 20223);
+	callfunc("DM_DMJStoryObjective", 20221, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Queen the Drowned Chose]^000000");
-	callfunc("DM_PartyMes", "^3355FFThe Dead You Failed - off the overflow at Niflheim's border: " + callfunc("DM_HuntBrief", 20222) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFBanquet Hall Procession - out of the Banquet Hall: " + callfunc("DM_HuntBrief", 20223) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFHear both audiences, then go to Himmelmez in the inner hall.^000000");
 	close();
 
-S_TurnIns:
-	.@paid = 0;
+S_Progress:
+	callfunc("DM_PartyMes", "[The Familiar Dead]");
+	callfunc("DM_PartyMes", ((dm_arc18_audience_mask & 1) ? "First audience: heard." : "First audience: not yet. A dead soul at the edge of the overflow."));
+	callfunc("DM_PartyMes", ((dm_arc18_audience_mask & 2) ? "Second audience: heard." : "Second audience: not yet. A former seal keeper, near the border."));
+	if (callfunc("DM_CountBits", dm_arc18_audience_mask) >= 2)
+		callfunc("DM_PartyMes", "^3355FFHimmelmez is in the inner hall, nif_in.^000000");
+	next();
+	switch (select("Ask about the optional contracts.", "Thank you. We are going.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		break;
+	}
+	close();
+
+S_Optional:
+	callfunc("DM_PartyMes", "[The Familiar Dead]");
+	callfunc("DM_PartyMes", "The overflow has its stragglers: Dullahan at the border, Gibbet in the Banquet Hall. Quieting them helps. It is not a condition of anything.");
+	next();
+	if (questprogress(20222) == 0) {
+		callfunc("DM_InstanceQuestStart", 20222);
+		callfunc("DM_PartyMes", "^3355FF[Optional: The Dead You Failed - " + callfunc("DM_HuntBrief", 20222) + "]^000000");
+	}
+	if (questprogress(20223) == 0) {
+		callfunc("DM_InstanceQuestStart", 20223);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Banquet Hall Procession - " + callfunc("DM_HuntBrief", 20223) + "]^000000");
+	}
 	callfunc("DM_HuntNoteShort", 20222);
 	if (questprogress(20222) == 1 && callfunc("DM_HuntCollect", 20222)) {
 		callfunc("DM_InstanceQuestComplete", 20222);
-		callfunc("DM_PartyExp", 450000, 220000);
+		callfunc("DM_PartyExp", 150000, 73000);
 		callfunc("DM_GivePartyZeny", 36000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[The Familiar Dead]");
-		callfunc("DM_PartyMes", "The Dullahan are quieted. They were the recently dead — people the living world lost in the last year. Some of them were from places you have been. They heard the cascade's frequency from the living side and followed it here because it felt like direction.");
-		next();
-		switch (select("They were looking for where to go.", "The cascade is leading the dead the same way it leads the living.", "Give them rest if you can.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[The Familiar Dead]");
-			callfunc("DM_PartyMes", "Yes. The dead need direction the same way the living do. The boundary usually provides that — a clear delineation of what they are now. The overflow removed the delineation.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[The Familiar Dead]");
-			callfunc("DM_PartyMes", "Yes. The cascade does not distinguish between the living and the dead. It is a frequency. It amplifies what is already present. In the living: urgency. In the dead: motion without direction.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[The Familiar Dead]");
-			callfunc("DM_PartyMes", "I said the words. For all of them. I know some of their names. That was the harder part.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The Dullahan are quieted. They were the recently dead, people the living world lost in the last year. Some of them were from places you have been. I said the words, for all of them. I know some of their names. That was the harder part.");
 		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20223);
 	if (questprogress(20223) == 1 && callfunc("DM_HuntCollect", 20223)) {
 		callfunc("DM_InstanceQuestComplete", 20223);
-		callfunc("DM_PartyExp", 450000, 220000);
+		callfunc("DM_PartyExp", 150000, 73000);
 		callfunc("DM_GivePartyZeny", 36000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[The Familiar Dead]");
-		callfunc("DM_PartyMes", "The Banquet Hall is quiet. The Gibbet have been part of Niflheim's architecture for centuries — they are part of what death looks like here. When they became unsettled, it meant the overflow had reached deep enough to shake things that had not moved in a very long time.");
-		next();
-		switch (select("How deep is the overflow now?", "Niflheim was stable until the cascade reached this frequency.", "Himmelmez has been watching this happen from her throne.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[The Familiar Dead]");
-			callfunc("DM_PartyMes", "To the Hall. That is the structural center. If the Banquet Hall's residents were unsettled, the Hall itself was at risk of losing coherence. The dead would have had nowhere that felt like Niflheim anymore. Nowhere to settle.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[The Familiar Dead]");
-			callfunc("DM_PartyMes", "For three hundred years since Thanatos. This frequency was always there but never this loud. The cascade's amplification pushed it past what the structure could absorb.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[The Familiar Dead]");
-			callfunc("DM_PartyMes", "Every day for three years. Without Loki's instructions. Without a way to fix the boundary herself. She has been doing what she can, which is hold what she can hold, and watch the rest overflow.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The Banquet Hall is quiet. The Gibbet have been part of Niflheim's architecture for centuries. When they became unsettled, it meant the overflow had reached deep enough to shake the Hall.");
 		next();
 	}
-
-	if (questprogress(20222) == 2 && questprogress(20223) == 2 && questprogress(20221) == 1 && !dm_arc18_himmelmez_killed && !dm_arc18_himmelmez_bargained) {
-		callfunc("DM_PartyMes", "[The Familiar Dead]");
-		callfunc("DM_PartyMes", "The overflow is reduced. Himmelmez will feel that — the structure is less stressed now. She is in the inner hall. nif_in.");
-		next();
-		callfunc("DM_PartyMes", "[The Familiar Dead]");
-		callfunc("DM_PartyMes", "Whether you fight her or talk to her: understand that she has been alone on that throne for three years waiting for a conversation to happen. This is it.");
-		close();
-	}
-
-	if (.@paid) {
-		callfunc("DM_PartyMes", "[The Familiar Dead]");
-		callfunc("DM_PartyMes", "Both contracts need to be done before the inner hall. Himmelmez can sense the overflow. She will not receive a conversation while the structure is still unstable.");
-		close();
-	}
-
-	callfunc("DM_PartyMes", "[The Familiar Dead]");
-	if (questprogress(20222) == 1 && questprogress(20223) == 1)
-		callfunc("DM_PartyMes", "The Dullahan quieting and the Gibbet stilling are both still active.");
-	else if (questprogress(20222) == 1)
-		callfunc("DM_PartyMes", "The Dead You Failed is still open. Dullahan at Niflheim's outer reaches.");
-	else if (questprogress(20223) == 1)
-		callfunc("DM_PartyMes", "Banquet Hall Procession is still open. Gibbet in the Banquet Hall.");
-	else
-		callfunc("DM_PartyMes", "Both done. Himmelmez is in the inner hall. nif_in.");
 	callfunc("DM_HuntStanding", 20222, 20223);
+	return;
+}
+
+// ── Audience 1: a returned memory ──────────────────────────────────────────
+niflheim,90,98,4	script	Lost Soul#dm	4_M_03,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc18_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc18_audience_mask & 1) {
+		callfunc("DM_PartyMes", "[Lost Soul]");
+		callfunc("DM_PartyMes", "You heard me. That is more than I expected. I will wait here until the dead are told what to do.");
+		close();
+	}
+	if (dm_arc16_bijou_killed) {
+		callfunc("DM_PartyMes", "[Maret]");
+		callfunc("DM_PartyMes", "You were the ones in the vault. I do not remember anything after the noise stopped. I would like you to tell me what happened, in your own words. I will not argue with it. I only want it said.");
+	} else if (dm_arc16_maret_freed) {
+		callfunc("DM_PartyMes", "[Lost Soul]");
+		callfunc("DM_PartyMes", "A traveler, I think. I do not remember my name. I remember a woman saying 'Is it quiet?' and somebody answering 'it will be.' It is the only thing I took with me. I would like to give it back.");
+	} else {
+		callfunc("DM_PartyMes", "[Lost Soul]");
+		callfunc("DM_PartyMes", "A traveler. I do not remember my name. I remember a road, and that I was going somewhere that mattered, and that the road stopped being there. Can you tell me where I was going?");
+	}
+	next();
+	switch (select("Answer her honestly.", "Apologize.", "Dispute her account.", "Decline to answer.")) {
+	case 1:
+		callfunc("DM_PartyMes", "[Lost Soul]");
+		callfunc("DM_PartyMes", "Thank you. That is what I wanted. Not forgiveness. A true answer.");
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "[Lost Soul]");
+		callfunc("DM_PartyMes", "I did not ask for that. I will take it, if you mean it. Some of the dead are tired of being apologized to, and some of them have never been.");
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "[Lost Soul]");
+		callfunc("DM_PartyMes", "You think I have it wrong. Maybe I do. I only have what I have. You are the first to tell me so out loud.");
+		break;
+	case 4:
+		callfunc("DM_PartyMes", "[Lost Soul]");
+		callfunc("DM_PartyMes", "That is allowed. It is also a kind of answer.");
+		break;
+	}
+	callfunc("DM_Arc18AddAudience", 1);
 	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Audience 2: the burden of containment ──────────────────────────────────
+niflheim,94,96,4	script	Former Seal Keeper#dm	4_M_04,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc18_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc18_audience_mask & 2) {
+		callfunc("DM_PartyMes", "[Former Seal Keeper]");
+		callfunc("DM_PartyMes", "I told you what it was like. I do not need you to have liked it.");
+		close();
+	}
+	callfunc("DM_PartyMes", "[Former Seal Keeper]");
+	callfunc("DM_PartyMes", "I kept a seal for forty years. I will tell you what it was like, and I will not tell you whether it was worth it. Nobody ever asked me.");
+	next();
+	callfunc("DM_PartyMes", "[Former Seal Keeper]");
+	callfunc("DM_PartyMes", "It is not a heroic thing. It is attention. You hold one thought for forty years and you do not put it down. People think the cost is the pain. The cost is that you are never somewhere else.");
+	next();
+	if (dm_arc15_pratt_challenged) {
+		callfunc("DM_PartyMes", "[Former Seal Keeper]");
+		callfunc("DM_PartyMes", "I heard what you did in Aldebaran. A consent procedure with a way out. I wish I had been offered one. I would have said yes anyway. I would have liked to be asked.");
+		next();
+	}
+	switch (select("Answer. Say what you think of that.", "Apologize.", "Dispute his account.", "Decline to answer.")) {
+	case 1:
+		callfunc("DM_PartyMes", "[Former Seal Keeper]");
+		callfunc("DM_PartyMes", "That is more than my own people did. Thank you.");
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "[Former Seal Keeper]");
+		callfunc("DM_PartyMes", "You did not do it. Apologize to the ones who did, or the ones who will.");
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "[Former Seal Keeper]");
+		callfunc("DM_PartyMes", "You think I have exaggerated. I would like to have. I have only my own account, and I have told it straight.");
+		break;
+	case 4:
+		callfunc("DM_PartyMes", "[Former Seal Keeper]");
+		callfunc("DM_PartyMes", "Silence is also something I have a lot of experience with.");
+		break;
+	}
+	callfunc("DM_Arc18AddAudience", 2);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
 }
 
 // ── Himmelmez — The Queen the Drowned Chose ───────────────────────────────
-nif_in,150,150,5	script	Himmelmez#dm	4_F_02,{
+nif_in,138,162,5	script	Himmelmez#dm	4_F_02,{
 	if (!callfunc("DM_SessionGate")) close;
-	if (questprogress(20221) == 2) {
+	if (questprogress(20221) == 2 && dm_arc18_resolution != 2) {
 		callfunc("DM_PartyMes", "[Himmelmez]");
 		if (dm_arc18_himmelmez_bargained)
 			callfunc("DM_PartyMes", "The pact holds. Death is patient. I will hold what I can hold while you do what needs to be done.");
@@ -187,53 +312,140 @@ nif_in,150,150,5	script	Himmelmez#dm	4_F_02,{
 			callfunc("DM_PartyMes", "The throne is empty. The dead hear no queen. What they will hear next is what you decide in Morroc's ruins.");
 		close();
 	}
-
 	if (!dm_arc18_started) {
 		callfunc("DM_PartyMes", "[Himmelmez]");
 		callfunc("DM_PartyMes", "Who sent you to the hall of the dead?");
 		close();
 	}
-
-	if (questprogress(20222) < 2 || questprogress(20223) < 2) {
+	if (dm_arc18_himmelmez_killed) {
+		callfunc("DM_PartyMes", "...");
+		close();
+	}
+	if (dm_arc18_resolution == 3) {
 		callfunc("DM_PartyMes", "[Himmelmez]");
-		callfunc("DM_PartyMes", "The structure is still unstable. Come back when the overflow is reduced. I can hear it from here.");
+		callfunc("DM_PartyMes", "You said you would challenge me. The confrontation is in progress. Whatever happens next, the Dungeon Master will resolve it. Do not look at me as if I have not been given a say.");
+		close();
+	}
+	if (callfunc("DM_CountBits", dm_arc18_audience_mask) < 2) {
+		callfunc("DM_PartyMes", "[Himmelmez]");
+		callfunc("DM_PartyMes", "The dead outside have not been heard. Hear them first. I will wait. I have been waiting three years.");
 		close();
 	}
 
 	callfunc("DM_PartyMes", "[Himmelmez]");
-	callfunc("DM_PartyMes", "I was like you, once. That is not a thing queens of the dead usually say. But the throne was Loki's gift and I accepted it knowing what accepting it meant.");
+	if (dm_arc18_resolution == 2)
+		callfunc("DM_PartyMes", "You came back. I said I would be here. You walked away once and I did not stop you. I am still on the throne, and still listening.");
+	else
+		callfunc("DM_PartyMes", "I was like you, once. That is not a thing queens of the dead usually say. But the throne was Loki's gift and I accepted it knowing what accepting it meant.");
+	next();
+	if (!dm_arc18_resolution) {
+		callfunc("DM_PartyMes", "[Himmelmez]");
+		callfunc("DM_PartyMes", "The seal decays and Niflheim overflows. I have been keeping the dead from walking north by sheer attention. That is not a sustainable strategy. I have known it for three years. I have been waiting for someone who understands what I am asking.");
+		next();
+		callfunc("DM_PartyMes", "[Himmelmez]");
+		callfunc("DM_PartyMes", "Loki offered me this throne in exchange for keeping the dead contained while the living world sorted itself out. The living world has not sorted itself out. Loki is silent. The dead do not care about the administrative situation.");
+		next();
+	}
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What would a pact cost you?", "What would it ask of us?", "What happens if we refuse?", "What does a challenge mean?", "We are ready to decide.", "We need to discuss this.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Himmelmez]");
+			callfunc("DM_PartyMes", "The containment boundary holds at the northern gate of this hall. I hold it, for as long as the pact stands, every hour. I will be here and not elsewhere. I will not rest. I would like you to understand that I am offering to give up the rest of what I might have had.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Himmelmez]");
+			callfunc("DM_PartyMes", "That you remember me. That you come back if the boundary shifts. That the seal you decide on takes the dead into account, as people who were asked, not as a problem you solved.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Himmelmez]");
+			callfunc("DM_PartyMes", "Nothing happens to me. I stay on the throne. The dead keep walking. You carry on to Morroc's ruins, and I am still here if you change your mind. I will not hold it against you. I do not have the strength for that.");
+			break;
+		case 4:
+			callfunc("DM_PartyMes", "[Himmelmez]");
+			callfunc("DM_PartyMes", "A fight. It is announced, and the Dungeon Master runs it. I do not die at the end of a sentence. If I fall, Niflheim has no queen and the dead pour north with nothing to hold them. If I do not, we both learn something. It is not the same as saying no.");
+			break;
+		case 5:
+			.@done = 1;
+			break;
+		case 6:
+			callfunc("DM_PartyMes", "[Himmelmez]");
+			callfunc("DM_PartyMes", "Do. The dead are patient. It is one of the few things we have in abundance.");
+			close();
+		}
+		if (!.@done)
+			next();
+	}
+	next();
+	if (dm_arc18_resolution == 2) {
+		switch (select("Negotiate the pact.", "Challenge her.", "Not yet. We want to talk it over.")) {
+		case 1:
+			.@mode = 1;
+			break;
+		case 2:
+			.@mode = 3;
+			break;
+		case 3:
+			close();
+		}
+	} else {
+		switch (select("Negotiate the pact.", "Refuse, and leave.", "Challenge her.", "Not yet. We want to talk it over.")) {
+		case 1:
+			.@mode = 1;
+			break;
+		case 2:
+			.@mode = 2;
+			break;
+		case 3:
+			.@mode = 3;
+			break;
+		case 4:
+			close();
+		}
+	}
 	next();
 	callfunc("DM_PartyMes", "[Himmelmez]");
-	callfunc("DM_PartyMes", "The seal decays and Niflheim overflows. I have been keeping the dead from walking north by sheer attention. That is not a sustainable strategy. I have known it for three years. I have been waiting for someone who understands the weight of that.");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "A pact. The boundary at the northern gate, held by me, hour by hour, for as long as the seal needs. You remember me. Confirm, and it is sealed.");
+	else if (.@mode == 2)
+		callfunc("DM_PartyMes", "You go, and I stay. Nothing is promised and nothing is taken. Confirm, and you may leave.");
+	else
+		callfunc("DM_PartyMes", "A challenge. It is announced, the Dungeon Master runs it, and I do not die at the end of a sentence. Confirm, and it begins.");
 	next();
-	callfunc("DM_PartyMes", "[Himmelmez]");
-	callfunc("DM_PartyMes", "Loki offered me this throne in exchange for keeping the dead contained while the living world sorted itself out. The living world has not sorted itself out. Loki is silent. The dead do not care about the administrative situation.");
-	next();
-	switch (select("You are part of what has gone wrong. This ends here.", "We need your hand to seal the cascade from the inside.")) {
-	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_killed", 1);
-		callfunc("DM_InstanceQuestComplete", 20221);
-		callfunc("DM_PartyExp", 2500000, 1500000);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1899);
-		instance_announce(instance_id(), "^3355FF[DM] Himmelmez falls. Niflheim has no queen. The dead pour north without her hand — and into a world that will have to decide what to do with them as part of the seal.^000000", bc_all);
-		sleep(2000);
-		instance_announce(instance_id(), "^FF6600[DM] One more piece removed. One less hand available for the finale. The seal's shape will have to account for an empty throne.^000000", bc_all);
-		break;
-	case 2:
+	if (select("Confirm.", "Wait.") != 1) {
+		callfunc("DM_PartyMes", "[Himmelmez]");
+		callfunc("DM_PartyMes", "Better to wait than to say it badly to the dead.");
+		close();
+	}
+	if (.@mode == 1) {
+		callfunc("DM_InstanceSetFlag", "dm_arc18_resolution", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc18_pact_valid", 1);
+		callfunc("DM_InstanceClearFlag", "dm_arc18_himmelmez_killed");
 		callfunc("DM_InstanceSetFlag", "dm_arc18_himmelmez_bargained", 1);
-		callfunc("DM_InstanceQuestComplete", 20221);
-		callfunc("DM_PartyExp", 2000000, 1200000);
-		callfunc("DM_PartyApplyFlag", "dm_story_beat", 1899);
-		instance_announce(instance_id(), "^3355FF[DM] A dark pact is sealed. Himmelmez will hold the dead while the living face Loki. She says: 'I have been holding them already. I am glad to have a reason now.'^000000", bc_all);
-		sleep(2000);
-		instance_announce(instance_id(), "^FF6600[DM] You leave Niflheim with a queen at your back and a debt that has no price yet. The ruins of Morroc are the last thread before the choice.^000000", bc_all);
-		break;
+		callfunc("DM_PartyMes", "[Himmelmez]");
+		callfunc("DM_PartyMes", "Sealed. I have been holding them already. I am glad to have a reason now.");
+		callfunc("DM_PartyMes", "^3355FF*The pact binds: the boundary, the hour, the cost. She will be here when the seal is decided.*^000000");
+		callfunc("DM_Arc18Close");
+	} else if (.@mode == 2) {
+		callfunc("DM_InstanceSetFlag", "dm_arc18_resolution", 2);
+		callfunc("DM_PartyMes", "[Himmelmez]");
+		callfunc("DM_PartyMes", "Then go. I will be here. I will not be angry at you. I have not been angry for a long time.");
+		callfunc("DM_PartyMes", "^3355FF*You leave without a pact. She is alive on the throne. The finale proceeds.*^000000");
+		callfunc("DM_Arc18Close");
+	} else {
+		callfunc("DM_InstanceSetFlag", "dm_arc18_resolution", 3);
+		$@dm_arc18_pressure_party_id = getcharid(CHAR_ID_PARTY);
+		$@dm_arc18_pressure_damage = 3;
+		callfunc("DM_TriggerEvent", "Himmelmez Pressure#dm", "OnPressureStart");
+		callfunc("DM_PartyMes", "[Himmelmez]");
+		callfunc("DM_PartyMes", "Then it is announced. The Dungeon Master will run it. Do not mistake me for helpless.");
+		callfunc("DM_PartyMes", "^3355FF[CHALLENGE ANNOUNCED. The Dungeon Master will resolve this confrontation; nothing is decided until they do.]^000000");
+		callfunc("DM_MapStory", "Himmelmez has been challenged. The curse presses in. The confrontation is the Dungeon Master's to resolve.");
 	}
 	close();
 
 OnInit:
-	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20221, 1;
+	callfunc("DM_AssertWalk");
 	end;
 }
 

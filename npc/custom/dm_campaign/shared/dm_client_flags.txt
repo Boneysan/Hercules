@@ -1,0 +1,61 @@
+//===== Seal Cascade Campaign ================================
+//= Client flag channel (docs/specs/dm-flag-channel.md, slice C2)
+//===== Description: =========================================
+//= Story flags are character variables. A few of them gate what the client
+//= may SHOW (Arc 1's investigation clues), so the server reports exactly those,
+//= over the same `[DMJ]{json}` lines the objective/checkpoint echoes already use.
+//=
+//=   DM_ClientFlagList      the allowlist: the only flags the client is ever told
+//=   DM_ClientFlagAllowed   is one name on it
+//=   DM_SendFlagDelta       one flag changed on the attached character
+//=   DM_SendFlagSnapshot    every allowlisted flag, in short numbered parts
+//=
+//= The allowlist is the spoiler control. A flag that names a culprit or an
+//= unrevealed ending is simply never listed. Add a flag here only when a client
+//= feature needs it; the client treats an absent flag as 0.
+//=
+//= Hercules chat lines are 255 bytes, so a snapshot is sent as parts of at most
+//= four flags. The client applies it only when every part of one `seq` arrived.
+//===========================================================
+
+function	script	DM_ClientFlagList	{
+	// Arc 1 reveal conditions (korangar hunt_story.tsv, column 7).
+	return "dm_arc01_started|dm_arc01_child_found|dm_arc01_clue_mask|dm_arc01_chamber_drained|dm_arc01_binding_applied|dm_arc01_holt_approach";
+}
+
+function	script	DM_ClientFlagAllowed	{
+	.@name$ = getarg(0);
+	if (.@name$ == "")
+		return 0;
+	return (strpos("|" + callfunc("DM_ClientFlagList") + "|", "|" + .@name$ + "|") >= 0) ? 1 : 0;
+}
+
+function	script	DM_SendFlagDelta	{
+	.@name$ = getarg(0);
+	.@value = getarg(1, 0);
+	if (!callfunc("DM_ClientFlagAllowed", .@name$))
+		return 0;
+	dispbottom("[DMJ]{\"t\":\"flag\",\"v\":1,\"seq\":0,\"name\":\"" + .@name$ + "\",\"value\":" + .@value + "}");
+	return 1;
+}
+
+function	script	DM_SendFlagSnapshot	{
+	explode(.@names$, callfunc("DM_ClientFlagList"), "|");
+	.@count = getarraysize(.@names$);
+	if (.@count <= 0)
+		return 0;
+	.@parts = (.@count + 3) / 4;
+	// One id per snapshot. Seconds are enough: the parts below are sent in one
+	// script run, so two snapshots to one character cannot interleave.
+	.@seq = gettimetick(2);
+	for (.@part = 0; .@part < .@parts; ++.@part) {
+		.@body$ = "";
+		for (.@i = .@part * 4; .@i < .@count && .@i < (.@part + 1) * 4; ++.@i) {
+			if (.@body$ != "")
+				.@body$ = .@body$ + ",";
+			.@body$ = .@body$ + "\"" + .@names$[.@i] + "\":" + callfunc("DM_GetFlag", .@names$[.@i]);
+		}
+		dispbottom("[DMJ]{\"t\":\"flags\",\"v\":1,\"seq\":" + .@seq + ",\"part\":" + .@part + ",\"of\":" + .@parts + ",\"flags\":{" + .@body$ + "}}");
+	}
+	return .@parts;
+}

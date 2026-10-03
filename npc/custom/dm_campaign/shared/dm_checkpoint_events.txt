@@ -16,12 +16,15 @@ OnPCPartyPush:
 	if (callfunc("DM_SessionAllows")) {
 		callfunc("DM_CatchUpFromParty", 1, 1);
 		callfunc("DM_CheckpointSyncSelf", $dm_active_party);
+		callfunc("DM_SendFlagSnapshot");
 	}
 	end;
 
 OnPCQuestLog:
-	if (callfunc("DM_SessionAllows"))
+	if (callfunc("DM_SessionAllows")) {
 		callfunc("DM_CatchUpFromParty", 1);
+		callfunc("DM_SendFlagSnapshot");
+	}
 	end;
 
 OnPCLoginEvent:
@@ -35,6 +38,7 @@ OnPCPartyJoin:
 	if (callfunc("DM_SessionAllows")) {
 		callfunc("DM_CheckpointSyncSelf", $dm_active_party);
 		callfunc("DM_CatchUpFromParty", 1);
+		callfunc("DM_SendFlagSnapshot");
 		dispbottom("[DM] Party progress copied. Quests and story flags you did not already have are filled in.");
 	}
 	end;
@@ -45,6 +49,7 @@ OnPCLoadMapEvent:
 	if (callfunc("DM_SessionAllows")) {
 		callfunc("DM_CheckpointSyncSelf", $dm_active_party);
 		callfunc("DM_CatchUpFromParty");
+		callfunc("DM_SendFlagSnapshot");
 	}
 	end;
 }

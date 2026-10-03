@@ -1,0 +1,23 @@
+//===== Hercules Script ======================================
+//= F39 shared-quest-credit test fixture (headless tester only)
+//============================================================
+//= Disabled in production: listed commented out in
+//= npc/scripts_dev.conf and enabled only for a disposable test run.
+//= Choice 1 / 2 completes quest 11118 / 11119 for the player, then
+//= offers the same step to nearby party members and reports how many
+//= were credited. Reports the count in the dialogue so a client can
+//= assert on it.
+//============================================================
+
+prontera,168,205,4	script	Party Credit Test NPC	4_F_01,{
+	mes "[Party Credit Test NPC]";
+	mes "Complete a test quest and share it with the party?";
+	next;
+	.@choice = select("Quest 11118", "Quest 11119");
+	.@quest = (.@choice == 1) ? 11118 : 11119;
+	completequest .@quest;
+	.@credited = partycompletequest(.@quest);
+	mes "[Party Credit Test NPC]";
+	mes "Credited " + .@credited + " party members.";
+	close;
+}

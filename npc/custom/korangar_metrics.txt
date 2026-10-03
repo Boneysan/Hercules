@@ -1,0 +1,272 @@
+//===== Korangar GM metrics ==================================
+//= F36 (GDD 17.3 / 18): GM-only observability for balance work.
+//===== Description: =========================================
+//= `@metrics` (GM level 1+; the same gate as the @dm tools).
+//=
+//=   @metrics on | off | status     opt in to aggregated counters (DEFAULT OFF)
+//=   @metrics report                today's counters, by area
+//=   @metrics baseline save <label> snapshot counters + economy gauges
+//=   @metrics baseline diff <label> change since that snapshot
+//=   @metrics spawns [map] [id]     monster count and mix on a map (or one kind)
+//=   @metrics party                 online parties and their level gaps
+//=   @metrics economy               zeny in circulation right now
+//=   @metrics quests                campaign quest/flag divergence (preview only)
+//=
+//= Privacy: counters are totals per day. No account or character id, no chat,
+//= no names are stored; only the number of times an event happened. Collection
+//= does nothing until a GM runs `@metrics on`, and `@metrics off` stops it.
+//=
+//= Not covered here: map visits (OnPCLoadMapEvent only fires on maps with the
+//= `loadevent` mapflag, which this server does not set globally), pathing
+//= failures / stuck loops (need C instrumentation), and UI usage (client side). Drop odds are simulated offline by
+//= tools/drop_sim.py, because scripts cannot read a monster's drop table.
+//===========================================================
+
+-	script	KorangarMetrics	FAKE_NPC,{
+OnInit:
+	query_sql("CREATE TABLE IF NOT EXISTS `korangar_metric_counter` (`day` DATE NOT NULL, `area` VARCHAR(16) NOT NULL, `name` VARCHAR(32) NOT NULL, `value` BIGINT UNSIGNED NOT NULL DEFAULT 0, PRIMARY KEY (`day`, `area`, `name`)) ENGINE=InnoDB");
+	query_sql("CREATE TABLE IF NOT EXISTS `korangar_metric_baseline` (`label` VARCHAR(32) NOT NULL, `area` VARCHAR(16) NOT NULL, `name` VARCHAR(32) NOT NULL, `value` BIGINT UNSIGNED NOT NULL DEFAULT 0, `saved_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`label`, `area`, `name`)) ENGINE=InnoDB");
+	bindatcmd("metrics", strnpcinfo(NPC_NAME_UNIQUE) + "::OnMetrics", 1, 99, 1);
+	end;
+
+// ---- collection: counts only, and only while a GM has switched it on ----
+
+OnPCDieEvent:
+	callfunc("KM_Count", "combat", "player_deaths");
+	end;
+
+OnNPCKillEvent:
+	callfunc("KM_Count", "combat", "monster_kills");
+	end;
+
+OnPCBaseLvUpEvent:
+	callfunc("KM_Count", "progress", "base_level_ups");
+	end;
+
+OnPCJobLvUpEvent:
+	callfunc("KM_Count", "progress", "job_level_ups");
+	end;
+
+OnPCLoginEvent:
+	callfunc("KM_Count", "session", "logins");
+	if (getcharid(CHAR_ID_PARTY) > 0)
+		callfunc("KM_Count", "party", "party_logins");
+	else
+		callfunc("KM_Count", "party", "solo_logins");
+	end;
+
+// ---- the command ----
+
+OnMetrics:
+	if (!callfunc("DM_RequireDM"))
+		end;
+	.@sub$ = .@atcmd_parameters$[0];
+	if (.@sub$ == "on") {
+		$korangar_metrics_on = 1;
+		dispbottom("[Metrics] Collection ON: aggregated counters only (no names, ids or chat).");
+		end;
+	}
+	if (.@sub$ == "off") {
+		$korangar_metrics_on = 0;
+		dispbottom("[Metrics] Collection OFF. Stored counters are kept; reports still work.");
+		end;
+	}
+	if (.@sub$ == "status") {
+		dispbottom("[Metrics] Collection is " + ($korangar_metrics_on ? "ON" : "OFF") + ".");
+		end;
+	}
+	if (.@sub$ == "report") {
+		callsub(S_Report);
+		end;
+	}
+	if (.@sub$ == "baseline") {
+		callsub(S_Baseline, .@atcmd_parameters$[1], .@atcmd_parameters$[2]);
+		end;
+	}
+	if (.@sub$ == "spawns") {
+		callsub(S_Spawns, .@atcmd_parameters$[1], atoi(.@atcmd_parameters$[2]));
+		end;
+	}
+	if (.@sub$ == "party") {
+		callsub(S_Party);
+		end;
+	}
+	if (.@sub$ == "economy") {
+		callsub(S_Economy);
+		end;
+	}
+	if (.@sub$ == "quests") {
+		callsub(S_Quests);
+		end;
+	}
+	dispbottom("[Metrics] @metrics on|off|status | report | baseline save|diff <label> | spawns [map] | party | economy | quests");
+	end;
+
+S_Report:
+	.@rows = query_sql("SELECT `area`, `name`, `value` FROM `korangar_metric_counter` WHERE `day` = CURDATE() ORDER BY `area`, `name`", .@area$, .@name$, .@value);
+	dispbottom("[Metrics] Today (collection " + ($korangar_metrics_on ? "ON" : "OFF") + "): " + .@rows + " counter(s).");
+	for (.@i = 0; .@i < .@rows; ++.@i)
+		dispbottom("[Metrics]   " + .@area$[.@i] + "." + .@name$[.@i] + " = " + .@value[.@i]);
+	return;
+
+S_Baseline:
+	.@action$ = getarg(0);
+	.@label$ = getarg(1);
+	if (.@action$ != "save" && .@action$ != "diff") {
+		dispbottom("[Metrics] Usage: @metrics baseline save <label> | diff <label>");
+		return;
+	}
+	if (!callfunc("KM_ValidLabel", .@label$)) {
+		dispbottom("[Metrics] A label is 1-32 characters of a-z, 0-9, _ or -.");
+		return;
+	}
+	.@sql$ = escape_sql(.@label$);
+	if (.@action$ == "save") {
+		query_sql("DELETE FROM `korangar_metric_baseline` WHERE `label` = '" + .@sql$ + "'");
+		query_sql("INSERT INTO `korangar_metric_baseline` (`label`, `area`, `name`, `value`) SELECT '" + .@sql$ + "', `area`, `name`, SUM(`value`) FROM `korangar_metric_counter` GROUP BY `area`, `name`");
+		query_sql("INSERT INTO `korangar_metric_baseline` (`label`, `area`, `name`, `value`) SELECT '" + .@sql$ + "', 'gauge', 'characters', COUNT(*) FROM `char`");
+		query_sql("INSERT INTO `korangar_metric_baseline` (`label`, `area`, `name`, `value`) SELECT '" + .@sql$ + "', 'gauge', 'zeny_total', COALESCE(SUM(`zeny`), 0) FROM `char`");
+		query_sql("SELECT COUNT(*) FROM `korangar_metric_baseline` WHERE `label` = '" + .@sql$ + "'", .@n);
+		dispbottom("[Metrics] Baseline '" + .@label$ + "' saved: " + .@n + " value(s) (counters plus economy gauges).");
+		return;
+	}
+	query_sql("SELECT COUNT(*), COALESCE(TIMESTAMPDIFF(MINUTE, MIN(`saved_at`), NOW()), 0) FROM `korangar_metric_baseline` WHERE `label` = '" + .@sql$ + "'", .@have, .@minutes);
+	if (.@have < 1) {
+		dispbottom("[Metrics] No baseline named '" + .@label$ + "'.");
+		return;
+	}
+	// Counters: now minus then. A counter missing from the snapshot started at 0.
+	.@rows = query_sql("SELECT c.`area`, c.`name`, c.`total` - COALESCE(b.`value`, 0) FROM (SELECT `area`, `name`, SUM(`value`) AS `total` FROM `korangar_metric_counter` GROUP BY `area`, `name`) c LEFT JOIN `korangar_metric_baseline` b ON b.`label` = '" + .@sql$ + "' AND b.`area` = c.`area` AND b.`name` = c.`name` ORDER BY c.`area`, c.`name`", .@area$, .@name$, .@delta);
+	dispbottom("[Metrics] Change since baseline '" + .@label$ + "' (" + .@minutes + " minute(s) ago):");
+	for (.@i = 0; .@i < .@rows; ++.@i)
+		dispbottom("[Metrics]   " + .@area$[.@i] + "." + .@name$[.@i] + " " + (.@delta[.@i] >= 0 ? "+" : "") + .@delta[.@i]);
+	// Gauges: live value, then the value at the snapshot.
+	query_sql("SELECT COUNT(*), COALESCE(SUM(`zeny`), 0) FROM `char`", .@chars, .@zeny);
+	query_sql("SELECT `value` FROM `korangar_metric_baseline` WHERE `label` = '" + .@sql$ + "' AND `area` = 'gauge' AND `name` = 'zeny_total'", .@zeny_then);
+	query_sql("SELECT `value` FROM `korangar_metric_baseline` WHERE `label` = '" + .@sql$ + "' AND `area` = 'gauge' AND `name` = 'characters'", .@chars_then);
+	dispbottom("[Metrics]   economy.zeny_total " + .@zeny_then + " -> " + .@zeny + " (" + (.@zeny >= .@zeny_then ? "+" : "") + (.@zeny - .@zeny_then) + ")");
+	dispbottom("[Metrics]   economy.characters " + .@chars_then + " -> " + .@chars);
+	return;
+
+S_Spawns:
+	.@map$ = getarg(0);
+	.@only = getarg(1, 0);
+	if (.@map$ == "")
+		.@map$ = strcharinfo(PC_MAP);
+	.@users = getmapusers(.@map$);
+	if (.@users < 0) {
+		dispbottom("[Metrics] Unknown map '" + .@map$ + "'.");
+		return;
+	}
+	.@mobs = getunits(BL_MOB, .@gid, 0, .@map$);
+	dispbottom("[Metrics] " + .@map$ + ": " + .@mobs + " monster(s), " + .@users + " player(s)" + (.@users > 0 ? ", " + (.@mobs / .@users) + " monster(s) per player." : "."));
+	freeloop(true);
+	.@kinds = 0;
+	for (.@i = 0; .@i < .@mobs; ++.@i) {
+		.@class = getunitdata(.@gid[.@i], UDT_CLASS);
+		for (.@k = 0; .@k < .@kinds; ++.@k)
+			if (.@kclass[.@k] == .@class)
+				break;
+		if (.@k == .@kinds) {
+			.@kclass[.@kinds] = .@class;
+			.@kcount[.@kinds] = 0;
+			++.@kinds;
+		}
+		++.@kcount[.@k];
+	}
+	freeloop(false);
+	// With a monster id: just that kind (a rare kind would not make the top five).
+	if (.@only > 0) {
+		.@found = 0;
+		for (.@k = 0; .@k < .@kinds; ++.@k)
+			if (.@kclass[.@k] == .@only)
+				.@found = .@kcount[.@k];
+		dispbottom("[Metrics]   " + .@found + " x " + getmonsterinfo(.@only, MOB_NAME) + " (lv " + getmonsterinfo(.@only, MOB_LV) + ")");
+		return;
+	}
+	// The five most numerous kinds.
+	for (.@top = 0; .@top < 5 && .@top < .@kinds; ++.@top) {
+		.@best = -1;
+		for (.@k = 0; .@k < .@kinds; ++.@k)
+			if (.@kcount[.@k] > 0 && (.@best < 0 || .@kcount[.@k] > .@kcount[.@best]))
+				.@best = .@k;
+		if (.@best < 0)
+			break;
+		dispbottom("[Metrics]   " + .@kcount[.@best] + " x " + getmonsterinfo(.@kclass[.@best], MOB_NAME) + " (lv " + getmonsterinfo(.@kclass[.@best], MOB_LV) + ")");
+		.@kcount[.@best] = 0;
+	}
+	return;
+
+S_Party:
+	.@origin = getcharid(CHAR_ID_ACCOUNT);
+	.@n = getunits(BL_PC, .@gid, 0);
+	.@parties = 0;
+	.@solo = 0;
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		if (!attachrid(.@gid[.@i]))
+			continue;
+		.@pid = getcharid(CHAR_ID_PARTY);
+		.@lv = BaseLevel;
+		detachrid();
+		if (.@pid <= 0) {
+			++.@solo;
+			continue;
+		}
+		for (.@k = 0; .@k < .@parties; ++.@k)
+			if (.@pids[.@k] == .@pid)
+				break;
+		if (.@k == .@parties) {
+			.@pids[.@parties] = .@pid;
+			.@min[.@parties] = .@lv;
+			.@max[.@parties] = .@lv;
+			.@size[.@parties] = 0;
+			++.@parties;
+		}
+		if (.@lv < .@min[.@k])
+			.@min[.@k] = .@lv;
+		if (.@lv > .@max[.@k])
+			.@max[.@k] = .@lv;
+		++.@size[.@k];
+	}
+	if (.@origin)
+		attachrid(.@origin);
+	dispbottom("[Metrics] " + .@n + " player(s) online: " + .@solo + " solo, " + .@parties + " in a party.");
+	for (.@k = 0; .@k < .@parties; ++.@k)
+		dispbottom("[Metrics]   party " + .@pids[.@k] + ": " + .@size[.@k] + " online, base levels " + .@min[.@k] + "-" + .@max[.@k] + " (gap " + (.@max[.@k] - .@min[.@k]) + ")");
+	return;
+
+S_Economy:
+	query_sql("SELECT COUNT(*), COALESCE(SUM(`zeny`), 0), COALESCE(MAX(`zeny`), 0) FROM `char`", .@chars, .@zeny, .@richest);
+	dispbottom("[Metrics] " + .@chars + " character(s) hold " + .@zeny + " zeny in total; the largest purse is " + .@richest + ".");
+	return;
+
+S_Quests:
+	if ($dm_active_party <= 0) {
+		dispbottom("[Metrics] No campaign session is active. Turn DM mode on first (@dm mode on).");
+		return;
+	}
+	dispbottom("[Metrics] Campaign state divergence for party " + $dm_active_party + " (preview only, nothing is changed):");
+	callfunc("DM_CheckpointPreview", $dm_active_party);
+	return;
+}
+
+// Add one to a counter for today, but only while collection is on.
+function	script	KM_Count	{
+	if (!$korangar_metrics_on)
+		return 0;
+	query_sql("INSERT INTO `korangar_metric_counter` (`day`, `area`, `name`, `value`) VALUES (CURDATE(), '" + escape_sql(getarg(0)) + "', '" + escape_sql(getarg(1)) + "', 1) ON DUPLICATE KEY UPDATE `value` = `value` + 1");
+	return 1;
+}
+
+function	script	KM_ValidLabel	{
+	.@label$ = getarg(0);
+	.@len = getstrlen(.@label$);
+	if (.@len < 1 || .@len > 32)
+		return 0;
+	for (.@i = 0; .@i < .@len; ++.@i) {
+		// strpos is -1 for a character outside the allowed set.
+		if (strpos("abcdefghijklmnopqrstuvwxyz0123456789_-", charat(.@label$, .@i)) < 0)
+			return 0;
+	}
+	return 1;
+}

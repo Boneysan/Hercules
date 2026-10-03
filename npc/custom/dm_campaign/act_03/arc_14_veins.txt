@@ -8,24 +8,93 @@
 //= Prelate Hesma suppresses the evidence. The faith-corruption
 //= arc closes here.
 //=
+//= REBUILT 2026-10-02 (handoff A3-14): get people out before
+//= confronting the heat. Evacuation runs in three discrete steps,
+//= each triggered by finishing a task (never by waiting).
+//=
+//= dm_arc14_evacuation_stage:
+//=   1 route surveyed (Tunnel Route Survey)
+//=   2 obstruction cleared or braced (Collapsed Gallery)
+//=   3 both worker groups moved to Dunmar's camp
+//= dm_arc14_authorization (Hesma, final, equal EXP; needs stage 1):
+//=   1 force a public evacuation authorization (hesma_exposed)
+//=   2 use Hesma's private approach access and document accountability
+//=     afterward (hesma_bribed, kept as the compat flag; dm_arc14_
+//=     accountability_logged records the ledger entry)
+//= Groups only move once an authorization exists. Both save everyone.
+//= dm_arc14_bypass_ready is set when both groups are safe: they reveal a
+//= cooling bypass. Throwing it in the Magma Cathedral shrinks the hazard
+//= from 8 cells to 5 (stay 6+ cells from the center) and softens the
+//= pulses. A party without the bypass can still repair it, at the cost
+//= of a lava golem fight.
+//= Optional mineral salvage is stated as unsafe until stage 3, and is
+//= locked until then.
+//=
 //= Quests (db/quest_db.conf):
 //=   20181 The Herald in the Magma    (arc tracker / Ifrit)
-//=   20183 Volcanic Salamander Hunt (Burning Heart x9, Burning Hair x4, Live Coal x4)
-//=   20184 Lava Golem Firebreak (Sticky Poison x9, Maneater Blossom x4, Jubilee x3)
-//=   20185 The Prelate's Silence      (Prelate Hesma)
+//=   20183 Volcanic Salamander Hunt (optional salvage, after stage 3)
+//=   20184 Lava Golem Firebreak     (optional salvage, after stage 3)
+//=   20185 The Prelate's Silence    (opens at stage 1)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc14_started, dm_arc14_hesma_exposed,
-//=   dm_arc14_hesma_bribed, dm_arc14_ifrit_killed,
-//=   dm_act03_complete
+//=   dm_arc14_started, dm_arc14_evacuation_stage, dm_arc14_groups_saved,
+//=   dm_arc14_bypass_ready, dm_arc14_authorization,
+//=   dm_arc14_accountability_logged, dm_arc14_hesma_exposed,
+//=   dm_arc14_hesma_bribed, dm_arc14_ifrit_killed, dm_act03_complete
 //===========================================================
 
+// ── Shared Arc 14 helpers ──────────────────────────────────────────────────
+
+function	script	DM_Arc14Stage	{
+	.@stage = getarg(0);
+	if (dm_arc14_evacuation_stage >= .@stage)
+		return dm_arc14_evacuation_stage;
+	callfunc("DM_InstanceSetFlag", "dm_arc14_evacuation_stage", .@stage);
+	callfunc("DM_DMJStoryObjective", 20181, 2, "Explore", .@stage, 3, (.@stage >= 3), getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc14_stage_" + .@stage)) {
+		if (.@stage == 1) {
+			callfunc("DM_PartyExp", 100000, 48000);
+			callfunc("DM_InstanceQuestStart", 20185);
+		} else if (.@stage == 2) {
+			callfunc("DM_PartyExp", 100000, 48000);
+		} else {
+			callfunc("DM_PartyExp", 160000, 78000);
+		}
+	}
+	if (.@stage >= 3)
+		callfunc("DM_PartyMes", "^3355FF[Evacuation complete. Both groups are at Dunmar's camp. The workers have something to tell you.]^000000");
+	else
+		callfunc("DM_PartyMes", "^3355FF[Evacuation step " + .@stage + " of 3 done.]^000000");
+	return .@stage;
+}
+
+// mode: 1 public authorization, 2 private access with accountability. Final.
+function	script	DM_Arc14Commit	{
+	.@mode = getarg(0);
+	if (dm_arc14_authorization)
+		return 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc14_authorization", .@mode);
+	if (.@mode == 1) {
+		callfunc("DM_InstanceClearFlag", "dm_arc14_hesma_bribed");
+		callfunc("DM_InstanceSetFlag", "dm_arc14_hesma_exposed", 1);
+	} else {
+		callfunc("DM_InstanceClearFlag", "dm_arc14_hesma_exposed");
+		callfunc("DM_InstanceSetFlag", "dm_arc14_hesma_bribed", 1);
+	}
+	callfunc("DM_InstanceQuestComplete", 20185);
+	callfunc("DM_DMJStoryObjective", 20185, 1, "Interact", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc14_resolution"))
+		callfunc("DM_PartyExp", 240000, 116000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1405);
+	return 1;
+}
+
 // ── Foreman Dunmar — The Man With Miners ───────────────────────────────────
-veins,100,100,5	script	Foreman Dunmar#dm	4_M_06,{
+veins,111,112,5	script	Foreman Dunmar#dm	4_M_06,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20181) == 2) {
 		callfunc("DM_PartyMes", "[Foreman Dunmar]");
-		callfunc("DM_PartyMes", "Ifrit is gone. The tunnels are cooler. Not cool — cooler. My people are alive. That is what I wanted from this.");
+		callfunc("DM_PartyMes", "Ifrit is gone. The tunnels are cooler. Not cool, cooler. My people are alive. That is what I wanted from this.");
 		close();
 	}
 
@@ -34,10 +103,11 @@ veins,100,100,5	script	Foreman Dunmar#dm	4_M_06,{
 		end;
 	}
 
-	callsub(S_TurnIns);
+	callsub(S_Progress);
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20181, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -46,230 +116,462 @@ OnInit:
 
 S_StartArc:
 	callfunc("DM_PartyMes", "[Foreman Dunmar]");
-	callfunc("DM_PartyMes", "You are not from Veins. Good. Everyone from Veins has been told there is no problem.");
+	callfunc("DM_PartyMes", "I do not have time to be polite. There are forty people in the lower tunnels and the heat gets worse by the hour. Prelate Hesma says it is a drill. It is not a drill.");
 	next();
-	if (dm_arc09_karsh_exposed) {
+	if (dm_arc13_treaty_verified || dm_arc13_carrion_bribed) {
 		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "Rachel's Prelate admitted to the blessing being a rift. That broke like news here. Hesma saw it. He has been very quiet since. I think he is waiting to see if confession is survivable.");
+		callfunc("DM_PartyMes", "I heard you made an arrangement with the demon coalition on the island. I am not going to ask whether that was wise. I am going to ask whether it holds, because Ifrit is one of theirs and I would like to know.");
 		next();
-	}
-	if (dm_arc09_karsh_deal) {
+	} else if (dm_arc13_beelzebub_killed) {
 		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "Karsh in Rachel made a deal. Managed transition. Hesma has been watching that situation carefully. He is calculating whether a deal is available for him.");
-		next();
-	}
-	if (dm_arc13_beelzebub_killed || dm_arc13_carrion_bribed) {
-		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "The demon situation on the Nameless Island. Word travels in the deep trades. The volcano got three degrees hotter the week after Beelzebub's coalition collapsed. The Ash Vacuum's secondary effects are being felt here.");
+		callfunc("DM_PartyMes", "You killed Beelzebub. Good. His coalition is not coordinating any more. Ifrit is not coordinating either. He is just burning, and that is somehow worse.");
 		next();
 	}
 	callfunc("DM_PartyMes", "[Dunmar]");
-	callfunc("DM_PartyMes", "The rock is alive. That sounds like a priest's metaphor. It is not. The tunnels are moving. Thermal spikes. Lava intrusions in shafts that have been dry for forty years. Three of my people are dead and Hesma is calling it a geological adjustment.");
+	callfunc("DM_PartyMes", "Surt is under the cathedral and his herald woke first. The tunnels are going soft. My people cannot get out the way they came in.");
 	next();
-	switch (select("What is actually causing this?", "Who is Hesma protecting?", "What do you need us to do?")) {
-	case 1:
-		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "The big thing below. Veins is built above Thor's Volcano because the geothermal heat was economically convenient. Nobody asked what was using the heat from the other side.");
-		break;
-	case 2:
-		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "The pilgrimage revenue. Veins's economy runs on pilgrims coming to see the sacred fires. A volcanic emergency empties the city in three days. Hesma knows that. He has known for six months.");
-		break;
-	case 3:
-		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "Clear the outer shafts so my people can get the remaining equipment out. The Salamander have migrated up from the deep levels — they are nesting in the working shafts. And the Lava Golem formations near the approach are blocking the main evacuation route.");
-		break;
+	.@ready = 0;
+	while (!.@ready) {
+		switch (select("What is wrong with the tunnels?", "Why does Hesma say it is a drill?", "What about the ore?", "We are ready. Where do we start?")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Dunmar]");
+			callfunc("DM_PartyMes", "Heat in the rock. A gallery has partly collapsed on the only way out. The route survey is the first thing, because if we do not know what is still standing, nobody is moving anyone.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Dunmar]");
+			callfunc("DM_PartyMes", "Because the Church leases the cathedral and he does not want it known that it is failing. He is not a villain. He is a man who has decided the Church is more important than forty miners.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Dunmar]");
+			callfunc("DM_PartyMes", "Leave it. Everyone wants the ore. It is not worth a tunnel and it is not worth the people in it. I will pay for it after we are out, and not before. That is a rule, not a request.");
+			break;
+		case 4:
+			.@ready = 1;
+			break;
+		}
+		next();
 	}
-	next();
 	callfunc("DM_PartyMes", "[Dunmar]");
-	callfunc("DM_PartyMes", "Then Hesma. He holds the authorizations for the deep approach to the Cathedral. You cannot reach Thor's core without his seal.");
+	callfunc("DM_PartyMes", "Three steps, in order. Survey the route so we know what is standing. Clear or brace the gallery that is blocking it. Move my two crews out. And before the crews move, someone has to authorize the evacuation. Hesma is the one who can, and he will not do it unless you make him.");
 	callfunc("DM_InstanceSetFlag", "dm_arc14_started", 1);
 	callfunc("DM_InstanceQuestStart", 20181);
-	callfunc("DM_InstanceQuestStart", 20183);
-	callfunc("DM_InstanceQuestStart", 20184);
+	callfunc("DM_DMJStoryObjective", 20181, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Herald in the Magma]^000000");
-	callfunc("DM_PartyMes", "^3355FFVolcanic Salamander Hunt - out of the working shafts: " + callfunc("DM_HuntBrief", 20183) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFLava Golem Firebreak - off the Veins evacuation route: " + callfunc("DM_HuntBrief", 20184) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFSurvey the route, get Hesma's authorization, clear the gallery, move both crews out.^000000");
 	close();
 
-S_TurnIns:
-	.@paid = 0;
+S_Progress:
+	callfunc("DM_PartyMes", "[Dunmar]");
+	callfunc("DM_PartyMes", ((dm_arc14_evacuation_stage >= 1) ? "Route: surveyed. We know what is still standing." : "Route: not surveyed. The survey point is at the tunnel mouth."));
+	callfunc("DM_PartyMes", (dm_arc14_authorization ? (dm_arc14_authorization == 1 ? "Authorization: public. Hesma signed it in front of the camp." : "Authorization: private. Hesma opened the approach. It is on the books that he did, or it will be.") : "Authorization: none yet. Speak to Hesma."));
+	callfunc("DM_PartyMes", ((dm_arc14_evacuation_stage >= 2) ? "Gallery: clear. The way out is open." : "Gallery: still blocking the way out."));
+	callfunc("DM_PartyMes", "Crews moved: " + callfunc("DM_CountBits", dm_arc14_groups_saved) + " of 2.");
+	if (dm_arc14_evacuation_stage < 3) {
+		callfunc("DM_PartyMes", "^3355FFSalvage is not safe to prioritize until both crews are out. I will not pay for ore that costs a route.^000000");
+		close();
+	}
+	next();
+	if (dm_arc14_bypass_ready) {
+		callfunc("DM_PartyMes", "[Dunmar]");
+		callfunc("DM_PartyMes", "One more thing, now that my people are out. The crews know the old cooling bypass in the cathedral. If somebody throws it, the heat in the lower chamber pulls back from the edges. Stay six cells from the middle and you will not feel it. I would not stand in the middle either way.");
+		next();
+	}
+	if (dm_arc14_authorization == 2 && !dm_arc14_accountability_logged) {
+		callfunc("DM_PartyMes", "[Dunmar]");
+		callfunc("DM_PartyMes", "And the ledger. You took Hesma's private way in. That is fine. It is only fine if it is written down. The ledger is by the camp fire.");
+		next();
+	}
+	switch (select("Ask about the optional salvage.", "Thank you. We are going down.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		break;
+	}
+	close();
+
+S_Optional:
+	callfunc("DM_PartyMes", "[Dunmar]");
+	callfunc("DM_PartyMes", "Now it is safe to ask. Salvage the lower seams for me. Not for the Church and not for Rekenber. For the camp.");
+	next();
+	if (questprogress(20183) == 0) {
+		callfunc("DM_InstanceQuestStart", 20183);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Volcanic Salamander Hunt - " + callfunc("DM_HuntBrief", 20183) + "]^000000");
+	}
+	if (questprogress(20184) == 0) {
+		callfunc("DM_InstanceQuestStart", 20184);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Lava Golem Firebreak - " + callfunc("DM_HuntBrief", 20184) + "]^000000");
+	}
 	callfunc("DM_HuntNoteShort", 20183);
 	if (questprogress(20183) == 1 && callfunc("DM_HuntCollect", 20183)) {
 		callfunc("DM_InstanceQuestComplete", 20183);
-		callfunc("DM_PartyExp", 420000, 200000);
-		callfunc("DM_GivePartyZeny", 35000);
-		.@paid = 1;
+		callfunc("DM_PartyExp", 133000, 65000);
+		callfunc("DM_GivePartyZeny", 28000);
 		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "The working shafts are clear. The Salamander came up because something pushed them — the deep levels are too hot even for them now. That is not a normal geological adjustment.");
-		next();
-		switch (select("Get your people out of the shafts now.", "Document the thermal readings from where the Salamander nested.", "How deep are the usable shafts?")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Dunmar]");
-			callfunc("DM_PartyMes", "Already started. The last crew pulled out an hour ago. The equipment stays — people first.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Dunmar]");
-			callfunc("DM_PartyMes", "Three hundred meters down the Salamander were still nesting comfortably. Below that the temperature spiked. Something is generating heat that is not geothermal. That reading will matter when this goes before an inquest.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Dunmar]");
-			callfunc("DM_PartyMes", "Above the three-hundred-meter mark, for now. The deeper shafts are closed. Have been since Hesma told us there was no problem, which was when I decided Hesma had a problem.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The seam stock is back in the camp. We will not run short of fuel this month.");
 		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20184);
 	if (questprogress(20184) == 1 && callfunc("DM_HuntCollect", 20184)) {
 		callfunc("DM_InstanceQuestComplete", 20184);
-		callfunc("DM_PartyExp", 440000, 210000);
-		callfunc("DM_GivePartyZeny", 37000);
-		.@paid = 1;
+		callfunc("DM_PartyExp", 133000, 65000);
+		callfunc("DM_GivePartyZeny", 28000);
 		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "The Lava Golem formations. Those have not been on the evacuation route before. They form where magma pools and solidifies under specific pressure — the pressure variance in that tunnel has changed significantly.");
-		next();
-		switch (select("The route is clear. Start moving people out.", "The formations are new. Something changed below three months ago.", "What happens if the evacuation route closes?")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Dunmar]");
-			callfunc("DM_PartyMes", "Already moving. I had teams staged. Thank you.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Dunmar]");
-			callfunc("DM_PartyMes", "Three months ago is when the first thermal spike hit. And when Hesma's office began receiving more pilgrimage revenue than usual. The timing matters.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Dunmar]");
-			callfunc("DM_PartyMes", "Then the city evacuates through the north gate, which takes four times as long, and we lose everyone in the eastern residential sector. I have been having that nightmare for six months.");
-			break;
-		}
+		callfunc("DM_PartyMes", "A firebreak, built from what the golems left. It will hold the lower tunnels for a day. A day is a lot.");
 		next();
 	}
-
-	if (questprogress(20183) == 2 && questprogress(20184) == 2 && questprogress(20185) == 0) {
-		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "The shafts are clear and the route is open. Now we need Hesma's seal for the deep Cathedral approach.");
-		next();
-		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "He will not give it willingly. He has been delaying that conversation for six months. But I think he has been waiting too — for something to make the decision for him.");
-		callfunc("DM_InstanceQuestStart", 20185);
-		next();
-		callfunc("DM_PartyMes", "^3355FF[Quest started: The Prelate's Silence]^000000");
-		callfunc("DM_PartyMes", "^3355FFConfront Prelate Hesma. Then descend to thor_v03 and face Ifrit.^000000");
-		close();
-	}
-
-	if (questprogress(20185) == 1 && !dm_arc14_hesma_exposed && !dm_arc14_hesma_bribed) {
-		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "Hesma is at the Temple of Fire. He has not left in two days. He knows something is coming.");
-		close();
-	}
-
-	if (questprogress(20185) == 1 && (dm_arc14_hesma_exposed || dm_arc14_hesma_bribed)) {
-		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "Hesma is handled. The deep approach is open. Thor's Volcano, Cathedral level — thor_v03. The heat starts feeling like intent rather than geology about halfway down.");
-		close();
-	}
-
-	if (.@paid) {
-		callfunc("DM_PartyMes", "[Dunmar]");
-		callfunc("DM_PartyMes", "Both field contracts need to be done first. People are still moving through those routes.");
-		close();
-	}
-
-	callfunc("DM_PartyMes", "[Dunmar]");
-	if (questprogress(20183) == 1 && questprogress(20184) == 1)
-		callfunc("DM_PartyMes", "The Salamander hunt and Lava Golem firebreak are both still active.");
-	else if (questprogress(20183) == 1)
-		callfunc("DM_PartyMes", "Volcanic Salamander Hunt is still open. The working shafts need to be cleared.");
-	else if (questprogress(20184) == 1)
-		callfunc("DM_PartyMes", "Lava Golem Firebreak is still open. The evacuation route is blocked.");
-	else
-		callfunc("DM_PartyMes", "Both contracts done. Hesma is the last obstacle. Temple of Fire, south of the city.");
 	callfunc("DM_HuntStanding", 20183, 20184);
-	close();
+	return;
 }
 
-// ── Prelate Hesma — The Silence Before the Fire ────────────────────────────
-veins,110,100,5	script	Prelate Hesma#dm	4_M_06,{
+// ── Prelate Hesma — The Prelate's Silence ──────────────────────────────────
+veins,118,108,5	script	Prelate Hesma#dm	4_M_06,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc14_started) {
 		callfunc("DM_PartyMes", "[Prelate Hesma]");
-		callfunc("DM_PartyMes", "Veins's sacred fires are a place of peace and reflection. Please respect the sanctity of the grounds.");
+		callfunc("DM_PartyMes", "The cathedral is Church property. Visitors are welcome on feast days.");
 		close();
 	}
-
-	if (questprogress(20181) == 2) {
+	if (dm_arc14_authorization) {
 		callfunc("DM_PartyMes", "[Prelate Hesma]");
-		if (dm_arc14_hesma_exposed)
-			callfunc("DM_PartyMes", "Ifrit is gone. My confession is on file. I will cooperate with whatever process follows. I owe Dunmar's people that much.");
+		if (dm_arc14_authorization == 1)
+			callfunc("DM_PartyMes", "I signed in front of the camp. It will be said that I was forced. It will also be said that I signed. I would prefer the second.");
 		else
-			callfunc("DM_PartyMes", "An arrangement was made. The city was evacuated safely. That is the result I was working toward, in my own way.");
-		close();
-	}
-
-	if (dm_arc14_hesma_exposed || dm_arc14_hesma_bribed) {
-		callfunc("DM_PartyMes", "[Prelate Hesma]");
-		callfunc("DM_PartyMes", "The deep Cathedral approach is open. I have nothing else to add at this time.");
+			callfunc("DM_PartyMes", "The approach is open. Let it be understood that I did not do this out of weakness. I will want to know how it is recorded.");
 		close();
 	}
 
 	callfunc("DM_PartyMes", "[Prelate Hesma]");
-	callfunc("DM_PartyMes", "Foreman Dunmar sent you. He is a good man who is very angry with me. He is entitled to be.");
+	callfunc("DM_PartyMes", "Dunmar sent you. He would. He is a good man who has never once had to defend a building.");
 	next();
-	if (dm_arc09_karsh_exposed) {
+	if (dm_arc09_karsh_exposed || dm_arc09_secret_kept) {
 		callfunc("DM_PartyMes", "[Hesma]");
-		callfunc("DM_PartyMes", "Karsh signed his confession. The precedent exists now. I have been reading the accounts. He still has a position in Arunafeltz's administration. The institution survived. That is more than I assumed it could.");
-		next();
-	}
-	if (dm_arc09_karsh_deal) {
-		callfunc("DM_PartyMes", "[Hesma]");
-		callfunc("DM_PartyMes", "Karsh made a deal. Managed transition. I have been calculating whether the same terms apply here. I think the answer is: no. The volcano does not negotiate.");
+		callfunc("DM_PartyMes", (dm_arc09_secret_kept ? "I am told you kept Karsh's secret in Rachel. I am glad. We understand each other, then." : "I am told you exposed Karsh in Rachel. I assume that is why you have come to see me before you did anything else."));
 		next();
 	}
 	callfunc("DM_PartyMes", "[Hesma]");
-	callfunc("DM_PartyMes", "I have known about the deep thermal readings for six months. I have known about Surt's stirring below the Cathedral level for three. I told no one because I was trying to manage the information carefully.");
+	callfunc("DM_PartyMes", "The cathedral is failing. The Church knows. The Church is not going to say so. If the miners leave in a panic, the cathedral falls with no one left to hold what is under it. My silence is not indifference.");
 	next();
-	callfunc("DM_PartyMes", "[Hesma]");
-	callfunc("DM_PartyMes", "What I was actually doing was waiting. I do not know what I was waiting for. I think I was waiting for it to stop being true.");
+	if (dm_arc14_evacuation_stage < 1) {
+		callfunc("DM_PartyMes", "[Hesma]");
+		callfunc("DM_PartyMes", "You have not even surveyed the route. Come back with something I would have to answer.");
+		close();
+	}
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What is under the cathedral?", "What does a public authorization cost you?", "What does private access cost the workers?", "We are ready to decide.", "We need to discuss this.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Hesma]");
+			callfunc("DM_PartyMes", "Surt. Or what is left of the thing that was sealed here. Ifrit is the first of it to stir. There will be more.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Hesma]");
+			callfunc("DM_PartyMes", "My post, and in public, which is worse. The Church will say I was forced and then it will say I was wrong. The crews move at once, in view of everyone, with the whole camp as witness.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Hesma]");
+			callfunc("DM_PartyMes", "Nothing, in the tunnels. They move just as fast. What it costs is later: I open a private approach, and someone has to write down that I did and why. If nobody does, it is a favor. If somebody does, it is a record.");
+			break;
+		case 4:
+			.@done = 1;
+			break;
+		case 5:
+			callfunc("DM_PartyMes", "[Hesma]");
+			callfunc("DM_PartyMes", "Do. The tunnels will not wait much longer, but I will wait for people who think before they act.");
+			close();
+		}
+		if (!.@done)
+			next();
+	}
 	next();
-	switch (select("Sign the evacuation authorization and file an honest report.", "Give us the deep approach seal and step back.", "What will you do about what you know?")) {
+	switch (select("Force a public evacuation authorization.", "Use his private approach, and document it afterward.", "Not yet. We want to talk it over.")) {
 	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc14_hesma_exposed", 1);
-		callfunc("DM_PartyMes", "[Hesma]");
-		callfunc("DM_PartyMes", "Yes. The authorization and the report. Both. I should have done this three months ago. I have a very clear sense of what I should have done three months ago.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Hesma signs both documents. His hand does not shake.*^000000");
-		callfunc("DM_PartyMes", "^3355FF*The evacuation order is posted. The deep approach is open.*^000000");
+		.@mode = 1;
 		break;
 	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc14_hesma_bribed", 1);
-		callfunc("DM_PartyMes", "[Hesma]");
-		callfunc("DM_PartyMes", "The seal. And I will... manage the city response. Quietly. The evacuation will happen. The public account will be a geological emergency, not a divine manifestation. The pilgrimage revenue may recover.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*The seal is transferred. Hesma's silence is purchased with the same currency he used to buy his own.*^000000");
+		.@mode = 2;
 		break;
 	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc14_hesma_exposed", 1);
 		callfunc("DM_PartyMes", "[Hesma]");
-		callfunc("DM_PartyMes", "What I will do. I will authorize the evacuation. I will file the report. I will testify at whatever inquiry follows. I am sixty-three years old. I have been a prelate for thirty-one of those years.");
-		next();
-		callfunc("DM_PartyMes", "[Hesma]");
-		callfunc("DM_PartyMes", "I have no idea what I will do after that. But I will do those things first.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Hesma signs both documents without being asked for a second time.*^000000");
-		break;
+		callfunc("DM_PartyMes", "Of course.");
+		close();
 	}
-	callfunc("DM_InstanceQuestComplete", 20185);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1405);
 	next();
-	callfunc("DM_PartyMes", "^3355FF[The Prelate's Silence resolved. Descend to thor_v03 and face Ifrit.]^000000");
+	callfunc("DM_PartyMes", "[Hesma]");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "Publicly, then. In front of the camp. Everyone will see what I was made to sign. Confirm, and I walk to the fire and read it out.");
+	else
+		callfunc("DM_PartyMes", "Privately. The approach opens at my word, and you write down that it did. Confirm, and I open it.");
+	next();
+	if (select("Confirm.", "Wait.") != 1) {
+		callfunc("DM_PartyMes", "[Hesma]");
+		callfunc("DM_PartyMes", "Better to wait than to be wrong in a camp full of people.");
+		close();
+	}
+	if (!callfunc("DM_Arc14Commit", .@mode))
+		close();
+	callfunc("DM_PartyMes", "[Hesma]");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "Then it is done. I have read it out. The crews can move now, openly.");
+	else
+		callfunc("DM_PartyMes", "The approach is open. Move your crews. And write it down, because I will want it written.");
+	next();
+	callfunc("DM_PartyMes", "^3355FF[The Prelate's Silence resolved. The crews can be moved.]^000000");
 	close();
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20185, 1;
+	end;
+}
+
+// ── Step 1: the tunnel route survey ────────────────────────────────────────
+veins,105,119,4	script	Tunnel Route Survey#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc14_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc14_evacuation_stage >= 1) {
+		callfunc("DM_PartyMes", "^3355FF*The survey marks stay chalked on the wall: green where the rock is sound, red where it is not.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The tunnel mouth. Heat shimmers over the floor. Somewhere below, a support beam ticks as it cooks.*^000000");
+	next();
+	if (select("Survey the route.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", "navigate", 11) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_PartyMes", "^3355FF*You map most of it. One branch you mark sound turns out not to be. You will have to watch your footing below.*^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*Every branch, marked. You know exactly which beams will hold and which will not.*^000000");
+	}
+	callfunc("DM_Arc14Stage", 1);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Step 2: the collapsed gallery (brace it, or clear it by force) ─────────
+veins,114,122,4	script	Collapsed Gallery#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc14_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc14_evacuation_stage >= 2) {
+		callfunc("DM_PartyMes", "^3355FF*The gallery is open. Timbers hold the roof and the way through is wide enough for a cart.*^000000");
+		close();
+	}
+	if (dm_arc14_evacuation_stage < 1) {
+		callfunc("DM_PartyMes", "^3355FF*A gallery, partly fallen in. You do not know which of the surrounding beams will hold. Survey the route first.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The golems that woke in the rubble are still moving.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The gallery that blocks the way out. Half the roof is down. The other half is wondering whether to follow.*^000000");
+	next();
+	switch (select("Brace the roof and clear the way.", "Clear it by force.", "Leave it.")) {
+	case 1:
+		if (callfunc("DM_CheckRoll", "craft", 12) < 2 && !callfunc("DM_IsDM")) {
+			callfunc("DM_PartyMes", "^3355FF*The bracing is not quite right. Something in the rubble stirs: lava golems, woken by the noise.*^000000");
+			break;
+		}
+		callfunc("DM_PartyMes", "^3355FF*You set the braces one at a time. The roof settles on them and does not argue.*^000000");
+		callfunc("DM_Arc14Stage", 2);
+		close();
+	case 2:
+		callfunc("DM_PartyMes", "^3355FF*You break the rubble open. The noise wakes what was sleeping in it.*^000000");
+		break;
+	case 3:
+		close();
+	}
+	if (!'guard_cleared) {
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc14_gallery", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Woken Lava Golem", LAVA_GOLEM, .@self$ + "::OnGuardDead", 74, 100, 2, 3);
+	}
+	close();
+
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc14_gallery");
+	// The golems were the obstruction: with them down, the way is clear.
+	callfunc("DM_Arc14Stage", 2);
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Step 3: the two worker groups ──────────────────────────────────────────
+veins,122,116,4	script	Worker Group West#dm	4_F_03,{
+	callsub(S_Group, 1);
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+S_Group:
+	.@bit = getarg(0);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc14_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc14_groups_saved & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*This crew is at Dunmar's camp, counting heads.*^000000");
+		close();
+	}
+	if (!dm_arc14_authorization) {
+		callfunc("DM_PartyMes", "[Crew Lead]");
+		callfunc("DM_PartyMes", "We cannot move without an order from the Prelate. Somebody has to make him give one.");
+		close();
+	}
+	if (dm_arc14_evacuation_stage < 2) {
+		callfunc("DM_PartyMes", "[Crew Lead]");
+		callfunc("DM_PartyMes", "The gallery is still down. We are not going through that.");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A crew of miners, wrapped in wet cloth, waiting for someone to tell them it is safe.*^000000");
+	next();
+	if (select("Lead them out.", "Not yet.") == 2) close();
+	callfunc("DM_PartyMes", "^3355FF*You take the road you surveyed and braced. The crew follows in a line. At the camp, a woman counts them twice and does not trust the number until the third time.*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc14_groups_saved", dm_arc14_groups_saved | .@bit);
+	if ((dm_arc14_groups_saved & 3) == 3) {
+		callfunc("DM_InstanceSetFlag", "dm_arc14_bypass_ready", 1);
+		callfunc("DM_Arc14Stage", 3);
+	} else {
+		callfunc("DM_PartyMes", "^3355FF[One crew safe. The other is still below.]^000000");
+	}
+	close();
+}
+
+veins,106,120,4	script	Worker Group East#dm	4_F_03,{
+	callsub(S_Group, 2);
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+S_Group:
+	.@bit = getarg(0);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc14_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc14_groups_saved & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*This crew is at Dunmar's camp, counting heads.*^000000");
+		close();
+	}
+	if (!dm_arc14_authorization) {
+		callfunc("DM_PartyMes", "[Crew Lead]");
+		callfunc("DM_PartyMes", "We cannot move without an order from the Prelate. Somebody has to make him give one.");
+		close();
+	}
+	if (dm_arc14_evacuation_stage < 2) {
+		callfunc("DM_PartyMes", "[Crew Lead]");
+		callfunc("DM_PartyMes", "The gallery is still down. We are not going through that.");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A crew of miners, wrapped in wet cloth, waiting for someone to tell them it is safe.*^000000");
+	next();
+	if (select("Lead them out.", "Not yet.") == 2) close();
+	callfunc("DM_PartyMes", "^3355FF*You take the road you surveyed and braced. The crew follows in a line. At the camp, a woman counts them twice and does not trust the number until the third time.*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc14_groups_saved", dm_arc14_groups_saved | .@bit);
+	if ((dm_arc14_groups_saved & 3) == 3) {
+		callfunc("DM_InstanceSetFlag", "dm_arc14_bypass_ready", 1);
+		callfunc("DM_Arc14Stage", 3);
+	} else {
+		callfunc("DM_PartyMes", "^3355FF[One crew safe. The other is still below.]^000000");
+	}
+	close();
+}
+
+// ── The accountability ledger (private authorization only) ─────────────────
+veins,113,114,4	script	Accountability Ledger#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (dm_arc14_authorization != 2) {
+		callfunc("DM_PartyMes", "^3355FF*A camp ledger. Rations, shifts, names. Nothing here needs your signature.*^000000");
+		close();
+	}
+	if (dm_arc14_accountability_logged) {
+		callfunc("DM_PartyMes", "^3355FF*The entry stands: the private approach, the reason, the date, and your names.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The camp ledger, open to a clean page. Dunmar has left a pen on it.*^000000");
+	next();
+	if (select("Write down the private authorization, and who agreed to it.", "Not yet.") == 2) close();
+	callfunc("DM_InstanceSetFlag", "dm_arc14_accountability_logged", 1);
+	callfunc("DM_PartyMes", "^3355FF*You write it out in full: what Hesma opened, why, and that you asked him to. Dunmar signs under it without comment.*^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── The cooling bypass (throwing it shrinks the Cathedral's hazard) ────────
+thor_v03,147,152,4	script	Cooling Bypass#dm	4_ENERGY_BLUE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if ($@dm_arc14_bypass_active) {
+		callfunc("DM_PartyMes", "^3355FF*The bypass is thrown. Cold air pulls along the edges of the chamber.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The golems guarding the valve are still on their feet.*^000000");
+		close();
+	}
+	if (dm_arc14_bypass_ready) {
+		callfunc("DM_PartyMes", "^3355FF*The cooling bypass the crews described. A wheel valve, stiff with heat, and a gauge in the red.*^000000");
+		next();
+		if (select("Throw the bypass.", "Not yet.") == 2) close();
+		$@dm_arc14_bypass_active = 1;
+		mapannounce strnpcinfo(NPC_MAP), "[Magma Cathedral] The cooling bypass is open. The edges of the chamber cool. Stay six cells from the center and the heat will not reach you.", bc_map, 0x88CCFF;
+		close();
+	}
+	// No crews to tell you where it is: the party repairs it themselves, at a cost.
+	callfunc("DM_PartyMes", "^3355FF*A wheel valve on a rusted pipe, half buried in slag. Nobody has told you what it is for.*^000000");
+	next();
+	if (select("Repair and throw it.", "Leave it.") == 2) close();
+	if (!'guard_cleared) {
+		callfunc("DM_PartyMes", "^3355FF*The valve is guarded by something that has made a nest of it.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc14_bypass", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Valve Guardian", LAVA_GOLEM, .@self$ + "::OnGuardDead", 74, 100, 2, 3);
+		close();
+	}
+	if (callfunc("DM_CheckRoll", "craft", 13) < 2 && !callfunc("DM_IsDM"))
+		callfunc("DM_PartyMes", "^3355FF*The repair is crude. It will hold for the length of the fight, and no longer.*^000000");
+	$@dm_arc14_bypass_active = 1;
+	mapannounce strnpcinfo(NPC_MAP), "[Magma Cathedral] The cooling bypass is open. The edges of the chamber cool. Stay six cells from the center and the heat will not reach you.", bc_map, 0x88CCFF;
+	close();
+
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc14_bypass");
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
 	end;
 }
 
@@ -282,39 +584,45 @@ OnMagmaStart:
 	'magma_map$ = strnpcinfo(NPC_MAP);
 	'magma_party_id = $@dm_arc14_magma_party_id;
 	'magma_damage = $@dm_arc14_magma_damage;
+	// The bypass makes the lane predictable: pulses reach 5 cells, not 8,
+	// and hit softer. The rule is on the announcement the party saw.
+	'magma_range = ($@dm_arc14_bypass_active ? 5 : 8);
+	if ($@dm_arc14_bypass_active)
+		'magma_damage = max(1, 'magma_damage - 2);
 	if ('magma_party_id > 0) {
-		mapannounce 'magma_map$, "[Magma Cathedral] The floor begins to pulse with Surt's heat.", bc_map, 0xFF6600;
+		mapannounce 'magma_map$, "[Magma Cathedral] Heat rolls off the walls as Ifrit rises from the magma.", bc_map, 0xFF6600;
 		initnpctimer;
 	}
 	end;
 
 OnMagmaStop:
 	stopnpctimer;
+	$@dm_arc14_bypass_active = 0;
 	end;
 
 OnTimer8000:
-	mapannounce 'magma_map$, "[Magma Cathedral] A ring of heat rolls out from the seal.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 8, 'magma_damage, 0, 0, 'magma_party_id);
+	mapannounce 'magma_map$, "[Magma Cathedral] The vents flare.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 'magma_range, 'magma_damage, 0, 0, 'magma_party_id);
 	end;
 
 OnTimer16000:
-	mapannounce 'magma_map$, "[Magma Cathedral] The seal vents another furnace breath.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 8, 'magma_damage, 0, 0, 'magma_party_id);
+	mapannounce 'magma_map$, "[Magma Cathedral] A gout of fire arcs from the ceiling.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 'magma_range, 'magma_damage, 0, 0, 'magma_party_id);
 	end;
 
 OnTimer24000:
-	mapannounce 'magma_map$, "[Magma Cathedral] The lava channels brighten underfoot.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 8, 'magma_damage, 0, 0, 'magma_party_id);
+	mapannounce 'magma_map$, "[Magma Cathedral] The floor sweats and the stone cracks.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 'magma_range, 'magma_damage, 0, 0, 'magma_party_id);
 	end;
 
 OnTimer32000:
-	mapannounce 'magma_map$, "[Magma Cathedral] Surt's pressure hammers the chamber again.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 8, 'magma_damage, 0, 0, 'magma_party_id);
+	mapannounce 'magma_map$, "[Magma Cathedral] Ifrit exhales and the chamber brightens.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 'magma_range, 'magma_damage, 0, 0, 'magma_party_id);
 	end;
 
 OnTimer40000:
-	mapannounce 'magma_map$, "[Magma Cathedral] The cathedral spends its last stored heat.", bc_map, 0xFF6600;
-	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 8, 'magma_damage, 0, 0, 'magma_party_id);
+	mapannounce 'magma_map$, "[Magma Cathedral] A last surge of heat before the cathedral steadies.", bc_map, 0xFF6600;
+	callfunc("DM_HazardArea", 'magma_map$, 150, 150, 'magma_range, 'magma_damage, 0, 0, 'magma_party_id);
 	stopnpctimer;
 	end;
 
@@ -323,13 +631,16 @@ OnIfritDead:
 	if (!callfunc("DM_ClaimGrant", "arc14_ifrit", .@party))
 		end;
 	stopnpctimer;
+	$@dm_arc14_bypass_active = 0;
 	callfunc("DM_InstanceQuestComplete", 20181);
 	callfunc("DM_InstanceSetFlag", "dm_arc14_ifrit_killed", 1);
 	callfunc("DM_InstanceSetFlag", "dm_act03_complete", 1);
-	callfunc("DM_PartyExp", 2000000, 1000000);
+	callfunc("DM_PartyExp", 2000000, 1000000, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1499);
-	if (dm_arc14_hesma_exposed)
-		instance_announce(instance_id(), "^3355FF[DM] Ifrit is banished. The herald is gone. Dunmar's people evacuated. Hesma's confession is public. Something that was wrong is less wrong.^000000", bc_all);
+	if (dm_arc14_evacuation_stage >= 3 && dm_arc14_hesma_exposed)
+		instance_announce(instance_id(), "^3355FF[DM] Ifrit is banished. The herald is gone. Dunmar's people evacuated, and Hesma's authorization is on the public record. Something that was wrong is less wrong.^000000", bc_all);
+	else if (dm_arc14_evacuation_stage >= 3)
+		instance_announce(instance_id(), "^3355FF[DM] Ifrit is banished. The herald is gone. Dunmar's people are out, and it is written in the camp ledger how they got out.^000000", bc_all);
 	else
 		instance_announce(instance_id(), "^3355FF[DM] Ifrit is banished. The herald is gone, but Surt still sleeps below. Act III is complete.^000000", bc_all);
 	sleep(2000);

@@ -7,30 +7,103 @@
 //= reactivated RSX-0806 to break it. Greta Holm wants
 //= the machine dead and Kessler accountable.
 //=
+//= REBUILT 2026-10-02 (handoff A2-07). The party prepares the
+//= ground, then decides what Einbroch does about the strike.
+//=
+//= Preparations (dm_arc07_prep_mask bits; any two open the decision,
+//= the third pays a bonus):
+//=   1 repair the medical station (consumes the Mine Dust Medicine
+//=       materials, listed from the hunt table so text and items agree)
+//=       -> a field cot in the dungeon that heals the party
+//=   2 secure the workers' exit (check; a failure brings a company patrol)
+//=       -> less smoke pressure in the Reactivation Bay
+//=   4 recover Kessler's reactivation order (check)
+//=       -> an emergency stop in the Bay; if the code is unreadable
+//=          (dm_arc07_code_failed) two manual valves do the same job
+//=
+//= Decision (dm_arc07_labor_resolution, mutually exclusive, final):
+//=   1 support the strike   2 monitored shutdown (needs the order)
+//=   3 enforce the reopening
+//= Derived for Arcs 10, 17 and the finale: strike_supported (1),
+//= strike_broken (3), strike_negotiated (2). Never two at once.
+//=
 //= Quests (db/quest_db.conf):
 //=   20111 The Unit That Wouldn't Stay Dead  (arc tracker / RSX)
-//=   20112 Whose Side the Smoke Is On        (strike resolution)
-//=   20113 Factory Whistle Shift (Old Pick x6, Mould Powder x6, Single Cell x6)
-//=   20114 Metaling Scrap Drive (Flexible Tube x10, Jubilee x6, Mole Claw x6)
-//=   20115 Mine Dust Medicine (Gun Powder x3, Crystal Fragment x4, Dark Crystal Fragment x4)
-//=
-//= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc07_started, dm_arc07_strike_supported,
-//=   dm_arc07_strike_broken, dm_arc07_kessler_confronted,
-//=   dm_arc07_rsx_killed
+//=   20112 Whose Side the Smoke Is On        (opens at two preparations)
+//=   20113 Factory Whistle Shift   (optional contract)
+//=   20114 Metaling Scrap Drive    (optional contract)
+//=   20115 Mine Dust Medicine      (the medical-station materials)
 //===========================================================
 
+// ── Shared Arc 7 helpers ───────────────────────────────────────────────────
+
+// Open the labor decision the first time two preparations are done, and pay a
+// bonus for the third.
+function	script	DM_Arc07AddPrep	{
+	.@bit = getarg(0);
+	if (!(dm_arc07_prep_mask & .@bit))
+		callfunc("DM_InstanceSetFlag", "dm_arc07_prep_mask", dm_arc07_prep_mask | .@bit);
+	.@n = callfunc("DM_CountBits", dm_arc07_prep_mask);
+	callfunc("DM_DMJStoryObjective", 20111, 2, "Explore", .@n, 2, (.@n >= 2), getcharid(CHAR_ID_PARTY));
+	if (.@n == 2) {
+		if (callfunc("DM_ClaimGrant", "arc07_prep")) {
+			callfunc("DM_PartyExp", 360000, 171000);
+			callfunc("DM_InstanceQuestStart", 20112);
+			callfunc("DM_PartyMes", "^3355FF[Two preparations done. Greta can put the decision to the foundry council.]^000000");
+		}
+	} else if (.@n >= 3) {
+		if (callfunc("DM_ClaimGrant", "arc07_prep_bonus"))
+			callfunc("DM_PartyExp", 60000, 28000);
+		callfunc("DM_PartyMes", "^3355FF[All three preparations done.]^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF[One preparation done. One more opens the decision.]^000000");
+	}
+	return .@n;
+}
+
+// The one commitment path. mode: 1 support, 2 monitored shutdown, 3 enforce.
+// First commitment is final, and exactly one strike flag ends up set.
+function	script	DM_Arc07Commit	{
+	.@mode = getarg(0);
+	if (dm_arc07_labor_resolution)
+		return 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc07_labor_resolution", .@mode);
+	if (.@mode == 1)
+		callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", 1);
+	else if (.@mode == 2)
+		callfunc("DM_InstanceSetFlag", "dm_arc07_strike_negotiated", 1);
+	else
+		callfunc("DM_InstanceSetFlag", "dm_arc07_strike_broken", 1);
+	// Presenting the order is how an accusation becomes a fact on the record.
+	if (dm_arc07_prep_mask & 4)
+		callfunc("DM_InstanceSetFlag", "dm_arc07_kessler_confronted", 1);
+	callfunc("DM_InstanceQuestComplete", 20112);
+	callfunc("DM_DMJStoryObjective", 20112, 1, "Interact", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc07_resolution"))
+		callfunc("DM_PartyExp", 240000, 114000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 705);
+	return 1;
+}
+
 // ── Greta Holm — Foundry-council Organizer ───────────────────────
-einbroch,145,230,5	script	Greta Holm#dm	4_F_03,{
+einbroch,171,226,5	script	Greta Holm#dm	4_F_03,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20111) == 2) {
 		callfunc("DM_PartyMes", "[Greta Holm]");
-		if (dm_arc07_strike_supported)
+		switch (dm_arc07_labor_resolution) {
+		case 1:
 			callfunc("DM_PartyMes", "The machine is quiet and the line held. That's two things Rekenber didn't want. Thanks to you.");
-		else if (dm_arc07_strike_broken)
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "The machine is quiet and the south foundry is under a monitored shutdown. Nobody won. Everybody is still alive. I will take it.");
+			break;
+		case 3:
 			callfunc("DM_PartyMes", "The machine is quiet. The strike... we'll rebuild. What Kessler did with RSX is on the record now.");
-		else
+			break;
+		default:
 			callfunc("DM_PartyMes", "The machine is quiet. What comes after is up to the workers now.");
+			break;
+		}
 		close();
 	}
 
@@ -39,10 +112,21 @@ einbroch,145,230,5	script	Greta Holm#dm	4_F_03,{
 		end;
 	}
 
-	callsub(S_TurnIns);
+	if (dm_arc07_labor_resolution) {
+		callsub(S_AfterDecision);
+		end;
+	}
+
+	if (callfunc("DM_CountBits", dm_arc07_prep_mask) >= 2) {
+		callsub(S_Decision);
+		end;
+	}
+
+	callsub(S_Progress);
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20111, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -53,177 +137,199 @@ S_Introduction:
 	callfunc("DM_PartyMes", "[Greta Holm]");
 	callfunc("DM_PartyMes", "You don't look like Rekenber's private security. Good. We've had enough of those today.");
 	next();
-	if (dm_arc06_vahl_trust || dm_arc06_krenn_exposed) {
+	if (dm_arc06_vahl_trust || dm_arc06_krenn_exposed || dm_arc06_krenn_cooperated) {
 		callfunc("DM_PartyMes", "[Greta]");
 		callfunc("DM_PartyMes", "You came from Yuno? Vahl's data about the cascade... some of us here have been seeing the same patterns in the mine's seismic logs. We're not alone in this.");
 		next();
+	} else if (dm_arc06_krenn_bribed) {
+		callfunc("DM_PartyMes", "[Greta]");
+		callfunc("DM_PartyMes", "Yuno. I heard a Director took a quiet payment there. I hope you were not the ones who paid it. I hope you can tell me why I should believe you were not.");
+		next();
 	}
 	callfunc("DM_PartyMes", "[Greta]");
-	callfunc("DM_PartyMes", "We have two problems. The strike has been going for six days — Rekenber wants to break it. And something walked out of the decommission pits. A scrapped unit. RSX-0806.");
+	callfunc("DM_PartyMes", "We have two problems. The strike has been going for six days, and Rekenber wants to break it. And something walked out of the decommission pits. A scrapped unit. RSX-0806.");
 	next();
-	switch (select("We'll take care of RSX. What else?", "Who reactivated it?", "We need to know where the strike stands.")) {
-	case 1:
-		callfunc("DM_PartyMes", "[Greta]");
-		callfunc("DM_PartyMes", "Keep the workers alive while you're at it. We need materials and medicine. You kill what you find in the fields and the mine, we'll handle the line.");
-		break;
-	case 2:
-		callfunc("DM_PartyMes", "[Greta]");
-		callfunc("DM_PartyMes", "Only a supervisor with floor clearance could have touched the reactivation controls. Kessler. But saying it and proving it are different things.");
-		break;
-	case 3:
-		callfunc("DM_PartyMes", "[Greta]");
-		callfunc("DM_PartyMes", "The workers hold the south foundry. Kessler's security holds the north gate. If RSX reaches the south, the strike breaks. We need the machine stopped.");
-		break;
+	.@ready = 0;
+	while (!.@ready) {
+		switch (select("Who reactivated it?", "Where does the strike stand?", "What do you need from us?", "We are ready. Where do we start?")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Greta]");
+			callfunc("DM_PartyMes", "Only a supervisor with floor clearance could have touched the reactivation controls. Kessler. But saying it and proving it are different things.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Greta]");
+			callfunc("DM_PartyMes", "The workers hold the south foundry. Kessler's security holds the north gate. If RSX reaches the south, the strike breaks. We need the machine stopped, and we need to be able to say what we are doing about the people in the way.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Greta]");
+			callfunc("DM_PartyMes", "Ground prepared, so that when you go down there it is not just you and a boiler. Then a decision about the strike that I am not willing to make for the council on my own.");
+			break;
+		case 4:
+			.@ready = 1;
+			break;
+		}
+		next();
 	}
+	callfunc("DM_PartyMes", "[Greta]");
+	callfunc("DM_PartyMes", "Three things. The medical tent has been working on empty since Kessler cut supply to the south gate. The workers need a way out that does not go past his security. And there is a reactivation order on Kessler's desk with his name on it, if someone can get to it.");
 	next();
 	callfunc("DM_PartyMes", "[Greta]");
-	callfunc("DM_PartyMes", "Roweens from the eastern plains are tearing up supply lines. Metalings are stripping the rail spurs of copper. The medical tent needs Zipper Bear pelts from the first mine level.");
+	callfunc("DM_PartyMes", "Any two will do. A third is welcome. If you want paying for the field work, I have contracts for the rail spurs. Optional. Ask me.");
 	callfunc("DM_InstanceSetFlag", "dm_arc07_started", 1);
 	callfunc("DM_InstanceQuestStart", 20111);
-	callfunc("DM_InstanceQuestStart", 20113);
-	callfunc("DM_InstanceQuestStart", 20114);
-	callfunc("DM_InstanceQuestStart", 20115);
+	callfunc("DM_DMJStoryObjective", 20111, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Unit That Wouldn't Stay Dead]^000000");
-	callfunc("DM_PartyMes", "^3355FFFactory Whistle Shift - carried out of the first Einbroch mine: " + callfunc("DM_HuntBrief", 20113) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFMetaling Scrap Drive - scrap off the Einbroch fields: " + callfunc("DM_HuntBrief", 20114) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFMine Dust Medicine - cut out of the Einbroch mine seams: " + callfunc("DM_HuntBrief", 20115) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFPrepare any two: repair the medical station, secure the workers' exit, recover Kessler's reactivation order.^000000");
 	close();
 
-S_TurnIns:
-	.@paid = 0;
+S_Progress:
+	callfunc("DM_PartyMes", "[Greta Holm]");
+	callfunc("DM_PartyMes", "Here is where we stand.");
+	next();
+	callsub(S_PrepStatus);
+	next();
+	switch (select("Ask about the optional contracts.", "Thanks. We are on it.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		break;
+	}
+	close();
+
+S_PrepStatus:
+	callfunc("DM_PartyMes", "[Greta]");
+	callfunc("DM_PartyMes", ((dm_arc07_prep_mask & 1) ? "Medical station: repaired. The tent has light and bandages again." : "Medical station: still dark. It needs " + callfunc("DM_HuntBrief", 20115) + "."));
+	callfunc("DM_PartyMes", ((dm_arc07_prep_mask & 2) ? "Workers' exit: open. The south gate empties without going past security." : "Workers' exit: not yet. The south gate is the problem; security is the other side of it."));
+	callfunc("DM_PartyMes", ((dm_arc07_prep_mask & 4) ? "Reactivation order: in hand, with Kessler's signature." : "Reactivation order: Kessler's desk, in the north supervisor post."));
+	return;
+
+S_Optional:
+	callfunc("DM_PartyMes", "[Greta]");
+	callfunc("DM_PartyMes", "Scrap and shift materials. The line runs better with them. The decision does not need them.");
+	next();
+	if (questprogress(20113) == 0) {
+		callfunc("DM_InstanceQuestStart", 20113);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Factory Whistle Shift - " + callfunc("DM_HuntBrief", 20113) + "]^000000");
+	}
+	if (questprogress(20114) == 0) {
+		callfunc("DM_InstanceQuestStart", 20114);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Metaling Scrap Drive - " + callfunc("DM_HuntBrief", 20114) + "]^000000");
+	}
 	callfunc("DM_HuntNoteShort", 20113);
 	if (questprogress(20113) == 1 && callfunc("DM_HuntCollect", 20113)) {
 		callfunc("DM_InstanceQuestComplete", 20113);
-		callfunc("DM_PartyExp", 200000, 95000);
+		callfunc("DM_PartyExp", 66000, 32000);
 		callfunc("DM_GivePartyZeny", 16000);
-		.@paid = 1;
-		callfunc("DM_PartyMes", "[Greta Holm]");
+		callfunc("DM_PartyMes", "[Greta]");
 		callfunc("DM_PartyMes", "The eastern supply routes are clear. The workers got the next shift's materials in before RSX could reroute.");
 		next();
-		switch (select("Log the cleared route with the foundry council.", "Report the route damage to Kessler — let him explain it.", "The workers should hold the checkpoint themselves.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Greta]");
-			callfunc("DM_PartyMes", "Good. The council will use that record when the labor board convenes. Paper trail is how we win this.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Greta]");
-			callfunc("DM_PartyMes", "Kessler will file it under 'contained.' But he'll know you're watching him account for damage his machine caused.");
-			break;
-		case 3:
-			callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", 1);
-			callfunc("DM_PartyMes", "[Greta]");
-			callfunc("DM_PartyMes", "You trust the workers to hold it. So do I. That's the difference between us and Rekenber.");
-			break;
-		}
-		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20114);
 	if (questprogress(20114) == 1 && callfunc("DM_HuntCollect", 20114)) {
 		callfunc("DM_InstanceQuestComplete", 20114);
-		callfunc("DM_PartyExp", 200000, 95000);
+		callfunc("DM_PartyExp", 66000, 32000);
 		callfunc("DM_GivePartyZeny", 16000);
-		.@paid = 1;
-		callfunc("DM_PartyMes", "[Greta Holm]");
-		callfunc("DM_PartyMes", "Scrap copper and steel from the Metalings. Good. The maintenance crew can keep the south boiler running another week on this.");
-		next();
-		switch (select("Give it to the foundry maintenance crew.", "Sell the surplus to the Schwarzwald broker.", "Keep the quality copper — the workers can use something better.")) {
-		case 1:
-			callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", 1);
-			callfunc("DM_PartyMes", "[Greta]");
-			callfunc("DM_PartyMes", "Directly to the crew. No broker, no cut. The line runs on this. You've earned goodwill in the south foundry.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Greta]");
-			callfunc("DM_PartyMes", "Some surplus makes sense. We split the proceeds with the medical fund.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Greta]");
-			callfunc("DM_PartyMes", "Bringing in tools the company won't provide. The workers notice things like that.");
-			break;
-		}
+		callfunc("DM_PartyMes", "[Greta]");
+		callfunc("DM_PartyMes", "Scrap copper and steel. Good. The maintenance crew can keep the south boiler running another week on this.");
 		next();
 	}
+	callfunc("DM_HuntStanding", 20113, 20114);
+	return;
 
-	callfunc("DM_HuntNoteShort", 20115);
-	if (questprogress(20115) == 1 && callfunc("DM_HuntCollect", 20115)) {
-		callfunc("DM_InstanceQuestComplete", 20115);
-		callfunc("DM_PartyExp", 150000, 70000);
-		callfunc("DM_GivePartyZeny", 12000);
-		.@paid = 1;
-		callfunc("DM_PartyMes", "[Greta Holm]");
-		callfunc("DM_PartyMes", "The mine pelts. The medical tent has been working on empty since Kessler cut supply access to the south gate.");
-		next();
-		callfunc("DM_PartyMes", "[Greta]");
-		callfunc("DM_PartyMes", "Three workers in the infirmary are going to walk out of here because of this. I won't forget it.");
-		next();
-	}
-
-	if (questprogress(20113) == 2 && questprogress(20114) == 2 && questprogress(20112) == 0) {
-		callfunc("DM_PartyMes", "[Greta Holm]");
-		callfunc("DM_PartyMes", "The field work is done. Now we face what matters: whose side are you on.");
-		next();
-		callfunc("DM_PartyMes", "[Greta]");
-		callfunc("DM_PartyMes", "Kessler had RSX reactivated to break this strike. If we can prove it, the labor board has grounds. If we can't — we fight the machine and say nothing.");
-		next();
-		switch (select("We'll confront Kessler directly.", "We will support the strike regardless.", "We'll let the machine settle it.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Greta]");
-			callfunc("DM_PartyMes", "Find Kessler at the north supervisor post. He'll have a story ready. See if you can break it.");
-			break;
-		case 2:
-			callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", 1);
-			callfunc("DM_PartyMes", "[Greta]");
-			callfunc("DM_PartyMes", "No conditions. No negotiation. The workers hold the south. Thank you.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Greta]");
-			callfunc("DM_PartyMes", "The machine is the immediate problem. Deal with it first. Kessler can wait.");
-			break;
-		}
+// Two preparations done: explain inertly, then ask once, then confirm.
+S_Decision:
+	if (questprogress(20112) == 0)
 		callfunc("DM_InstanceQuestStart", 20112);
-		next();
-		callfunc("DM_PartyMes", "^3355FF[Quest started: Whose Side the Smoke Is On]^000000");
-		callfunc("DM_PartyMes", "^3355FFConfront Kessler, then descend to ein_dun02 and shut down RSX-0806.^000000");
-		close();
-	}
-
-	if (questprogress(20112) == 1 && !dm_arc07_kessler_confronted && !dm_arc07_strike_supported && !dm_arc07_strike_broken) {
-		callfunc("DM_PartyMes", "[Greta Holm]");
-		callfunc("DM_PartyMes", "Kessler is at the north supervisor post. Or take the south entrance to the dungeon and go straight for RSX.");
-		close();
-	}
-
-	if (questprogress(20112) == 1 && (dm_arc07_kessler_confronted || dm_arc07_strike_supported || dm_arc07_strike_broken)) {
-		callfunc("DM_PartyMes", "[Greta Holm]");
-		callfunc("DM_PartyMes", "Go. RSX-0806 is in the lower dungeon. Whatever Kessler told you or didn't tell you — the machine is still down there.");
-		close();
-	}
-
-	if (.@paid) {
-		callfunc("DM_PartyMes", "[Greta Holm]");
-		callfunc("DM_PartyMes", "Keep the contracts moving. The RSX problem doesn't wait.");
-		close();
-	}
-
 	callfunc("DM_PartyMes", "[Greta Holm]");
-	if (questprogress(20113) == 1 && questprogress(20114) == 1)
-		callfunc("DM_PartyMes", "The field contracts are both still open. Roween and Metaling, out in the eastern fields.");
-	else if (questprogress(20113) == 1)
-		callfunc("DM_PartyMes", "Factory Whistle Shift is still open. Roween on the eastern supply route.");
-	else if (questprogress(20114) == 1)
-		callfunc("DM_PartyMes", "Metaling Scrap Drive is still open. Metalings on the rail spurs west of here.");
-	else if (questprogress(20115) == 1)
-		callfunc("DM_PartyMes", "Mine Dust Medicine is still open. Zipper Bears on the first mine level.");
+	callfunc("DM_PartyMes", "That is the ground prepared. Now the part I will not decide alone. What does Einbroch do about the strike?");
+	next();
+	callsub(S_PrepStatus);
+	next();
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What does each choice cost?", "What does the order give us?", "We are ready to decide.", "We need to discuss this.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Greta]");
+			callfunc("DM_PartyMes", "Support the strike: the south foundry holds, the company stops paying, and security will treat everyone in the south as a target until it ends. Monitored shutdown: the line stops under both sides' eyes, nobody is dismissed, and nobody gets what they asked for. Enforce the reopening: the line restarts, workers are sent back, and the people who trusted us will remember who did it.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Greta]");
+			callfunc("DM_PartyMes", "With Kessler's signed order, a monitored shutdown is something he cannot refuse without the labor board reading it. Without it, he will laugh and offer us the north gate.");
+			break;
+		case 3:
+			.@done = 1;
+			break;
+		case 4:
+			callfunc("DM_PartyMes", "[Greta]");
+			callfunc("DM_PartyMes", "Take your time. The machine is not going anywhere that it has not already been.");
+			close();
+		}
+		if (!.@done)
+			next();
+	}
+	next();
+	switch (select("Support the strike.", "Propose a monitored shutdown.", "Enforce the company's reopening.", "Not yet. We want to talk it over.")) {
+	case 1:
+		.@mode = 1;
+		break;
+	case 2:
+		if (!(dm_arc07_prep_mask & 4)) {
+			callfunc("DM_PartyMes", "[Greta]");
+			callfunc("DM_PartyMes", "Kessler will not even sit down without leverage. Get the order from his desk and ask me again.");
+			close();
+		}
+		.@mode = 2;
+		break;
+	case 3:
+		.@mode = 3;
+		break;
+	case 4:
+		callfunc("DM_PartyMes", "[Greta]");
+		callfunc("DM_PartyMes", "Of course. Do not take long. The south gate is quiet in a way I do not like.");
+		close();
+	}
+	next();
+	callfunc("DM_PartyMes", "[Greta]");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "Then the south holds and we take whatever is sent at it. Confirm, and I tell the council.");
+	else if (.@mode == 2)
+		callfunc("DM_PartyMes", "A monitored shutdown. I will take the order to the labor board myself. Confirm, and it goes in.");
 	else
-		callfunc("DM_PartyMes", "Finish the field contracts. Then we talk about what matters.");
-	callfunc("DM_HuntStanding", 20113, 20114, 20115);
+		callfunc("DM_PartyMes", "You will tell them to go back to work. I will not stand next to you when you do. Confirm, and I step aside.");
+	next();
+	if (select("Confirm.", "Wait.") != 1) {
+		callfunc("DM_PartyMes", "[Greta]");
+		callfunc("DM_PartyMes", "Better to wait than to be wrong in front of them.");
+		close();
+	}
+	if (!callfunc("DM_Arc07Commit", .@mode))
+		close();
+	callfunc("DM_PartyMes", "[Greta]");
+	switch (.@mode) {
+	case 1:
+		callfunc("DM_PartyMes", "The council voted. The south foundry holds, with you behind it. Kessler will hear by dark.");
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "The labor board has Kessler's signature on the reactivation order. A monitored shutdown starts at dawn. He is furious. He cannot say why in public.");
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "I told them. Half of them will not look at me. The line restarts in the morning. Go and stop the machine before it matters again.");
+		break;
+	}
+	next();
+	callfunc("DM_PartyMes", "^3355FF[Whose Side the Smoke Is On resolved. Descend to ein_dun02 and face RSX-0806.]^000000");
+	close();
+
+S_AfterDecision:
+	callfunc("DM_PartyMes", "[Greta Holm]");
+	callfunc("DM_PartyMes", "Go. RSX-0806 is in the lower dungeon. Whatever Kessler told you or didn't tell you, the machine is still down there.");
 	close();
 }
 
 // ── Supervisor Kessler — The Company Man ───────────────────────────────
-einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
+einbroch,174,197,5	script	Supervisor Kessler#dm	4_M_02,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (!dm_arc07_started) {
 		callfunc("DM_PartyMes", "[Supervisor Kessler]");
@@ -240,14 +346,19 @@ einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
 		close();
 	}
 
-	if (dm_arc07_strike_broken || dm_arc07_strike_supported || dm_arc07_kessler_confronted) {
+	if (dm_arc07_labor_resolution) {
 		callfunc("DM_PartyMes", "[Supervisor Kessler]");
-		if (dm_arc07_strike_broken)
+		switch (dm_arc07_labor_resolution) {
+		case 1:
+			callfunc("DM_PartyMes", "You made a mistake. When RSX handles the situation, the record will not mention you at all.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "A monitored shutdown. With my signature on it. I will remember the afternoon you arranged that.");
+			break;
+		case 3:
 			callfunc("DM_PartyMes", "Good work. Rekenber remembers who helps the process run smoothly.");
-		else if (dm_arc07_strike_supported)
-			callfunc("DM_PartyMes", "Your mistake. When RSX handles the situation, the record won't mention you at all.");
-		else
-			callfunc("DM_PartyMes", "I don't know what you think you've found. RSX was a decommissioning accident.");
+			break;
+		}
 		close();
 	}
 
@@ -259,49 +370,257 @@ einbroch,160,200,5	script	Supervisor Kessler#dm	4_M_02,{
 		callfunc("DM_PartyMes", "I hear you made trouble in Yuno. Krenn filed a complaint. Whatever game you're playing, it ends here.");
 		next();
 	}
-	switch (select("We know about RSX-0806. Who authorized the reactivation?", "We'll break the strike for you.", "The workers will hold. Stand down.")) {
-	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc07_kessler_confronted", 1);
-		callfunc("DM_PartyMes", "[Kessler]");
-		callfunc("DM_PartyMes", "RSX was a field test. Decommissioned units require periodic functional verification under clause 17-C of the maintenance contract.");
-		next();
-		callfunc("DM_PartyMes", "[Kessler]");
-		callfunc("DM_PartyMes", "...");
-		next();
-		callfunc("DM_PartyMes", "[Kessler]");
-		callfunc("DM_PartyMes", "The authorization came from the Lighthalzen facility director. That's all I'm saying without legal present.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*The chain leads north. Lighthalzen authorized RSX's reactivation.*^000000");
-		callfunc("DM_InstanceQuestComplete", 20112);
-		break;
-	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc07_strike_broken", 1);
-		callfunc("DM_PartyMes", "[Kessler]");
-		callfunc("DM_PartyMes", "Pragmatic. RSX is already handling most of it, but I can use additional muscle at the south gate.");
-		next();
-		callfunc("DM_PartyMes", "[Kessler]");
-		callfunc("DM_PartyMes", "Rekenber will compensate you. The machine was reactivated under standing protocol. I authorized it. That's for your ears only.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Kessler volunteers the RSX authorization. The workers won't thank you for this.*^000000");
-		callfunc("DM_InstanceQuestComplete", 20112);
-		break;
-	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc07_strike_supported", 1);
-		callfunc("DM_PartyMes", "[Kessler]");
-		callfunc("DM_PartyMes", "Then you're enemies of progress. RSX will handle the south foundry. And you along with it.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Kessler reveals nothing. The confrontation closes without an answer. Find RSX yourself.*^000000");
-		callfunc("DM_InstanceQuestComplete", 20112);
-		break;
+	.@done = 0;
+	while (!.@done) {
+		if (dm_arc07_prep_mask & 4)
+			.@pick = select("Who authorized the reactivation of RSX-0806?", "What happens if the strike breaks?", "We have your signed order. Explain it.", "We are done talking.");
+		else
+			.@pick = select("Who authorized the reactivation of RSX-0806?", "What happens if the strike breaks?", "We are done talking.");
+		if (.@pick == 1) {
+			callfunc("DM_PartyMes", "[Kessler]");
+			callfunc("DM_PartyMes", "RSX was a field test. Decommissioned units require periodic functional verification under clause 17-C of the maintenance contract. That is the account. Do not ask me for a different one.");
+			next();
+		} else if (.@pick == 2) {
+			callfunc("DM_PartyMes", "[Kessler]");
+			callfunc("DM_PartyMes", "The line restarts. The south foundry works the night shift. Rekenber pays on time. That is what the strike was supposed to cost him: nothing.");
+			next();
+		} else if ((dm_arc07_prep_mask & 4) && .@pick == 3) {
+			callfunc("DM_PartyMes", "[Kessler]");
+			callfunc("DM_PartyMes", "...");
+			next();
+			callfunc("DM_PartyMes", "[Kessler]");
+			callfunc("DM_PartyMes", "That is a copy. Where did you... never mind. The authorization came from the Lighthalzen facility director. That is all I will say without legal present.");
+			next();
+			callfunc("DM_PartyMes", "^3355FF*The chain leads north. Lighthalzen authorized RSX's reactivation.*^000000");
+			next();
+		} else {
+			.@done = 1;
+		}
 	}
-	next();
-	callfunc("DM_PartyMes", "^3355FF[Whose Side the Smoke Is On resolved. Descend to ein_dun02 and face RSX-0806.]^000000");
+	callfunc("DM_PartyMes", "[Kessler]");
+	callfunc("DM_PartyMes", "If you want something from me, it is a signed agreement. Take it to Holm and her council. I do not negotiate on the street.");
 	close();
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20112, 1;
 	end;
+}
+
+// ── Preparation 1: the medical station ─────────────────────────────────────
+einbroch,166,222,4	script	Medical Station#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc07_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc07_prep_mask & 1) {
+		callfunc("DM_PartyMes", "^3355FF*Lamps lit, shelves stocked. Someone has already hung a sign: 'Open.'*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The south-gate medical station. Empty shelves, a dead lamp. A worker lies on a cot by the wall and does not look at you.*^000000");
+	next();
+	callfunc("DM_HuntNoteShort", 20115);
+	if (questprogress(20115) == 0) {
+		callfunc("DM_InstanceQuestStart", 20115);
+		callfunc("DM_PartyMes", "^3355FF[Needed to restock it: " + callfunc("DM_HuntBrief", 20115) + "]^000000");
+		close();
+	}
+	if (questprogress(20115) == 1 && callfunc("DM_HuntCollect", 20115)) {
+		callfunc("DM_InstanceQuestComplete", 20115);
+		callfunc("DM_PartyExp", 66000, 32000);
+		callfunc("DM_GivePartyZeny", 12000);
+		callfunc("DM_PartyMes", "^3355FF*You restock the shelves. The lamp comes on. Three workers in the infirmary are going to walk out of here.*^000000");
+		callfunc("DM_Arc07AddPrep", 1);
+		close();
+	}
+	callfunc("DM_HuntStanding", 20115);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Preparation 2: the workers' exit ───────────────────────────────────────
+einbroch,172,234,4	script	South Foundry Exit#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc07_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc07_prep_mask & 2) {
+		callfunc("DM_PartyMes", "^3355FF*The side gate stands open. Workers are filing out in twos, away from the north post.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The patrol is still between you and the gate.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The south gate's service exit. The only other way out of the foundry runs past the north post, and everyone knows it.*^000000");
+	next();
+	if (select("Open a route that avoids the post.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", "perceive", 11) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_PartyMes", "^3355FF*You find the route. A security patrol finds you.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc07_patrol", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnPatrolDead", .@self$ + "::OnPatrolDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Company Patrol", METALING, .@self$ + "::OnPatrolDead", 50, 100, 2, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A maintenance corridor, a chained gate, a key left under a boiler plate. The route is clean.*^000000");
+	callfunc("DM_Arc07AddPrep", 2);
+	close();
+
+OnPatrolDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnPatrolDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	callfunc("DM_EncCleanup", "arc07_patrol");
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Preparation 3: Kessler's reactivation order ────────────────────────────
+einbroch,180,203,4	script	Kessler's Locked Desk#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc07_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc07_prep_mask & 4) {
+		callfunc("DM_PartyMes", "^3355FF*The drawer hangs open. You have what was in it.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A supervisor's desk in the north post. A locked drawer. Greta said the reactivation order would be here.*^000000");
+	next();
+	if (select("Open the drawer.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", "lockpick", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_InstanceSetFlag", "dm_arc07_code_failed", 1);
+		callfunc("DM_PartyMes", "^3355FF*The lock gives and the drawer jams on its way out. You tear the order free. Half of it is the stop code, and the half you have is torn through.*^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*The order, signed. Under it, the stop code for the bay, written out in full.*^000000");
+	}
+	callfunc("DM_Arc07AddPrep", 4);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Reactivation Bay objects ───────────────────────────────────────────────
+// Cot: three uses, only if the medical station was repaired.
+ein_dun02,146,146,4	script	Field Medic Cot#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!(dm_arc07_prep_mask & 1)) {
+		callfunc("DM_PartyMes", "^3355FF*A bare cot. Nothing on it that would help anyone.*^000000");
+		close();
+	}
+	if ('uses >= 3) {
+		callfunc("DM_PartyMes", "^3355FF*The cot is stripped bare. The supplies the station sent down are used up.*^000000");
+		close();
+	}
+	'uses += 1;
+	percentheal 50, 40;
+	callfunc("DM_PartyMes", "^3355FF*Bandages, a flask, a steadying hand. The supplies from the repaired station. (" + (3 - 'uses) + " left.)*^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// Emergency stop: the stop code from the order. Ends the smoke pressure.
+ein_dun02,154,151,4	script	Emergency Stop#dm	4_ENERGY_BLUE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!(dm_arc07_prep_mask & 4) || dm_arc07_code_failed) {
+		callfunc("DM_PartyMes", "^3355FF*A red lever under a plate that wants a code. Nobody has the code.*^000000");
+		close();
+	}
+	if ('stopped) {
+		callfunc("DM_PartyMes", "^3355FF*The lever is down. The smoke has stopped.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The code on Kessler's order fits the plate. A red lever, a lot of pressure behind it.*^000000");
+	next();
+	if (select("Throw the lever.", "Leave it.") == 2) close();
+	'stopped = 1;
+	callfunc("DM_TriggerEvent", "Reactivation Bay#dm", "OnPressureStop");
+	mapannounce strnpcinfo(NPC_MAP), "[Reactivation Bay] The emergency stop thuds home. The vents close. The smoke thins.", bc_map, 0x88CCFF;
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// Manual valves: the route when the code was torn. Both must be turned.
+ein_dun02,143,147,4	script	Manual Valve A#dm	4_ENERGY_BLUE,{
+	callsub(S_Valve, 1);
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+S_Valve:
+	.@bit = getarg(0);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc07_code_failed) {
+		callfunc("DM_PartyMes", "^3355FF*A seized valve. It does not need turning. The stop works.*^000000");
+		close();
+	}
+	if ('valves & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*Already turned. There is another one across the bay.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A manual valve, hot to the touch. It will take two to vent the bay.*^000000");
+	next();
+	if (select("Turn the valve.", "Leave it.") == 2) close();
+	'valves |= .@bit;
+	if (('valves & 3) == 3) {
+		callfunc("DM_TriggerEvent", "Reactivation Bay#dm", "OnPressureStop");
+		mapannounce strnpcinfo(NPC_MAP), "[Reactivation Bay] Both valves open. The bay vents. The smoke thins.", bc_map, 0x88CCFF;
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*One valve open. The pressure drops a little.*^000000");
+	}
+	close();
+}
+
+ein_dun02,153,147,4	script	Manual Valve B#dm	4_ENERGY_BLUE,{
+	callsub(S_Valve, 2);
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+S_Valve:
+	.@bit = getarg(0);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc07_code_failed) {
+		callfunc("DM_PartyMes", "^3355FF*A seized valve. It does not need turning. The stop works.*^000000");
+		close();
+	}
+	if ('valves & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*Already turned. There is another one across the bay.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A manual valve, hot to the touch. It will take two to vent the bay.*^000000");
+	next();
+	if (select("Turn the valve.", "Leave it.") == 2) close();
+	'valves |= .@bit;
+	if (('valves & 3) == 3) {
+		callfunc("DM_TriggerEvent", "Reactivation Bay#dm", "OnPressureStop");
+		mapannounce strnpcinfo(NPC_MAP), "[Reactivation Bay] Both valves open. The bay vents. The smoke thins.", bc_map, 0x88CCFF;
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*One valve open. The pressure drops a little.*^000000");
+	}
+	close();
 }
 
 // ── Reactivation Bay Set-piece ─────────────────────────────────────────────

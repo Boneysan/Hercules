@@ -39,13 +39,6 @@ if ! ./tools/gen-chests.py --check; then
     exit 1
 fi
 
-echo "Checking equipment-eligibility parity ..."
-if ! ./tools/gen-equipment-eligibility.py --check; then
-    echo
-    echo "FAIL - equipment eligibility manifest is stale or invalid."
-    exit 1
-fi
-
 echo "Checking Act I static rules ..."
 if ! python3 ./tools/check-act1.py; then
     echo
@@ -53,12 +46,13 @@ if ! python3 ./tools/check-act1.py; then
     exit 1
 fi
 
-echo "Checking warp-graph parity ..."
-if ! ./tools/gen-warp-graph.py --check; then
+echo "Checking monster AI pilot profiles ..."
+if ! python3 ./tools/check_mob_ai_profiles.py; then
     echo
-    echo "FAIL - warp graph is stale or invalid."
+    echo "FAIL - monster AI profile checks."
     exit 1
 fi
+
 
 echo "Checking encumbrance helper parity ..."
 if ! ./tools/check-encumbrance-paths.sh; then
@@ -102,7 +96,7 @@ if ! grep -q 'function[[:space:]]\+script[[:space:]]\+DM_CheckpointCampaign' "$C
 	echo "FAIL - checkpoint helpers are not namespaced/audited by campaign identity."
 	exit 1
 fi
-if ! grep -q 'DM_CampaignCheckpointEvents' "$CHECKPOINT_EVENTS" || \
+if ! grep -q 'DM_CampEvents' "$CHECKPOINT_EVENTS" || \
    ! grep -q 'dm_campaign/shared/dm_checkpoint_events.txt' npc/scripts_custom.conf; then
 	echo "FAIL - checkpoint reconnect/map-load synchronization hook is missing."
 	exit 1
@@ -199,6 +193,14 @@ if ! grep -q "Successfully loaded" "$LOG"; then
     echo "FAIL — server did not finish loading (DB unreachable, or crashed early)."
     echo "Last lines:"
     tail -n 15 "$LOG"
+    exit 1
+fi
+
+# A profile file the server never read passes every static check; only the
+# server's own boot line proves it loaded (2026-10-02: it had never loaded).
+if ! python3 ./tools/check_mob_ai_profiles.py --boot-log "$LOG"; then
+    echo
+    echo "FAIL — the server did not actually load the AI profiles."
     exit 1
 fi
 

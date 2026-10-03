@@ -6670,11 +6670,11 @@ static void battle_drain(struct map_session_data *sd, struct block_list *tbl, in
 			sp += battle->calc_drain(*damage, wd->sp_drain[type].rate, wd->sp_drain[type].per);
 
 		// HPVanishRate
-		if (sd->bonus.hp_vanish_rate && rnd() % 1000 < sd->bonus.hp_vanish_rate && !sd->bonus.hp_vanish_trigger)
+		if (sd->bonus.hp_vanish_rate && rnd() % 1000 < sd->bonus.hp_vanish_rate && (!sd->bonus.hp_vanish_trigger || (sd->bonus.hp_vanish_trigger & BF_NORMAL)))
 			status_percent_damage(&sd->bl, tbl, (unsigned char)sd->bonus.hp_vanish_per, 0, false);
 
 		// SPVanishRate
-		if (sd->bonus.sp_vanish_rate && rnd() % 1000 < sd->bonus.sp_vanish_rate && !sd->bonus.sp_vanish_trigger)
+		if (sd->bonus.sp_vanish_rate && rnd() % 1000 < sd->bonus.sp_vanish_rate && (!sd->bonus.sp_vanish_trigger || (sd->bonus.sp_vanish_trigger & BF_NORMAL)))
 			status_percent_damage(&sd->bl, tbl, 0, (unsigned char)sd->bonus.sp_vanish_per, false);
 
 		if (hp) {
@@ -7989,6 +7989,7 @@ static const struct config_data_old battle_data[] = {
 	{ "idle_no_share",                      &battle_config.idle_no_share,                   0,      0,      INT_MAX,        },
 	{ "party_even_share_bonus",             &battle_config.party_even_share_bonus,          0,      0,      INT_MAX,        },
 	{ "campaign_combat_timeout_ms",         &battle_config.campaign_combat_timeout_ms,      8000,   0,      INT_MAX,        },
+	{ "mob_pilot_version",                  &battle_config.mob_pilot_version,               0,      0,      1,              },
 	{ "campaign_sit_recovery_interval_ms",  &battle_config.campaign_sit_recovery_interval_ms, 10000, 100,  INT_MAX,        },
 	{ "campaign_sit_recovery_percent",      &battle_config.campaign_sit_recovery_percent,  25,     0,      100,            },
 	{ "campaign_respawn_percent",           &battle_config.campaign_respawn_percent,        50,     0,      100,            },

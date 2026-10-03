@@ -23834,6 +23834,76 @@ static BUILDIN(changequest)
 	return true;
 }
 
+/**
+ * Opt-in shared credit for one quest transition (GDD F39).
+ *
+ * Applies the same transition the script is about to perform for the actor to
+ * every *other* member of the actor's party who is on the same map, within
+ * `range` cells, alive, not autotrading, and who currently has `old_id` ACTIVE.
+ * It never grants a quest, never touches items, zeny, exp or other rewards
+ * (the script keeps doing those for the actor alone), and a member whose quest
+ * is not ACTIVE is skipped, so calling it twice cannot credit anyone twice.
+ *
+ * @param ap party_id, actor block id, old quest id, new quest id (0 = complete)
+ **/
+static int script_party_quest_credit_sub(struct block_list *bl, va_list ap)
+{
+	struct map_session_data *sd = NULL;
+	int party_id = va_arg(ap, int);
+	int actor_id = va_arg(ap, int);
+	int old_id = va_arg(ap, int);
+	int new_id = va_arg(ap, int);
+	int i;
+
+	nullpo_ret(bl);
+	Assert_ret(bl->type == BL_PC);
+	sd = BL_UCAST(BL_PC, bl);
+
+	if (sd->bl.id == actor_id || party_id == 0 || sd->status.party_id != party_id)
+		return 0;
+	if (pc_isdead(sd) || sd->state.autotrade)
+		return 0;
+	ARR_FIND(0, sd->avail_quests, i, sd->quest_log[i].quest_id == old_id && sd->quest_log[i].state == Q_ACTIVE);
+	if (i >= sd->avail_quests)
+		return 0;
+	if (new_id == 0) {
+		if (quest->update_status(sd, old_id, Q_COMPLETE) != 0)
+			return 0;
+	} else {
+		if (quest->check(sd, new_id, HAVEQUEST) != -1 || quest->change(sd, old_id, new_id) != 0)
+			return 0;
+	}
+	return 1;
+}
+
+static int script_party_quest_credit(struct script_state *st, int new_id_arg_index, int old_id, int new_id)
+{
+	struct map_session_data *sd = script->rid2sd(st);
+	int range = AREA_SIZE;
+
+	if (sd == NULL || sd->status.party_id == 0)
+		return 0;
+	if (script_hasdata(st, new_id_arg_index))
+		range = cap_value(script_getnum(st, new_id_arg_index), 1, AREA_SIZE);
+	return map->foreachinrange(script_party_quest_credit_sub, &sd->bl, range, BL_PC, sd->status.party_id, sd->bl.id, old_id, new_id);
+}
+
+/// partycompletequest(<quest id>{,<range>});
+/// Completes <quest id> for nearby party members who have it ACTIVE. Returns the number credited.
+static BUILDIN(partycompletequest)
+{
+	script_pushint(st, script_party_quest_credit(st, 3, script_getnum(st, 2), 0));
+	return true;
+}
+
+/// partychangequest(<old quest id>,<new quest id>{,<range>});
+/// changequest() for nearby party members who have <old quest id> ACTIVE and not <new quest id>.
+static BUILDIN(partychangequest)
+{
+	script_pushint(st, script_party_quest_credit(st, 4, script_getnum(st, 2), script_getnum(st, 3)));
+	return true;
+}
+
 static BUILDIN(questactive)
 {
 	struct map_session_data *sd = script->rid2sd(st);
@@ -29691,6 +29761,8 @@ static void script_parse_builtin(void)
 		BUILDIN_DEF(questprogress, "i?"),
 		BUILDIN_DEF(questactive, "i"),
 		BUILDIN_DEF(changequest, "ii"),
+		BUILDIN_DEF(partycompletequest, "i?"),
+		BUILDIN_DEF(partychangequest, "ii?"),
 		BUILDIN_DEF(showevent, "i?"),
 
 		/**

@@ -8,20 +8,87 @@
 //= Lysandra knows the real cost. Scholar Pratt wants to
 //= replicate the method. He hasn't told his volunteers yet.
 //=
+//= REBUILT 2026-10-02 (handoff A4-15): experience the cost before
+//= choosing it. Three short memory scenes, each with one bounded
+//= task and no one left idle: the offer (hold a ward), the first
+//= failure of the seal (relieve its operator), the maintenance
+//= burden centuries later (recover a missing record).
+//=
+//= State:
+//=   dm_arc15_memory_mask    bits 1,2,4 (any order)
+//=   dm_arc15_cost_disclosed set when all three memories are known: the
+//=       party can restate what the personal seal costs. The finale reads
+//=       it for Thanatos's Road. Nobody is selected by this arc.
+//=   dm_arc15_pratt_resolution (final, equal EXP; opens at two memories):
+//=       1 stop the experiment and name the volunteers
+//=       2 delay it pending disclosure to the council
+//=       3 confront him with the full record and set up a consent
+//=         procedure (needs all three memories)
+//=   Derived afterwards: pratt_exposed (1), pratt_delayed (2),
+//=   pratt_challenged (3), never two at once.
+//= The existing Thanatos encounter is the final memory defense.
+//=
 //= Quests (db/quest_db.conf):
 //=   20191 The Five Doors of a Dead Hero  (arc tracker / Thanatos)
-//=   20192 What the Tower Remembers (Worn Out Page x8, Topaz x2, Pearl x2)
-//=   20193 Aldebaran Last Letters (Ruby x3, Garnet x3, Red Feather x2)
-//=   20194 The Method's Price             (Scholar Pratt)
+//=   20192 What the Tower Remembers  (optional salvage)
+//=   20193 Aldebaran Last Letters    (optional salvage)
+//=   20194 The Method's Price             (opens at two memories)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc15_started, dm_arc15_pratt_exposed,
+//=   dm_arc15_started, dm_arc15_memory_mask, dm_arc15_cost_disclosed,
+//=   dm_arc15_pratt_resolution, dm_arc15_pratt_exposed,
 //=   dm_arc15_pratt_delayed, dm_arc15_pratt_challenged,
 //=   dm_arc15_thanatos_killed
 //===========================================================
 
+// ── Shared Arc 15 helpers ──────────────────────────────────────────────────
+
+function	script	DM_Arc15AddMemory	{
+	.@bit = getarg(0);
+	if (!(dm_arc15_memory_mask & .@bit))
+		callfunc("DM_InstanceSetFlag", "dm_arc15_memory_mask", dm_arc15_memory_mask | .@bit);
+	.@n = callfunc("DM_CountBits", dm_arc15_memory_mask);
+	callfunc("DM_DMJStoryObjective", 20191, 2, "Explore", .@n, 3, (.@n >= 3), getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc15_memory_" + .@bit))
+		callfunc("DM_PartyExp", 200000, 100000);
+	if (.@n >= 2 && questprogress(20194) == 0)
+		callfunc("DM_InstanceQuestStart", 20194);
+	if (.@n >= 3) {
+		callfunc("DM_InstanceSetFlag", "dm_arc15_cost_disclosed", 1);
+		callfunc("DM_PartyMes", "^3355FF[All three memories seen. What the seal costs is on the record: a life, held for as long as it holds, with no relief and no end.]^000000");
+	} else if (.@n == 2) {
+		callfunc("DM_PartyMes", "^3355FF[Two memories seen. Scholar Pratt can be answered now. The third completes the record.]^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF[One memory seen.]^000000");
+	}
+	return .@n;
+}
+
+// mode: 1 stop and name, 2 delay, 3 full record and consent procedure. Final.
+function	script	DM_Arc15Commit	{
+	.@mode = getarg(0);
+	if (dm_arc15_pratt_resolution)
+		return 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_resolution", .@mode);
+	callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
+	callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
+	callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
+	if (.@mode == 1)
+		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_exposed", 1);
+	else if (.@mode == 2)
+		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_delayed", 1);
+	else
+		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_challenged", 1);
+	callfunc("DM_InstanceQuestComplete", 20194);
+	callfunc("DM_DMJStoryObjective", 20194, 1, "Interact", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc15_resolution"))
+		callfunc("DM_PartyExp", 400000, 200000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1505);
+	return 1;
+}
+
 // ── Keeper Lysandra — The Archivist ────────────────────────────────────────
-aldebaran,100,100,5	script	Keeper Lysandra#dm	4_F_01,{
+aldebaran,99,99,5	script	Keeper Lysandra#dm	4_F_01,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20191) == 2) {
 		callfunc("DM_PartyMes", "[Keeper Lysandra]");
@@ -37,10 +104,11 @@ aldebaran,100,100,5	script	Keeper Lysandra#dm	4_F_01,{
 		end;
 	}
 
-	callsub(S_TurnIns);
+	callsub(S_Progress);
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20191, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -56,140 +124,102 @@ S_StartArc:
 		callfunc("DM_PartyMes", "Envoy Aelith sent word. The rift anchor at the New World is resonating at the same frequency as the Tower's upper levels. That frequency is Thanatos. The cascade found him.");
 		next();
 	}
-	if (dm_arc13_carrion_bribed) {
+	if (dm_arc13_treaty_verified) {
 		callfunc("DM_PartyMes", "[Lysandra]");
-		callfunc("DM_PartyMes", "The Broker's deal. Carrion noted the cascade's Thanatos-frequency in his coalition briefing. He called it a 'structural seam.' He is not wrong. A seam is a weakness, and also a place where things can be joined.");
+		callfunc("DM_PartyMes", "The Broker's treaty. Carrion noted the cascade's Thanatos-frequency in his coalition briefing. He called it a 'structural seam.' He is not wrong. A seam is a weakness, and also a place where things can be joined. I understand the treaty held. That is more than most of what I have read.");
+		next();
+	} else if (dm_arc13_carrion_bribed) {
+		callfunc("DM_PartyMes", "[Lysandra]");
+		callfunc("DM_PartyMes", "The Broker's treaty. Carrion noted the cascade's Thanatos-frequency in his coalition briefing. He called it a 'structural seam.' He is not wrong. A seam is a weakness, and also a place where things can be joined.");
 		next();
 	}
 	callfunc("DM_PartyMes", "[Lysandra]");
 	callfunc("DM_PartyMes", "Thanatos sealed Morroc three centuries ago. The official account is that he slew the demon with a divine weapon and paid his life in the effort. The official account is a useful simplification.");
 	next();
-	switch (select("What actually happened?", "How is the cascade involved?", "What does this mean for sealing the cascade now?")) {
-	case 1:
-		callfunc("DM_PartyMes", "[Lysandra]");
-		callfunc("DM_PartyMes", "He became the seal. He wove his life-force into the containment structure directly — a living lock on a dead thing. The Tower is not his tomb. It is his anchor point.");
-		break;
-	case 2:
-		callfunc("DM_PartyMes", "[Lysandra]");
-		callfunc("DM_PartyMes", "The cascade found the anchor. The sacrifice left an echo — a frequency of intention that has been resonating for three hundred years. The cascade is using that echo as a carrier wave. It is not destroying the seal. It is singing through it.");
-		break;
-	case 3:
-		callfunc("DM_PartyMes", "[Lysandra]");
-		callfunc("DM_PartyMes", "It means the next seal needs to be different. The same method restarts the same cycle. But first you need to understand exactly what the method costs. That is why the Tower matters.");
-		break;
+	.@ready = 0;
+	while (!.@ready) {
+		switch (select("What actually happened?", "How is the cascade involved?", "What does this mean for sealing the cascade now?", "We are ready. Where do we start?")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Lysandra]");
+			callfunc("DM_PartyMes", "He became the seal. He wove his life-force into the containment structure directly: a living lock on a dead thing. The Tower is not his tomb. It is his anchor point.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Lysandra]");
+			callfunc("DM_PartyMes", "The cascade found the anchor. The sacrifice left an echo, a frequency of intention that has been resonating for three hundred years. The cascade is using that echo as a carrier wave. It is not destroying the seal. It is singing through it.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Lysandra]");
+			callfunc("DM_PartyMes", "It means the next seal needs to be different. The same method restarts the same cycle. But first you need to understand exactly what the method costs. That is why the Tower matters.");
+			break;
+		case 4:
+			.@ready = 1;
+			break;
+		}
+		next();
 	}
+	callfunc("DM_PartyMes", "[Lysandra]");
+	callfunc("DM_PartyMes", "The Tower keeps three memories I can show you: the offer, the first failure of the seal, and what it was like to keep it three centuries later. Each is a place in the city where the Tower's memory reaches the ground. Each asks something of you. You will not be left standing idle, and you will not be trapped. Nobody here is asked to give anything but attention and a few minutes.");
 	next();
 	callfunc("DM_PartyMes", "[Lysandra]");
-	callfunc("DM_PartyMes", "There is a Schwarzwald researcher here. Scholar Pratt. He has been here for three months. He believes the Thanatos method can be replicated efficiently. I have been watching him recruit.");
-	next();
-	callfunc("DM_PartyMes", "[Lysandra]");
-	callfunc("DM_PartyMes", "The Tower's upper levels are saturated with cascade resonance. The spirits there — Hylozoist, Lude — are echoes of scholars who ascended before you and became part of the resonance. Clear them. You need to reach the memory directly.");
+	callfunc("DM_PartyMes", "There is a Schwarzwald researcher here. Scholar Pratt. He has been here for three months. He believes the Thanatos method can be replicated efficiently. I have been watching him recruit. Do not answer him until you have seen at least two of the memories.");
 	callfunc("DM_InstanceSetFlag", "dm_arc15_started", 1);
 	callfunc("DM_InstanceQuestStart", 20191);
-	callfunc("DM_InstanceQuestStart", 20192);
-	callfunc("DM_InstanceQuestStart", 20193);
+	callfunc("DM_DMJStoryObjective", 20191, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Five Doors of a Dead Hero]^000000");
-	callfunc("DM_PartyMes", "^3355FFWhat the Tower Remembers - carried down from the Tower's upper floors: " + callfunc("DM_HuntBrief", 20192) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFAldebaran Last Letters - off the scholar levels: " + callfunc("DM_HuntBrief", 20193) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFSee the three memories: the offer, the first failure, the burden. Two let you answer Pratt; three complete the record.^000000");
 	close();
 
-S_TurnIns:
-	.@paid = 0;
+S_Progress:
+	callfunc("DM_PartyMes", "[Lysandra]");
+	callfunc("DM_PartyMes", "What the Tower has shown you so far:");
+	callfunc("DM_PartyMes", ((dm_arc15_memory_mask & 1) ? "The offer: seen. He was asked, and he said yes before he understood the second half." : "The offer: not yet. A ward to hold, at the north stone."));
+	callfunc("DM_PartyMes", ((dm_arc15_memory_mask & 2) ? "The first failure: seen. The seal slipped in the first year. The operator would not leave it." : "The first failure: not yet. An operator to relieve, at the east stone."));
+	callfunc("DM_PartyMes", ((dm_arc15_memory_mask & 4) ? "The burden: seen. Three centuries on, the record of the maintenance is a single page, and it is mostly blank." : "The burden: not yet. A record to recover, at the south stone."));
+	if (dm_arc15_cost_disclosed)
+		callfunc("DM_PartyMes", "^3355FFYou know what the seal costs. Say it in your own words before you make any choice that depends on it.^000000");
+	next();
+	switch (select("Ask about the optional salvage.", "Thank you. We are going back.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		break;
+	}
+	close();
+
+S_Optional:
+	callfunc("DM_PartyMes", "[Lysandra]");
+	callfunc("DM_PartyMes", "The Tower sheds things. Pages, gems, letters people left. Not part of the memories. I will pay for them.");
+	next();
+	if (questprogress(20192) == 0) {
+		callfunc("DM_InstanceQuestStart", 20192);
+		callfunc("DM_PartyMes", "^3355FF[Optional: What the Tower Remembers - " + callfunc("DM_HuntBrief", 20192) + "]^000000");
+	}
+	if (questprogress(20193) == 0) {
+		callfunc("DM_InstanceQuestStart", 20193);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Aldebaran Last Letters - " + callfunc("DM_HuntBrief", 20193) + "]^000000");
+	}
 	callfunc("DM_HuntNoteShort", 20192);
 	if (questprogress(20192) == 1 && callfunc("DM_HuntCollect", 20192)) {
 		callfunc("DM_InstanceQuestComplete", 20192);
-		callfunc("DM_PartyExp", 500000, 250000);
-		callfunc("DM_GivePartyZeny", 40000);
-		.@paid = 1;
+		callfunc("DM_PartyExp", 167000, 83000);
+		callfunc("DM_GivePartyZeny", 30000);
 		callfunc("DM_PartyMes", "[Lysandra]");
-		callfunc("DM_PartyMes", "The Hylozoist are dispersed. They were not hostile in the original sense — they were replaying the moment of the sacrifice on a loop, trying to complete something that was never meant to complete.");
-		next();
-		switch (select("What were they trying to do?", "Are the memories recoverable?", "The cascade accelerated their replay cycle.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Lysandra]");
-			callfunc("DM_PartyMes", "Reach the end of the sacrifice and find an exit. There was none. Thanatos chose permanence. They were caught in the echo of a decision that does not conclude.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Lysandra]");
-			callfunc("DM_PartyMes", "Some. The dispersal releases fragments. I can piece together the moment of decision from what you have freed. It will take time — but yes.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Lysandra]");
-			callfunc("DM_PartyMes", "Yes. The cascade resonates at the sacrifice's frequency and drives the echo faster. The Hylozoist have been in accelerating distress for months. You released them from something I could not reach.");
-			break;
-		}
+		callfunc("DM_PartyMes", "Pages. Each one a small account of someone who thought they were doing the right thing. I will keep them with the others.");
 		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20193);
 	if (questprogress(20193) == 1 && callfunc("DM_HuntCollect", 20193)) {
 		callfunc("DM_InstanceQuestComplete", 20193);
-		callfunc("DM_PartyExp", 500000, 250000);
-		callfunc("DM_GivePartyZeny", 40000);
-		.@paid = 1;
+		callfunc("DM_PartyExp", 167000, 83000);
+		callfunc("DM_GivePartyZeny", 30000);
 		callfunc("DM_PartyMes", "[Lysandra]");
-		callfunc("DM_PartyMes", "The Lude. Those were my predecessors — archivists and scholars who came to document the Tower and stayed without choosing to. I recognized some of them.");
-		next();
-		switch (select("They came to understand the sacrifice and got caught in it.", "What does it mean that scholars keep becoming part of this?", "You stayed. You are still here.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Lysandra]");
-			callfunc("DM_PartyMes", "Yes. The Tower does not trap through malice. It traps through truth. The sacrifice is so complete that anyone who fully comprehends it finds it difficult to leave the comprehension behind.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Lysandra]");
-			callfunc("DM_PartyMes", "It means the cascade's solution requires more than understanding. It requires willingness to act differently than Thanatos did. Understanding alone becomes a loop.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Lysandra]");
-			callfunc("DM_PartyMes", "I leave every evening. I have for forty years. I think that is the difference — I do not try to understand the sacrifice completely. I maintain the record. There is a distinction.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The last letters. Whoever wrote them was told it was only for a season. They kept the letters anyway.");
 		next();
 	}
-
-	if (questprogress(20192) == 2 && questprogress(20193) == 2 && questprogress(20194) == 0) {
-		callfunc("DM_PartyMes", "[Lysandra]");
-		callfunc("DM_PartyMes", "The upper levels are clear. Scholar Pratt is in the archive room at the Tower's seventh floor. He has a meeting scheduled with his volunteers this afternoon.");
-		next();
-		callfunc("DM_PartyMes", "[Lysandra]");
-		callfunc("DM_PartyMes", "I cannot stop him myself. I am an archivist. I preserve records. You are something else.");
-		callfunc("DM_InstanceQuestStart", 20194);
-		next();
-		callfunc("DM_PartyMes", "^3355FF[Quest started: The Method's Price]^000000");
-		callfunc("DM_PartyMes", "^3355FFConfront Scholar Pratt at the Tower's upper archive. Then descend to thana_boss and face the Memory of Thanatos.^000000");
-		close();
-	}
-
-	if (questprogress(20194) == 1 && !dm_arc15_pratt_exposed && !dm_arc15_pratt_delayed && !dm_arc15_pratt_challenged) {
-		callfunc("DM_PartyMes", "[Lysandra]");
-		callfunc("DM_PartyMes", "Pratt is on the seventh floor. His volunteers arrive in two hours.");
-		close();
-	}
-
-	if (questprogress(20194) == 1 && (dm_arc15_pratt_exposed || dm_arc15_pratt_delayed || dm_arc15_pratt_challenged)) {
-		callfunc("DM_PartyMes", "[Lysandra]");
-		callfunc("DM_PartyMes", "Pratt is handled. The memory lies below thana_boss. It will be... intense. You understand what you are walking into.");
-		close();
-	}
-
-	if (.@paid) {
-		callfunc("DM_PartyMes", "[Lysandra]");
-		callfunc("DM_PartyMes", "Both field contracts need to be complete before you face Pratt. He deserves to be stopped with full knowledge, not urgency.");
-		close();
-	}
-
-	callfunc("DM_PartyMes", "[Lysandra]");
-	if (questprogress(20192) == 1 && questprogress(20193) == 1)
-		callfunc("DM_PartyMes", "The Hylozoist hunt and the Lude silencing are both still active.");
-	else if (questprogress(20192) == 1)
-		callfunc("DM_PartyMes", "What the Tower Remembers is still open. The Hylozoist in the upper floors.");
-	else if (questprogress(20193) == 1)
-		callfunc("DM_PartyMes", "Aldebaran Last Letters is still open. The Lude in the scholar levels.");
-	else
-		callfunc("DM_PartyMes", "Both done. Pratt is on the seventh floor.");
 	callfunc("DM_HuntStanding", 20192, 20193);
-	close();
+	return;
 }
 
 // ── Scholar Pratt — The Method Without the Cost ────────────────────────────
@@ -200,7 +230,6 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 		callfunc("DM_PartyMes", "The Tower's archives are restricted to approved researchers. I suggest you speak to Keeper Lysandra.");
 		close();
 	}
-
 	if (questprogress(20191) == 2) {
 		callfunc("DM_PartyMes", "[Scholar Pratt]");
 		if (dm_arc15_pratt_exposed)
@@ -211,8 +240,7 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 			callfunc("DM_PartyMes", "The council review is scheduled for next month. There is time. The method is sound. I still believe that.");
 		close();
 	}
-
-	if (dm_arc15_pratt_exposed || dm_arc15_pratt_delayed || dm_arc15_pratt_challenged) {
+	if (dm_arc15_pratt_resolution) {
 		callfunc("DM_PartyMes", "[Scholar Pratt]");
 		callfunc("DM_PartyMes", "We have spoken. I have work to do.");
 		close();
@@ -227,71 +255,205 @@ aldebaran,110,100,5	script	Scholar Pratt#dm	4_M_02,{
 	callfunc("DM_PartyMes", "[Pratt]");
 	callfunc("DM_PartyMes", "They believe it is a temporary ritual. The procedure is not temporary. I have not told them that. The research cannot proceed if the candidates withdraw due to cost-related concerns.");
 	next();
-	switch (select("Name your volunteers. What they agreed to was not informed consent.", "Present your findings to the council before you proceed with any human subjects.", "What do you know about the cost that is not in the official record?")) {
+	if (callfunc("DM_CountBits", dm_arc15_memory_mask) < 2) {
+		callfunc("DM_PartyMes", "[Pratt]");
+		callfunc("DM_PartyMes", "You are going to tell me what I should do about it. You have not seen the Tower's memories yet, so you are guessing. Come back when you are not.");
+		close();
+	}
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What do you know about the cost that is not in the official record?", "What would the volunteers lose?", "What is a consent procedure?", "We are ready to decide.", "We need to discuss this.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Pratt]");
+			callfunc("DM_PartyMes", "That he did not come back, and that no one has found a way for the next person to. That the maintenance is a life, not an act. I have the numbers. I have not read them aloud.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Pratt]");
+			callfunc("DM_PartyMes", "Everything that is not the seal. Their names stop appearing in the record. They stop being interrupted, because no one can reach them. That is the nice version.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Pratt]");
+			callfunc("DM_PartyMes", "The thing I have been avoiding. Each candidate hears the full cost from someone who is not me. They are given time. They are allowed to leave at any stage and no one thinks less of them. If I cannot do that, I cannot do this.");
+			break;
+		case 4:
+			.@done = 1;
+			break;
+		case 5:
+			callfunc("DM_PartyMes", "[Pratt]");
+			callfunc("DM_PartyMes", "Of course. I am not going anywhere. My candidates are not either, which is rather the problem.");
+			close();
+		}
+		if (!.@done)
+			next();
+	}
+	next();
+	switch (select("Stop the experiment. Name your volunteers.", "Delay it until the council has been told.", "Confront him with the full record and set up a consent procedure.", "Not yet. We want to talk it over.")) {
 	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
-		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_exposed", 1);
-		callfunc("DM_InstanceQuestComplete", 20194);
+		.@mode = 1;
+		break;
+	case 2:
+		.@mode = 2;
+		break;
+	case 3:
+		if (dm_arc15_memory_mask != 7) {
+			callfunc("DM_PartyMes", "[Pratt]");
+			callfunc("DM_PartyMes", "You say 'the full record.' You have seen two memories of three. Which part of it are you proposing to leave out?");
+			close();
+		}
+		.@mode = 3;
+		break;
+	case 4:
 		callfunc("DM_PartyMes", "[Pratt]");
-		callfunc("DM_PartyMes", "They chose to serve research. That is not the same as—");
-		next();
+		callfunc("DM_PartyMes", "Of course.");
+		close();
+	}
+	next();
+	callfunc("DM_PartyMes", "[Pratt]");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "Names. Yes. I will give them to Lysandra, and the commitments are rescinded. Confirm, and I write them.");
+	else if (.@mode == 2)
+		callfunc("DM_PartyMes", "A delay. The council hears it first. The method survives, and so does my belief in it. Confirm, and I file the notice.");
+	else
+		callfunc("DM_PartyMes", "The full record, in front of the candidates, with the time they are owed and the exit they were never offered. Confirm, and I stand beside you for it.");
+	next();
+	if (select("Confirm.", "Wait.") != 1) {
 		callfunc("DM_PartyMes", "[Pratt]");
-		callfunc("DM_PartyMes", "...");
-		next();
-		callfunc("DM_PartyMes", "[Pratt]");
-		callfunc("DM_PartyMes", "Candidate names. Yes. I will provide them to Lysandra. The volunteer commitments are... rescinded.");
-		next();
+		callfunc("DM_PartyMes", "Better to wait than to be wrong about four people.");
+		close();
+	}
+	if (!callfunc("DM_Arc15Commit", .@mode))
+		close();
+	callfunc("DM_PartyMes", "[Pratt]");
+	switch (.@mode) {
+	case 1:
+		callfunc("DM_PartyMes", "They chose to serve research. That is not the same as... Candidate names. Yes. The volunteer commitments are rescinded.");
 		callfunc("DM_PartyMes", "^3355FF*Pratt writes the names. His hand is steady. His face is not.*^000000");
 		callfunc("DM_PartyMes", "^3355FF[Encounter: the Tower's resonance weakens because the cycle will not be repeated.]^000000");
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_challenged");
-		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_delayed", 1);
-		callfunc("DM_InstanceQuestComplete", 20194);
-		callfunc("DM_PartyMes", "[Pratt]");
-		callfunc("DM_PartyMes", "The council. Yes. The standard review process. My timeline can accommodate that.");
-		next();
-		callfunc("DM_PartyMes", "[Pratt]");
-		callfunc("DM_PartyMes", "You understand that the council review changes nothing about the method's viability.");
-		next();
-		callfunc("DM_PartyMes", "[Pratt]");
-		callfunc("DM_PartyMes", "I understand you understand that.");
-		next();
+		callfunc("DM_PartyMes", "Pending the council. I will wait. I am not changing my mind. I am changing my schedule.");
 		callfunc("DM_PartyMes", "^3355FF*Pratt files the council review paperwork. The method survives, delayed.*^000000");
 		callfunc("DM_PartyMes", "^3355FF[Encounter: the Tower's resonance remains unstable while the method survives.]^000000");
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_exposed");
-		callfunc("DM_InstanceClearFlag", "dm_arc15_pratt_delayed");
-		callfunc("DM_InstanceSetFlag", "dm_arc15_pratt_challenged", 1);
-		callfunc("DM_InstanceQuestComplete", 20194);
-		callfunc("DM_PartyMes", "[Pratt]");
-		callfunc("DM_PartyMes", "What I know that is not in the record. Yes. I can tell you that.");
-		next();
-		callfunc("DM_PartyMes", "[Pratt]");
-		callfunc("DM_PartyMes", "Thanatos is still in the seal. He did not sacrifice himself and then cease. He became the living lock on a dead thing. He has been in there for three hundred years. Aware. Unable to leave. Maintaining the seal.");
-		next();
-		callfunc("DM_PartyMes", "[Pratt]");
-		callfunc("DM_PartyMes", "My method replicates that. My four volunteers would become four living locks. For however long the seal holds.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Pratt closes his research notes.*^000000");
-		callfunc("DM_PartyMes", "^3355FF*He does not open them again.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Encounter: Thanatos recognizes that the party understands the living-lock cost.]^000000");
+		callfunc("DM_PartyMes", "The full record, then, and a consent procedure with a way out. I did not think I would be the one to propose it. I am not certain I am the right person to run it.");
+		callfunc("DM_PartyMes", "^3355FF*Pratt's candidates are called in. He reads it to them himself, and the exit is offered before the cost is.*^000000");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: the Tower's resonance steadies now that the cost has been said aloud.]^000000");
 		break;
 	}
 	next();
-	callfunc("DM_PartyMes", "^3355FF[The Method's Price resolved. Descend to thana_boss and face the Memory of Thanatos.]^000000");
+	callfunc("DM_PartyMes", "^3355FF[The Method's Price resolved. The Tower's last memory is below.]^000000");
 	close();
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20194, 1;
 	end;
 }
 
-// ── Memory of Thanatos Set-piece ───────────────────────────────────────────
+// ── Memory 1: the offer (hold a ward) ──────────────────────────────────────
+aldebaran,104,92,4	script	Memory Stone North#dm	4_ENERGY_BLUE,{
+	callsub(S_Memory, 1);
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc15_north");
+	end;
+S_Memory:
+	.@bit = getarg(0);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc15_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc15_memory_mask & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*The stone is quiet. What it held, it has given.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The ward is still under attack. Hold it.*^000000");
+		close();
+	}
+	if (!'guard_cleared) {
+		callfunc("DM_PartyMes", "^3355FF*The stone remembers the offer. A man in plain armor is asked a question by someone whose face you cannot see. Behind him a ward is rising, and something has noticed it. Hold the ward. Take turns at the stone.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc15_north", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Echo of the Offer", 1706, .@self$ + "::OnGuardDead", 76, 100, 3, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The ward steadies. The man answers: yes. He says it before he has heard the second half, and you understand that the second half was not offered. The memory lets go.*^000000");
+	callfunc("DM_Arc15AddMemory", .@bit);
+	close();
+}
+
+// ── Memory 2: the first failure (relieve the operator) ─────────────────────
+aldebaran,94,106,4	script	Memory Stone East#dm	4_ENERGY_BLUE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc15_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc15_memory_mask & 2) {
+		callfunc("DM_PartyMes", "^3355FF*The stone is quiet. What it held, it has given.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The stone remembers the first failure. A year in, the seal slipped. The operator is on his knees at the lock, hands bleeding on the controls, and he will not let go. He has been there for hours.*^000000");
+	next();
+	if (select("Relieve the operator.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", "endure", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_PartyMes", "^3355FF*You take the controls and the seal pulls at you. It takes more than you meant to give. You hold it, barely, and the memory lets you go.*^000000");
+		callfunc("DM_HazardArea", strnpcinfo(NPC_MAP), 94, 106, 5, 4, SC_CONFUSION, 3000, getcharid(CHAR_ID_PARTY));
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*You take the controls from him one hand at a time. He does not want to give them up. He lets you. Behind him there is nobody to take his place, and there never will be.*^000000");
+	}
+	callfunc("DM_Arc15AddMemory", 2);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Memory 3: the burden (recover the missing record) ──────────────────────
+aldebaran,108,110,4	script	Memory Stone South#dm	4_ENERGY_BLUE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc15_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc15_memory_mask & 4) {
+		callfunc("DM_PartyMes", "^3355FF*The stone is quiet. What it held, it has given.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The stone remembers a library, three centuries on. A ledger of the seal's maintenance sits on a desk, and a page is missing from the middle. Whoever kept it stopped keeping it, and no one noticed.*^000000");
+	next();
+	if (select("Recover the missing record.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", "lore", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_PartyMes", "^3355FF*You find the page, torn and water-stained. You can read most of it. The rest the stone shows you anyway, and it is worse than you guessed.*^000000");
+		callfunc("DM_HazardArea", strnpcinfo(NPC_MAP), 108, 110, 5, 4, SC_CONFUSION, 3000, getcharid(CHAR_ID_PARTY));
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*The page is where it should not be: folded into a prayer book. It says one thing in a small hand: 'I do not know how long I can keep doing this. Nobody has come to ask.'*^000000");
+	}
+	callfunc("DM_Arc15AddMemory", 4);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Memory of Thanatos Set-piece (the final memory defense) ────────────────
 thana_boss,150,150,0	script	Memory of Thanatos#dm	HIDDEN_NPC,{
 	end;
 

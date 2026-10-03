@@ -8,6 +8,7 @@ function	script	DM_SetFlag	{
 		return 0;
 
 	setd(.@flag$, .@value);
+	callfunc("DM_SendFlagDelta", .@flag$, .@value);
 	return .@value;
 }
 
@@ -308,6 +309,12 @@ function	script	DM_ClearArc06Flags	{
 	callfunc("DM_ClearFlag", "dm_arc06_krenn_exposed");
 	callfunc("DM_ClearFlag", "dm_arc06_mistress_spared");
 	callfunc("DM_ClearFlag", "dm_arc06_mistress_killed");
+	callfunc("DM_ClearFlag", "dm_arc06_evidence_mask");
+	callfunc("DM_ClearFlag", "dm_arc06_posts");
+	callfunc("DM_ClearFlag", "dm_arc06_post_fail");
+	callfunc("DM_ClearFlag", "dm_arc06_krenn_alerted");
+	callfunc("DM_ClearFlag", "dm_arc06_disclosure_mode");
+	callfunc("DM_ClearFlag", "dm_arc06_krenn_cooperated");
 	return 1;
 }
 
@@ -319,6 +326,12 @@ function	script	DM_PrintArc06Flags	{
 		+ " krenn_exposed=" + callfunc("DM_GetFlag", "dm_arc06_krenn_exposed"));
 	dispbottom("  mistress_spared=" + callfunc("DM_GetFlag", "dm_arc06_mistress_spared")
 		+ " mistress_killed=" + callfunc("DM_GetFlag", "dm_arc06_mistress_killed"));
+	dispbottom("  evidence_mask=" + callfunc("DM_GetFlag", "dm_arc06_evidence_mask")
+		+ " posts=" + callfunc("DM_GetFlag", "dm_arc06_posts")
+		+ " post_fail=" + callfunc("DM_GetFlag", "dm_arc06_post_fail")
+		+ " krenn_alerted=" + callfunc("DM_GetFlag", "dm_arc06_krenn_alerted"));
+	dispbottom("  disclosure_mode=" + callfunc("DM_GetFlag", "dm_arc06_disclosure_mode")
+		+ " krenn_cooperated=" + callfunc("DM_GetFlag", "dm_arc06_krenn_cooperated"));
 	return 1;
 }
 
@@ -328,6 +341,10 @@ function	script	DM_ClearArc07Flags	{
 	callfunc("DM_ClearFlag", "dm_arc07_strike_broken");
 	callfunc("DM_ClearFlag", "dm_arc07_kessler_confronted");
 	callfunc("DM_ClearFlag", "dm_arc07_rsx_killed");
+	callfunc("DM_ClearFlag", "dm_arc07_prep_mask");
+	callfunc("DM_ClearFlag", "dm_arc07_code_failed");
+	callfunc("DM_ClearFlag", "dm_arc07_labor_resolution");
+	callfunc("DM_ClearFlag", "dm_arc07_strike_negotiated");
 	return 1;
 }
 
@@ -338,6 +355,7 @@ function	script	DM_PrintArc07Flags	{
 		+ " strike_broken=" + callfunc("DM_GetFlag", "dm_arc07_strike_broken"));
 	dispbottom("  kessler_confronted=" + callfunc("DM_GetFlag", "dm_arc07_kessler_confronted")
 		+ " rsx_killed=" + callfunc("DM_GetFlag", "dm_arc07_rsx_killed"));
+	dispbottom("  " + "prep_mask=" + callfunc("DM_GetFlag", "dm_arc07_prep_mask") + " code_failed=" + callfunc("DM_GetFlag", "dm_arc07_code_failed") + " labor_resolution=" + callfunc("DM_GetFlag", "dm_arc07_labor_resolution") + " strike_negotiated=" + callfunc("DM_GetFlag", "dm_arc07_strike_negotiated"));
 	return 1;
 }
 
@@ -346,11 +364,15 @@ function	script	DM_ClearArc08Flags	{
 	callfunc("DM_ClearFlag", "dm_arc08_manfred_killed");
 	callfunc("DM_ClearFlag", "dm_arc08_manfred_spared");
 	callfunc("DM_ClearFlag", "dm_arc08_darklord_killed");
+	callfunc("DM_ClearFlag", "dm_arc08_memory_mask");
+	callfunc("DM_ClearFlag", "dm_arc08_watch_resolution");
+	callfunc("DM_ClearFlag", "dm_arc08_manfred_confessed");
 	return 1;
 }
 
 function	script	DM_PrintArc08Flags	{
 	dispbottom("[DM] Arc 08 flags: started=" + callfunc("DM_GetFlag", "dm_arc08_started") + " manfred_spared=" + callfunc("DM_GetFlag", "dm_arc08_manfred_spared") + " manfred_killed=" + callfunc("DM_GetFlag", "dm_arc08_manfred_killed") + " darklord_killed=" + callfunc("DM_GetFlag", "dm_arc08_darklord_killed"));
+	dispbottom("  " + "memory_mask=" + callfunc("DM_GetFlag", "dm_arc08_memory_mask") + " watch_resolution=" + callfunc("DM_GetFlag", "dm_arc08_watch_resolution") + " manfred_confessed=" + callfunc("DM_GetFlag", "dm_arc08_manfred_confessed"));
 	return 1;
 }
 
@@ -359,11 +381,19 @@ function	script	DM_ClearArc09Flags	{
 	callfunc("DM_ClearFlag", "dm_arc09_karsh_exposed");
 	callfunc("DM_ClearFlag", "dm_arc09_karsh_deal");
 	callfunc("DM_ClearFlag", "dm_arc09_gloom_killed");
+	callfunc("DM_ClearFlag", "dm_arc09_record");
+	callfunc("DM_ClearFlag", "dm_arc09_witness_route");
+	callfunc("DM_ClearFlag", "dm_arc09_witness_secured");
+	callfunc("DM_ClearFlag", "dm_arc09_checkpoints");
+	callfunc("DM_ClearFlag", "dm_arc09_disclosure_schedule");
+	callfunc("DM_ClearFlag", "dm_arc09_approach_safe");
+	callfunc("DM_ClearFlag", "dm_arc09_secret_kept");
 	return 1;
 }
 
 function	script	DM_PrintArc09Flags	{
 	dispbottom("[DM] Arc 09 flags: started=" + callfunc("DM_GetFlag", "dm_arc09_started") + " karsh_exposed=" + callfunc("DM_GetFlag", "dm_arc09_karsh_exposed") + " karsh_deal=" + callfunc("DM_GetFlag", "dm_arc09_karsh_deal") + " gloom_killed=" + callfunc("DM_GetFlag", "dm_arc09_gloom_killed"));
+	dispbottom("  " + "record=" + callfunc("DM_GetFlag", "dm_arc09_record") + " witness_route=" + callfunc("DM_GetFlag", "dm_arc09_witness_route") + " witness_secured=" + callfunc("DM_GetFlag", "dm_arc09_witness_secured") + " checkpoints=" + callfunc("DM_GetFlag", "dm_arc09_checkpoints") + " disclosure_schedule=" + callfunc("DM_GetFlag", "dm_arc09_disclosure_schedule") + " approach_safe=" + callfunc("DM_GetFlag", "dm_arc09_approach_safe") + " secret_kept=" + callfunc("DM_GetFlag", "dm_arc09_secret_kept"));
 	return 1;
 }
 
@@ -373,37 +403,43 @@ function	script	DM_ClearArc10Flags	{
 	callfunc("DM_ClearFlag", "dm_arc10_echo_freed");
 	callfunc("DM_ClearFlag", "dm_arc10_kiel_killed");
 	callfunc("DM_ClearFlag", "dm_act02_complete");
+	callfunc("DM_ClearFlag", "dm_arc10_patrol_disabled");
+	callfunc("DM_ClearFlag", "dm_arc10_evidence_secured");
+	callfunc("DM_ClearFlag", "dm_arc10_containment_opened");
+	callfunc("DM_ClearFlag", "dm_arc10_echo_exit");
+	callfunc("DM_ClearFlag", "dm_arc10_lab_resolution");
 	return 1;
 }
 
 function	script	DM_PrintArc10Flags	{
 	dispbottom("[DM] Arc 10 flags: started=" + callfunc("DM_GetFlag", "dm_arc10_started") + " reise_confronted=" + callfunc("DM_GetFlag", "dm_arc10_reise_confronted") + " echo_freed=" + callfunc("DM_GetFlag", "dm_arc10_echo_freed") + " kiel_killed=" + callfunc("DM_GetFlag", "dm_arc10_kiel_killed") + " act02_complete=" + callfunc("DM_GetFlag", "dm_act02_complete"));
+	dispbottom("  " + "patrol_disabled=" + callfunc("DM_GetFlag", "dm_arc10_patrol_disabled") + " evidence_secured=" + callfunc("DM_GetFlag", "dm_arc10_evidence_secured") + " containment_opened=" + callfunc("DM_GetFlag", "dm_arc10_containment_opened") + " echo_exit=" + callfunc("DM_GetFlag", "dm_arc10_echo_exit") + " lab_resolution=" + callfunc("DM_GetFlag", "dm_arc10_lab_resolution"));
 	return 1;
 }
 
-function	script	DM_ClearArc11Flags	{ callfunc("DM_ClearFlag", "dm_arc11_started"); callfunc("DM_ClearFlag", "dm_arc11_bjorn_subdued"); callfunc("DM_ClearFlag", "dm_arc11_bjorn_joined"); callfunc("DM_ClearFlag", "dm_arc11_randgris_killed"); return 1; }
+function	script	DM_ClearArc11Flags	{ callfunc("DM_ClearFlag", "dm_arc11_started"); callfunc("DM_ClearFlag", "dm_arc11_bjorn_subdued"); callfunc("DM_ClearFlag", "dm_arc11_bjorn_joined"); callfunc("DM_ClearFlag", "dm_arc11_randgris_killed"); callfunc("DM_ClearFlag", "dm_arc11_trial_mask"); callfunc("DM_ClearFlag", "dm_arc11_signal_partial"); callfunc("DM_ClearFlag", "dm_arc11_bjorn_outcome"); callfunc("DM_ClearFlag", "dm_arc11_civilian_pact"); return 1; }
 function	script	DM_PrintArc11Flags	{ dispbottom("[DM] Arc 11 flags: started=" + callfunc("DM_GetFlag", "dm_arc11_started") + " bjorn_subdued=" + callfunc("DM_GetFlag", "dm_arc11_bjorn_subdued") + " bjorn_joined=" + callfunc("DM_GetFlag", "dm_arc11_bjorn_joined") + " randgris_killed=" + callfunc("DM_GetFlag", "dm_arc11_randgris_killed")); return 1; }
 
-function	script	DM_ClearArc12Flags	{ callfunc("DM_ClearFlag", "dm_arc12_started"); callfunc("DM_ClearFlag", "dm_arc12_vance_exposed"); callfunc("DM_ClearFlag", "dm_arc12_vance_helped"); callfunc("DM_ClearFlag", "dm_arc12_naght_killed"); return 1; }
+function	script	DM_ClearArc12Flags	{ callfunc("DM_ClearFlag", "dm_arc12_started"); callfunc("DM_ClearFlag", "dm_arc12_vance_exposed"); callfunc("DM_ClearFlag", "dm_arc12_vance_helped"); callfunc("DM_ClearFlag", "dm_arc12_naght_killed"); callfunc("DM_ClearFlag", "dm_arc12_survey_recovered"); callfunc("DM_ClearFlag", "dm_arc12_survey_partial"); callfunc("DM_ClearFlag", "dm_arc12_survey_agreement"); callfunc("DM_ClearFlag", "dm_arc12_naga_passage"); callfunc("DM_ClearFlag", "dm_arc12_anchor_mask"); return 1; }
 function	script	DM_PrintArc12Flags	{ dispbottom("[DM] Arc 12 flags: started=" + callfunc("DM_GetFlag", "dm_arc12_started") + " vance_exposed=" + callfunc("DM_GetFlag", "dm_arc12_vance_exposed") + " naght_killed=" + callfunc("DM_GetFlag", "dm_arc12_naght_killed")); return 1; }
 
-function	script	DM_ClearArc13Flags	{ callfunc("DM_ClearFlag", "dm_arc13_started"); callfunc("DM_ClearFlag", "dm_arc13_carrion_killed"); callfunc("DM_ClearFlag", "dm_arc13_carrion_bribed"); callfunc("DM_ClearFlag", "dm_arc13_beelzebub_killed"); callfunc("DM_ClearFlag", "dm_arc13_coalition_deal_honored"); return 1; }
+function	script	DM_ClearArc13Flags	{ callfunc("DM_ClearFlag", "dm_arc13_started"); callfunc("DM_ClearFlag", "dm_arc13_carrion_killed"); callfunc("DM_ClearFlag", "dm_arc13_carrion_bribed"); callfunc("DM_ClearFlag", "dm_arc13_beelzebub_killed"); callfunc("DM_ClearFlag", "dm_arc13_coalition_deal_honored"); callfunc("DM_ClearFlag", "dm_arc13_ward_mask"); callfunc("DM_ClearFlag", "dm_arc13_witness"); callfunc("DM_ClearFlag", "dm_arc13_treaty_terms"); callfunc("DM_ClearFlag", "dm_arc13_treaty_verified"); return 1; }
 function	script	DM_PrintArc13Flags	{ dispbottom("[DM] Arc 13 flags: started=" + callfunc("DM_GetFlag", "dm_arc13_started") + " carrion_killed=" + callfunc("DM_GetFlag", "dm_arc13_carrion_killed") + " carrion_bribed=" + callfunc("DM_GetFlag", "dm_arc13_carrion_bribed") + " beelzebub_killed=" + callfunc("DM_GetFlag", "dm_arc13_beelzebub_killed") + " deal_honored=" + callfunc("DM_GetFlag", "dm_arc13_coalition_deal_honored")); return 1; }
 
-function	script	DM_ClearArc14Flags	{ callfunc("DM_ClearFlag", "dm_arc14_started"); callfunc("DM_ClearFlag", "dm_arc14_hesma_exposed"); callfunc("DM_ClearFlag", "dm_arc14_hesma_bribed"); callfunc("DM_ClearFlag", "dm_arc14_ifrit_killed"); callfunc("DM_ClearFlag", "dm_act03_complete"); return 1; }
+function	script	DM_ClearArc14Flags	{ callfunc("DM_ClearFlag", "dm_arc14_started"); callfunc("DM_ClearFlag", "dm_arc14_hesma_exposed"); callfunc("DM_ClearFlag", "dm_arc14_hesma_bribed"); callfunc("DM_ClearFlag", "dm_arc14_ifrit_killed"); callfunc("DM_ClearFlag", "dm_act03_complete"); callfunc("DM_ClearFlag", "dm_arc14_evacuation_stage"); callfunc("DM_ClearFlag", "dm_arc14_groups_saved"); callfunc("DM_ClearFlag", "dm_arc14_bypass_ready"); callfunc("DM_ClearFlag", "dm_arc14_authorization"); callfunc("DM_ClearFlag", "dm_arc14_accountability_logged"); return 1; }
 function	script	DM_PrintArc14Flags	{ dispbottom("[DM] Arc 14 flags: started=" + callfunc("DM_GetFlag", "dm_arc14_started") + " hesma_exposed=" + callfunc("DM_GetFlag", "dm_arc14_hesma_exposed") + " hesma_bribed=" + callfunc("DM_GetFlag", "dm_arc14_hesma_bribed") + " ifrit_killed=" + callfunc("DM_GetFlag", "dm_arc14_ifrit_killed") + " act03_complete=" + callfunc("DM_GetFlag", "dm_act03_complete")); return 1; }
 
-function	script	DM_ClearArc15Flags	{ callfunc("DM_ClearFlag", "dm_arc15_started"); callfunc("DM_ClearFlag", "dm_arc15_pratt_exposed"); callfunc("DM_ClearFlag", "dm_arc15_pratt_delayed"); callfunc("DM_ClearFlag", "dm_arc15_pratt_challenged"); callfunc("DM_ClearFlag", "dm_arc15_thanatos_killed"); return 1; }
+function	script	DM_ClearArc15Flags	{ callfunc("DM_ClearFlag", "dm_arc15_started"); callfunc("DM_ClearFlag", "dm_arc15_pratt_exposed"); callfunc("DM_ClearFlag", "dm_arc15_pratt_delayed"); callfunc("DM_ClearFlag", "dm_arc15_pratt_challenged"); callfunc("DM_ClearFlag", "dm_arc15_thanatos_killed"); callfunc("DM_ClearFlag", "dm_arc15_memory_mask"); callfunc("DM_ClearFlag", "dm_arc15_cost_disclosed"); callfunc("DM_ClearFlag", "dm_arc15_pratt_resolution"); return 1; }
 function	script	DM_PrintArc15Flags	{ dispbottom("[DM] Arc 15 flags: started=" + callfunc("DM_GetFlag", "dm_arc15_started") + " pratt_exposed=" + callfunc("DM_GetFlag", "dm_arc15_pratt_exposed") + " pratt_delayed=" + callfunc("DM_GetFlag", "dm_arc15_pratt_delayed") + " pratt_challenged=" + callfunc("DM_GetFlag", "dm_arc15_pratt_challenged") + " thanatos_killed=" + callfunc("DM_GetFlag", "dm_arc15_thanatos_killed")); return 1; }
 
-function	script	DM_ClearArc16Flags	{ callfunc("DM_ClearFlag", "dm_arc16_started"); callfunc("DM_ClearFlag", "dm_arc16_rina_exposed"); callfunc("DM_ClearFlag", "dm_arc16_rina_rolled"); callfunc("DM_ClearFlag", "dm_arc16_rina_defected"); callfunc("DM_ClearFlag", "dm_arc16_bijou_killed"); callfunc("DM_ClearFlag", "dm_arc16_maret_freed"); return 1; }
+function	script	DM_ClearArc16Flags	{ callfunc("DM_ClearFlag", "dm_arc16_started"); callfunc("DM_ClearFlag", "dm_arc16_rina_exposed"); callfunc("DM_ClearFlag", "dm_arc16_rina_rolled"); callfunc("DM_ClearFlag", "dm_arc16_rina_defected"); callfunc("DM_ClearFlag", "dm_arc16_bijou_killed"); callfunc("DM_ClearFlag", "dm_arc16_maret_freed"); callfunc("DM_ClearFlag", "dm_arc16_evidence_mask"); callfunc("DM_ClearFlag", "dm_arc16_discretion_lost"); callfunc("DM_ClearFlag", "dm_arc16_rina_resolution"); callfunc("DM_ClearFlag", "dm_arc16_release_known"); callfunc("DM_ClearFlag", "dm_arc16_release_completed"); return 1; }
 function	script	DM_PrintArc16Flags	{ dispbottom("[DM] Arc 16 flags: started=" + callfunc("DM_GetFlag", "dm_arc16_started") + " rina_exposed=" + callfunc("DM_GetFlag", "dm_arc16_rina_exposed") + " rina_rolled=" + callfunc("DM_GetFlag", "dm_arc16_rina_rolled") + " rina_defected=" + callfunc("DM_GetFlag", "dm_arc16_rina_defected") + " bijou_killed=" + callfunc("DM_GetFlag", "dm_arc16_bijou_killed") + " maret_freed=" + callfunc("DM_GetFlag", "dm_arc16_maret_freed")); return 1; }
 
-function	script	DM_ClearArc17Flags	{ callfunc("DM_ClearFlag", "dm_arc17_started"); callfunc("DM_ClearFlag", "dm_arc17_admin_purged"); callfunc("DM_ClearFlag", "dm_arc17_admin_negotiated"); callfunc("DM_ClearFlag", "dm_arc17_admin_running"); callfunc("DM_ClearFlag", "dm_arc17_beta_killed"); return 1; }
+function	script	DM_ClearArc17Flags	{ callfunc("DM_ClearFlag", "dm_arc17_started"); callfunc("DM_ClearFlag", "dm_arc17_admin_purged"); callfunc("DM_ClearFlag", "dm_arc17_admin_negotiated"); callfunc("DM_ClearFlag", "dm_arc17_admin_running"); callfunc("DM_ClearFlag", "dm_arc17_beta_killed"); callfunc("DM_ClearFlag", "dm_arc17_design_recovered"); callfunc("DM_ClearFlag", "dm_arc17_chamber_isolated"); callfunc("DM_ClearFlag", "dm_arc17_fault_mask"); callfunc("DM_ClearFlag", "dm_arc17_prototype_verified"); callfunc("DM_ClearFlag", "dm_arc17_maintenance_secured"); callfunc("DM_ClearFlag", "dm_arc17_design_exported"); callfunc("DM_ClearFlag", "dm_arc17_admin_resolution"); return 1; }
 function	script	DM_PrintArc17Flags	{ dispbottom("[DM] Arc 17 flags: started=" + callfunc("DM_GetFlag", "dm_arc17_started") + " admin_purged=" + callfunc("DM_GetFlag", "dm_arc17_admin_purged") + " admin_negotiated=" + callfunc("DM_GetFlag", "dm_arc17_admin_negotiated") + " admin_running=" + callfunc("DM_GetFlag", "dm_arc17_admin_running") + " beta_killed=" + callfunc("DM_GetFlag", "dm_arc17_beta_killed")); return 1; }
 
-function	script	DM_ClearArc18Flags	{ callfunc("DM_ClearFlag", "dm_arc18_started"); callfunc("DM_ClearFlag", "dm_arc18_himmelmez_killed"); callfunc("DM_ClearFlag", "dm_arc18_himmelmez_bargained"); return 1; }
+function	script	DM_ClearArc18Flags	{ callfunc("DM_ClearFlag", "dm_arc18_started"); callfunc("DM_ClearFlag", "dm_arc18_himmelmez_killed"); callfunc("DM_ClearFlag", "dm_arc18_himmelmez_bargained"); callfunc("DM_ClearFlag", "dm_arc18_audience_mask"); callfunc("DM_ClearFlag", "dm_arc18_resolution"); callfunc("DM_ClearFlag", "dm_arc18_pact_valid"); return 1; }
 function	script	DM_PrintArc18Flags	{ dispbottom("[DM] Arc 18 flags: started=" + callfunc("DM_GetFlag", "dm_arc18_started") + " himmelmez_killed=" + callfunc("DM_GetFlag", "dm_arc18_himmelmez_killed") + " himmelmez_bargained=" + callfunc("DM_GetFlag", "dm_arc18_himmelmez_bargained")); return 1; }
 
-function	script	DM_ClearArc19Flags	{ callfunc("DM_ClearFlag", "dm_arc19_started"); callfunc("DM_ClearFlag", "dm_arc19_surt_defeated"); callfunc("DM_ClearFlag", "dm_finale_shared_seal"); callfunc("DM_ClearFlag", "dm_finale_reforged_seal"); callfunc("DM_ClearFlag", "dm_finale_queens_bargain"); callfunc("DM_ClearFlag", "dm_finale_thanatos_road"); callfunc("DM_ClearFlag", "dm_finale_ragnarok_unbound"); callfunc("DM_ClearFlag", "dm_campaign_complete"); return 1; }
+function	script	DM_ClearArc19Flags	{ callfunc("DM_ClearFlag", "dm_arc19_started"); callfunc("DM_ClearFlag", "dm_arc19_surt_defeated"); callfunc("DM_ClearFlag", "dm_finale_shared_seal"); callfunc("DM_ClearFlag", "dm_finale_reforged_seal"); callfunc("DM_ClearFlag", "dm_finale_queens_bargain"); callfunc("DM_ClearFlag", "dm_finale_thanatos_road"); callfunc("DM_ClearFlag", "dm_finale_road_volunteer"); callfunc("DM_ClearFlag", "dm_finale_ragnarok_unbound"); callfunc("DM_ClearFlag", "dm_campaign_complete"); callfunc("DM_ClearFlag", "dm_arc19_briefed"); callfunc("DM_ClearFlag", "dm_arc19_groups_agreed"); callfunc("DM_ClearFlag", "dm_arc19_prepared_mask"); callfunc("DM_ClearFlag", "dm_arc19_volunteer_kind"); callfunc("DM_ClearFlag", "dm_arc19_final_choice"); return 1; }
 function	script	DM_PrintArc19Flags	{ dispbottom("[DM] Arc 19 flags: started=" + callfunc("DM_GetFlag", "dm_arc19_started") + " surt_defeated=" + callfunc("DM_GetFlag", "dm_arc19_surt_defeated") + " campaign_complete=" + callfunc("DM_GetFlag", "dm_campaign_complete")); return 1; }

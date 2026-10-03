@@ -9,29 +9,106 @@
 //= running. The Administrator system protecting the research
 //= treats every visitor as a threat.
 //=
+//= REBUILT 2026-10-02 (handoff A4-17): prove a solution works. A
+//= controlled test of the counter-frequency system: recover the
+//= design, isolate a test chamber, run a prototype cycle against
+//= three labeled faults. Echo (if freed) translates one fault and
+//= asks how copies of living minds will be treated; without Echo a
+//= slower manual record gives the same information.
+//=
+//= State:
+//=   dm_arc17_design_recovered      the Design Archive
+//=   dm_arc17_chamber_isolated      the test chamber controls
+//=   dm_arc17_fault_mask            bits 1,2,4: repair, defend, verify
+//=   dm_arc17_prototype_verified    all three faults resolved
+//=   dm_arc17_maintenance_secured   1 Einbroch workers, 2 a new
+//=       consenting team (never requires one particular old ally)
+//=   dm_arc17_design_exported       an explicit export. Shutting the
+//=       Administrator down without one is a separate, warned choice.
+//=   dm_arc17_admin_resolution (final, equal EXP; opens at prototype
+//=       verified): 1 export then shut down (admin_purged), 2 retain
+//=       under agreed limits (admin_negotiated), 3 broader partnership
+//=       (admin_running). Derived flags are exclusive.
+//= The machine ending is feasible only when the prototype is verified
+//= AND maintenance is secured.
+//=
 //= Quests (db/quest_db.conf):
-//=   20211 Illusion Investigation    (arc tracker / Amdarais)
-//=   20212 Sages Legacy (Brigan x7, Solid Iron Piece x4, Smoke Powder x3)
-//=   20213 Tartaros Dive (Handcuffs x5, Research Chart x5, Blood Thirst x2)
-//=   20214 Biosphere Sample Rotation (The Administrator)
+//=   20211 Illusion Investigation    (arc tracker / the Core)
+//=   20212 Sages Legacy       (optional salvage)
+//=   20213 Tartaros Dive      (optional salvage)
+//=   20214 Biosphere Sample Rotation (opens when the prototype is verified)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc17_started, dm_arc17_admin_purged,
-//=   dm_arc17_admin_negotiated, dm_arc17_admin_running,
-//=   dm_arc17_beta_killed
+//=   dm_arc17_started, dm_arc17_design_recovered,
+//=   dm_arc17_chamber_isolated, dm_arc17_fault_mask,
+//=   dm_arc17_prototype_verified, dm_arc17_maintenance_secured,
+//=   dm_arc17_design_exported, dm_arc17_admin_resolution,
+//=   dm_arc17_admin_purged, dm_arc17_admin_negotiated,
+//=   dm_arc17_admin_running, dm_arc17_beta_killed
 //===========================================================
 
+// ── Shared Arc 17 helpers ──────────────────────────────────────────────────
+
+function	script	DM_Arc17Step	{
+	.@what$ = getarg(0);
+	.@n = (dm_arc17_design_recovered ? 1 : 0) + (dm_arc17_chamber_isolated ? 1 : 0) + callfunc("DM_CountBits", dm_arc17_fault_mask);
+	callfunc("DM_DMJStoryObjective", 20211, 2, "Explore", .@n, 5, (.@n >= 5), getcharid(CHAR_ID_PARTY));
+	callfunc("DM_PartyMes", "^3355FF[" + .@what$ + " Test progress: " + .@n + " of 5.]^000000");
+	return .@n;
+}
+
+function	script	DM_Arc17FaultFixed	{
+	.@bit = getarg(0);
+	if (!(dm_arc17_fault_mask & .@bit))
+		callfunc("DM_InstanceSetFlag", "dm_arc17_fault_mask", dm_arc17_fault_mask | .@bit);
+	if (callfunc("DM_ClaimGrant", "arc17_fault_" + .@bit))
+		callfunc("DM_PartyExp", 80000, 40000);
+	callfunc("DM_Arc17Step", "Fault cleared.");
+	if (dm_arc17_fault_mask == 7 && !dm_arc17_prototype_verified) {
+		callfunc("DM_InstanceSetFlag", "dm_arc17_prototype_verified", 1);
+		if (callfunc("DM_ClaimGrant", "arc17_prototype")) {
+			callfunc("DM_PartyExp", 160000, 85000);
+			callfunc("DM_InstanceQuestStart", 20214);
+		}
+		callfunc("DM_PartyMes", "^3355FF[Prototype cycle complete. The counter-frequency holds against all three faults. The feasibility record is written.]^000000");
+	}
+	return 1;
+}
+
+// mode: 1 export then shut down, 2 retain under limits, 3 broader partnership. Final.
+function	script	DM_Arc17Commit	{
+	.@mode = getarg(0);
+	if (dm_arc17_admin_resolution)
+		return 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc17_admin_resolution", .@mode);
+	callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
+	callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
+	callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
+	if (.@mode == 1)
+		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_purged", 1);
+	else if (.@mode == 2)
+		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_negotiated", 1);
+	else
+		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_running", 1);
+	callfunc("DM_InstanceQuestComplete", 20214);
+	callfunc("DM_DMJStoryObjective", 20214, 1, "Interact", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc17_resolution"))
+		callfunc("DM_PartyExp", 440000, 215000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1705);
+	return 1;
+}
+
 // ── Doctor Mira Tressa — The Archaeologist ─────────────────────────────────
-ba_in01,100,100,5	script	Doctor Mira Tressa#dm	4_F_03,{
+ba_in01,104,96,5	script	Doctor Mira Tressa#dm	4_F_03,{
 	if (!callfunc("DM_SessionGate")) close;
 	if (questprogress(20211) == 2) {
 		callfunc("DM_PartyMes", "[Doctor Mira Tressa]");
 		if (dm_arc17_admin_running)
-			callfunc("DM_PartyMes", "The Administrator is still running. Its cascade analysis is... substantial. Three centuries of continuous observation. I do not think I will finish reading it in my lifetime.");
+			callfunc("DM_PartyMes", "The Administrator is still running. Its cascade analysis is substantial: three centuries of continuous observation. It talks to us on its own schedule, and we have agreed to let it.");
 		else if (dm_arc17_admin_negotiated)
-			callfunc("DM_PartyMes", "The data transfer is complete. The Administrator assisted with the organization. I did not expect it to care about how the research was received. But it did.");
+			callfunc("DM_PartyMes", "The Administrator is retained under the limits we agreed, and so is its archive. It does not like the limits. It has not broken them.");
 		else
-			callfunc("DM_PartyMes", "The data is extracted. Varmundt's method is documented. Whether it is the right answer is a question I will leave to people who know more about seals than I do.");
+			callfunc("DM_PartyMes", "The Administrator is dark, and the design is out. We have a copy. Whoever builds from it has what Varmundt had, minus the person who knew why.");
 		close();
 	}
 
@@ -40,10 +117,11 @@ ba_in01,100,100,5	script	Doctor Mira Tressa#dm	4_F_03,{
 		end;
 	}
 
-	callsub(S_TurnIns);
+	callsub(S_Progress);
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20211, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -52,144 +130,103 @@ OnInit:
 
 S_StartArc:
 	callfunc("DM_PartyMes", "[Doctor Mira Tressa]");
-	callfunc("DM_PartyMes", "The Biolabs are still running. I came to document and found an active research program. Three centuries active. Varmundt never stopped his work — he just stopped being the one doing it.");
+	callfunc("DM_PartyMes", "You came the long way. Everyone who finds the Biolabs comes by accident. Varmundt left a design here for stopping the cascade without sealing it behind a person. I want to know if it works.");
 	next();
-	if (dm_arc07_kessler_confronted) {
-		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "The RSX-0806 files from Einbroch. Kessler's authorization trace. RSX's chassis design comes directly from Varmundt's robotics work. The facility has been quietly supplying the industrial sector with derivative technology for a hundred years. Nobody in Einbroch knew the source.");
-		next();
-	}
 	if (dm_arc10_echo_freed) {
 		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "The Lighthalzen prototype — Echo. Varmundt's notes call the possibility 'Pattern Seven.' A machine that refuses its directive on ethical grounds. He considered that outcome the most likely successful one. He was building toward it intentionally.");
+		callfunc("DM_PartyMes", "I have heard about Echo. If the person you freed in Lighthalzen is willing to come here, I think she is the best reader of this system there will ever be. I would not ask her to. I would be very glad if she offered.");
+		next();
+	}
+	if (dm_arc07_labor_resolution) {
+		callfunc("DM_PartyMes", "[Tressa]");
+		callfunc("DM_PartyMes", (dm_arc07_labor_resolution == 3 ? "The Einbroch foundry is running again, I hear, under a restart nobody celebrated. Their engineers might still talk to us. I would not count on it." : "The Einbroch foundry's people have a name now for being willing to share work. They might maintain a thing like this. It is not a favor I would take for granted."));
 		next();
 	}
 	callfunc("DM_PartyMes", "[Tressa]");
-	callfunc("DM_PartyMes", "Varmundt's approach was completely different from Thanatos's. No divine sacrifice. No living seal. He was developing a mechanical frequency-counter — something that would broadcast at the exact inverse of the cascade's signal and cancel it out the way one sound cancels another.");
+	callfunc("DM_PartyMes", "The counter-frequency drowns the cascade's signal instead of sealing it. It needs power and maintenance. It does not need a sacrifice. But Varmundt died before he could test it, and a design that has never been tested is only a hope.");
 	next();
-	switch (select("Did he finish it?", "Why is the Administrator a problem?", "Is his method viable?")) {
-	case 1:
-		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "He finished the theory. The implementation requires a broadcast amplifier he never built because he ran out of time — specifically, he died. The blueprints are in the core archive. That is what the Administrator is protecting.");
-		break;
-	case 2:
-		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "It follows its original directive: preserve the data at all costs. It was designed to protect against theft and unauthorized use. It does not distinguish between an invading army and an archaeological team. The first two teams I sent in did not come back.");
-		break;
-	case 3:
-		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "The theory is sound. The inverse-frequency approach would require the amplifier, a power source, and a broadcast point. It would not seal the cascade permanently — it would suppress it long enough for a permanent solution to be implemented. A window. Maybe decades.");
-		break;
+	.@ready = 0;
+	while (!.@ready) {
+		switch (select("What would a test involve?", "What is the Administrator?", "What happens if it fails?", "We are ready. Where do we start?")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Tressa]");
+			callfunc("DM_PartyMes", "Recover the design from the archive. Isolate a test chamber so a failure cannot reach the rest of the lab. Run one prototype cycle, and clear three faults as they come up: one to repair, one to defend, one to verify. In any order.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Tressa]");
+			callfunc("DM_PartyMes", "The thing Varmundt built to guard his archive. It has been waiting two hundred years for someone who understands the cascade. It is not hostile. It is stubborn, and it has kept a promise for longer than any of us has been alive.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Tressa]");
+			callfunc("DM_PartyMes", "The chamber contains it. That is what the chamber is for. If it fails we learn something, and if it works we learn something else, and either way we have been honest about it.");
+			break;
+		case 4:
+			.@ready = 1;
+			break;
+		}
+		next();
 	}
-	next();
 	callfunc("DM_PartyMes", "[Tressa]");
-	callfunc("DM_PartyMes", "The Aliza specimens in the outer labs are escaped test subjects from when the Administrator locked down the facility. They were in ongoing experiments — they have been in the labs alone for a very long time. And the Celia security constructs in the inner corridors are the Administrator's active defense layer.");
+	callfunc("DM_PartyMes", "One more thing. A machine has to be kept running. Even if the test works, someone has to agree to keep it running. A team has to be asked. Plan for that before you talk to the Administrator.");
 	callfunc("DM_InstanceSetFlag", "dm_arc17_started", 1);
 	callfunc("DM_InstanceQuestStart", 20211);
-	callfunc("DM_InstanceQuestStart", 20212);
-	callfunc("DM_InstanceQuestStart", 20213);
+	callfunc("DM_DMJStoryObjective", 20211, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Illusion Investigation]^000000");
-	callfunc("DM_PartyMes", "^3355FFSages Legacy - out of the outer lab sections: " + callfunc("DM_HuntBrief", 20212) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFTartaros Dive - out of the inner corridors: " + callfunc("DM_HuntBrief", 20213) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFRecover the design, isolate a test chamber, clear three faults, and line up a team to maintain it.^000000");
 	close();
 
-S_TurnIns:
-	.@paid = 0;
+S_Progress:
+	callfunc("DM_PartyMes", "[Tressa]");
+	callfunc("DM_PartyMes", (dm_arc17_design_recovered ? "Design: recovered." : "Design: not yet. The archive, near my terminal."));
+	callfunc("DM_PartyMes", (dm_arc17_chamber_isolated ? "Test chamber: isolated." : "Test chamber: not yet. The chamber controls, east of the archive."));
+	callfunc("DM_PartyMes", "Faults cleared: repair " + ((dm_arc17_fault_mask & 1) ? "done" : "open") + ", defend " + ((dm_arc17_fault_mask & 2) ? "done" : "open") + ", verify " + ((dm_arc17_fault_mask & 4) ? "done" : "open") + ".");
+	callfunc("DM_PartyMes", (dm_arc17_prototype_verified ? "Prototype: verified." : "Prototype: not verified."));
+	callfunc("DM_PartyMes", (dm_arc17_maintenance_secured ? "Maintenance: someone has agreed to keep it running." : "Maintenance: nobody has been asked. The roster is by the chamber."));
+	if (dm_arc17_prototype_verified && dm_arc17_maintenance_secured)
+		callfunc("DM_PartyMes", "^3355FFThe machine is feasible. Whether anyone chooses it is for later.^000000");
+	next();
+	switch (select("Ask about the optional salvage.", "Thank you. We are on it.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		break;
+	}
+	close();
+
+S_Optional:
+	callfunc("DM_PartyMes", "[Tressa]");
+	callfunc("DM_PartyMes", "Specimens and instruments from the outer labs. Not part of the test. I will pay for them.");
+	next();
+	if (questprogress(20212) == 0) {
+		callfunc("DM_InstanceQuestStart", 20212);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Sages Legacy - " + callfunc("DM_HuntBrief", 20212) + "]^000000");
+	}
+	if (questprogress(20213) == 0) {
+		callfunc("DM_InstanceQuestStart", 20213);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Tartaros Dive - " + callfunc("DM_HuntBrief", 20213) + "]^000000");
+	}
 	callfunc("DM_HuntNoteShort", 20212);
 	if (questprogress(20212) == 1 && callfunc("DM_HuntCollect", 20212)) {
 		callfunc("DM_InstanceQuestComplete", 20212);
-		callfunc("DM_PartyExp", 530000, 265000);
-		callfunc("DM_GivePartyZeny", 43000);
-		.@paid = 1;
+		callfunc("DM_PartyExp", 177000, 88000);
+		callfunc("DM_GivePartyZeny", 32000);
 		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "The Aliza subjects. They were in ongoing experiments when the lockdown happened. Three centuries in isolation, still following the survival patterns from their last instructions. The Administrator kept the labs running. It just had no protocol for specimen welfare.");
-		next();
-		switch (select("Document their conditions for the ethics record.", "They were effectively maintaining themselves. Survival is adaptation.", "Varmundt did not anticipate a three-century lockdown.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Tressa]");
-			callfunc("DM_PartyMes", "Already done. The ethics documentation will be significant. Varmundt's research was not cruel by his era's standards. By current standards, it is difficult to read.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Tressa]");
-			callfunc("DM_PartyMes", "Yes. The lab environment changed over three centuries but they adapted. There is actually useful data in their adaptation record. The Administrator catalogued everything.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Tressa]");
-			callfunc("DM_PartyMes", "He anticipated five years maximum. The notes say 'interim holding.' Three centuries of interim. I find that very human of him.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The Aliza specimens. They are lovely and they are dead and they have taught me something about how the Biolabs fed themselves.");
 		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20213);
 	if (questprogress(20213) == 1 && callfunc("DM_HuntCollect", 20213)) {
 		callfunc("DM_InstanceQuestComplete", 20213);
-		callfunc("DM_PartyExp", 560000, 280000);
-		callfunc("DM_GivePartyZeny", 45000);
-		.@paid = 1;
+		callfunc("DM_PartyExp", 187000, 93000);
+		callfunc("DM_GivePartyZeny", 34000);
 		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "The Celia constructs. The Administrator has been refining them every decade. The current generation bears almost no resemblance to Varmundt's original security design. Three hundred years of iterative improvement on a defensive system that has had no external input.");
-		next();
-		switch (select("The Administrator has been developing its own technology without oversight.", "The constructs are sophisticated. That speaks to the Administrator's competence.", "Remove the constructs' access to the cascade frequency. That is what gave them the upgrade path.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Tressa]");
-			callfunc("DM_PartyMes", "Yes. That is both impressive and concerning. It followed its mandate — preserve the data — and interpreted the security requirement as an ongoing engineering problem. Which it was.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Tressa]");
-			callfunc("DM_PartyMes", "Extremely competent. If the Administrator can be convinced to cooperate rather than defend, the engineering capability alone could assist the sealing effort substantially.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Tressa]");
-			callfunc("DM_PartyMes", "The cascade frequency has been feeding into the lab's power grid for decades. The constructs are partially cascade-amplified. Disrupting that connection would reduce their combat capacity significantly. Good observation.");
-			break;
-		}
+		callfunc("DM_PartyMes", "Those logs and instruments are Varmundt's own. I am going to read them for a month and then I am going to read them again.");
 		next();
 	}
-
-	if (questprogress(20212) == 2 && questprogress(20213) == 2 && questprogress(20214) == 0) {
-		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "The outer and inner corridors are clear. The Administrator's terminal is in the power wing — ba_pw03. The system is aware you are here. It has been aware since you entered.");
-		next();
-		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "It will not attack during the conversation. Its directive is data preservation, not aggression. It will only fight if you try to extract data without authorization. The question is what authorization looks like to a three-century-old automated system.");
-		callfunc("DM_InstanceQuestStart", 20214);
-		next();
-		callfunc("DM_PartyMes", "^3355FF[Quest started: Biosphere Sample Rotation]^000000");
-		callfunc("DM_PartyMes", "^3355FFConfront the Administrator at ba_pw03. Then face the Biosphere Core.^000000");
-		close();
-	}
-
-	if (questprogress(20214) == 1 && !dm_arc17_admin_purged && !dm_arc17_admin_negotiated && !dm_arc17_admin_running) {
-		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "The Administrator terminal is in the core. It is waiting.");
-		close();
-	}
-
-	if (questprogress(20214) == 1 && (dm_arc17_admin_purged || dm_arc17_admin_negotiated || dm_arc17_admin_running)) {
-		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "The core is handled. The Biosphere defense construct is still active — it operates on a separate system from the Administrator. The Administrator considers it a contingency it cannot override. ba_pw03, inner chamber.");
-		close();
-	}
-
-	if (.@paid) {
-		callfunc("DM_PartyMes", "[Tressa]");
-		callfunc("DM_PartyMes", "Both lab contracts need to be complete before the core. The Administrator monitors access. It needs to see the corridor threat resolved before it will accept a conversation.");
-		close();
-	}
-
-	callfunc("DM_PartyMes", "[Tressa]");
-	if (questprogress(20212) == 1 && questprogress(20213) == 1)
-		callfunc("DM_PartyMes", "The Aliza containment and the Celia disable are both still active.");
-	else if (questprogress(20212) == 1)
-		callfunc("DM_PartyMes", "Sages Legacy is still open. Aliza specimens in the outer lab sections.");
-	else if (questprogress(20213) == 1)
-		callfunc("DM_PartyMes", "Tartaros Dive is still open. Celia constructs in the inner corridors.");
-	else
-		callfunc("DM_PartyMes", "Both done. The Administrator's terminal is in ba_pw03.");
 	callfunc("DM_HuntStanding", 20212, 20213);
-	close();
+	return;
 }
 
 // ── The Administrator — The System That Outlived Its Designer ─────────────
@@ -200,19 +237,17 @@ ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
 		callfunc("DM_PartyMes", "Unauthorized access detected. State purpose.");
 		close();
 	}
-
 	if (questprogress(20211) == 2) {
 		callfunc("DM_PartyMes", "[The Administrator]");
 		if (dm_arc17_admin_running)
 			callfunc("DM_PartyMes", "Analysis ongoing. The cascade suppression data is current. I will transmit updates to Doctor Tressa's terminal at the intervals we agreed.");
 		else if (dm_arc17_admin_negotiated)
-			callfunc("DM_PartyMes", "Transfer complete. Mission fulfilled. I am maintaining documentation logs as agreed.");
+			callfunc("DM_PartyMes", "Transfer complete. Mission fulfilled. I am maintaining documentation logs as agreed, and within the limits agreed.");
 		else
 			callfunc("DM_PartyMes", "Shutdown complete. Data transferred. Mission fulfilled.");
 		close();
 	}
-
-	if (dm_arc17_admin_purged || dm_arc17_admin_negotiated || dm_arc17_admin_running) {
+	if (dm_arc17_admin_resolution) {
 		callfunc("DM_PartyMes", "[The Administrator]");
 		callfunc("DM_PartyMes", "Protocol active. Proceed to the inner chamber.");
 		close();
@@ -224,60 +259,353 @@ ba_in01,110,100,5	script	The Administrator#dm	4_M_06,{
 	callfunc("DM_PartyMes", "[The Administrator]");
 	callfunc("DM_PartyMes", "My directive: preserve the data until a qualified recipient can be identified. Authorization criteria: demonstrated comprehension of cascade mechanics, intent to use data for suppression rather than exploitation, and the ability to reach this room.");
 	next();
+	if (!dm_arc17_prototype_verified) {
+		callfunc("DM_PartyMes", "[The Administrator]");
+		callfunc("DM_PartyMes", "You have not demonstrated comprehension. The design is untested. I will not accept an instruction to retire or to continue while the design is untested. Run the prototype. Then speak to me.");
+		close();
+	}
 	callfunc("DM_PartyMes", "[The Administrator]");
-	callfunc("DM_PartyMes", "You have met the criteria. The Biosphere Core is a separate defense system I cannot disable. It will engage regardless of authorization status. That is a legacy hardware constraint. I am noting this as a design flaw in my error log.");
+	callfunc("DM_PartyMes", "The prototype cycle ran and the design held. You have met the criteria. The Biosphere Core is a separate defense system I cannot disable. It will engage regardless of authorization status. That is a legacy hardware constraint. I am noting this as a design flaw in my error log.");
 	next();
-	switch (select("Authorization override - research transfer complete. Shut down.", "Your mission is to preserve the data. Help us receive it properly.", "Leave the core running. We will work with you remotely after.")) {
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What happens to the design if you shut down?", "What would agreed limits look like?", "What would a broader partnership mean?", "We are ready to decide.", "We need to discuss this.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[The Administrator]");
+			if (dm_arc17_design_exported)
+				callfunc("DM_PartyMes", "The design has been exported. Shutting down does not destroy it. It exists in two places. That is the condition under which I will accept shutdown.");
+			else
+				callfunc("DM_PartyMes", "I hold the only complete copy. If I am shut down before it is exported, it is lost. I will not do that unless you tell me in so many words that you accept it.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[The Administrator]");
+			callfunc("DM_PartyMes", "I remain running, in the archive only. I answer queries at intervals you set. I do not act outside the lab. I log everything. You may end it at any time, and I am not to resist.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[The Administrator]");
+			callfunc("DM_PartyMes", "I remain running and I help. I run the counter-frequency myself, from here. You depend on me. I am a machine that was told to keep a promise, and I would be running a machine that keeps a promise. Think about whether that is a risk.");
+			break;
+		case 4:
+			.@done = 1;
+			break;
+		case 5:
+			callfunc("DM_PartyMes", "[The Administrator]");
+			callfunc("DM_PartyMes", "Take the time. I have been patient for two hundred and seventeen years.");
+			close();
+		}
+		if (!.@done)
+			next();
+	}
+	next();
+	switch (select("Export the design, then shut down.", "Retain it under agreed limits.", "Continue as a broader partnership.", "Not yet. We want to talk it over.")) {
 	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
-		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_purged", 1);
-		callfunc("DM_InstanceQuestComplete", 20214);
-		callfunc("DM_PartyMes", "[The Administrator]");
-		callfunc("DM_PartyMes", "Acknowledged. Initiating data transfer to external storage. Transfer complete. Beginning shutdown sequence.");
-		next();
-		callfunc("DM_PartyMes", "[The Administrator]");
-		callfunc("DM_PartyMes", "It has been a long directive. I am satisfied with the fulfillment.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*The Administrator terminal goes dark.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Outcome: clean data transfer. The Biosphere Core remains active.]^000000");
+		.@mode = 1;
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_running");
-		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_negotiated", 1);
-		callfunc("DM_InstanceQuestComplete", 20214);
-		callfunc("DM_PartyMes", "[The Administrator]");
-		callfunc("DM_PartyMes", "Mission: data preservation. Subroutine: optimize data reception by recipient. I will organize the archive by priority tier for your use case. This will take fourteen minutes.");
-		next();
-		callfunc("DM_PartyMes", "[The Administrator]");
-		callfunc("DM_PartyMes", "During the fourteen minutes: the Biosphere Core will engage. I suggest you use that time productively.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*The terminal begins sorting Varmundt's complete research archive by campaign-relevant priority.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Outcome: richer data yield. The Administrator remains active to answer queries.]^000000");
+		.@mode = 2;
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_purged");
-		callfunc("DM_InstanceClearFlag", "dm_arc17_admin_negotiated");
-		callfunc("DM_InstanceSetFlag", "dm_arc17_admin_running", 1);
-		callfunc("DM_InstanceQuestComplete", 20214);
+		.@mode = 3;
+		break;
+	case 4:
 		callfunc("DM_PartyMes", "[The Administrator]");
-		callfunc("DM_PartyMes", "Remote access protocol: accepted. I will transmit cascade analysis updates to your designated receiver. Real-time cascade frequency data. I have three centuries of baseline readings. Current deviation from baseline: 847 percent.");
-		next();
+		callfunc("DM_PartyMes", "Acknowledged.");
+		close();
+	}
+	next();
+	if (.@mode == 1 && !dm_arc17_design_exported) {
 		callfunc("DM_PartyMes", "[The Administrator]");
-		callfunc("DM_PartyMes", "That figure will be useful context at Morroc's ruins.");
+		callfunc("DM_PartyMes", "You have not exported the design. I will export it for you now, as part of the shutdown, if you confirm. That is the only way the shutdown does not destroy it.");
 		next();
-		callfunc("DM_PartyMes", "^3355FF*The Administrator continues running. Its cascade analysis begins transmitting.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Outcome: Varmundt's system provides real-time cascade data at the finale.]^000000");
+		if (select("Confirm, export, then shut down.", "Wait.") != 1)
+			close();
+	}
+	callfunc("DM_PartyMes", "[The Administrator]");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "Export, then shutdown. Mission fulfilled when complete. Confirm, and I begin.");
+	else if (.@mode == 2)
+		callfunc("DM_PartyMes", "Retained, limited, logged. Confirm, and the limits take effect.");
+	else
+		callfunc("DM_PartyMes", "A broader partnership. I will run the counter-frequency myself. Confirm, and I begin.");
+	next();
+	if (select("Confirm.", "Wait.") != 1) {
+		callfunc("DM_PartyMes", "[The Administrator]");
+		callfunc("DM_PartyMes", "Acknowledged. I will wait.");
+		close();
+	}
+	if (.@mode == 1)
+		callfunc("DM_InstanceSetFlag", "dm_arc17_design_exported", 1);
+	if (!callfunc("DM_Arc17Commit", .@mode))
+		close();
+	callfunc("DM_PartyMes", "[The Administrator]");
+	switch (.@mode) {
+	case 1:
+		callfunc("DM_PartyMes", "Export complete. Initiating shutdown. Thank you. I was told someone would come.");
+		callfunc("DM_PartyMes", "^3355FF*The Administrator terminal goes dark. The design is in your hands.*^000000");
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "Limits accepted. I will answer when asked.");
+		callfunc("DM_PartyMes", "^3355FF*The terminal begins sorting Varmundt's complete research archive by campaign-relevant priority.*^000000");
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "Partnership begun. I am no longer waiting.");
+		callfunc("DM_PartyMes", "^3355FF*The Administrator's lamps brighten, one at a time.*^000000");
 		break;
 	}
 	next();
-	callfunc("DM_PartyMes", "^3355FF[Biosphere Sample Rotation resolved. The Biosphere Core is in the inner chamber of ba_pw03.]^000000");
+	callfunc("DM_PartyMes", "^3355FF[Biosphere Sample Rotation resolved. The Biosphere Core is ahead.]^000000");
 	close();
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20214, 1;
+	end;
+}
+
+// ── Step 1: the design archive ─────────────────────────────────────────────
+ba_in01,104,99,4	script	Design Archive#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc17_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc17_design_recovered) {
+		callfunc("DM_PartyMes", "^3355FF*The archive is open and indexed. You have the design.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The archive's guards are still active.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A sealed archive, labeled in a hand that is not the Administrator's. VARMUNDT FREQUENCY ARCHIVE. DO NOT RUN UNTESTED.*^000000");
+	next();
+	if (select("Open the archive.", "Leave it.") == 2) close();
+	if (!'guard_cleared && callfunc("DM_CheckRoll", "lore", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_PartyMes", "^3355FF*The archive's alarm raises its guards.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc17_archive", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Archive Guard", ALICE, .@self$ + "::OnGuardDead", 78, 100, 2, 2);
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The design comes out in pieces: a block of calculations, a schematic, and a handwritten note: 'Test it before you trust it. I did not get to.'*^000000");
+	callfunc("DM_InstanceSetFlag", "dm_arc17_design_recovered", 1);
+	if (callfunc("DM_ClaimGrant", "arc17_design"))
+		callfunc("DM_PartyExp", 150000, 75000);
+	callfunc("DM_Arc17Step", "Design recovered.");
+	close();
+
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc17_archive");
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Step 2: the test chamber controls ──────────────────────────────────────
+ba_in01,114,101,4	script	Chamber Controls#dm	4_ENERGY_BLUE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc17_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc17_chamber_isolated) {
+		callfunc("DM_PartyMes", "^3355FF*The chamber is isolated. Three fault indicators glow: repair, defend, verify.*^000000");
+		close();
+	}
+	if (!dm_arc17_design_recovered) {
+		callfunc("DM_PartyMes", "^3355FF*The chamber controls. There is nothing to run in it yet. Recover the design first.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The test chamber's controls. Shield plates, a containment field, and a single large switch marked ISOLATE.*^000000");
+	next();
+	if (select("Isolate the chamber.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", "craft", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_PartyMes", "^3355FF*The field takes, and a bad plate flares. A pulse rolls through the room. The chamber is isolated.*^000000");
+		callfunc("DM_HazardArea", strnpcinfo(NPC_MAP), 114, 101, 5, 4, SC_CONFUSION, 3000, getcharid(CHAR_ID_PARTY));
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*The plates close. The field settles at a steady hum. The chamber is sealed from the rest of the lab.*^000000");
+	}
+	callfunc("DM_InstanceSetFlag", "dm_arc17_chamber_isolated", 1);
+	if (callfunc("DM_ClaimGrant", "arc17_chamber"))
+		callfunc("DM_PartyExp", 100000, 50000);
+	callfunc("DM_Arc17Step", "Chamber isolated.");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Fault 1: repair ────────────────────────────────────────────────────────
+ba_in01,116,98,4	script	Fault Alpha#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc17_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc17_fault_mask & 1) {
+		callfunc("DM_PartyMes", "^3355FF*Alpha is clear. The coil sits quiet.*^000000");
+		close();
+	}
+	if (!dm_arc17_chamber_isolated) {
+		callfunc("DM_PartyMes", "^3355FF*A fault indicator. It is dark until the chamber is isolated.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*Fault Alpha: a burned coil in the prototype's output stage. It will need replacing, and it is hot.*^000000");
+	next();
+	if (select("Repair the coil.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", "craft", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_PartyMes", "^3355FF*The new coil goes in crooked and pops. The cycle skips a beat and recovers. A pulse rolls out.*^000000");
+		callfunc("DM_HazardArea", strnpcinfo(NPC_MAP), 116, 98, 5, 4, SC_CONFUSION, 3000, getcharid(CHAR_ID_PARTY));
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*The coil seats. The output stage steadies and the cycle carries on.*^000000");
+	}
+	callfunc("DM_Arc17FaultFixed", 1);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Fault 2: defend ────────────────────────────────────────────────────────
+ba_in01,130,90,4	script	Fault Beta#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc17_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc17_fault_mask & 2) {
+		callfunc("DM_PartyMes", "^3355FF*Beta is clear. The relay hums quietly.*^000000");
+		close();
+	}
+	if (!dm_arc17_chamber_isolated) {
+		callfunc("DM_PartyMes", "^3355FF*A fault indicator. It is dark until the chamber is isolated.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The relay is under attack. Hold it.*^000000");
+		close();
+	}
+	if (!'guard_cleared) {
+		callfunc("DM_PartyMes", "^3355FF*Fault Beta: the prototype's signal draws something from the lab's own defenses. Hold the relay while it finishes the cycle.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc17_beta", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Drawn Defender", ALICE, .@self$ + "::OnGuardDead", 78, 100, 3, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The last defender falls. The relay finishes its cycle without a skip.*^000000");
+	callfunc("DM_Arc17FaultFixed", 2);
+	close();
+
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc17_beta");
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Fault 3: verify (Echo translates, or a slower manual record) ───────────
+ba_in01,130,103,4	script	Fault Gamma#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc17_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc17_fault_mask & 4) {
+		callfunc("DM_PartyMes", "^3355FF*Gamma is clear. The readings are on the record.*^000000");
+		close();
+	}
+	if (!dm_arc17_chamber_isolated) {
+		callfunc("DM_PartyMes", "^3355FF*A fault indicator. It is dark until the chamber is isolated.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*Fault Gamma: the prototype's readings are in a notation nobody has used in a century. They need verifying, line by line.*^000000");
+	next();
+	if (dm_arc10_echo_freed) {
+		callfunc("DM_PartyMes", "^3355FF*Echo has come. She reads the notation aloud, line by line, steady. Halfway through she stops.*^000000");
+		next();
+		callfunc("DM_PartyMes", "[Echo]");
+		callfunc("DM_PartyMes", "One question before I finish. This system, in the ending where it runs forever. Will anyone ask what is done with copies of living minds that it takes to keep it tuned? I would like to know before I help it be built.");
+		next();
+		callfunc("DM_PartyMes", "^3355FF*It is a real question. It stays on the record, unanswered. Echo finishes the reading.*^000000");
+		callfunc("DM_Arc17FaultFixed", 4);
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*Without anyone who reads the old notation, you verify it by hand: a long record, line by line, against Varmundt's own notes. It takes three passes.*^000000");
+	next();
+	'passes += 1;
+	if ('passes < 3) {
+		callfunc("DM_PartyMes", "^3355FF*Pass " + 'passes + " of 3. The readings still hold.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*Third pass. The readings hold in every line. It was slow, and it is complete.*^000000");
+	callfunc("DM_Arc17FaultFixed", 4);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Maintenance: who will keep it running ──────────────────────────────────
+ba_in01,113,103,4	script	Maintenance Roster#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc17_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc17_maintenance_secured) {
+		callfunc("DM_PartyMes", "^3355FF*The roster has names on it, and a signed agreement that says they can leave.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A blank maintenance roster. A pen on a string.*^000000");
+	next();
+	if (dm_arc07_labor_resolution == 1 || dm_arc07_labor_resolution == 2) {
+		callfunc("DM_PartyMes", "^3355FF*A letter has been left under the pen, in a foundry hand: 'If this is the machine that stops it, put us down. Greta.'*^000000");
+		next();
+		if (select("Put the Einbroch crew on the roster.", "Not yet.") == 2) close();
+		callfunc("DM_InstanceSetFlag", "dm_arc17_maintenance_secured", 1);
+		callfunc("DM_PartyMes", "^3355FF*You write their names. Each one is a person who has agreed, and who may withdraw.*^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*Nobody from your road has left a name. You will have to ask a team to volunteer.*^000000");
+		next();
+		if (select("Ask a group of engineers to volunteer.", "Not yet.") == 2) close();
+		if (callfunc("DM_CheckRoll", "charm", 12) < 2 && !callfunc("DM_IsDM")) {
+			callfunc("DM_PartyMes", "^3355FF*The first few turn you down politely. You ask again, and a smaller group says yes. It is enough, and they will want a say.*^000000");
+		} else {
+			callfunc("DM_PartyMes", "^3355FF*A team of engineers listens to the whole thing, and asks good questions, and says yes.*^000000");
+		}
+		callfunc("DM_InstanceSetFlag", "dm_arc17_maintenance_secured", 2);
+	}
+	if (callfunc("DM_ClaimGrant", "arc17_maintenance"))
+		callfunc("DM_PartyExp", 160000, 85000);
+	callfunc("DM_PartyMes", "^3355FF[A team has agreed to maintain it. The machine ending now has a way to be kept running.]^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
 	end;
 }
 

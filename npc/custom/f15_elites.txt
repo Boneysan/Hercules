@@ -1,0 +1,42 @@
+//===== Hercules Script ======================================
+//= F15 elite variants (GDD 6.7)
+//===== Description: =========================================
+//= Keeps up to 2 "[Elite] Orc Skeleton" on orcsdun01. Does nothing
+//= when mob_pilot_version is 0 (rollback switch), and the elites
+//= already spawned are removed on the next tick after switching off.
+//============================================================
+
+-	script	F15Elites	FAKE_NPC,{
+OnInit:
+	.map$ = "orcsdun01";
+	.mob = 20901;
+	.max = 2;
+	bindatcmd("setmobhp", strnpcinfo(NPC_NAME_UNIQUE) + "::OnSetMobHP", 1, 99, 1);
+	initnpctimer;
+	end;
+
+OnSetMobHP:
+	if (.@atcmd_numparameters >= 2) {
+		.@gid = atoi(.@atcmd_parameters$[0]);
+		.@hp = atoi(.@atcmd_parameters$[1]);
+		if (.@gid > 0 && .@hp > 0) {
+			setunitdata(.@gid, UDT_HP, .@hp);
+		}
+	}
+	end;
+
+OnTimer60000:
+	stopnpctimer;
+	if (getbattleflag("mob_pilot_version") < 1) {
+		killmonster(.map$, strnpcinfo(NPC_NAME) + "::OnEliteDead");
+	} else {
+		.@n = mobcount(.map$, strnpcinfo(NPC_NAME) + "::OnEliteDead");
+		for (.@i = .@n; .@i < .max; ++.@i)
+			monster(.map$, 0, 0, "[Elite] Orc Skeleton", .mob, 1, strnpcinfo(NPC_NAME) + "::OnEliteDead");
+	}
+	initnpctimer;
+	end;
+
+OnEliteDead:
+	end;
+}

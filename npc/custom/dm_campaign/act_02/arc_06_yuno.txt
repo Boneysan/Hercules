@@ -8,18 +8,98 @@
 //= Director Krenn is paid to keep Vahl's research buried.
 //= The Mistress MVP in Juperos feeds on the fragment below.
 //=
+//= REBUILT 2026-10-02 to the Act I pattern (handoff A2-06):
+//= the party builds a case that survives suppression instead of
+//= running three item errands. Questions are inert; commitments
+//= change the world.
+//=
+//= Evidence (dm_arc06_evidence_mask bits):
+//=   1 migration readings - calibrate BOTH plateau posts
+//=       (dm_arc06_posts bits 1/2; a failed calibration still
+//=        records the readings but marks them partial)
+//=   2 signed suppression order - Krenn's records drawer
+//=   4 Juperos recorder - beyond a small Venatu guard
+//= Score: order 2, recorder 2, readings 2 (clean) or 1 (partial).
+//= Score 4+ opens the hearing. All three sources protect the witness.
+//=
 //= Quests (db/quest_db.conf):
 //=   20101 The Heart That Holds the City  (arc tracker / Mistress)
-//=   20102 The Number Nobody Wants        (Vahl's crisis document)
-//=   20103 Harpy Weather Log (Harpy Feather x12, Antelope Horn x6, Maneater Blossom x7)
-//=   20104 Juperos Parts Requisition (Rusty Screw x5, Used Iron Plate x5, Metal Fragment x8)
-//=   20105 Norgroad Heat Index (Sand Clump x8, Great Nature x5, Empty Bottle x8)
+//=   20102 The Number Nobody Wants        (the hearing, opens at score 4)
+//=   20103-20105 optional equipment support contracts (item turn-ins;
+//=       small rewards, never gate the story)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc06_started, dm_arc06_vahl_trust,
-//=   dm_arc06_krenn_bribed, dm_arc06_krenn_exposed,
-//=   dm_arc06_mistress_spared, dm_arc06_mistress_killed
+//=   dm_arc06_started, dm_arc06_evidence_mask, dm_arc06_posts,
+//=   dm_arc06_post_fail, dm_arc06_krenn_alerted,
+//=   dm_arc06_disclosure_mode (1 named, 2 anonymous, 3 protected,
+//=     4 buried), dm_arc06_vahl_trust, dm_arc06_krenn_cooperated,
+//=   dm_arc06_krenn_bribed, dm_arc06_krenn_exposed (derived, kept for
+//=     Arcs 7, 9, 10 and 16), dm_arc06_mistress_killed
 //===========================================================
+
+// ── Shared Arc 6 helpers ───────────────────────────────────────────────────
+
+// Evidence score. Partial migration readings count for 1, clean for 2.
+function	script	DM_Arc06Score	{
+	.@s = 0;
+	if (dm_arc06_evidence_mask & 1)
+		.@s += (dm_arc06_post_fail ? 1 : 2);
+	if (dm_arc06_evidence_mask & 2)
+		.@s += 2;
+	if (dm_arc06_evidence_mask & 4)
+		.@s += 2;
+	return .@s;
+}
+
+// Record one source and open the hearing the first time the score reaches 4.
+function	script	DM_Arc06AddEvidence	{
+	.@bit = getarg(0);
+	if (!(dm_arc06_evidence_mask & .@bit))
+		callfunc("DM_InstanceSetFlag", "dm_arc06_evidence_mask", dm_arc06_evidence_mask | .@bit);
+	.@score = callfunc("DM_Arc06Score");
+	callfunc("DM_DMJStoryObjective", 20101, 2, "Explore", callfunc("DM_CountBits", dm_arc06_evidence_mask), 2, (.@score >= 4), getcharid(CHAR_ID_PARTY));
+	if (.@score >= 4) {
+		if (callfunc("DM_ClaimGrant", "arc06_evidence")) {
+			callfunc("DM_PartyExp", 360000, 171000);
+			callfunc("DM_InstanceQuestStart", 20102);
+			callfunc("DM_PartyMes", "^3355FF[Evidence enough for a Council hearing. Return to Doctor Vahl.]^000000");
+		} else {
+			callfunc("DM_PartyMes", "^3355FF[The case is stronger now.]^000000");
+		}
+	} else {
+		callfunc("DM_PartyMes", "^3355FF[Evidence: " + .@score + " of 4 needed for a hearing.]^000000");
+	}
+	return .@score;
+}
+
+// The one commitment path. mode: 1 named, 2 anonymous, 3 protected (with
+// Krenn), 4 buried (Krenn's money). Mutually exclusive: the first commitment
+// is final. Pays equal base story EXP whichever way the party goes.
+function	script	DM_Arc06Commit	{
+	.@mode = getarg(0);
+	if (dm_arc06_disclosure_mode)
+		return 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc06_disclosure_mode", .@mode);
+	if (.@mode == 1 || .@mode == 2)
+		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
+	if (.@mode == 3)
+		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_cooperated", 1);
+	if (.@mode == 4) {
+		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_bribed", 1);
+		if (callfunc("DM_ClaimGrant", "arc06_krenn_zeny"))
+			callfunc("DM_GivePartyZeny", 25000);
+	}
+	// Vahl trusts people who put their names to it, or who brought all three sources.
+	if (.@mode == 1 || (dm_arc06_evidence_mask & 7) == 7)
+		if (.@mode != 4)
+			callfunc("DM_InstanceSetFlag", "dm_arc06_vahl_trust", 1);
+	callfunc("DM_InstanceQuestComplete", 20102);
+	callfunc("DM_DMJStoryObjective", 20102, 1, "Interact", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc06_resolution"))
+		callfunc("DM_PartyExp", 240000, 114000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 605);
+	return 1;
+}
 
 // ── Doctor Ingrid Vahl — Yuno Atmospheric Researcher ───────────────────────
 yuno,155,185,5	script	Doctor Ingrid Vahl#dm	4_F_02,{
@@ -41,10 +121,21 @@ yuno,155,185,5	script	Doctor Ingrid Vahl#dm	4_F_02,{
 		end;
 	}
 
-	callsub(S_TurnIns);
+	if (dm_arc06_disclosure_mode) {
+		callsub(S_AfterDisclosure);
+		end;
+	}
+
+	if (callfunc("DM_Arc06Score") >= 4) {
+		callsub(S_Hearing);
+		end;
+	}
+
+	callsub(S_Progress);
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20101, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -61,184 +152,239 @@ S_StartArc:
 	}
 	if (dm_arc05_northern_account || dm_arc05_brode_threatened) {
 		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "Brode's gray courier and the northern account? That money leads here. Director Krenn's suppression budget comes from the same Yuno investor chain. You already pulled that thread.");
+		callfunc("DM_PartyMes", "Brode's gray courier and the northern account? That money leads here. Director Krenn's suppression budget comes from the same Yuno investor channel.");
 		next();
 	}
 	callfunc("DM_PartyMes", "[Vahl]");
 	callfunc("DM_PartyMes", "I am Doctor Vahl. I measure the dimensional instability in the Ymir shard that holds this city up.");
 	next();
 	callfunc("DM_PartyMes", "[Vahl]");
-	callfunc("DM_PartyMes", "The Republic built everything on a fragment the old gods used as a hinge. Fine. But the cascade is interfering with the fragment's resonance. I have the number now. The city has years, not decades.");
+	callfunc("DM_PartyMes", "The Republic built everything on a fragment the old gods used as a hinge. Fine. But the cascade is interfering with the fragment's resonance. I have a number for how long that is survivable. Nobody with a budget will read it.");
 	next();
-	switch (select("What does Yuno need from us?", "Who is paying to suppress this?", "Show us the data.")) {
-	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_vahl_trust", 1);
-		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "Atmospheric readings from the Harpy migration routes. They sense the disturbance before instruments do. And machine parts from Juperos — the ruins below are still reacting to the fragment.");
-		break;
-	case 2:
-		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "Director Krenn. Rekenber pays him to file my readings as 'within acceptable parameters.' The city floats on denial as much as the shard.");
-		break;
-	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_vahl_trust", 1);
-		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "This graph. The resonance frequency is diverging from baseline. That line will intersect the cascade frequency in... I am still writing the decimal. It is not a long one.");
-		break;
+	.@ready = 0;
+	while (!.@ready) {
+		switch (select("What does Yuno need from us?", "Who is paying to suppress this?", "Show us the data.", "We are ready. Where do we start?")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Vahl]");
+			callfunc("DM_PartyMes", "A case that survives being buried. Not a speech. Readings someone else can check, a document with a signature on it, and a recording from the source.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Vahl]");
+			callfunc("DM_PartyMes", "Director Krenn. Rekenber pays him to file my readings as 'within acceptable parameters.' The city floats on denial as much as the shard.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Vahl]");
+			callfunc("DM_PartyMes", "This graph. The resonance frequency is diverging from baseline. That line will intersect the cascade frequency in... I am still writing the date. I would rather not write it alone.");
+			break;
+		case 4:
+			.@ready = 1;
+			break;
+		}
+		next();
 	}
+	callfunc("DM_PartyMes", "[Vahl]");
+	callfunc("DM_PartyMes", "Three things would make the Council sit down. One: calibrate my two observation posts on the plateau edge, east and west, so the migration readings are clean. Two: Krenn keeps a signed suppression order in his records drawer near the Grand Library. Three: the Venatu in Juperos are guarding a recorder the old builders left running.");
 	next();
 	callfunc("DM_PartyMes", "[Vahl]");
-	callfunc("DM_PartyMes", "Help me gather field evidence. Harpy weather logs from the sky migration, Venatu components from the Juperos ruins, and ground samples off the plateau for the heat index. Then I can finish the report and we see what Krenn does with it.");
+	callfunc("DM_PartyMes", "Any two will do. All three keep whoever speaks safe. If you want to be paid for the legwork, I have contracts for harpy feathers and Juperos parts. They are optional. Ask me.");
 	callfunc("DM_InstanceSetFlag", "dm_arc06_started", 1);
 	callfunc("DM_InstanceQuestStart", 20101);
-	callfunc("DM_InstanceQuestStart", 20103);
-	callfunc("DM_InstanceQuestStart", 20104);
-	callfunc("DM_InstanceQuestStart", 20105);
+	callfunc("DM_DMJStoryObjective", 20101, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: The Heart That Holds the City]^000000");
-	callfunc("DM_PartyMes", "^3355FFHarpy Weather Log - field evidence off the Yuno plateau: " + callfunc("DM_HuntBrief", 20103) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFJuperos Parts Requisition - salvaged from the Juperos ruins: " + callfunc("DM_HuntBrief", 20104) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFNorgroad Heat Index - ground samples off the Yuno plateau: " + callfunc("DM_HuntBrief", 20105) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFBuild a case: any two of the plateau readings, Krenn's signed order, the Juperos recorder.^000000");
 	close();
 
+S_Progress:
+	callfunc("DM_PartyMes", "[Vahl]");
+	callfunc("DM_PartyMes", "Where are we? I will say exactly what I have, and not a word more.");
+	next();
+	callsub(S_EvidenceStatus);
+	next();
+	switch (select("Ask about the optional support contracts.", "Thank you. We will keep working.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		close();
+	}
+	close();
+
+// Lists each source and how reliable it is. Never calls a partial reading proven.
+S_EvidenceStatus:
+	callfunc("DM_PartyMes", "[Vahl]");
+	if (dm_arc06_evidence_mask & 1) {
+		if (dm_arc06_post_fail)
+			callfunc("DM_PartyMes", "Migration readings: recorded, but noisy. One post drifted. I would not stake a hearing on them alone.");
+		else
+			callfunc("DM_PartyMes", "Migration readings: clean from both posts. Someone else could reproduce them.");
+	} else {
+		callfunc("DM_PartyMes", "Migration readings: not yet. Both posts, east and west on the plateau edge.");
+	}
+	if (dm_arc06_evidence_mask & 2)
+		callfunc("DM_PartyMes", "Suppression order: in hand, signed. It names the budget line.");
+	else
+		callfunc("DM_PartyMes", "Suppression order: Krenn's records drawer, near the Grand Library.");
+	if (dm_arc06_evidence_mask & 4)
+		callfunc("DM_PartyMes", "Juperos recorder: recovered. Whatever it heard was heard from underneath.");
+	else
+		callfunc("DM_PartyMes", "Juperos recorder: still down there, behind the Venatu.");
+	if (callfunc("DM_Arc06Score") == 3)
+		callfunc("DM_PartyMes", "^3355FFOne more source and the noisy readings stop mattering.^000000");
+	return;
+
+S_Optional:
+	callfunc("DM_PartyMes", "[Vahl]");
+	callfunc("DM_PartyMes", "Equipment, not evidence. The case does not need any of it. But I pay, and the instruments need replacing either way.");
+	next();
+	if (questprogress(20103) == 0) {
+		callfunc("DM_InstanceQuestStart", 20103);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Harpy Weather Log - " + callfunc("DM_HuntBrief", 20103) + "]^000000");
+	}
+	if (questprogress(20104) == 0) {
+		callfunc("DM_InstanceQuestStart", 20104);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Juperos Parts Requisition - " + callfunc("DM_HuntBrief", 20104) + "]^000000");
+	}
+	if (questprogress(20105) == 0) {
+		callfunc("DM_InstanceQuestStart", 20105);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Norgroad Heat Index - " + callfunc("DM_HuntBrief", 20105) + "]^000000");
+	}
+	callsub(S_TurnIns);
+	return;
+
+// Optional contracts: items for pay. No story choices live in here.
 S_TurnIns:
-	.@paid = 0;
 	callfunc("DM_HuntNoteShort", 20103);
 	if (questprogress(20103) == 1 && callfunc("DM_HuntCollect", 20103)) {
 		callfunc("DM_InstanceQuestComplete", 20103);
-		callfunc("DM_PartyExp", 180000, 85000);
+		callfunc("DM_PartyExp", 60000, 28000);
 		callfunc("DM_GivePartyZeny", 15000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[Vahl]");
 		callfunc("DM_PartyMes", "Harpy migration data. They have been banking south for three weeks. They feel the shard warming before the instruments register it.");
 		next();
-		switch (select("Log the readings and file them.", "Publish the migration data early.", "Give the raw data to Krenn as leverage.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Vahl]");
-			callfunc("DM_PartyMes", "Filed. When the crisis report is complete, this becomes the paper trail he cannot burn.");
-			break;
-		case 2:
-			callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
-			callfunc("DM_PartyMes", "[Vahl]");
-			callfunc("DM_PartyMes", "The naturalist journals will run it before Krenn can kill the suppression memo. That is either brave or reckless. Possibly both.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Vahl]");
-			callfunc("DM_PartyMes", "Giving Krenn advance data to use as cover for his own suppression. That is a bet on his gratitude, which I would not take.");
-			break;
-		}
-		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20104);
 	if (questprogress(20104) == 1 && callfunc("DM_HuntCollect", 20104)) {
 		callfunc("DM_InstanceQuestComplete", 20104);
-		callfunc("DM_PartyExp", 220000, 105000);
+		callfunc("DM_PartyExp", 73000, 35000);
 		callfunc("DM_GivePartyZeny", 18000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "Venatu components. The ruins are vibrating at the same frequency as the shard. The Juperos builders knew. They built resonators into the ruins to monitor the fragment from below.");
-		next();
-		switch (select("Calibrate them for your instruments.", "Sell them to Schwarzwald engineers.", "Keep one — the Sigil Ring reacts to it.")) {
-		case 1:
-			callfunc("DM_InstanceSetFlag", "dm_arc06_vahl_trust", 1);
-			callfunc("DM_PartyMes", "[Vahl]");
-			callfunc("DM_PartyMes", "With these calibrated, the instruments will read the fragment directly. The number I give the Council will be accurate enough to make them genuinely afraid.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Vahl]");
-			callfunc("DM_PartyMes", "They will learn what they need from the parts. And we get the budget to finish the report.");
-			break;
-		case 3:
-			if (dm_arc01_sigil_ring_obtained || countitem(50001) > 0) {
-				callfunc("DM_PartyMes", "[Vahl]");
-				callfunc("DM_PartyMes", "The resonator and the ring hum at each other. The Juperos builders and whoever forged that ring understood the same thing about sealed things.");
-			} else {
-				callfunc("DM_PartyMes", "[Vahl]");
-				callfunc("DM_PartyMes", "A souvenir from the ruins. They make a noise that no one else in the party hears.");
-			}
-			break;
-		}
+		callfunc("DM_PartyMes", "Venatu components. The ruins are vibrating at the same frequency as the shard. The Juperos builders built resonators into them to monitor the fragment from below.");
+		if (dm_arc01_sigil_ring_obtained || countitem(50001) > 0)
+			callfunc("DM_PartyMes", "The resonator and the ring hum at each other. Whoever forged that ring understood the same thing about sealed things.");
 		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20105);
 	if (questprogress(20105) == 1 && callfunc("DM_HuntCollect", 20105)) {
 		callfunc("DM_InstanceQuestComplete", 20105);
-		callfunc("DM_PartyExp", 200000, 95000);
+		callfunc("DM_PartyExp", 66000, 32000);
 		callfunc("DM_GivePartyZeny", 16000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "Ground samples. The plateau is two degrees warmer than the same month last year, and the warmth is not coming from the sun - it is coming from underneath. The Republic will want that read as weather. It is not weather.");
+		callfunc("DM_PartyMes", "Ground samples. The plateau is two degrees warmer than the same month last year, and the warmth is not coming from the sun. The Republic will want that read as weather. It is not weather.");
 		next();
 	}
+	callfunc("DM_HuntStanding", 20103, 20104, 20105);
+	return;
 
-	if (questprogress(20103) == 2 && questprogress(20104) == 2 && questprogress(20105) == 2 && questprogress(20102) == 0) {
-		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "All three datasets are in. The report is written: resonance divergence, migration anomaly, ground temperature, and a timeline the Republic will not enjoy.");
-		next();
-		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "I am calling it The Number Nobody Wants. Krenn has to either sign the transmission or formally bury it. Either way it ends his comfortable suppression.");
-		next();
-		switch (select("Deliver it over Krenn's head to the Republic Council.", "Let us carry it past Krenn ourselves.", "Use it as leverage against Krenn.")) {
+// Score 4: the party can go to the Council. Explain, inertly, before asking.
+S_Hearing:
+	if (questprogress(20102) == 0)
+		callfunc("DM_InstanceQuestStart", 20102);
+	callfunc("DM_PartyMes", "[Vahl]");
+	callfunc("DM_PartyMes", "That is enough to make the Council sit. What I cannot decide for you is how it is said, and who is standing next to it when it is.");
+	next();
+	callsub(S_EvidenceStatus);
+	next();
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What does each way of saying it cost?", "What if one of our sources is weak?", "What about Krenn?", "We are ready to decide.", "We need to discuss this.")) {
 		case 1:
-			callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
 			callfunc("DM_PartyMes", "[Vahl]");
-			callfunc("DM_PartyMes", "The Council will not enjoy it. But they will not be able to bury it with you watching.");
+			callfunc("DM_PartyMes", "Under my name: the Council cannot file what I have signed, and Rekenber's lawyers know who I am by morning. Anonymously: nobody is exposed, and any member can call it a rumor and be believed. Through Krenn, protected: he presents it with you and keeps his post, and you are trusting a man who was paid to say the opposite.");
 			break;
 		case 2:
 			callfunc("DM_PartyMes", "[Vahl]");
-			callfunc("DM_PartyMes", "Krenn's office is between us and the Council chamber. He will intercept it. Be ready for that conversation.");
+			callfunc("DM_PartyMes", "If the readings are noisy, I call them preliminary and say so. It costs credibility, not the hearing.");
 			break;
 		case 3:
 			callfunc("DM_PartyMes", "[Vahl]");
-			callfunc("DM_PartyMes", "Leverage only works if you are willing to use it, and willing to survive what happens after you do. But yes. It is leverage.");
+			callfunc("DM_PartyMes", "He is at his office near the Grand Library. He will offer you money. Know that taking it ends the hearing before it starts. That is a separate decision, and he is the one who offers it.");
 			break;
+		case 4:
+			.@done = 1;
+			break;
+		case 5:
+			callfunc("DM_PartyMes", "[Vahl]");
+			callfunc("DM_PartyMes", "Do. Nobody here is on a clock.");
+			close();
 		}
-		callfunc("DM_InstanceQuestStart", 20102);
-		next();
-		callfunc("DM_PartyMes", "^3355FF[Quest started: The Number Nobody Wants]^000000");
-		callfunc("DM_PartyMes", "^3355FFConfront Director Krenn. Then descend to Juperos and face the Mistress.^000000");
+		if (!.@done)
+			next();
+	}
+	next();
+	switch (select("Publish under your name.", "Publish anonymously.", "Not yet. We want to talk it over.")) {
+	case 1:
+		.@mode = 1;
+		break;
+	case 2:
+		.@mode = 2;
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "[Vahl]");
+		callfunc("DM_PartyMes", "Of course. If you want it protected, Krenn is the one who has to stand beside you. Talk to him.");
 		close();
 	}
-
-	if (questprogress(20102) == 1 && !dm_arc06_krenn_bribed && !dm_arc06_krenn_exposed) {
-		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "Krenn is the wall between the data and the city that needs it. He posts near the Grand Library most mornings.");
-		close();
-	}
-
-	if ((questprogress(20102) == 1 || questprogress(20102) == 0) && (dm_arc06_krenn_bribed || dm_arc06_krenn_exposed)) {
-		if (questprogress(20102) == 1) callfunc("DM_InstanceQuestComplete", 20102);
-		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "Krenn is dealt with. Now the fragment below needs dealing with.");
-		next();
-		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "The Mistress. An old guardian spirit from the Juperos era — it was supposed to watch over the shard. The cascade has been feeding it. Whatever it is watching over now, it is no longer the shard.");
-		next();
-		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "The entrance is below the plateau, south of the Republic's lower docks.");
-		close();
-	}
-
-	if (.@paid) {
-		callfunc("DM_PartyMes", "[Vahl]");
-		callfunc("DM_PartyMes", "Bring back all three sets of field data. The report writes itself after that.");
-		close();
-	}
-
+	next();
 	callfunc("DM_PartyMes", "[Vahl]");
-	if (questprogress(20103) == 1 && questprogress(20104) == 1 && questprogress(20105) == 1)
-		callfunc("DM_PartyMes", "All three field sets are still open. The shard readings do not improve while we wait.");
-	else if (questprogress(20103) == 1)
-		callfunc("DM_PartyMes", "The Harpy migration contract is still open. They are banking south from the outer fields.");
-	else if (questprogress(20104) == 1)
-		callfunc("DM_PartyMes", "The Juperos parts requisition is still open. The Venatu down there know what they are guarding.");
-	else if (questprogress(20105) == 1)
-		callfunc("DM_PartyMes", "The heat index is still short. The plateau sand holds the reading better than any instrument I own.");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "My name. All right. You will see what that costs within the day. Confirm it, and I sign.");
 	else
-		callfunc("DM_PartyMes", "Finish the contracts and come back. The number is waiting.");
-	callfunc("DM_HuntStanding", 20103, 20104, 20105);
+		callfunc("DM_PartyMes", "No name. The page will be easy to dismiss and hard to forget. Confirm it, and it goes out tonight.");
+	next();
+	if (select("Confirm.", "Wait.") != 1) {
+		callfunc("DM_PartyMes", "[Vahl]");
+		callfunc("DM_PartyMes", "Better to wait than to say it badly.");
+		close();
+	}
+	if (!callfunc("DM_Arc06Commit", .@mode))
+		close();
+	callfunc("DM_PartyMes", "[Vahl]");
+	if (.@mode == 1) {
+		callfunc("DM_PartyMes", "The Council has it, signed. Two guards are standing outside my lab. I do not know whether the Council sent them or Rekenber did. Either way, the number is on the record.");
+	} else {
+		callfunc("DM_PartyMes", "The naturalist circuit will print it tonight. No one signed it. Half the Council will say so. The other half will check the readings.");
+	}
+	next();
+	callfunc("DM_PartyMes", "^3355FF[The Number Nobody Wants resolved. Juperos is next.]^000000");
+	close();
+
+S_AfterDisclosure:
+	callfunc("DM_PartyMes", "[Vahl]");
+	switch (dm_arc06_disclosure_mode) {
+	case 1:
+		callfunc("DM_PartyMes", "The guards are still outside. The Council keeps asking me to repeat things I have already signed. It is slower than being ignored and a good deal better.");
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "Nobody has come to my door. That is either safety or a sign that nobody believes it matters. I am watching which.");
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "Krenn stood beside you and said what the memo said. He still hates it. The Council has noticed that he does not hate it quietly any more.");
+		break;
+	case 4:
+		callfunc("DM_PartyMes", "The report is filed under 'acceptable variance.' I have the original. I have not decided what I think of you.");
+		break;
+	}
+	next();
+	callfunc("DM_PartyMes", "[Vahl]");
+	callfunc("DM_PartyMes", "The Mistress. An old guardian spirit from the Juperos era — it was supposed to watch over the shard. The cascade has been feeding it. Whatever it is watching over now, it is no longer the shard. The entrance is below the plateau, south of the Republic's lower docks.");
+	next();
+	switch (select("Ask about the optional support contracts.", "Thank you.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		break;
+	}
 	close();
 }
 
@@ -251,12 +397,20 @@ yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
 		close();
 	}
 
-	if (dm_arc06_krenn_bribed || dm_arc06_krenn_exposed) {
+	if (dm_arc06_disclosure_mode) {
 		callfunc("DM_PartyMes", "[Director Krenn]");
-		if (dm_arc06_krenn_bribed)
-			callfunc("DM_PartyMes", "You took the money. Good. Now let us pretend this was a professional arrangement.");
-		else
+		switch (dm_arc06_disclosure_mode) {
+		case 1:
+		case 2:
 			callfunc("DM_PartyMes", "The Council has the document. I hope you know what you have started.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "We are, apparently, co-signatories. I want it noted that I did not enjoy the afternoon.");
+			break;
+		case 4:
+			callfunc("DM_PartyMes", "You took the money. Good. Now let us pretend this was a professional arrangement.");
+			break;
+		}
 		close();
 	}
 
@@ -268,43 +422,255 @@ yuno,160,185,5	script	Director Aldous Krenn#dm	4_M_01,{
 		callfunc("DM_PartyMes", "Brother Cassell sends his regards, incidentally. He was very specific: 'parties carrying unusual seals are to receive every courtesy.' So. Here we are.");
 		next();
 	}
+	if (dm_arc06_krenn_alerted) {
+		callfunc("DM_PartyMes", "[Krenn]");
+		callfunc("DM_PartyMes", "Someone has been through my records drawer. I will not ask who. I will only remark that the drawer is where I keep things I intend to deny.");
+		next();
+	}
 	callfunc("DM_PartyMes", "[Krenn]");
 	callfunc("DM_PartyMes", "The investors who built the Republic's infrastructure take a dim view of public panic. My job is managed uncertainty. Vahl's report is unmanaged certainty. You see the problem.");
 	next();
-	switch (select("Sign the document. This city deserves the truth.", "We will take the data to a buyer who is not Rekenber.", "What does staying quiet pay?")) {
-	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
+	if (callfunc("DM_Arc06Score") < 4) {
 		callfunc("DM_PartyMes", "[Krenn]");
-		callfunc("DM_PartyMes", "You want me to sign my own career's end so Yuno can panic in an orderly fashion. No. But you do not need my signature.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Krenn's refusal goes on record. The document moves to the Council over his objection.*^000000");
-		break;
-	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_exposed", 1);
+		callfunc("DM_PartyMes", "Come back when you have something that is not a rumor and a graph. Until then I have nothing to discuss that I would admit to discussing.");
+		close();
+	}
+	.@done = 0;
+	while (!.@done) {
+		switch (select("What does staying quiet pay?", "We want protected disclosure. You present it with us.", "Take the payment and bury the report.", "Never mind.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Krenn]");
+			callfunc("DM_PartyMes", "Twenty-five thousand zeny, today. The report is filed as 'acceptable variance' and goes no further. I want you to hear the second half: no Council, no naturalists, no copy. Vahl is told it was you. That is what the money is for.");
+			break;
+		case 2:
+			.@done = 2;
+			break;
+		case 3:
+			.@done = 3;
+			break;
+		case 4:
+			close();
+		}
+		if (.@done == 0)
+			next();
+	}
+	next();
+	if (.@done == 2) {
 		callfunc("DM_PartyMes", "[Krenn]");
-		callfunc("DM_PartyMes", "The Schwarzwald naturalist journals will print anything. And I will find a reason to have you removed from the city before morning.");
+		callfunc("DM_PartyMes", "You want me to stand in front of the Council and read the memo I was paid to lose. I keep my post and lose my friends. That is not the worst offer I have had today. Confirm it, and I will do it.");
 		next();
-		callfunc("DM_PartyMes", "^3355FF*The threat is hollow. Vahl's data leaves through the naturalist circuit.*^000000");
-		break;
-	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_bribed", 1);
-		if (callfunc("DM_ClaimGrant", "arc06_krenn_zeny"))
-			callfunc("DM_GivePartyZeny", 25000);
+		if (select("Confirm.", "Wait.") != 1)
+			close();
+		if (!callfunc("DM_Arc06Commit", 3))
+			close();
+		callfunc("DM_PartyMes", "[Krenn]");
+		callfunc("DM_PartyMes", "Then we go together. Walk slowly. I would like them to see I am not frightened.");
+		next();
+		callfunc("DM_PartyMes", "^3355FF*Krenn reads the order aloud to the Council. His voice does not shake. His hands do.*^000000");
+	} else {
+		callfunc("DM_PartyMes", "[Krenn]");
+		callfunc("DM_PartyMes", "You understand that this ends it. No hearing. Vahl is told. There is no taking it back. Confirm.");
+		next();
+		if (select("Confirm. Take the payment.", "Wait.") != 1)
+			close();
+		if (!callfunc("DM_Arc06Commit", 4))
+			close();
 		callfunc("DM_PartyMes", "[Krenn]");
 		callfunc("DM_PartyMes", "Now you are speaking the Republic's language. Twenty-five thousand zeny. Consider it a retainer for services rendered in the public interest.");
 		next();
 		callfunc("DM_PartyMes", "^3355FF*25,000 zeny changes hands. Krenn files the report under 'acceptable variance.'*^000000");
-		break;
 	}
-	callfunc("DM_InstanceQuestComplete", 20102);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 605);
 	next();
-	callfunc("DM_PartyMes", "^3355FF[The Number Nobody Wants resolved. The Juperos set-piece is now accessible.]^000000");
+	callfunc("DM_PartyMes", "^3355FF[The Number Nobody Wants resolved. Juperos is next.]^000000");
 	close();
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20102, 1;
+	end;
+}
+
+// ── Plateau observation posts (readings; both needed for a clean source) ───
+yuno,148,192,4	script	Observation Post West#dm	4_ENERGY_BLUE,{
+	callsub(S_Post, 1, "craft");
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+
+S_Post:
+	.@bit = getarg(0);
+	.@tag$ = getarg(1);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc06_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc06_posts & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*Calibrated. The needle sits where Vahl said it would.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*One of Vahl's observation posts. The needle drifts a little more each hour. Someone has to set it against a known reference.*^000000");
+	next();
+	if (select("Calibrate the instrument.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", .@tag$, 11) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_InstanceSetFlag", "dm_arc06_post_fail", dm_arc06_post_fail | .@bit);
+		callfunc("DM_PartyMes", "^3355FF*The reading comes out noisy. It is still a reading. It will need corroborating.*^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*The needle settles. A clean reading, with the drift accounted for.*^000000");
+	}
+	callfunc("DM_InstanceSetFlag", "dm_arc06_posts", dm_arc06_posts | .@bit);
+	if ((dm_arc06_posts & 3) == 3) {
+		callfunc("DM_PartyMes", "^3355FF[Both posts logged. The migration readings are recorded.]^000000");
+		callfunc("DM_Arc06AddEvidence", 1);
+	} else {
+		callfunc("DM_PartyMes", "^3355FF[One post logged. The other is on the opposite edge of the plateau.]^000000");
+	}
+	close();
+}
+
+yuno,168,192,4	script	Observation Post East#dm	4_ENERGY_BLUE,{
+	callsub(S_Post, 2, "lore");
+	end;
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+
+S_Post:
+	.@bit = getarg(0);
+	.@tag$ = getarg(1);
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc06_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc06_posts & .@bit) {
+		callfunc("DM_PartyMes", "^3355FF*Calibrated. The needle sits where Vahl said it would.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*One of Vahl's observation posts. The harpy tracks cross here, and the needle swings when the flocks bank. Someone has to read it against the migration log.*^000000");
+	next();
+	if (select("Calibrate the instrument.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", .@tag$, 11) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_InstanceSetFlag", "dm_arc06_post_fail", dm_arc06_post_fail | .@bit);
+		callfunc("DM_PartyMes", "^3355FF*The reading comes out noisy. It is still a reading. It will need corroborating.*^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*The flocks bank and the needle follows them. A clean reading.*^000000");
+	}
+	callfunc("DM_InstanceSetFlag", "dm_arc06_posts", dm_arc06_posts | .@bit);
+	if ((dm_arc06_posts & 3) == 3) {
+		callfunc("DM_PartyMes", "^3355FF[Both posts logged. The migration readings are recorded.]^000000");
+		callfunc("DM_Arc06AddEvidence", 1);
+	} else {
+		callfunc("DM_PartyMes", "^3355FF[One post logged. The other is on the opposite edge of the plateau.]^000000");
+	}
+	close();
+}
+
+// ── Krenn's records drawer (the signed suppression order) ──────────────────
+yuno,163,181,4	script	Locked Records Drawer#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc06_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc06_evidence_mask & 2) {
+		callfunc("DM_PartyMes", "^3355FF*Empty. You have what was in it.*^000000");
+		close();
+	}
+	if (dm_arc06_disclosure_mode) {
+		callfunc("DM_PartyMes", "^3355FF*It no longer matters what was in here.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A locked drawer outside the Director's office. Krenn keeps the things he intends to deny in it.*^000000");
+	next();
+	if (select("Open the drawer.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", "traps", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_InstanceSetFlag", "dm_arc06_krenn_alerted", 1);
+		callfunc("DM_PartyMes", "^3355FF*The lock gives, and so does something behind it. A clerk looks up. You have the paper. Krenn will hear about the noise.*^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*The lock turns without a sound. One page on top: a suppression order, signed, with a budget line.*^000000");
+	}
+	callfunc("DM_Arc06AddEvidence", 2);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Council notice board (shows the visible consequence of the hearing) ───
+yuno,157,178,4	script	Council Notice Board#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc06_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	switch (dm_arc06_disclosure_mode) {
+	case 1:
+		callfunc("DM_PartyMes", "^3355FF*Council docket, in a clerk's hand: Dr. I. Vahl, resonance divergence, signed testimony. Crowd at the door.*^000000");
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "^3355FF*A page pinned to the board, unsigned: THE NUMBER. Someone has scrawled 'who wrote this?' beneath it. Someone else has underlined the number.*^000000");
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "^3355FF*Council docket: joint statement, Dir. A. Krenn with party. A smaller crowd. They are reading it.*^000000");
+		break;
+	case 4:
+		callfunc("DM_PartyMes", "^3355FF*Council docket: Research Bureau, resonance review, 'acceptable variance.' Nobody is reading it.*^000000");
+		break;
+	default:
+		callfunc("DM_PartyMes", "^3355FF*Council docket: no entry from the Research Bureau this week.*^000000");
+		break;
+	}
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Juperos recorder (beyond a small Venatu guard) ─────────────────────────
+juperos_01,144,139,4	script	Juperos Recorder#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc06_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc06_evidence_mask & 4) {
+		callfunc("DM_PartyMes", "^3355FF*The housing is empty. You have the recording.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The sentries are still between you and the recorder.*^000000");
+		close();
+	}
+	if (!'guard_cleared) {
+		callfunc("DM_PartyMes", "^3355FF*A recorder, still running, in a cradle the builders cut for it. The Venatu that guard it turn as one.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc06_sentries", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnSentryDead", .@self$ + "::OnSentryDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Venatu Sentry", VENATU_1, .@self$ + "::OnSentryDead", 58, 100, 3, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The cradle releases it. Hours of the shard, recorded from below. The number is in here, in the building's own voice.*^000000");
+	callfunc("DM_Arc06AddEvidence", 4);
+	close();
+
+OnSentryDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnSentryDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc06_sentries");
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
 	end;
 }
 

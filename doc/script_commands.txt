@@ -10103,6 +10103,28 @@ Add quest of the <ID2> to the the quest log, and the state is "active".
 
 ---------------------------------------
 
+*partycompletequest(<ID>{, <range>})
+*partychangequest(<ID>, <ID2>{, <range>})
+
+(Fork addition, GDD F39.) Opt-in shared credit for one quest step. They apply
+the same transition as completequest()/changequest() to the OTHER members of the
+attached player's party who are on the same map, within <range> cells (default
+and maximum: the view range, AREA_SIZE), alive, not autotrading, and who
+currently have quest <ID> ACTIVE. Return the number of members credited.
+
+They never give a quest to anyone who does not already have it active, so a
+second call credits nobody twice. They never touch items, zeny, exp or any
+other reward: the script keeps granting and consuming those for the attached
+player alone, and personal story choices must not use these commands.
+partychangequest() skips a member who already has <ID2>. With no party they
+return 0.
+
+	// Everyone nearby who is also on "Examine the old well" finishes it too:
+	completequest 9100;
+	.@others = partycompletequest(9100);
+
+---------------------------------------
+
 *questprogress(<ID>{, <type>})
 
 If no additional argument supplied, return the state of the quest:

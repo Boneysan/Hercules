@@ -8,7 +8,7 @@ client_repo="${KORANGAR_DIR:-$repo/../korangar}"
 
 require() {
     local pattern="$1" file="$2" message="$3"
-    if ! rg -q "$pattern" "$file"; then
+    if ! grep -Eq "$pattern" "$file"; then
         echo "FAIL - $message"
         exit 1
     fi

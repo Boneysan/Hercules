@@ -11,10 +11,31 @@
 //=
 //= Quests (db/quest_db.conf):
 //=   20231 Where Thanatos Stood     (arc tracker / Surt)
-//=   20232 Beyond the Veil (Rotten Bandage x10, Scale Shell x6, Grit x6)
+//=   20232 Beyond the Veil   (retired as a gate; no longer started)
 //=   20233 The Choice He Never Had  (Loki / final audience)
 //=
+//= REBUILT 2026-10-02 (handoff A4-19). The collection gate is gone.
+//= Loki gives a short required account; the long history and the allies'
+//= accounts are on request. A preparation board lists all five answers as
+//= Ready / Needs preparation / Unavailable and prepares them. Surt is
+//= fought with one authored support action per prepared answer. At the
+//= Central Choice each answer shows its cost, is re-checked at the moment of
+//= commitment, and is claimed once per party (two conversations cannot
+//= commit two endings). Exactly one dm_finale_* flag is set, then an
+//= implementation scene, the tailored epilogue, and three outcome cards:
+//= a place, a person, an obligation.
+//=
+//= Eligibility (see DM_Arc19Ready):
+//=   Shared Seal   two groups explicitly asked and agreed + the rite prepared
+//=   Reforged Seal design exported + prototype verified + maintenance team
+//=   Queen's       pact_valid and she is not killed; killed = Unavailable
+//=   Thanatos Road cost disclosed + an informed, named volunteer who is present
+//=   Unbound       explicit acceptance + evacuation prepared (always reachable)
+//=
 //= Story flags (persistent character vars, see dm_flags.txt):
+//=   dm_arc19_briefed, dm_arc19_groups_agreed, dm_arc19_prepared_mask,
+//=   dm_arc19_volunteer_kind (1 a player, 2 Keeper Lysandra),
+//=   dm_arc19_final_choice (1..5), dm_finale_road_volunteer (per character),
 //=   dm_arc19_started, dm_arc19_surt_defeated,
 //=   dm_finale_shared_seal, dm_finale_reforged_seal,
 //=   dm_finale_queens_bargain, dm_finale_thanatos_road,
@@ -45,6 +66,7 @@ moc_ruins,150,150,5	script	Loki The Voice#dm	4_M_04,{
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20231, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -72,7 +94,7 @@ S_StartArc:
 	}
 	if (dm_arc13_carrion_bribed) {
 		callfunc("DM_PartyMes", "[Loki]");
-		callfunc("DM_PartyMes", "Carrion's deal. The demon coalition holds. There is a reason the Broker wanted the cascade to slow down. Demons live in the space between what-is and what-isn't. If the cascade seals completely and that space collapses, there is nowhere for them to be. Carrion was not acting against you. He was acting for his own survival in a way that aligned with yours. That alignment is rare. It is worth knowing about.");
+		callfunc("DM_PartyMes", "Carrion's treaty. The demon coalition holds. There is a reason the Broker wanted the cascade to slow down. Demons live in the space between what-is and what-isn't. If the cascade seals completely and that space collapses, there is nowhere for them to be. Carrion was not acting against you. He was acting for his own survival in a way that aligned with yours. That alignment is rare. It is worth knowing about.");
 		next();
 	}
 	callfunc("DM_PartyMes", "[Loki]");
@@ -103,44 +125,68 @@ S_StartArc:
 	callfunc("DM_PartyMes", "The Khalitzburg walking the ruins are the cascade-animated dead of the last great war — Thanatos's war. They have been in the seal's resonance since the beginning. They are the oldest consequence of what he did. They deserve to be quieted first.");
 	callfunc("DM_InstanceSetFlag", "dm_arc19_started", 1);
 	callfunc("DM_InstanceQuestStart", 20231);
-	callfunc("DM_InstanceQuestStart", 20232);
+	callfunc("DM_DMJStoryObjective", 20231, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: Where Thanatos Stood]^000000");
-	callfunc("DM_PartyMes", "^3355FFBeyond the Veil - out of the ruins of Morroc: " + callfunc("DM_HuntBrief", 20232) + ". Then return to Loki.^000000");
-	close();
+	callsub(S_FinalAudience);
+	end;
 
 S_Progress:
-	if (questprogress(20232) == 1 && !callfunc("DM_HuntReady", 20232)) {
-		callfunc("DM_PartyMes", "[Loki The Voice]");
-		callfunc("DM_PartyMes", "The Khalitzburg are still in the ruins. They have been here for three hundred years. A few more minutes is fine. Take your time.");
-		callfunc("DM_HuntStanding", 20232);
-		close();
-	}
-
-	if (questprogress(20232) == 1 && callfunc("DM_HuntCollect", 20232)) {
-		callfunc("DM_InstanceQuestComplete", 20232);
-		callfunc("DM_PartyExp", 600000, 300000);
+	if (!dm_arc19_briefed) {
 		callsub(S_FinalAudience);
 		end;
 	}
-
-	if (questprogress(20233) == 1 && !dm_arc19_surt_defeated) {
-		callfunc("DM_PartyMes", "[Loki The Voice]");
-		callfunc("DM_PartyMes", "Surt waits at the Ash Vacuum Rift. moc_fild22. When he falls, The Central Choice is where I was standing before I stepped aside.");
-		close();
-	}
-
 	callfunc("DM_PartyMes", "[Loki The Voice]");
-	callfunc("DM_PartyMes", "You are doing well. Keep going.");
+	callfunc("DM_PartyMes", "The board at the ruins lists what each answer needs, and what is ready. Surt waits at the Ash Vacuum Rift, moc_fild22. When he falls, The Central Choice is where I was standing before I stepped aside.");
+	next();
+	switch (select("Review our journey.", "Hear from our allies.", "Nothing more. We will prepare.")) {
+	case 1:
+		callsub(S_Journey);
+		break;
+	case 2:
+		callsub(S_Allies);
+		break;
+	case 3:
+		break;
+	}
 	close();
 
+// The required account is short. Everything else is on request.
 S_FinalAudience:
 	callfunc("DM_InstanceQuestStart", 20233);
 	callfunc("DM_PartyMes", "[Loki The Voice]");
-	callfunc("DM_PartyMes", "The Khalitzburg are at rest. They were the last loose end from Thanatos's original decision. It is appropriate that you closed that before making your own.");
+	callfunc("DM_PartyMes", "The seal is failing. The cascade is the seal, ringing at the wrong pitch for three hundred years, and it will not hold much longer.");
 	next();
 	callfunc("DM_PartyMes", "[Loki]");
-	callfunc("DM_PartyMes", "What you found in the Tower: Thanatos is still in the seal. What Varmundt found: the inverse-frequency can suppress the cascade but not close it permanently. What Himmelmez holds: the dead, for now, while you work.");
+	callfunc("DM_PartyMes", "What you found: Thanatos is still in the seal. The inverse-frequency can suppress the cascade but not close it by itself. The dead can be asked to hold, and not told. Those are the facts. I will not add to them.");
+	next();
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "Surt holds the focal point open at the Ash Vacuum Rift, moc_fild22. When he falls, you will have a choice. Before you face him, prepare whichever answers you want to be able to choose. A board at the ruins lists all five and what each one needs. Not every one is ready, and I will not pretend otherwise.");
+	next();
+	.@done = 0;
+	while (!.@done) {
+		switch (select("Review our journey.", "Hear from our allies.", "We are ready. Where do we prepare?")) {
+		case 1:
+			callsub(S_Journey);
+			break;
+		case 2:
+			callsub(S_Allies);
+			break;
+		case 3:
+			.@done = 1;
+			break;
+		}
+	}
+	callfunc("DM_InstanceSetFlag", "dm_arc19_briefed", 1);
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "The board is here at the ruins. Surt is at moc_fild22. Go in whichever order you like.");
+	callfunc("DM_PartyMes", "^3355FF[The Choice He Never Had: prepare at the board, go to moc_fild22 and face Surt. The Central Choice follows.]^000000");
+	close();
+
+// The long history, on request.
+S_Journey:
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "You made most of those decisions early, before you knew they were part of anything. I will say what I saw. I will not say whether it was right.");
 	next();
 	if (dm_arc04_cassell_unmasked) {
 		callfunc("DM_PartyMes", "[Loki]");
@@ -309,14 +355,708 @@ S_FinalAudience:
 			callfunc("DM_PartyMes", "" + dm_arc19_ally_turnout + " separate groups owe you their passage and know it. Thanatos did this alone because there was nobody who would have come. That is the whole difference between his options and yours.");
 		next();
 	}
-	callfunc("DM_PartyMes", "[Loki]");
-	callfunc("DM_PartyMes", "There are five ways to close the cascade. You have done the work to make all five possible. Only you have done enough of that work to know which one is right.");
+	return;
+
+// Up to three allies speak for themselves, if there are any to speak.
+S_Allies:
+	.@n = 0;
+	if (dm_arc10_echo_freed && .@n < 3) {
+		callfunc("DM_PartyMes", "[Echo]");
+		callfunc("DM_PartyMes", "I am out because you asked me which way. Before anything is decided for the people who cannot answer, I would like to be asked again.");
+		next();
+		++.@n;
+	}
+	if (dm_arc16_maret_freed && .@n < 3) {
+		callfunc("DM_PartyMes", "[Maret]");
+		callfunc("DM_PartyMes", "It is quiet. I did not think it would be. Whatever is chosen, please ask what the quiet is for.");
+		next();
+		++.@n;
+	}
+	if (dm_arc09_witness_secured && .@n < 3) {
+		callfunc("DM_PartyMes", "[Naima]");
+		callfunc("DM_PartyMes", "Whatever you choose, write it down. I will keep a copy, and I will not be kind about it if it is wrong.");
+		next();
+		++.@n;
+	}
+	if (dm_arc12_survey_agreement == 1 && .@n < 3) {
+		callfunc("DM_PartyMes", "[Captain Vance]");
+		callfunc("DM_PartyMes", "My crew is on stabilization work. If you ask, we will stay. Ask us. Do not assume.");
+		next();
+		++.@n;
+	}
+	if (dm_arc17_prototype_verified && .@n < 3) {
+		callfunc("DM_PartyMes", "[Doctor Tressa]");
+		callfunc("DM_PartyMes", "The prototype held. The machine is real. I would want to know who keeps it running before anyone chooses it.");
+		next();
+		++.@n;
+	}
+	if ((dm_arc07_labor_resolution == 1 || dm_arc07_labor_resolution == 2) && .@n < 3) {
+		callfunc("DM_PartyMes", "[Greta Holm]");
+		callfunc("DM_PartyMes", "The foundry will take a shift, if it comes to that. We would like to be asked, not drafted.");
+		next();
+		++.@n;
+	}
+	if (dm_arc14_evacuation_stage >= 3 && .@n < 3) {
+		callfunc("DM_PartyMes", "[Foreman Dunmar]");
+		callfunc("DM_PartyMes", "Forty people are alive because the order of things was moved. If people need moving again, I know how.");
+		next();
+		++.@n;
+	}
+	if (dm_arc11_bjorn_joined && .@n < 3) {
+		callfunc("DM_PartyMes", "[Bjorn]");
+		callfunc("DM_PartyMes", "I promised no civilian would be the price of this. I would like that to still be true afterward.");
+		next();
+		++.@n;
+	}
+	if (.@n == 0) {
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "No one has come to speak. That is also a record, and I will not decorate it.");
+		next();
+	}
+	return;
+}
+
+// ── Shared Arc 19 helpers ──────────────────────────────────────────────────
+
+// Groups that have a recorded, explicit agreement from earlier arcs and so
+// can be ASKED to share maintenance. Nobody here is counted as consenting by
+// default: the party asks each one at the board.
+function	script	DM_Arc19Groups	{
+	.@m = 0;
+	if (dm_arc07_labor_resolution == 1 || dm_arc07_labor_resolution == 2)
+		.@m |= 1;
+	if (dm_arc12_survey_agreement == 1)
+		.@m |= 2;
+	if (dm_arc11_civilian_pact)
+		.@m |= 4;
+	if (dm_arc12_naga_passage == 1)
+		.@m |= 8;
+	if (dm_arc09_disclosure_schedule == 1 || dm_arc09_disclosure_schedule == 2)
+		.@m |= 16;
+	if (dm_arc17_maintenance_secured)
+		.@m |= 32;
+	return .@m;
+}
+
+function	script	DM_Arc19GroupName	{
+	switch (getarg(0)) {
+	case 1: return "the Einbroch foundry crews";
+	case 2: return "Vance's survey crew";
+	case 4: return "the faithful of Hugel";
+	case 8: return "the Naga of the New World";
+	case 16: return "the pilgrims of Rachel";
+	case 32: return "the maintenance team from the Biolabs";
+	case 64: return "a new civic group";
+	}
+	return "a group";
+}
+
+// 2 = Ready, 1 = Needs preparation, 0 = Unavailable. The one rule table; the
+// board and the final commit both call it, so eligibility is checked again at
+// the moment of commitment.
+function	script	DM_Arc19Ready	{
+	switch (getarg(0)) {
+	case 1:
+		return (callfunc("DM_CountBits", dm_arc19_groups_agreed) >= 2 && (dm_arc19_prepared_mask & 1)) ? 2 : 1;
+	case 2:
+		return (dm_arc17_design_exported && dm_arc17_prototype_verified && dm_arc17_maintenance_secured && (dm_arc19_prepared_mask & 2)) ? 2 : 1;
+	case 3:
+		if (dm_arc18_himmelmez_killed)
+			return 0;
+		return (dm_arc18_pact_valid && (dm_arc19_prepared_mask & 4)) ? 2 : 1;
+	case 4:
+		return (dm_arc15_cost_disclosed && dm_arc19_volunteer_kind && (dm_arc19_prepared_mask & 8)) ? 2 : 1;
+	case 5:
+		return (dm_arc19_prepared_mask & 16) ? 2 : 1;
+	}
+	return 0;
+}
+
+function	script	DM_Arc19EndingName	{
+	switch (getarg(0)) {
+	case 1: return "The Shared Seal";
+	case 2: return "The Reforged Seal";
+	case 3: return "The Queen's Bargain";
+	case 4: return "Thanatos's Road";
+	case 5: return "Ragnarok Unbound";
+	}
+	return "";
+}
+
+function	script	DM_Arc19Why	{
+	.@e = getarg(0);
+	if (callfunc("DM_Arc19Ready", .@e) == 2)
+		return "Ready.";
+	switch (.@e) {
+	case 1:
+		return "Needs preparation: two groups must explicitly agree to share maintenance (" + callfunc("DM_CountBits", dm_arc19_groups_agreed) + " so far) and the distribution rite must be prepared.";
+	case 2:
+		return "Needs preparation: " + (dm_arc17_design_exported ? "" : "the design is not exported; ") + (dm_arc17_prototype_verified ? "" : "the prototype is not verified; ") + (dm_arc17_maintenance_secured ? "" : "no maintenance team has agreed; ") + "the counter-frequency must be prepared.";
+	case 3:
+		if (dm_arc18_himmelmez_killed) {
+			if (dm_arc18_pact_valid)
+				return "Unavailable: the record is contradictory (a pact marked valid, and Himmelmez killed). The DM needs to repair it.";
+			return "Unavailable: Himmelmez fell. This route cannot be restored from a menu.";
+		}
+		return "Needs preparation: " + (dm_arc18_pact_valid ? "" : "no pact has been agreed (return to Niflheim); ") + "the pact must be confirmed intact.";
+	case 4:
+		return "Needs preparation: " + (dm_arc15_cost_disclosed ? "" : "the cost has not been disclosed (the Tower's memories); ") + (dm_arc19_volunteer_kind ? "" : "no informed volunteer has consented; ") + "the volunteer must be prepared.";
+	case 5:
+		return "Needs preparation: the party must accept release and prepare the evacuation and containment.";
+	}
+	return "";
+}
+
+// What each answer costs. Shown BEFORE commitment.
+function	script	DM_Arc19Cost	{
+	switch (getarg(0)) {
+	case 1: return "Recurring coordination and maintenance. The groups share the burden voluntarily and may leave. It lasts as long as the trust does.";
+	case 2: return "Power, repair, and public responsibility for keeping the machine running. If the team stops, it stops.";
+	case 3: return "The agreed obligations to the dead, and her continued burden. An untested arrangement is not a guarantee, and nothing here is promised to be permanent.";
+	case 4: return "One person carries the seal, knowing the full cost. In the epilogue that is a sacrifice. Their character stays playable; nothing is deleted or disabled by this choice.";
+	case 5: return "Uncertain consequences and immediate danger. Nothing promises that what rises will be friendly.";
+	}
+	return "";
+}
+
+function	script	DM_Arc19VolunteerPresent	{
+	.@party = getcharid(CHAR_ID_PARTY);
+	.@aid = getd("$dm_arc19_vol_aid_" + .@party);
+	.@cid = getd("$dm_arc19_vol_cid_" + .@party);
+	if (.@aid <= 0 || .@cid <= 0)
+		return 0;
+	return isloggedin(.@aid, .@cid);
+}
+
+// Final commitment. Re-checks eligibility and claims the transition once per
+// party, so two conversations cannot commit two endings. Returns 1, or a
+// negative reason: -1 not ready, -2 volunteer absent, -3 already committed.
+function	script	DM_Arc19Commit	{
+	.@e = getarg(0);
+	if (callfunc("DM_Arc19Ready", .@e) != 2)
+		return -1;
+	if (.@e == 4 && dm_arc19_volunteer_kind == 1 && !callfunc("DM_Arc19VolunteerPresent"))
+		return -2;
+	if (dm_arc19_final_choice)
+		return -3;
+	if (!callfunc("DM_ClaimGrant", "arc19_choice"))
+		return -3;
+	callfunc("DM_InstanceSetFlag", "dm_arc19_final_choice", .@e);
+	callfunc("DM_InstanceClearFlag", "dm_finale_shared_seal");
+	callfunc("DM_InstanceClearFlag", "dm_finale_reforged_seal");
+	callfunc("DM_InstanceClearFlag", "dm_finale_queens_bargain");
+	callfunc("DM_InstanceClearFlag", "dm_finale_thanatos_road");
+	callfunc("DM_InstanceClearFlag", "dm_finale_ragnarok_unbound");
+	switch (.@e) {
+	case 1: callfunc("DM_InstanceSetFlag", "dm_finale_shared_seal", 1); break;
+	case 2: callfunc("DM_InstanceSetFlag", "dm_finale_reforged_seal", 1); break;
+	case 3: callfunc("DM_InstanceSetFlag", "dm_finale_queens_bargain", 1); break;
+	case 4: callfunc("DM_InstanceSetFlag", "dm_finale_thanatos_road", 1); break;
+	case 5: callfunc("DM_InstanceSetFlag", "dm_finale_ragnarok_unbound", 1); break;
+	}
+	return 1;
+}
+
+// ── The Final Preparations board ───────────────────────────────────────────
+// Readiness for all five answers, and the preparation each one needs. Nothing
+// here commits an ending; that happens at the Central Choice, after Surt.
+moc_ruins,154,150,5	script	Final Preparations#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (dm_campaign_complete) {
+		callfunc("DM_PartyMes", "^3355FF*The board is bare. What was prepared has been used.*^000000");
+		close();
+	}
+	if (!dm_arc19_started) {
+		callfunc("DM_PartyMes", "^3355FF*A board of notes, not yet written on. Speak to Loki.*^000000");
+		close();
+	}
+	while (1) {
+		callfunc("DM_PartyMes", "^3355FF*The board lists five answers to the cascade and what each one needs. Prepare any of them before you face Surt. Nothing here is a commitment.*^000000");
+		next();
+		switch (select("Show readiness for all five.", "Prepare The Shared Seal.", "Prepare The Reforged Seal.", "Prepare The Queen's Bargain.", "Prepare Thanatos's Road.", "Prepare Ragnarok Unbound.", "Leave the board.")) {
+		case 1:
+			for (.@e = 1; .@e <= 5; ++.@e) {
+				callfunc("DM_PartyMes", callfunc("DM_Arc19EndingName", .@e) + ": " + callfunc("DM_Arc19Why", .@e));
+			}
+			next();
+			break;
+		case 2:
+			callsub(S_PrepShared);
+			break;
+		case 3:
+			callsub(S_PrepReforged);
+			break;
+		case 4:
+			callsub(S_PrepQueen);
+			break;
+		case 5:
+			callsub(S_PrepRoad);
+			break;
+		case 6:
+			callsub(S_PrepUnbound);
+			break;
+		case 7:
+			close();
+		}
+	}
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+
+S_PrepShared:
+	if (dm_arc19_prepared_mask & 1) {
+		callfunc("DM_PartyMes", "^3355FF*The distribution rite is prepared, and the groups are on the list.*^000000");
+		next();
+		return;
+	}
+	.@avail = callfunc("DM_Arc19Groups");
+	for (.@b = 1; .@b <= 32; .@b *= 2) {
+		if (!(.@avail & .@b) || (dm_arc19_groups_agreed & .@b))
+			continue;
+		callfunc("DM_PartyMes", "^3355FFYour record shows " + callfunc("DM_Arc19GroupName", .@b) + " agreed to something with you earlier. That is not consent to this. You have to ask.^000000");
+		next();
+		if (select("Ask " + callfunc("DM_Arc19GroupName", .@b) + " to share the maintenance.", "Skip them.") == 1) {
+			callfunc("DM_InstanceSetFlag", "dm_arc19_groups_agreed", dm_arc19_groups_agreed | .@b);
+			callfunc("DM_PartyMes", "^3355FF*They listen to all of it, ask what they can leave, and say yes. It is written down, with the exit.*^000000");
+			next();
+		}
+	}
+	if (callfunc("DM_CountBits", dm_arc19_groups_agreed) < 2) {
+		callfunc("DM_PartyMes", "^3355FFFewer than two groups have agreed. You can recruit a new civic group in a short scene. It will want a say.^000000");
+		next();
+		if (select("Recruit a new civic group.", "Not now.") == 1) {
+			if (callfunc("DM_CheckRoll", "charm", 12) < 2 && !callfunc("DM_IsDM"))
+				callfunc("DM_PartyMes", "^3355FF*The first meeting goes badly. The second goes better. A small group says yes, with conditions.*^000000");
+			else
+				callfunc("DM_PartyMes", "^3355FF*A civic group hears the whole proposal, argues for an hour, and says yes.*^000000");
+			callfunc("DM_InstanceSetFlag", "dm_arc19_groups_agreed", dm_arc19_groups_agreed | 64);
+			next();
+		}
+	}
+	if (callfunc("DM_CountBits", dm_arc19_groups_agreed) >= 2) {
+		callfunc("DM_PartyMes", "^3355FFTwo or more groups agree. The distribution rite can be prepared.^000000");
+		next();
+		if (select("Prepare the distribution rite.", "Not now.") == 1) {
+			callfunc("DM_InstanceSetFlag", "dm_arc19_prepared_mask", dm_arc19_prepared_mask | 1);
+			callfunc("DM_PartyMes", "^3355FF[Shared Seal prepared.]^000000");
+			next();
+		}
+	}
+	return;
+
+S_PrepReforged:
+	if (dm_arc19_prepared_mask & 2) {
+		callfunc("DM_PartyMes", "^3355FF*The counter-frequency is prepared: design in hand, prototype verified, a team on the roster.*^000000");
+		next();
+		return;
+	}
+	if (!dm_arc17_prototype_verified) {
+		callfunc("DM_PartyMes", "^3355FFThe prototype was never verified. That has to be done at the Varmundt Biolabs. The board cannot do it for you.^000000");
+		next();
+		return;
+	}
+	if (!dm_arc17_design_exported) {
+		callfunc("DM_PartyMes", "^3355FFThe design is not exported. The Administrator's archive holds it. You can export a copy now.^000000");
+		next();
+		if (select("Export the design from the Administrator's archive.", "Not now.") == 1) {
+			callfunc("DM_InstanceSetFlag", "dm_arc17_design_exported", 1);
+			callfunc("DM_PartyMes", "^3355FF*The archive hands over a complete copy. Nothing is deleted.*^000000");
+			next();
+		}
+	}
+	if (!dm_arc17_maintenance_secured) {
+		callfunc("DM_PartyMes", "^3355FFNobody has agreed to keep it running. You can ask a team of engineers to volunteer, in a short scene.^000000");
+		next();
+		if (select("Ask engineers to volunteer.", "Not now.") == 1) {
+			if (callfunc("DM_CheckRoll", "charm", 12) < 2 && !callfunc("DM_IsDM"))
+				callfunc("DM_PartyMes", "^3355FF*Two turn you down. A third group agrees, and wants a say in everything.*^000000");
+			else
+				callfunc("DM_PartyMes", "^3355FF*A team of engineers hears the whole thing and says yes.*^000000");
+			callfunc("DM_InstanceSetFlag", "dm_arc17_maintenance_secured", 2);
+			next();
+		}
+	}
+	if (dm_arc17_design_exported && dm_arc17_prototype_verified && dm_arc17_maintenance_secured) {
+		callfunc("DM_PartyMes", "^3355FFEverything is in place. The counter-frequency can be prepared.^000000");
+		next();
+		if (select("Prepare the counter-frequency.", "Not now.") == 1) {
+			callfunc("DM_InstanceSetFlag", "dm_arc19_prepared_mask", dm_arc19_prepared_mask | 2);
+			callfunc("DM_PartyMes", "^3355FF[Reforged Seal prepared.]^000000");
+			next();
+		}
+	}
+	return;
+
+S_PrepQueen:
+	if (dm_arc18_himmelmez_killed) {
+		callfunc("DM_PartyMes", "^3355FFHimmelmez fell. This route cannot be restored from a menu.^000000");
+		next();
+		return;
+	}
+	if (dm_arc19_prepared_mask & 4) {
+		callfunc("DM_PartyMes", "^3355FF*The pact is confirmed intact. She is still on the throne.*^000000");
+		next();
+		return;
+	}
+	if (!dm_arc18_pact_valid) {
+		callfunc("DM_PartyMes", "^3355FFNo pact has been agreed. Himmelmez is in the inner hall at Niflheim, and she is still available. The board cannot negotiate for you.^000000");
+		next();
+		return;
+	}
+	callfunc("DM_PartyMes", "^3355FFThe pact stands, and she is still there. You can confirm it is intact.^000000");
 	next();
-	callfunc("DM_PartyMes", "[Loki]");
-	callfunc("DM_PartyMes", "Face Surt. He holds the focal point open. When the focal point closes, the choice will be available. The Ash Vacuum Rift at moc_fild22.");
+	if (select("Confirm the pact is intact.", "Not now.") == 1) {
+		callfunc("DM_InstanceSetFlag", "dm_arc19_prepared_mask", dm_arc19_prepared_mask | 4);
+		callfunc("DM_PartyMes", "^3355FF[Queen's Bargain prepared.]^000000");
+		next();
+	}
+	return;
+
+S_PrepRoad:
+	if (dm_arc19_prepared_mask & 8) {
+		callfunc("DM_PartyMes", "^3355FF*A volunteer is on the board by name, with the date they agreed, and a line that says they can change their mind until the very end.*^000000");
+		next();
+		return;
+	}
+	if (!dm_arc15_cost_disclosed) {
+		callfunc("DM_PartyMes", "^3355FFThe cost has not been disclosed. Nobody can consent to what they have not been told. The Tower's memories are in Aldebaran.^000000");
+		next();
+		return;
+	}
+	callfunc("DM_PartyMes", "^3355FFThis one takes a person: informed, named, willing. Nobody is chosen by the party. A volunteer is a volunteer.^000000");
 	next();
-	callfunc("DM_PartyMes", "^3355FF[The Choice He Never Had - go to moc_fild22 and face Surt. The Central Choice follows.]^000000");
+	switch (select("A member of this party volunteers.", "Keeper Lysandra offers.", "Not now.")) {
+	case 1:
+		callfunc("DM_PartyMes", "[Loki The Voice]");
+		callfunc("DM_PartyMes", "This is not decided by the party's votes. The person speaking now is the one who would go. Three centuries inside the lock. The rest of you live. Nobody here is allowed to volunteer anyone else, including you.");
+		next();
+		if (select("I will go into the lock.", "Not me. Let us talk about this.") != 1) {
+			callfunc("DM_PartyMes", "[Loki]");
+			callfunc("DM_PartyMes", "Good. Talk. Nothing is lost by it.");
+			next();
+			return;
+		}
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "" + strcharinfo(PC_NAME) + ". You, specifically. Say it once more and it is recorded. You can withdraw any time before the choice is made.");
+		next();
+		if (select("Yes. I am sure.", "No. I need more time.") != 1) {
+			callfunc("DM_PartyMes", "[Loki]");
+			callfunc("DM_PartyMes", "Better to stop here than later.");
+			next();
+			return;
+		}
+		// Per-character, never party-wide, never journaled, never copied on rejoin.
+		callfunc("DM_SetFlag", "dm_finale_road_volunteer", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc19_volunteer_kind", 1);
+		setd("$dm_arc19_vol_aid_" + getcharid(CHAR_ID_PARTY), getcharid(CHAR_ID_ACCOUNT));
+		setd("$dm_arc19_vol_cid_" + getcharid(CHAR_ID_PARTY), getcharid(CHAR_ID_CHAR));
+		setd("$dm_arc19_vol_name_" + getcharid(CHAR_ID_PARTY) + "$", strcharinfo(PC_NAME));
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "[Keeper Lysandra]");
+		callfunc("DM_PartyMes", "I have asked myself for forty years whether I would. I have the cost by heart, because I am the one who wrote it down. I would rather it were someone who knew what they were saying yes to than someone who did not. If it comes to it, let it be me. I can still say no, and I would like that on the record too.");
+		next();
+		if (select("Record her offer.", "Not now.") != 1)
+			return;
+		callfunc("DM_InstanceSetFlag", "dm_arc19_volunteer_kind", 2);
+		setd("$dm_arc19_vol_name_" + getcharid(CHAR_ID_PARTY) + "$", "Keeper Lysandra");
+		break;
+	case 3:
+		return;
+	}
+	callfunc("DM_InstanceSetFlag", "dm_arc19_prepared_mask", dm_arc19_prepared_mask | 8);
+	callfunc("DM_PartyMes", "^3355FF[Thanatos's Road prepared. The volunteer is recorded and can withdraw before the choice.]^000000");
+	next();
+	return;
+
+S_PrepUnbound:
+	if (dm_arc19_prepared_mask & 16) {
+		callfunc("DM_PartyMes", "^3355FF*The evacuation is planned and the containment lines are drawn.*^000000");
+		next();
+		return;
+	}
+	callfunc("DM_PartyMes", "^3355FFThis one is always reachable. Nothing is promised about what rises. The party has to say, out loud, that it accepts release and its danger.^000000");
+	next();
+	if (select("We accept release and its danger. Prepare the evacuation and containment.", "Not now.") != 1)
+		return;
+	callfunc("DM_InstanceSetFlag", "dm_arc19_prepared_mask", dm_arc19_prepared_mask | 16);
+	callfunc("DM_PartyMes", "^3355FF[Ragnarok Unbound prepared: evacuation planned, containment lines drawn.]^000000");
+	next();
+	return;
+}
+
+// ── The Central Choice — The Five Paths ───────────────────────────────────
+moc_fild22,175,140,5	script	The Central Choice#dm	4_M_05,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (dm_campaign_complete) {
+		callfunc("DM_PartyMes", "[The Central Choice]");
+		if (dm_finale_thanatos_road && dm_finale_road_volunteer)
+			callfunc("DM_PartyMes", "You chose this. The seal is you now, and it knows your name. Your character is yours. The seal is something you carry, not something that carries you off.");
+		else if (dm_finale_thanatos_road)
+			callfunc("DM_PartyMes", "The choice was made. Someone carries it who said they would. You were told what that meant before you agreed.");
+		else
+			callfunc("DM_PartyMes", "The choice was made. The seal is different now.");
+		close();
+	}
+
+	if (!dm_arc19_surt_defeated) {
+		callfunc("DM_PartyMes", "[The Central Choice]");
+		callfunc("DM_PartyMes", "Surt holds the focal point open. The choice is not available while the focal point is open.");
+		close();
+	}
+	if (dm_arc19_final_choice) {
+		callfunc("DM_PartyMes", "[The Central Choice]");
+		callfunc("DM_PartyMes", "An answer has been given: " + callfunc("DM_Arc19EndingName", dm_arc19_final_choice) + ". It is being enacted. Wait for it.");
+		close();
+	}
+
+	callfunc("DM_PartyMes", "[Loki The Voice]");
+	callfunc("DM_PartyMes", "Here is what Thanatos never had: options. Five of them. I will tell you which are ready, which need work, and which are gone. I will not tell you which to choose.");
+	next();
+	while (1) {
+		for (.@e = 1; .@e <= 5; ++.@e) {
+			callfunc("DM_PartyMes", callfunc("DM_Arc19EndingName", .@e) + ": " + callfunc("DM_Arc19Why", .@e));
+		}
+		next();
+		.@pick = select("The Shared Seal.", "The Reforged Seal.", "The Queen's Bargain.", "Thanatos's Road.", "Ragnarok Unbound.", "Return to preparation. We are not ready.", "We need to discuss this.");
+		if (.@pick >= 6) {
+			callfunc("DM_PartyMes", "[Loki]");
+			callfunc("DM_PartyMes", .@pick == 6 ? "The board is at the ruins. Take your time. The seal point stays open." : "Discuss it. Nothing here is on a clock.");
+			close();
+		}
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", callfunc("DM_Arc19EndingName", .@pick) + ": " + callfunc("DM_Arc19Why", .@pick));
+		if (callfunc("DM_Arc19Ready", .@pick) != 2) {
+			next();
+			continue;
+		}
+		callfunc("DM_PartyMes", "Cost: " + callfunc("DM_Arc19Cost", .@pick));
+		next();
+		callfunc("DM_PartyMes", "[Loki]");
+		callfunc("DM_PartyMes", "Say it as a group, and then say it once more. When it is said, it is done.");
+		next();
+		if (select("Confirm " + callfunc("DM_Arc19EndingName", .@pick) + ".", "Wait. We are not sure.") != 1) {
+			callfunc("DM_PartyMes", "[Loki]");
+			callfunc("DM_PartyMes", "Good. Choose again.");
+			next();
+			continue;
+		}
+		// The commit, the three scenes, the quest, the flags and the EXP grant all run
+		// without a pause: SQL-backed helpers by the dozen. Without this the instruction
+		// guard aborts the script ("run_script: infinity loop !") after the ending is
+		// already recorded, leaving the party stuck on "It is being enacted".
+		freeloop(true);
+		.@r = callfunc("DM_Arc19Commit", .@pick);
+		if (.@r == -1) {
+			callfunc("DM_PartyMes", "[Loki]");
+			callfunc("DM_PartyMes", "That is not ready now. Something changed. Look at the board again.");
+			next();
+			continue;
+		}
+		if (.@r == -2) {
+			callfunc("DM_PartyMes", "[Loki]");
+			callfunc("DM_PartyMes", "Your volunteer is not here. This choice pauses until they are. Nobody carries this for someone who is absent.");
+			close();
+		}
+		if (.@r == -3) {
+			callfunc("DM_PartyMes", "[Loki]");
+			callfunc("DM_PartyMes", "An answer was given a moment ago, in another conversation. Only one is given.");
+			close();
+		}
+		.@ending = .@pick;
+		break;
+	}
+	callsub(S_Implementation, .@ending);
+	callsub(S_Epilogue, .@ending, getd("$dm_arc19_vol_name_" + getcharid(CHAR_ID_PARTY) + "$"));
+	callsub(S_Cards, .@ending);
+	callfunc("DM_PartyMes", "^FF6600[DM] The Seal Cascade ends. The party has shaped the fate of Midgard.^000000");
+	callfunc("DM_InstanceQuestComplete", 20233);
+	callfunc("DM_InstanceSetFlag", "dm_campaign_complete", 1);
+	if (callfunc("DM_ClaimGrant", "arc19_finale"))
+		callfunc("DM_PartyExp", 1000000, 500000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1999);
+	announce("[DM] The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", bc_all, 0xFF6600);
 	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+
+// A short implementation scene. No fanfare; what was said, done.
+S_Implementation:
+	.@e = getarg(0);
+	callfunc("DM_PartyMes", "^3355FF[" + callfunc("DM_Arc19EndingName", .@e) + "]^000000");
+	switch (.@e) {
+	case 1:
+		callfunc("DM_PartyMes", "The groups come in one at a time and take their place around the focal point. Nobody is the lock. Each of them says out loud that they can leave, and each stays. The note holds, and it holds on all of them at once.");
+		break;
+	case 2:
+		callfunc("DM_PartyMes", "The counter-frequency is switched on and the maintenance team takes its shift. Somewhere under the ruins a machine begins to cancel itself. It does not feel like victory. It feels like something that will need to be looked after.");
+		break;
+	case 3:
+		callfunc("DM_PartyMes", "In Niflheim, a queen on a throne says the words of the pact. The dead stop walking north. Not all at once. One at a time, as they hear that there is someone holding the line and that the party remembers her name.");
+		break;
+	case 4:
+		callfunc("DM_PartyMes", "The volunteer walks to the focal point. The party stays until the note steadies. Nobody speaks. The volunteer is not alone in that moment, and the volunteer is not forced. The seal takes.");
+		break;
+	case 5:
+		callfunc("DM_PartyMes", "The evacuation moves. The containment lines are lit. The focal point is left open, and the thing beneath the ruins comes up, slowly, into a place that has been prepared for it. What it is, nobody can promise.");
+		break;
+	}
+	next();
+	return;
+
+// Three outcome cards from actual state: a place, a named person, a new obligation.
+S_Cards:
+	.@e = getarg(0);
+	switch (.@e) {
+	case 1:
+		.@place$ = (dm_arc12_survey_agreement == 1) ? "The New World camp" : ((dm_arc07_labor_resolution == 1 || dm_arc07_labor_resolution == 2) ? "The south foundry at Einbroch" : "The ward stones above Hugel");
+		.@person$ = dm_arc16_maret_freed ? "Maret" : (dm_arc10_echo_freed ? "Echo" : "Keeper Lysandra");
+		.@duty$ = "Every participating group keeps the maintenance, and any of them may leave. The seal lasts exactly as long as the trust does.";
+		break;
+	case 2:
+		.@place$ = "The Varmundt Biolabs";
+		.@person$ = (dm_arc17_maintenance_secured == 1) ? "Greta Holm" : "Doctor Mira Tressa";
+		.@duty$ = "The machine is kept running by the team that agreed. If they stop, it stops, and everyone should know that.";
+		break;
+	case 3:
+		.@place$ = "The northern gate of Niflheim";
+		.@person$ = "Himmelmez";
+		.@duty$ = "Her pact: the boundary, her hours, and the living remembering her. It is a pact, not a guarantee.";
+		break;
+	case 4:
+		.@place$ = "The Tower at Aldebaran";
+		.@person$ = getd("$dm_arc19_vol_name_" + getcharid(CHAR_ID_PARTY) + "$");
+		.@duty$ = "To keep faith with the one who carries it, and to ask them, every season, whether they would like to stop.";
+		break;
+	case 5:
+		.@place$ = "Morroc's ruins";
+		.@person$ = (dm_arc14_evacuation_stage >= 3) ? "Foreman Dunmar" : "Father Quill";
+		.@duty$ = "To face what comes, together, without any promise that it will be friendly.";
+		break;
+	}
+	callfunc("DM_PartyMes", "^3355FF[A place]^000000 " + .@place$ + " is different now.");
+	callfunc("DM_PartyMes", "^3355FF[A person]^000000 " + .@person$ + " will remember how this was decided.");
+	callfunc("DM_PartyMes", "^3355FF[An obligation]^000000 " + .@duty$);
+	next();
+	return;
+
+// ── Epilogue: what the earlier choices left standing ──────────────────────
+S_Epilogue:
+	.@ending = getarg(0, 0);
+	.@volunteer$ = getarg(1, "");
+	.@said = 0;
+	callfunc("DM_PartyMes", "[Loki The Voice]");
+	if (dm_arc15_pratt_exposed) {
+		callfunc("DM_PartyMes", "Pratt's list has names on it now, and each of them was asked. Thanatos never had that list.");
+	} else if (dm_arc15_pratt_delayed) {
+		callfunc("DM_PartyMes", "Pratt's council review is still open. The method has not been used on anyone yet. That is as much as anyone can honestly say.");
+	}
+	switch (.@ending) {
+	case 1:
+		if (dm_arc19_ally_turnout == 0)
+			callfunc("DM_PartyMes", "Nobody came when the seal needed carriers. It holds on the people who were standing there, and they will have to find more.");
+		else if (dm_arc19_ally_turnout < 3)
+			callfunc("DM_PartyMes", "A few groups carry it, and they know each other's names.");
+		else
+			callfunc("DM_PartyMes", "Enough groups carry it that no one of them is the lock.");
+		if (dm_arc16_rina_defected) {
+			callfunc("DM_PartyMes", "Rina is on the roster. She walked free once. She will be asked again.");
+		}
+		if (dm_arc12_vance_exposed) {
+			callfunc("DM_PartyMes", "Vance pulled his team back and filed an honest report. His superiors have not answered it.");
+		} else if (dm_arc12_vance_helped) {
+			callfunc("DM_PartyMes", "Vance's crews are on stabilization work instead of resource survey. They are the only outside hands the seal has.");
+		}
+		break;
+	case 2:
+		if (dm_arc17_admin_purged)
+			callfunc("DM_PartyMes", "The Administrator is dark. The transfer was clean, and nothing is left that can answer when the counter-frequency drifts.");
+		else if (dm_arc17_admin_negotiated)
+			callfunc("DM_PartyMes", "The Administrator still answers queries. Whoever keeps the machine running can ask it how.");
+		else if (dm_arc17_admin_running)
+			callfunc("DM_PartyMes", "The Biosphere Core is still running, a defence nobody can switch off, in the same place as the machine that holds the seal.");
+		else
+			callfunc("DM_PartyMes", "Someone will have to keep it running. Nobody has been asked yet.");
+		if (dm_arc07_strike_supported) {
+			callfunc("DM_PartyMes", "Einbroch's machinists keep it tuned. They remember who stood with them in the strike.");
+		} else if (dm_arc07_strike_broken) {
+			callfunc("DM_PartyMes", "Einbroch's machinists keep it running too. They remember who broke the strike, and nothing obliges them to be quick about repairs.");
+		} else if (dm_arc07_strike_negotiated) {
+			callfunc("DM_PartyMes", "Einbroch's machinists keep it running under a monitored arrangement both sides signed. Neither trusts the other. It holds.");
+		}
+		break;
+	case 3:
+		if (dm_arc18_himmelmez_killed)
+			callfunc("DM_PartyMes", "Nobody can tell you whether this was a bargain at all. The only party to it was not there to agree.");
+		else if (dm_arc18_himmelmez_bargained)
+			callfunc("DM_PartyMes", "Himmelmez chose this, aloud, in front of you. That is more than most of the dead were given.");
+		else
+			callfunc("DM_PartyMes", "Himmelmez was never asked in the end. The pact is held on the strength of an old promise.");
+		break;
+	case 4:
+		if (.@volunteer$ != "")
+			callfunc("DM_PartyMes", .@volunteer$ + " goes into the lock knowing what it costs. They said so out loud, and the party read the cost before they did. That is the only thing about this seal that Thanatos's did not have.");
+		else
+			callfunc("DM_PartyMes", "Whoever goes into the lock goes knowing what it costs. That is the only thing about this seal that Thanatos's did not have.");
+		break;
+	case 5:
+		if (dm_arc19_ally_turnout > 0)
+			callfunc("DM_PartyMes", "The groups who owe you passage are standing at the edge of the rift. They did not agree to this either.");
+		else
+			callfunc("DM_PartyMes", "Nobody else is there. Whatever rises will be met by the people who chose to let it.");
+		break;
+	}
+	next();
+	callfunc("DM_PartyMes", "[Loki]");
+	callfunc("DM_PartyMes", "That is what you leave behind. Not what you meant. What you did.");
+	return;
+}
+
+// ── Surt support actions (one use each, from what the party prepared) ─────
+moc_fild22,172,142,4	script	Support Console#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (dm_arc19_surt_defeated) {
+		callfunc("DM_PartyMes", "^3355FF*The console is dark. The fight is over.*^000000");
+		close();
+	}
+	if (!dm_arc19_prepared_mask) {
+		callfunc("DM_PartyMes", "^3355FF*A console that answers only to something prepared at the board. Nothing has been prepared.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*Each answer you prepared left one thing here, usable once, during the fight.*^000000");
+	next();
+	.@any = 0;
+	for (.@b = 1; .@b <= 16; .@b *= 2) {
+		if (!(dm_arc19_prepared_mask & .@b) || ('used & .@b))
+			continue;
+		.@any = 1;
+		.@name$ = (.@b == 1 ? "The Shared Seal" : (.@b == 2 ? "The Reforged Seal" : (.@b == 4 ? "The Queen's Bargain" : (.@b == 8 ? "Thanatos's Road" : "Ragnarok Unbound"))));
+		.@effect$ = (.@b == 1 || .@b == 8) ? "stabilize a ward and soften the pulses" : ((.@b == 2 || .@b == 16) ? "break one reinforcement wave" : "give the party one recovery");
+		if (select("Use " + .@name$ + " to " + .@effect$ + ".", "Hold it.") != 1)
+			continue;
+		'used |= .@b;
+		if (.@b == 1 || .@b == 8) {
+			callfunc("DM_TriggerEvent", "The Ash Vacuum Rift#dm", "OnRiftSoften");
+			mapannounce strnpcinfo(NPC_MAP), "[Ash Vacuum Rift] A ward steadies. The pulses will come softer.", bc_map, 0x88CCFF;
+		} else if (.@b == 2 || .@b == 16) {
+			killmonster strnpcinfo(NPC_MAP), "The Ash Vacuum Rift#dm::OnAddDead";
+			mapannounce strnpcinfo(NPC_MAP), "[Ash Vacuum Rift] A reinforcement wave breaks against what you prepared.", bc_map, 0x88CCFF;
+		} else {
+			percentheal 60, 50;
+			callfunc("DM_PartyMes", "^3355FF*The dead hold the edge of the field for a breath. It is enough to stand up.*^000000");
+		}
+	}
+	if (!.@any)
+		callfunc("DM_PartyMes", "^3355FF*Everything you prepared has been used.*^000000");
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
 }
 
 // ── The Ash Vacuum Rift Set-piece ─────────────────────────────────────────
@@ -338,6 +1078,14 @@ OnRiftStart:
 
 OnRiftStop:
 	stopnpctimer;
+	end;
+
+// A prepared support action: ward steadies, pulses halve (never below 1).
+OnRiftSoften:
+	'rift_damage = max(1, 'rift_damage / 2);
+	end;
+
+OnAddDead:
 	end;
 
 OnTimer8000:
@@ -379,66 +1127,3 @@ OnSurtDead:
 	end;
 }
 
-// ── The Central Choice — The Five Paths ───────────────────────────────────
-moc_fild22,175,140,5	script	The Central Choice#dm	4_M_05,{
-	if (!callfunc("DM_SessionGate")) close;
-	if (dm_campaign_complete) {
-		callfunc("DM_PartyMes", "[The Central Choice]");
-		callfunc("DM_PartyMes", "The choice was made. The seal is different now.");
-		close();
-	}
-
-	if (!dm_arc19_surt_defeated) {
-		callfunc("DM_PartyMes", "[The Central Choice]");
-		callfunc("DM_PartyMes", "Surt holds the focal point open. The choice is not available while the focal point is open.");
-		close();
-	}
-
-	callfunc("DM_PartyMes", "[Loki The Voice]");
-	callfunc("DM_PartyMes", "Here is what Thanatos never had: options.");
-	next();
-	callfunc("DM_PartyMes", "[Loki]");
-	callfunc("DM_PartyMes", "Five ways to close the cascade. Each one uses what you learned differently. Each one creates a different kind of seal. Choose what the next three centuries look like.");
-	next();
-	switch (select("The Shared Seal — many carry what one could not hold alone.", "The Reforged Seal — Varmundt's counter-frequency rebuilds the lock.", "The Queen's Bargain — Himmelmez holds the seal from the other side.", "Thanatos's Road — one person chooses the seal, knowing the cost.", "Ragnarok Unbound — the seal is not rebuilt. Let what is beneath rise and be faced.")) {
-	case 1:
-		callfunc("DM_InstanceSetFlag", "dm_finale_shared_seal", 1);
-		callfunc("DM_PartyMes", "^3355FF[The Shared Seal]^000000");
-		callfunc("DM_PartyMes", "The party distributes the resonance across a network of willing carriers. No single person becomes the lock. The seal holds through collective intention. It requires maintenance. It requires trust. It will last exactly as long as the trust does.");
-		break;
-	case 2:
-		callfunc("DM_InstanceSetFlag", "dm_finale_reforged_seal", 1);
-		callfunc("DM_PartyMes", "^3355FF[The Reforged Seal]^000000");
-		callfunc("DM_PartyMes", "Varmundt's inverse-frequency counter-broadcasts at the cascade's exact harmonic inverse. The seal closes mechanically. No living lock. No collective. A machine that cancels itself. It requires power and maintenance. It will last as long as someone keeps it running.");
-		break;
-	case 3:
-		callfunc("DM_InstanceSetFlag", "dm_finale_queens_bargain", 1);
-		callfunc("DM_PartyMes", "^3355FF[The Queen's Bargain]^000000");
-		callfunc("DM_PartyMes", "Himmelmez holds the seal from Niflheim's side. The dead become the lock. This is what the cascade feared — that the dead and the living would cooperate on the seal rather than divide it between them. The seal is permanent while Himmelmez holds it. The cost is hers. She already knew that when she made the pact.");
-		break;
-	case 4:
-		callfunc("DM_InstanceSetFlag", "dm_finale_thanatos_road", 1);
-		callfunc("DM_PartyMes", "^3355FF[Thanatos's Road]^000000");
-		callfunc("DM_PartyMes", "One person chooses the seal, knowing the full cost. Not ignorantly, the way Thanatos could not have known. With full knowledge of what three centuries in the lock means. The seal is perfect. The person is permanent. Scholar Pratt's volunteers are gone. The choice is for whoever is willing to make it knowing.");
-		break;
-	case 5:
-		callfunc("DM_InstanceSetFlag", "dm_finale_ragnarok_unbound", 1);
-		callfunc("DM_PartyMes", "^3355FF[Ragnarok Unbound]^000000");
-		callfunc("DM_PartyMes", "The seal is not rebuilt. What Thanatos sealed rises. It has been in there for three hundred years. The cascade's amplification has been feeding it. What rises is not what went in. It may be reasoned with. It may not. Midgard faces what it has been avoiding facing and finds out what that is.");
-		break;
-	}
-	next();
-	callfunc("DM_PartyMes", "^FF6600[DM] The Seal Cascade ends. The party has shaped the fate of Midgard.^000000");
-	callfunc("DM_InstanceQuestComplete", 20233);
-	callfunc("DM_InstanceSetFlag", "dm_campaign_complete", 1);
-	if (callfunc("DM_ClaimGrant", "arc19_finale"))
-		callfunc("DM_PartyExp", 1000000, 500000);
-	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1999);
-	announce("[DM] The Seal Cascade ends. The choice has been made. The shape of the next age is yours.", bc_all, 0xFF6600);
-	close();
-
-OnInit:
-	questinfo QTYPE_QUEST2, 1;
-	setquestinfo QINFO_QUEST, 20233, 1;
-	end;
-}

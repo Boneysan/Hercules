@@ -8,16 +8,77 @@
 //= function: punishing the faithless. Midgard provides no
 //= shortage of targets.
 //=
+//= REBUILT 2026-10-02 (handoff A3-11): earn cooperation through a
+//= trial. Zealot Bjorn watches two ward trials, argues his view
+//= between them, and is recruited (or set aside) by an explicit
+//= agreement, never by a conversation opinion.
+//=
+//= Trials (dm_arc11_trial_mask bits; both needed, any order):
+//=   1 protect the exposed keeper (a defense at the keeper's shrine)
+//=   2 interpret the damaged signal (check; a poor reading is
+//=     recorded as partial and Bjorn disputes it)
+//= Final Bjorn outcome (dm_arc11_bjorn_outcome, final, equal EXP):
+//=   1 joins as an accountable ally (explicit civilian-protection pact)
+//=   2 proceed independently, his obstruction disarmed
+//= Derived for later arcs: bjorn_joined (1), bjorn_subdued (2).
+//= Payoff in the Valkyrie Hall: a ward that disrupts one reinforcement
+//= wave. With Bjorn it is one action; without him the party works it
+//= through three steps.
+//=
 //= Quests (db/quest_db.conf):
 //=   20151 When Heaven Turns          (arc tracker / Randgris)
-//=   20153 Gryphon Vigil (Talon of Griffon x8, Cyfar x3, Maneater Root x7)
-//=   20154 Dragon Pack Dispersal (Dragon Scale x7, Dragon Canine x5, Dragon Skin x5)
-//=   20155 The Zealot's Testimony     (Zealot Bjorn)
+//=   20153 Gryphon Vigil   (optional support)
+//=   20154 Dragon Pack Dispersal (optional support)
+//=   20155 The Zealot's Testimony     (opens when both trials are done)
 //=
 //= Story flags (persistent character vars, see dm_flags.txt):
-//=   dm_arc11_started, dm_arc11_bjorn_subdued,
-//=   dm_arc11_bjorn_joined, dm_arc11_randgris_killed
+//=   dm_arc11_started, dm_arc11_trial_mask, dm_arc11_signal_partial,
+//=   dm_arc11_bjorn_outcome, dm_arc11_civilian_pact,
+//=   dm_arc11_bjorn_subdued, dm_arc11_bjorn_joined,
+//=   dm_arc11_randgris_killed
 //===========================================================
+
+// ── Shared Arc 11 helpers ──────────────────────────────────────────────────
+
+function	script	DM_Arc11AddTrial	{
+	.@bit = getarg(0);
+	if (!(dm_arc11_trial_mask & .@bit))
+		callfunc("DM_InstanceSetFlag", "dm_arc11_trial_mask", dm_arc11_trial_mask | .@bit);
+	.@n = callfunc("DM_CountBits", dm_arc11_trial_mask);
+	callfunc("DM_DMJStoryObjective", 20151, 2, "Explore", .@n, 2, (.@n >= 2), getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc11_trial_" + .@bit))
+		callfunc("DM_PartyExp", 180000, 87000);
+	if (.@n >= 2) {
+		if (questprogress(20155) == 0)
+			callfunc("DM_InstanceQuestStart", 20155);
+		callfunc("DM_PartyMes", "^3355FF[Both trials done. Bjorn has seen all of it. Speak to him at the temple gate.]^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF[One trial done. The other is on the other side of the village.]^000000");
+	}
+	return .@n;
+}
+
+// mode: 1 joins as an accountable ally, 2 independent. Final.
+function	script	DM_Arc11Commit	{
+	.@mode = getarg(0);
+	if (dm_arc11_bjorn_outcome)
+		return 0;
+	callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_outcome", .@mode);
+	if (.@mode == 1) {
+		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_subdued");
+		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_joined", 1);
+		callfunc("DM_InstanceSetFlag", "dm_arc11_civilian_pact", 1);
+	} else {
+		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_joined");
+		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_subdued", 1);
+	}
+	callfunc("DM_InstanceQuestComplete", 20155);
+	callfunc("DM_DMJStoryObjective", 20155, 1, "Interact", 1, 1, 1, getcharid(CHAR_ID_PARTY));
+	if (callfunc("DM_ClaimGrant", "arc11_resolution"))
+		callfunc("DM_PartyExp", 240000, 116000);
+	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1105);
+	return 1;
+}
 
 // ── Priest Eadric — The Faithful Witness ───────────────────────────────────
 hugel,100,100,5	script	Priest Eadric#dm	4_M_01,{
@@ -36,10 +97,11 @@ hugel,100,100,5	script	Priest Eadric#dm	4_M_01,{
 		end;
 	}
 
-	callsub(S_TurnIns);
+	callsub(S_Progress);
 	end;
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST, 1;
 	setquestinfo QINFO_QUEST, 20151, 0;
 	questinfo QTYPE_QUEST2, 1;
@@ -55,6 +117,11 @@ S_StartArc:
 		callfunc("DM_PartyMes", "Rachel's Prelate Karsh. I heard. The church's failures are not unique to Arunafeltz. The same rot shows up in every institution that mistakes authority for truth. We are not immune here.");
 		next();
 	}
+	if (dm_arc09_secret_kept) {
+		callfunc("DM_PartyMes", "[Eadric]");
+		callfunc("DM_PartyMes", "I am told the truth about Rachel's rift was kept quiet, and that you were part of that. I will not ask how it felt. I will only say that Bjorn would have had a great deal to say about it.");
+		next();
+	}
 	if (dm_arc08_manfred_killed) {
 		callfunc("DM_PartyMes", "[Eadric]");
 		callfunc("DM_PartyMes", "The last bishop of Glast Heim. I knew his name from the accounts. His faith was absolute and it died alone in the ruins with him. I keep thinking about that.");
@@ -65,144 +132,94 @@ S_StartArc:
 		callfunc("DM_PartyMes", "Manfred of Glast Heim is still alive? That is... I had assumed. Good. Good.");
 		next();
 	}
+	if (dm_arc08_manfred_confessed) {
+		callfunc("DM_PartyMes", "[Eadric]");
+		callfunc("DM_PartyMes", "I am told Manfred admitted that he altered the evacuation order himself, and that you heard him say it. A man that certain, saying that aloud. I find I do not know what to do with it, and I am glad someone does.");
+		next();
+	}
 	callfunc("DM_PartyMes", "[Eadric]");
 	callfunc("DM_PartyMes", "The Valkyries of Odin's Temple have turned on us. Not corruption, not possession. They have simply stopped receiving orders, and without orders from Odin, they have defaulted to their original function.");
 	next();
-	switch (select("What is their original function?", "What happened to Odin's signal?", "What do you need from us?")) {
-	case 1:
-		callfunc("DM_PartyMes", "[Eadric]");
-		callfunc("DM_PartyMes", "Punishing the faithless. Before the age of temples and prayers, Valkyries were instruments of divine judgment. They chose the worthy among the dead. Everyone else was... judged.");
-		break;
-	case 2:
-		callfunc("DM_PartyMes", "[Eadric]");
-		callfunc("DM_PartyMes", "The cascade. It is not destroying the connection — it is filling it with noise. Odin's signal exists, but the Valkyries cannot distinguish it from the cascade's frequency. They have been operating blind for weeks.");
-		break;
-	case 3:
-		callfunc("DM_PartyMes", "[Eadric]");
-		callfunc("DM_PartyMes", "The sacred creatures near the temple approach have gone feral. The Gryphon roosts are dangerous. The Ferus packs have moved into the lower approach. I need those paths clear before anyone can reach the temple.");
-		break;
+	.@ready = 0;
+	while (!.@ready) {
+		switch (select("What is their original function?", "What happened to Odin's signal?", "Who is Bjorn?", "We are ready. Where do we start?")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Eadric]");
+			callfunc("DM_PartyMes", "Punishing the faithless. Before the age of temples and prayers, Valkyries were instruments of divine judgment. They chose the worthy among the dead. Everyone else was... judged.");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Eadric]");
+			callfunc("DM_PartyMes", "The cascade. It is not destroying the connection, it is filling it with noise. Odin's signal exists, but the Valkyries cannot distinguish it from the cascade's frequency. They have been operating blind for weeks.");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Eadric]");
+			callfunc("DM_PartyMes", "One of ours, or was. He decided the Valkyries are right, that we deserve this. He is standing at the temple gate and he will watch whatever you do. He has been writing it all down.");
+			break;
+		case 4:
+			.@ready = 1;
+			break;
+		}
+		next();
 	}
-	next();
 	callfunc("DM_PartyMes", "[Eadric]");
-	callfunc("DM_PartyMes", "There is also Bjorn. He is one of ours — or was. He has decided the Valkyries are right. That we deserve this. He is standing between the lower approach and the temple gates.");
+	callfunc("DM_PartyMes", "Two trials, at the ward sites. At the keeper's shrine, the keeper is exposed and the Gryphon packs have turned on it. At the signal obelisk, the signal is damaged, and someone has to read it honestly. Bjorn will be watching both, and he will argue with you in between.");
 	callfunc("DM_InstanceSetFlag", "dm_arc11_started", 1);
 	callfunc("DM_InstanceQuestStart", 20151);
-	callfunc("DM_InstanceQuestStart", 20153);
-	callfunc("DM_InstanceQuestStart", 20154);
+	callfunc("DM_DMJStoryObjective", 20151, 1, "Talk", 1, 1, 1, getcharid(CHAR_ID_PARTY));
 	next();
 	callfunc("DM_PartyMes", "^3355FF[Quest started: When Heaven Turns]^000000");
-	callfunc("DM_PartyMes", "^3355FFGryphon Vigil - off the temple approach: " + callfunc("DM_HuntBrief", 20153) + ".^000000");
-	callfunc("DM_PartyMes", "^3355FFDragon Pack Dispersal - off the pack on the lower approach: " + callfunc("DM_HuntBrief", 20154) + ".^000000");
+	callfunc("DM_PartyMes", "^3355FFComplete both ward trials: protect the keeper, interpret the signal.^000000");
 	close();
 
-S_TurnIns:
-	.@paid = 0;
+S_Progress:
+	callfunc("DM_PartyMes", "[Eadric]");
+	callfunc("DM_PartyMes", ((dm_arc11_trial_mask & 1) ? "Keeper's shrine: protected. The Gryphon packs have scattered." : "Keeper's shrine: the keeper is still exposed, and the packs are still on it."));
+	callfunc("DM_PartyMes", ((dm_arc11_trial_mask & 2) ? (dm_arc11_signal_partial ? "Signal obelisk: read, but the reading is rough. Bjorn will say so." : "Signal obelisk: read cleanly. It is not Odin. It is the cascade.") : "Signal obelisk: still damaged, and nobody has read it."));
+	if (dm_arc11_bjorn_outcome) {
+		callfunc("DM_PartyMes", "Bjorn has made his answer. The gate is open.");
+	}
+	next();
+	switch (select("Ask about the optional support work.", "Thank you. We are on it.")) {
+	case 1:
+		callsub(S_Optional);
+		break;
+	case 2:
+		break;
+	}
+	close();
+
+S_Optional:
+	callfunc("DM_PartyMes", "[Eadric]");
+	callfunc("DM_PartyMes", "The roosts and the lower slopes. Not part of the trials. The creatures are afraid, not wicked, and I would rather they were safe.");
+	next();
+	if (questprogress(20153) == 0) {
+		callfunc("DM_InstanceQuestStart", 20153);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Gryphon Vigil - " + callfunc("DM_HuntBrief", 20153) + "]^000000");
+	}
+	if (questprogress(20154) == 0) {
+		callfunc("DM_InstanceQuestStart", 20154);
+		callfunc("DM_PartyMes", "^3355FF[Optional: Dragon Pack Dispersal - " + callfunc("DM_HuntBrief", 20154) + "]^000000");
+	}
 	callfunc("DM_HuntNoteShort", 20153);
 	if (questprogress(20153) == 1 && callfunc("DM_HuntCollect", 20153)) {
 		callfunc("DM_InstanceQuestComplete", 20153);
-		callfunc("DM_PartyExp", 300000, 145000);
+		callfunc("DM_PartyExp", 100000, 48000);
 		callfunc("DM_GivePartyZeny", 25000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[Eadric]");
-		callfunc("DM_PartyMes", "The Gryphon roosts are clear. They were not attacking out of aggression — they were afraid. The cascade vibration off the temple stones is a frequency those creatures can hear that we cannot.");
-		next();
-		switch (select("Mark the roost locations. They can return once the temple is stable.", "The path is clear. That's what matters.", "These creatures may have been reacting to Randgris's state.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Eadric]");
-			callfunc("DM_PartyMes", "Thoughtful. Gryphon are sacred to this place. They should come back. I will mark the roosts.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Eadric]");
-			callfunc("DM_PartyMes", "Practical. You are not wrong.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Eadric]");
-			callfunc("DM_PartyMes", "That is... yes. If Randgris's emotional state is propagating outward through the cascade, the animals would feel it before the people. I had not followed that chain.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The Gryphon roosts are clear. They were not attacking out of aggression. They were afraid. The cascade vibration off the temple stones is a frequency those creatures can hear that we cannot.");
 		next();
 	}
-
 	callfunc("DM_HuntNoteShort", 20154);
 	if (questprogress(20154) == 1 && callfunc("DM_HuntCollect", 20154)) {
 		callfunc("DM_InstanceQuestComplete", 20154);
-		callfunc("DM_PartyExp", 300000, 145000);
+		callfunc("DM_PartyExp", 100000, 48000);
 		callfunc("DM_GivePartyZeny", 25000);
-		.@paid = 1;
 		callfunc("DM_PartyMes", "[Eadric]");
-		callfunc("DM_PartyMes", "The Ferus packs are back in the high slopes. They den near the temple normally — they moved down when the Valkyries began acting erratically. The temple's blessing repelled them.");
-		next();
-		switch (select("The temple's own energy is destabilizing.", "How long until the Valkyries move beyond the temple?", "Bjorn must be watching all of this.")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Eadric]");
-			callfunc("DM_PartyMes", "Yes. The cascade is feeding into the blessing instead of the prayers feeding outward. The flow has reversed. I am not sure what that means structurally.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Eadric]");
-			callfunc("DM_PartyMes", "I think that is what Randgris is working toward. The outer creatures going feral was the first sign. The next sign will be worse.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Eadric]");
-			callfunc("DM_PartyMes", "He has been taking notes. I find that more frightening than if he were weeping.");
-			break;
-		}
+		callfunc("DM_PartyMes", "The Ferus packs are back in the high slopes. They moved down when the Valkyries began acting erratically. The temple's blessing used to repel them.");
 		next();
 	}
-
-	if (questprogress(20153) == 2 && questprogress(20154) == 2 && questprogress(20155) == 0) {
-		callfunc("DM_PartyMes", "[Eadric]");
-		callfunc("DM_PartyMes", "The approaches are clear. Bjorn stands at the temple gate. He has not attacked anyone yet. I believe he is waiting to make a point.");
-		next();
-		switch (select("Let us go to him.", "What does he actually want?", "Is he dangerous?")) {
-		case 1:
-			callfunc("DM_PartyMes", "[Eadric]");
-			callfunc("DM_PartyMes", "Yes. Go. He deserves to be heard before he is dealt with.");
-			break;
-		case 2:
-			callfunc("DM_PartyMes", "[Eadric]");
-			callfunc("DM_PartyMes", "Validation, I think. He has been saying for years that Midgard's faith is hollow and performative. The Valkyries have apparently agreed with him. He wants someone to acknowledge that he was right.");
-			break;
-		case 3:
-			callfunc("DM_PartyMes", "[Eadric]");
-			callfunc("DM_PartyMes", "Not yet. But if the Valkyries come for him and he is still standing at the gate, he will let them through rather than fight them off.");
-			break;
-		}
-		callfunc("DM_InstanceQuestStart", 20155);
-		next();
-		callfunc("DM_PartyMes", "^3355FF[Quest started: The Zealot's Testimony]^000000");
-		callfunc("DM_PartyMes", "^3355FFFind Zealot Bjorn at the temple gate. Then descend to abyss_03 and face Randgris.^000000");
-		close();
-	}
-
-	if (questprogress(20155) == 1 && !dm_arc11_bjorn_subdued && !dm_arc11_bjorn_joined) {
-		callfunc("DM_PartyMes", "[Eadric]");
-		callfunc("DM_PartyMes", "Bjorn is at the temple gate. He has not moved.");
-		close();
-	}
-
-	if (questprogress(20155) == 1 && (dm_arc11_bjorn_subdued || dm_arc11_bjorn_joined)) {
-		callfunc("DM_PartyMes", "[Eadric]");
-		callfunc("DM_PartyMes", "Bjorn has stepped aside. The temple gate is open. Randgris waits in the deepest sanctum — the Valkyrie Hall in the abyss below.");
-		close();
-	}
-
-	if (.@paid) {
-		callfunc("DM_PartyMes", "[Eadric]");
-		callfunc("DM_PartyMes", "Both field contracts need to be finished before you face Bjorn. Clear the approaches first.");
-		close();
-	}
-
-	callfunc("DM_PartyMes", "[Eadric]");
-	if (questprogress(20153) == 1 && questprogress(20154) == 1)
-		callfunc("DM_PartyMes", "The Gryphon Vigil and Dragon Pack Dispersal are both still active. The approaches are not clear.");
-	else if (questprogress(20153) == 1)
-		callfunc("DM_PartyMes", "Gryphon Vigil is still open. The roosts are in the upper approach north of Hugel.");
-	else if (questprogress(20154) == 1)
-		callfunc("DM_PartyMes", "Dragon Pack Dispersal is still open. Ferus in the lower slopes.");
-	else
-		callfunc("DM_PartyMes", "The approaches are clear. Find Bjorn at the temple gate.");
 	callfunc("DM_HuntStanding", 20153, 20154);
-	close();
+	return;
 }
 
 // ── Zealot Bjorn — The Man Who Was Right for the Wrong Reasons ─────────────
@@ -213,8 +230,7 @@ hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
 		callfunc("DM_PartyMes", "Midgard sleeps. The reckoning approaches and no one watches the horizon.");
 		close();
 	}
-
-	if (dm_arc11_bjorn_subdued || dm_arc11_bjorn_joined) {
+	if (dm_arc11_bjorn_outcome) {
 		callfunc("DM_PartyMes", "[Zealot Bjorn]");
 		if (dm_arc11_bjorn_joined)
 			callfunc("DM_PartyMes", "I walk with you now. Not because the Valkyries were wrong about what we became. But because I think we can still become something else.");
@@ -229,60 +245,200 @@ hugel,110,100,5	script	Zealot Bjorn#dm	4_M_02,{
 	callfunc("DM_PartyMes", "[Bjorn]");
 	callfunc("DM_PartyMes", "I have been saying this for fifteen years. Now the sky confirms it.");
 	next();
-	switch (select("The Valkyries are not judging us. They are malfunctioning.", "You may be right about Midgard's failures. That is not what this is.", "Then stand with us and do something about those failures.")) {
+	// Between stages he argues from what he has seen.
+	if (dm_arc11_trial_mask & 1) {
+		callfunc("DM_PartyMes", "[Bjorn]");
+		callfunc("DM_PartyMes", "You defended the keeper. Fine. Anyone with a blade would. The question is not whether you can fight. The question is whether the thing you defended deserved it.");
+		next();
+	}
+	if (dm_arc11_trial_mask & 2) {
+		callfunc("DM_PartyMes", "[Bjorn]");
+		if (dm_arc11_signal_partial)
+			callfunc("DM_PartyMes", "You read the signal. Roughly. I read it too. It could be Odin's, or it could be noise. You cannot tell me which, and I do not believe you.");
+		else
+			callfunc("DM_PartyMes", "You read the signal. It is not Odin's voice. It is a frequency that has been laid over it. I have no argument for that, and I resent that I have none.");
+		next();
+	}
+	if ((dm_arc11_trial_mask & 3) != 3) {
+		callfunc("DM_PartyMes", "[Bjorn]");
+		callfunc("DM_PartyMes", "I have not seen enough to be moved. Do both trials, and I will be at this gate when you come back.");
+		close();
+	}
+
+	.@done = 0;
+	while (!.@done) {
+		switch (select("The Valkyries are not judging us. They are malfunctioning.", "You may be right about Midgard's failures. That is not what this is.", "What would you need to stand with us?", "We are ready to decide.", "We need to discuss this.")) {
+		case 1:
+			callfunc("DM_PartyMes", "[Bjorn]");
+			callfunc("DM_PartyMes", "Malfunctioning. A divine instrument of judgment, and you call it broken. ...What if you are right? What if I spent fifteen years calling the instrument what I wished to hear?");
+			break;
+		case 2:
+			callfunc("DM_PartyMes", "[Bjorn]");
+			callfunc("DM_PartyMes", "You acknowledge that Midgard is faithless. Then what is your alternative? If the diagnosis is correct and the medicine is wrong, what is the medicine?");
+			break;
+		case 3:
+			callfunc("DM_PartyMes", "[Bjorn]");
+			callfunc("DM_PartyMes", "A promise. Out loud, in front of Eadric. If I go into that temple with you, no civilian is the price of it. Not one. If you will not say that, I will stand here and watch, and I will not hinder you.");
+			break;
+		case 4:
+			.@done = 1;
+			break;
+		case 5:
+			callfunc("DM_PartyMes", "[Bjorn]");
+			callfunc("DM_PartyMes", "I have been waiting fifteen years. I can wait for you to disagree with each other.");
+			close();
+		}
+		if (!.@done)
+			next();
+	}
+	next();
+	switch (select("Promise that no civilian is the price. Ask Bjorn to stand with us.", "Go in without him. Ask him to step aside.", "Not yet. We want to talk it over.")) {
 	case 1:
-		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_joined");
-		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_subdued", 1);
-		callfunc("DM_InstanceQuestComplete", 20155);
-		callfunc("DM_PartyMes", "[Bjorn]");
-		callfunc("DM_PartyMes", "Malfunctioning. A divine instrument of judgment, and you call it broken.");
-		next();
-		callfunc("DM_PartyMes", "[Bjorn]");
-		callfunc("DM_PartyMes", "...");
-		next();
-		callfunc("DM_PartyMes", "[Bjorn]");
-		callfunc("DM_PartyMes", "What if you are right? What if I spent fifteen years calling the instrument what I wished to hear?");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Bjorn does not move. But he does not block the path.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Encounter: Randgris will fight with her full court.]^000000");
+		.@mode = 1;
 		break;
 	case 2:
-		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_joined");
-		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_subdued", 1);
-		callfunc("DM_InstanceQuestComplete", 20155);
-		callfunc("DM_PartyMes", "[Bjorn]");
-		callfunc("DM_PartyMes", "You acknowledge that Midgard is faithless.");
-		next();
-		callfunc("DM_PartyMes", "[Bjorn]");
-		callfunc("DM_PartyMes", "Then what are you doing here? If the diagnosis is correct but the medicine is wrong, what is your alternative?");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Bjorn steps aside to hear the answer in Randgris's death. He will be watching.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Encounter: Randgris will fight with her full court.]^000000");
+		.@mode = 2;
 		break;
 	case 3:
-		callfunc("DM_InstanceClearFlag", "dm_arc11_bjorn_subdued");
-		callfunc("DM_InstanceSetFlag", "dm_arc11_bjorn_joined", 1);
-		callfunc("DM_InstanceQuestComplete", 20155);
 		callfunc("DM_PartyMes", "[Bjorn]");
-		callfunc("DM_PartyMes", "Do something about it.");
-		next();
+		callfunc("DM_PartyMes", "Of course.");
+		close();
+	}
+	next();
+	callfunc("DM_PartyMes", "[Bjorn]");
+	if (.@mode == 1)
+		callfunc("DM_PartyMes", "Say it in front of Eadric, and I will take the crook and go ahead of you. Confirm, and you have promised.");
+	else
+		callfunc("DM_PartyMes", "You go without me. I step aside and I do not stop you. I will watch which of us was right. Confirm, and I stand down.");
+	next();
+	if (select("Confirm.", "Wait.") != 1) {
 		callfunc("DM_PartyMes", "[Bjorn]");
-		callfunc("DM_PartyMes", "Not punish it. Not mourn it. Do something about it.");
-		next();
-		callfunc("DM_PartyMes", "[Bjorn]");
-		callfunc("DM_PartyMes", "All right. I have been mourning it for fifteen years. Let me try your approach for an hour.");
-		next();
-		callfunc("DM_PartyMes", "^3355FF*Bjorn picks up his crook and walks toward the temple gate.*^000000");
-		callfunc("DM_PartyMes", "^3355FF[Encounter: Bjorn's faith will restrain part of Randgris's court.]^000000");
-		break;
+		callfunc("DM_PartyMes", "Better to wait than to promise lightly.");
+		close();
+	}
+	if (!callfunc("DM_Arc11Commit", .@mode))
+		close();
+	callfunc("DM_PartyMes", "[Bjorn]");
+	if (.@mode == 1) {
+		callfunc("DM_PartyMes", "Then I will go ahead of you with this crook. If the faith has any weight left in this place, I will use it. Do not make me regret the promise.");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: Bjorn works the Valkyrie ward himself and disrupts a reinforcement wave.]^000000");
+	} else {
+		callfunc("DM_PartyMes", "I will not block the gate. I will watch from here. You will operate the ward yourselves, and it will take longer.");
+		callfunc("DM_PartyMes", "^3355FF[Encounter: the party works the Valkyrie ward through three steps.]^000000");
 	}
 	next();
 	callfunc("DM_PartyMes", "^3355FF[The Zealot's Testimony resolved. The temple gate is open.]^000000");
 	close();
 
 OnInit:
+	callfunc("DM_AssertWalk");
 	questinfo QTYPE_QUEST2, 1;
 	setquestinfo QINFO_QUEST, 20155, 1;
+	end;
+}
+
+// ── Trial 1: the exposed keeper ────────────────────────────────────────────
+hugel,96,104,4	script	Keeper's Shrine#dm	4_BOARD3,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc11_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc11_trial_mask & 1) {
+		callfunc("DM_PartyMes", "^3355FF*The keeper is on her feet again, tending the lamp. She nods once.*^000000");
+		close();
+	}
+	if ('boss_up) {
+		callfunc("DM_PartyMes", "^3355FF*The packs are still on the keeper. Hold the shrine.*^000000");
+		close();
+	}
+	if (!'guard_cleared) {
+		callfunc("DM_PartyMes", "^3355FF*The keeper kneels at the shrine, unarmed. Bjorn stands at the edge of the lamplight, watching. The Gryphon packs break from the treeline.*^000000");
+		.@map$ = strnpcinfo(NPC_MAP);
+		getmapxy(.@m$, .@x, .@y, UNITTYPE_NPC);
+		.@self$ = strnpcinfo(NPC_NAME);
+		'boss_up = 1;
+		callfunc("DM_EncStart", "arc11_keeper", getcharid(CHAR_ID_PARTY), .@map$, .@self$ + "::OnGuardDead", .@self$ + "::OnGuardDead", .@self$);
+		callfunc("DM_EncMonster", .@map$, .@x, .@y, "Frightened Gryphon", GRYPHON, .@self$ + "::OnGuardDead", 68, 100, 3, 3);
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*The last Gryphon wheels away. The keeper lifts her head. She is shaking and she is unhurt.*^000000");
+	callfunc("DM_Arc11AddTrial", 1);
+	close();
+
+OnGuardDead:
+	.@left = mobcount(strnpcinfo(NPC_MAP), strnpcinfo(NPC_NAME)+"::OnGuardDead");
+	if (.@left > 0)
+		end;
+	'boss_up = 0;
+	'guard_cleared = 1;
+	callfunc("DM_EncCleanup", "arc11_keeper");
+	end;
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Trial 2: the damaged signal ────────────────────────────────────────────
+hugel,106,96,4	script	Signal Obelisk#dm	4_ENERGY_BLUE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc11_started) {
+		mes("The party has not brought you into this chapter yet. Join their party, or log in again once someone who has it is online.");
+		close;
+	}
+	if (dm_arc11_trial_mask & 2) {
+		callfunc("DM_PartyMes", "^3355FF*The obelisk hums quietly. Someone has written the reading on a slate beside it.*^000000");
+		close();
+	}
+	callfunc("DM_PartyMes", "^3355FF*A signal obelisk, cracked down one side. It throws two overlapping tones. One is steady and old. The other is the cascade.*^000000");
+	next();
+	if (select("Interpret the signal.", "Leave it.") == 2) close();
+	if (callfunc("DM_CheckRoll", "lore", 12) < 2 && !callfunc("DM_IsDM")) {
+		callfunc("DM_InstanceSetFlag", "dm_arc11_signal_partial", 1);
+		callfunc("DM_PartyMes", "^3355FF*You separate the tones, mostly. There is a third you cannot account for. It is a reading. It is not a certain one.*^000000");
+	} else {
+		callfunc("DM_PartyMes", "^3355FF*The tones come apart cleanly. The steady one is Odin's and it is still sending. The other is laid over it, and it is not divine.*^000000");
+	}
+	callfunc("DM_Arc11AddTrial", 2);
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
+	end;
+}
+
+// ── Valkyrie ward: one wave disrupted ──────────────────────────────────────
+abyss_03,153,150,4	script	Valkyrie Ward#dm	4_ENERGY_WHITE,{
+	if (!callfunc("DM_SessionGate")) close;
+	if (!dm_arc11_bjorn_outcome) {
+		callfunc("DM_PartyMes", "^3355FF*A ward stone, humming with a held signal. Nobody here knows how to work it.*^000000");
+		close();
+	}
+	if ('done) {
+		callfunc("DM_PartyMes", "^3355FF*The ward is spent. The wave it held has broken.*^000000");
+		close();
+	}
+	if (dm_arc11_bjorn_joined) {
+		callfunc("DM_PartyMes", "^3355FF*Bjorn steps up to the ward and puts his crook against it. He says one word in the old liturgy.*^000000");
+		'done = 1;
+		killmonster strnpcinfo(NPC_MAP), "Valkyrie Hall#dm::OnAddDead";
+		mapannounce strnpcinfo(NPC_MAP), "[Valkyrie Hall] Bjorn's word breaks a reinforcement wave. The Valkyries it held fall silent.", bc_map, 0x88CCFF;
+		close();
+	}
+	'step += 1;
+	if ('step < 3) {
+		callfunc("DM_PartyMes", "^3355FF*You work the ward by hand. The signal steadies. (Step " + 'step + " of 3.)*^000000");
+		close();
+	}
+	'done = 1;
+	callfunc("DM_PartyMes", "^3355FF*The third step takes. The signal clears, and the reinforcements it held come apart.*^000000");
+	killmonster strnpcinfo(NPC_MAP), "Valkyrie Hall#dm::OnAddDead";
+	mapannounce strnpcinfo(NPC_MAP), "[Valkyrie Hall] The ward is worked by hand. A reinforcement wave breaks.", bc_map, 0x88CCFF;
+	close();
+
+OnInit:
+	callfunc("DM_AssertWalk");
 	end;
 }
 
@@ -297,7 +453,7 @@ OnRandgrisDead:
 	killmonster strnpcinfo(NPC_MAP), "Valkyrie Hall#dm::OnAddDead";
 	callfunc("DM_InstanceQuestComplete", 20151);
 	callfunc("DM_InstanceSetFlag", "dm_arc11_randgris_killed", 1);
-	callfunc("DM_PartyExp", 1200000, 700000);
+	callfunc("DM_PartyExp", 1200000, 700000, .@party);
 	callfunc("DM_PartyApplyFlag", "dm_story_beat", 1199);
 	if (dm_arc11_bjorn_joined)
 		instance_announce(instance_id(), "^3355FF[DM] Randgris falls. Bjorn catches her as she goes. She says something to him no one else hears. He weeps.^000000", bc_all);
