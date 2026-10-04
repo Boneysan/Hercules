@@ -1870,7 +1870,7 @@ static bool mob_ai_sub_hard(struct mob_data *md, int64 tick)
 		int flee_target_id = md->target_id != 0 ? md->target_id : md->attacked_id;
 		struct block_list *flee_target = map->id2bl(flee_target_id);
 		if (flee_target != NULL && flee_target->m == md->bl.m
-		    && unit->skilluse_id2(&md->bl, flee_target->id, NPC_RUN, ai_profile->flee_distance, 0, 1) == 0) {
+		    && unit->skilluse_id2(&md->bl, flee_target->id, NPC_RUN, ai_profile->flee_distance, 0, 1) != 0) {
 			md->ai_profile_cooldown_tick = tick;
 			return true;
 		}
