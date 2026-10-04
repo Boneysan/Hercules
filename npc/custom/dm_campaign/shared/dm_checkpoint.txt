@@ -46,7 +46,10 @@ function	script	DM_CheckpointPurgeParty	{
 	query_sql("DELETE FROM `dm_campaign_party_state` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
 	query_sql("DELETE FROM `dm_campaign_party_event` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
 	query_sql("DELETE FROM `dm_campaign_party_cursor` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
-	query_sql("DELETE FROM `dm_campaign_pending_grant` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
+	// Rewards already earned stay owed: dm_campaign_pending_grant is paid by
+	// char_id at the member's next sync, so keeping the rows cannot leak them to
+	// another party. A reset restarts the story; it does not confiscate loot
+	// (owner decision 2026-10-04).
 	return 1;
 }
 
@@ -184,7 +187,10 @@ function	script	DM_CheckpointReset	{
 		query_sql("INSERT INTO `dm_campaign_checkpoint_log` (`campaign_id`,`party_id`,`step`,`actor_char_id`,`event`) VALUES ('" + .@campaign$ + "'," + .@party_id + "," + .@step + "," + getcharid(CHAR_ID_CHAR) + ",'reset')");
 	query_sql("DELETE FROM `dm_campaign_checkpoint` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
 	query_sql("DELETE FROM `dm_campaign_party_state` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
-	query_sql("DELETE FROM `dm_campaign_pending_grant` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
+	// Rewards already earned stay owed: dm_campaign_pending_grant is paid by
+	// char_id at the member's next sync, so keeping the rows cannot leak them to
+	// another party. A reset restarts the story; it does not confiscate loot
+	// (owner decision 2026-10-04).
 	query_sql("DELETE FROM `dm_campaign_party_event` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
 	query_sql("DELETE FROM `dm_campaign_party_cursor` WHERE `campaign_id` = '" + .@campaign$ + "' AND `party_id` = " + .@party_id);
 	getpartymember(.@party_id, PT_MEMBER_CHARID, .@charid);
