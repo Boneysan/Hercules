@@ -268,9 +268,10 @@ prontera,156,40,3	script	Frightened Mother#dm	4_F_01,{
 		callfunc("DM_InstanceSetFlag", "dm_arc01_refugees_helped", 1);
 		callfunc("DM_InstanceSetFlag", "dm_mira_lives", 1);
 		callfunc("DM_InstanceQuestComplete", 20004);
-		if (callfunc("DM_ClaimGrant", "arc01_rescue"))
+		if (callfunc("DM_ClaimGrant", "arc01_rescue")) {
 			callfunc("DM_PartyExp", 3000, 1200);
-		callfunc("DM_GivePartyZeny", 1500);
+			callfunc("DM_GivePartyZeny", 1500);
+		}
 		callfunc("DM_PartyMes", "^3355FF*You walk Mira home. Named refugees will not raise a hand in the chamber.*^000000");
 		break;
 	case 2:
@@ -278,9 +279,10 @@ prontera,156,40,3	script	Frightened Mother#dm	4_F_01,{
 		callfunc("DM_InstanceSetFlag", "dm_arc01_refugees_helped", 0);
 		callfunc("DM_InstanceSetFlag", "dm_mira_lives", 1);
 		callfunc("DM_InstanceQuestComplete", 20004);
-		if (callfunc("DM_ClaimGrant", "arc01_rescue"))
+		if (callfunc("DM_ClaimGrant", "arc01_rescue")) {
 			callfunc("DM_PartyExp", 3000, 1200);
-		callfunc("DM_GivePartyZeny", 1500);
+			callfunc("DM_GivePartyZeny", 1500);
+		}
 		callfunc("DM_PartyMes", "^3355FF*The watch comes. Mira is safe. Others scatter toward Holt. The chamber will be more crowded.*^000000");
 		break;
 	case 3:
@@ -288,9 +290,10 @@ prontera,156,40,3	script	Frightened Mother#dm	4_F_01,{
 		callfunc("DM_InstanceSetFlag", "dm_arc01_refugees_helped", 1);
 		callfunc("DM_InstanceSetFlag", "dm_mira_lives", 1);
 		callfunc("DM_InstanceQuestComplete", 20004);
-		if (callfunc("DM_ClaimGrant", "arc01_rescue"))
+		if (callfunc("DM_ClaimGrant", "arc01_rescue")) {
 			callfunc("DM_PartyExp", 3000, 1200);
-		callfunc("DM_GivePartyZeny", 1500);
+			callfunc("DM_GivePartyZeny", 1500);
+		}
 		callfunc("DM_PartyMes", "^3355FF*Mira names the bread-man. The organizer cannot smile it away. One recruit lays down a ladle instead of a knife.*^000000");
 		break;
 	case 4:

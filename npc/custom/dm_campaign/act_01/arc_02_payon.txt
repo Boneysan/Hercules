@@ -500,17 +500,19 @@ payon,185,100,4	script	East Memorial#dm	4_BOARD3,{
 		case 1:
 			callfunc("DM_InstanceSetFlag", "dm_arc02_ancestor_helped", 1);
 			callfunc("DM_InstanceQuestComplete", 20011);
-			if (callfunc("DM_ClaimGrant", "arc02_graves"))
+			if (callfunc("DM_ClaimGrant", "arc02_graves")) {
 				callfunc("DM_PartyExp", 12000, 5000);
-			callfunc("DM_GivePartyZeny", 2500);
+				callfunc("DM_GivePartyZeny", 2500);
+			}
 			callfunc("DM_PartyMes", "^3355FF*The comb is cold. Take it to the family. One ancestor will answer without force.*^000000");
 			break;
 		case 2:
 			callfunc("DM_InstanceSetFlag", "dm_arc02_ancestor_helped", 0);
 			callfunc("DM_InstanceQuestComplete", 20011);
-			if (callfunc("DM_ClaimGrant", "arc02_graves"))
+			if (callfunc("DM_ClaimGrant", "arc02_graves")) {
 				callfunc("DM_PartyExp", 10000, 4000);
-			callfunc("DM_GivePartyZeny", 5000);
+				callfunc("DM_GivePartyZeny", 5000);
+			}
 			callfunc("DM_PartyMes", "^3355FF*You copy the map. The comb stays with the things Voss could not use.*^000000");
 			break;
 		case 3:
