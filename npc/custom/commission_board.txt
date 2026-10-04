@@ -1,0 +1,175 @@
+//===== Korangar: shared crafting commission board ===========================
+//= GDD F31, decision D7. Any player can post a request, see everyone's open
+//= requests, and (as the requester) assign a crafter, complete or cancel it.
+//=
+//= Non-custodial: this board only records requests. Materials, the item and
+//= the fee move by ordinary player trade, never through this script.
+//=
+//= Commands (group 0, every player):
+//=   @commission                          list (same as `list`)
+//=   @commission post <fee> <item name>   fee first, so item names keep spaces
+//=   @commission assign <id> <character>
+//=   @commission complete <id>
+//=   @commission cancel <id>
+//=
+//= The korangar client reads the list from `[CMB]{json}` lines (dispbottom):
+//=   {"t":"begin","v":1,"n":<rows>}
+//=   {"t":"row","v":1,"id":..,"item":"..","fee":..,"by":"..","crafter":"..",
+//=    "status":"open|assigned","mine":0|1,"yours":0|1}
+//=   {"t":"end","v":1}
+//= after every command, refused or not, and the client replaces its list
+//= only on `end`. Human-readable results are plain
+//= dispbottom lines. Keep both ends in step (korangar
+//= state/commission_board.rs), and bump "v" on any incompatible change.
+//=
+//= Status: 0 open, 1 assigned, 2 completed, 3 cancelled.
+//=
+//= NOTE: bindatcmd's .@atcmd_* variables exist only in the event scope, so
+//= the command is handled inline; S_List takes no parameters it cannot get.
+//============================================================================
+
+-	script	CommissionBoard	FAKE_NPC,{
+	end;
+
+OnInit:
+	bindatcmd("commission", strnpcinfo(NPC_NAME_UNIQUE) + "::OnCommand", 0, 99, 1);
+	// One player may hold this many open or assigned requests.
+	.max_active = 5;
+	// The list shows the newest this many.
+	.max_listed = 50;
+	.max_fee = 1000000000;
+	.max_item_len = 50;
+	// Item names are free text shown to everyone: keep them to plain
+	// characters, so nothing needs escaping in SQL, chat or JSON.
+	.allowed$ = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 +-'.()[]";
+	end;
+
+OnCommand:
+	.@char_id = getcharid(CHAR_ID_CHAR);
+	.@me$ = strcharinfo(PC_NAME);
+	.@sub$ = (.@atcmd_numparameters > 0) ? .@atcmd_parameters$[0] : "list";
+
+	if (.@sub$ == "list") {
+		goto L_List;
+	}
+
+	if (.@sub$ == "post") {
+		.@fee$ = .@atcmd_parameters$[1];
+		.@fee = atoi(.@fee$);
+		if (.@atcmd_numparameters < 3 || .@fee$ != "" + .@fee || .@fee < 0 || .@fee > .max_fee) {
+			dispbottom("Usage: @commission post <fee in zeny> <item name>");
+			goto L_List;
+		}
+		.@item$ = .@atcmd_parameters$[2];
+		for (.@i = 3; .@i < .@atcmd_numparameters; ++.@i)
+			.@item$ += " " + .@atcmd_parameters$[.@i];
+		.@len = getstrlen(.@item$);
+		if (.@len > .max_item_len) {
+			dispbottom("Item names are at most " + .max_item_len + " characters.");
+			goto L_List;
+		}
+		for (.@i = 0; .@i < .@len; ++.@i) {
+			if (strpos(.allowed$, charat(.@item$, .@i)) < 0) {
+				dispbottom("Item names may use letters, digits, spaces and + - ' . ( ) [ ] only.");
+				goto L_List;
+			}
+		}
+		query_sql("SELECT COUNT(*) FROM `korangar_commission` WHERE `requester_char_id` = " + .@char_id + " AND `status` IN (0, 1)", .@active);
+		if (.@active >= .max_active) {
+			dispbottom("You already have " + .@active + " open commissions. Complete or cancel one first.");
+			goto L_List;
+		}
+		query_sql("INSERT INTO `korangar_commission` (`requester_char_id`, `requester_name`, `item_name`, `fee`) VALUES (" + .@char_id + ", '" + escape_sql(.@me$) + "', '" + escape_sql(.@item$) + "', " + .@fee + ")");
+		query_sql("SELECT LAST_INSERT_ID()", .@id);
+		dispbottom("Commission #" + .@id + " posted: " + .@item$ + " for " + .@fee + "z. Trade materials and payment directly.");
+		announce("[Commission] " + .@me$ + " is looking for " + .@item$ + " (" + .@fee + "z). Type /commission to see the board.", bc_all | bc_blue);
+		goto L_List;
+	}
+
+	if (.@sub$ == "assign" || .@sub$ == "complete" || .@sub$ == "cancel") {
+		.@id$ = .@atcmd_parameters$[1];
+		if (charat(.@id$, 0) == "#")
+			.@id$ = delchar(.@id$, 0);
+		.@id = atoi(.@id$);
+		if (.@id <= 0 || .@id$ != "" + .@id) {
+			dispbottom("Usage: @commission " + .@sub$ + " <id>" + (.@sub$ == "assign" ? " <character name>" : ""));
+			goto L_List;
+		}
+		.@rows = query_sql("SELECT `requester_char_id`, `item_name`, `status`, `crafter_name` FROM `korangar_commission` WHERE `id` = " + .@id, .@owner, .@item$, .@status, .@crafter$);
+		if (.@rows == 0 || .@status >= 2) {
+			dispbottom("Commission #" + .@id + " is not on the board.");
+			goto L_List;
+		}
+		if (.@owner != .@char_id) {
+			dispbottom("Only the player who posted commission #" + .@id + " can " + .@sub$ + " it.");
+			goto L_List;
+		}
+
+		if (.@sub$ == "assign") {
+			if (.@status != 0) {
+				dispbottom("Commission #" + .@id + " is already assigned to " + .@crafter$ + ".");
+				goto L_List;
+			}
+			.@name$ = .@atcmd_parameters$[2];
+			for (.@i = 3; .@i < .@atcmd_numparameters; ++.@i)
+				.@name$ += " " + .@atcmd_parameters$[.@i];
+			if (.@name$ == "") {
+				dispbottom("Usage: @commission assign <id> <character name>");
+				goto L_List;
+			}
+			.@found = query_sql("SELECT `char_id`, `name` FROM `char` WHERE `name` = '" + escape_sql(.@name$) + "'", .@crafter_id, .@crafter_name$);
+			if (.@found == 0) {
+				dispbottom("No character is named " + .@name$ + ".");
+				goto L_List;
+			}
+			if (.@crafter_id == .@char_id) {
+				dispbottom("You cannot assign your own commission to yourself.");
+				goto L_List;
+			}
+			query_sql("UPDATE `korangar_commission` SET `status` = 1, `crafter_char_id` = " + .@crafter_id + ", `crafter_name` = '" + escape_sql(.@crafter_name$) + "' WHERE `id` = " + .@id + " AND `status` = 0");
+			dispbottom("Commission #" + .@id + " (" + .@item$ + ") is now with " + .@crafter_name$ + ".");
+			// getcharid by name only finds a character who is online.
+			if (getcharid(CHAR_ID_ACCOUNT, .@crafter_name$) > 0)
+				message(.@crafter_name$, "[Commission] " + .@me$ + " assigned you #" + .@id + ": " + .@item$ + ". Type /commission to see it.");
+		} else {
+			query_sql("UPDATE `korangar_commission` SET `status` = " + (.@sub$ == "complete" ? 2 : 3) + " WHERE `id` = " + .@id + " AND `status` IN (0, 1)");
+			dispbottom("Commission #" + .@id + " (" + .@item$ + ") " + (.@sub$ == "complete" ? "completed" : "cancelled") + ".");
+			if (.@status == 1 && .@crafter$ != "" && getcharid(CHAR_ID_ACCOUNT, .@crafter$) > 0)
+				message(.@crafter$, "[Commission] #" + .@id + " (" + .@item$ + ") was " + (.@sub$ == "complete" ? "marked complete" : "cancelled") + " by " + .@me$ + ".");
+		}
+		goto L_List;
+	}
+
+	dispbottom("Usage: @commission [list | post <fee> <item> | assign <id> <name> | complete <id> | cancel <id>]");
+	goto L_List;
+
+// Every command, refused or not, ends with the current list, so the client
+// always has a fresh board and a test always has an end to wait for.
+L_List:
+	callsub(S_List);
+	end;
+
+// Send the open and assigned requests to the attached player as [CMB] lines.
+S_List:
+	.@viewer = getcharid(CHAR_ID_CHAR);
+	.@n = query_sql("SELECT `id`, `item_name`, `fee`, `requester_name`, `requester_char_id`, `crafter_name`, `crafter_char_id`, `status` FROM `korangar_commission` WHERE `status` IN (0, 1) ORDER BY `id` DESC LIMIT " + .max_listed,
+		.@ids, .@items$, .@fees, .@by$, .@by_ids, .@crafters$, .@crafter_ids, .@statuses);
+	dispbottom("[CMB]{\"t\":\"begin\",\"v\":1,\"n\":" + .@n + "}");
+	for (.@i = 0; .@i < .@n; ++.@i) {
+		dispbottom("[CMB]{\"t\":\"row\",\"v\":1,\"id\":" + .@ids[.@i]
+			+ ",\"item\":\"" + callsub(S_Json, .@items$[.@i])
+			+ "\",\"fee\":" + .@fees[.@i]
+			+ ",\"by\":\"" + callsub(S_Json, .@by$[.@i])
+			+ "\",\"crafter\":\"" + callsub(S_Json, .@crafters$[.@i])
+			+ "\",\"status\":\"" + (.@statuses[.@i] == 1 ? "assigned" : "open")
+			+ "\",\"mine\":" + (.@by_ids[.@i] == .@viewer ? 1 : 0)
+			+ ",\"yours\":" + (.@crafter_ids[.@i] == .@viewer ? 1 : 0) + "}");
+	}
+	dispbottom("[CMB]{\"t\":\"end\",\"v\":1}");
+	return;
+
+// Escape a string for a JSON string literal. Item names are restricted on
+// post, but character names are not ours to restrict.
+S_Json:
+	return replacestr(replacestr(getarg(0), "\\", "\\\\"), "\"", "\\\"");
+}

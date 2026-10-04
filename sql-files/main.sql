@@ -971,6 +971,7 @@ INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300137); -- 2026-09-2
 INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300705); -- 2026-09-24--19-45.sql
 INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300765); -- 2026-09-24--19-46.sql
 INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1790300825); -- 2026-09-24--19-47.sql
+INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (1791165605); -- 2026-10-04--20-00.sql
 -- Fork migration markers the upgrades also record; tools/check-checkpoint-migration.sh reads 20260916.
 INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260916);
 INSERT IGNORE INTO `sql_updates` (`timestamp`) VALUES (20260922);
@@ -1294,4 +1295,24 @@ CREATE TABLE IF NOT EXISTS `dm_campaign_party_cursor` (
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`campaign_id`, `char_id`),
   KEY `dm_campaign_party_cursor_party` (`campaign_id`, `party_id`)
+) ENGINE=InnoDB;
+
+--
+-- Table structure for table `korangar_commission` (fork; upgrades/2026-10-04--20-00.sql)
+--
+
+CREATE TABLE IF NOT EXISTS `korangar_commission` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `requester_char_id` INT UNSIGNED NOT NULL,
+  `requester_name` VARCHAR(30) NOT NULL,
+  `item_name` VARCHAR(50) NOT NULL,
+  `fee` INT UNSIGNED NOT NULL DEFAULT 0,
+  `crafter_char_id` INT UNSIGNED NOT NULL DEFAULT 0,
+  `crafter_name` VARCHAR(30) NOT NULL DEFAULT '',
+  `status` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `korangar_commission_status` (`status`),
+  KEY `korangar_commission_requester` (`requester_char_id`, `status`)
 ) ENGINE=InnoDB;
