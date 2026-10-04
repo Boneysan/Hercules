@@ -753,6 +753,12 @@ S_Reset:
 	for (.@q = 20221; .@q <= 20223; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
 	for (.@q = 20231; .@q <= 20233; ++.@q) callfunc("DM_InstanceQuestErase", .@q);
 	if (.@party_id > 0) {
+		// A reset starts a new run, so its rewards must be earnable again.
+		// Only `@dm mode off` cleared the claim-once latches, and it clears
+		// $dm_active_party's -- already 0 after a reset -- so a replayed
+		// campaign silently paid nothing for every beat paid in the last run.
+		// Owed rewards for offline members are a separate table and survive.
+		callfunc("DM_ClearPartyGrants", .@party_id);
 		setd("$dm_inst_" + .@party_id, 0);
 		setd("$dm_arc19_vol_aid_" + .@party_id, 0);
 		setd("$dm_arc19_vol_cid_" + .@party_id, 0);
