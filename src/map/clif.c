@@ -12815,6 +12815,10 @@ static void clif_parse_SplitInventoryStack(int fd, struct map_session_data *sd)
 	}
 
 	memcpy(&split_item, &sd->status.inventory[source], sizeof(split_item));
+	// The new half is a new database row. Leaving the source's row id here
+	// would give two slots one id until the next save, and correctness would
+	// then rest on how char-server's memitemdata_to_sql pairs rows.
+	split_item.id = 0;
 	split_item.amount = amount;
 	split_item.equip = 0;
 	split_item.favorite = 0;

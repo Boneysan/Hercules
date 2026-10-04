@@ -1,0 +1,39 @@
+//===== Hercules Script =======================================
+//= Headless loot fixture (Korangar integration tests)
+//===== Description: ==========================================
+//= @testloot <item id> <amount> <dx> <dy>
+//= Puts an ownerless item on the floor at the caller's position
+//= plus (dx, dy), with `makeitem`. Unlike a player's own drop it
+//= is not flagged player_dropped, and unlike a monster drop it has
+//= no owner window, so automatic pickup may take it at once. The
+//= autopickup radius and party-override scenarios need exactly that.
+//=
+//= Listed (commented out) in npc/scripts_dev.conf and enabled only
+//= for a disposable test run by korangar's run-integration-tests.sh.
+//= Never enable it on a server anyone else can reach: it creates
+//= items from nothing, for any GM who calls it.
+//=============================================================
+
+-	script	Headless Loot Test	FAKE_NPC,{
+OnInit:
+	bindatcmd("testloot", strnpcinfo(NPC_NAME_UNIQUE) + "::OnTestLoot", 60, 99, 1);
+	end;
+
+OnTestLoot:
+	if (.@atcmd_numparameters < 4) {
+		message(strcharinfo(PC_NAME), "Usage: @testloot <item id> <amount> <dx> <dy>");
+		end;
+	}
+	.@item = atoi(.@atcmd_parameters$[0]);
+	.@amount = atoi(.@atcmd_parameters$[1]);
+	getmapxy(.@map$, .@x, .@y, UNITTYPE_PC);
+	.@x += atoi(.@atcmd_parameters$[2]);
+	.@y += atoi(.@atcmd_parameters$[3]);
+	if (getitemname(.@item) == "null" || .@amount < 1 || .@amount > 100) {
+		message(strcharinfo(PC_NAME), "Test loot refused: unknown item or amount outside 1-100.");
+		end;
+	}
+	makeitem(.@item, .@amount, .@map$, .@x, .@y);
+	message(strcharinfo(PC_NAME), "Test loot placed: " + .@item + " x" + .@amount + " at " + .@x + "," + .@y);
+	end;
+}
