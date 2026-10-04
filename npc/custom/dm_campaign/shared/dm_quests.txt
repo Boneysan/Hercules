@@ -518,17 +518,38 @@ function	script	DM_CopyOneFlag	{
 	return 0;
 }
 
+// True once this character is placed on its map. At login the catch-up runs
+// before that (OnPCQuestLog), and pc_gainexp refuses a character with no map
+// block (`bl.prev == NULL`) without a word -- so owed EXP was marked claimed
+// and lost. getunits walks the map's blocks, so it finds us only when placed.
+function	script	DM_OnMap	{
+	getmapxy(.@m$, .@x, .@y, UNITTYPE_PC);
+	.@n = getunits(BL_PC, .@gid, 0, .@m$, .@x, .@y, .@x, .@y);
+	.@self = getcharid(CHAR_ID_ACCOUNT);
+	for (.@i = 0; .@i < .@n; ++.@i)
+		if (.@gid[.@i] == .@self)
+			return 1;
+	return 0;
+}
+
 // Pay item, zeny, and experience grants that were queued while this
 // character was offline. Each row is marked claimed before the next, so a
-// disconnect mid-loop cannot pay the same row twice.
+// disconnect mid-loop cannot pay the same row twice. EXP rows wait until the
+// character is on its map (see DM_OnMap) and retry on a short timer.
 function	script	DM_ClaimPendingGrants	{
 	.@char_id = getcharid(CHAR_ID_CHAR);
 	if (.@char_id <= 0)
 		return 0;
+	.@on_map = callfunc("DM_OnMap");
 	.@campaign$ = callfunc("DM_CheckpointCampaign");
 	.@rows = query_sql("SELECT `id`, `kind`, `amount`, `amount2` FROM `dm_campaign_pending_grant` WHERE `campaign_id` = '" + .@campaign$ + "' AND `char_id` = " + .@char_id + " AND `claimed` = 0", .@id, .@kind$, .@amount, .@amount2);
 	for (.@i = 0; .@i < .@rows; ++.@i) {
+		if (.@kind$[.@i] == "exp" && !.@on_map) {
+			.@deferred = 1;
+			continue;
+		}
 		query_sql("UPDATE `dm_campaign_pending_grant` SET `claimed` = 1 WHERE `id` = " + .@id[.@i] + " AND `claimed` = 0");
+		++.@paid;
 		if (.@kind$[.@i] == "item" && .@amount[.@i] > 0 && .@amount2[.@i] > 0)
 			getitem(.@amount[.@i], .@amount2[.@i]);
 		else if (.@kind$[.@i] == "zeny" && .@amount[.@i] > 0)
@@ -536,7 +557,14 @@ function	script	DM_ClaimPendingGrants	{
 		else if (.@kind$[.@i] == "exp")
 			getexp(.@amount[.@i], .@amount2[.@i]);
 	}
-	return .@rows;
+	deltimer("DM_CampEvents::OnDMRetryGrants");
+	if (.@deferred && @dm_grant_retries < 30) {
+		++@dm_grant_retries;
+		addtimer(2000, "DM_CampEvents::OnDMRetryGrants");
+	} else {
+		@dm_grant_retries = 0;
+	}
+	return .@paid;
 }
 
 // Replay typed quest/flag transitions for this character. The event cursor is

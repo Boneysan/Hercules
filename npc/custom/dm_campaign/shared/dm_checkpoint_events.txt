@@ -20,6 +20,11 @@ OnPCPartyPush:
 	}
 	end;
 
+// Owed EXP waits until the character is on its map (DM_ClaimPendingGrants).
+OnDMRetryGrants:
+	callfunc("DM_ClaimPendingGrants");
+	end;
+
 OnPCQuestLog:
 	if (callfunc("DM_SessionAllows")) {
 		callfunc("DM_CatchUpFromParty", 1);
