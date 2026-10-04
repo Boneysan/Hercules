@@ -15,12 +15,17 @@ OnInit:
 	initnpctimer;
 	end;
 
+// @setmobhp <monster GID> <hp>: test hook used by the headless boss scenarios
+// (korangar headless-tester mobs.rs) to bring a boss to a phase threshold.
+// Monsters only, so it can never be used to set a player's HP.
 OnSetMobHP:
 	if (.@atcmd_numparameters >= 2) {
 		.@gid = atoi(.@atcmd_parameters$[0]);
 		.@hp = atoi(.@atcmd_parameters$[1]);
-		if (.@gid > 0 && .@hp > 0) {
+		if (.@gid > 0 && .@hp > 0 && getunittype(.@gid) == UNITTYPE_MOB) {
 			setunitdata(.@gid, UDT_HP, .@hp);
+		} else {
+			message(strcharinfo(PC_NAME), "Usage: @setmobhp <monster GID> <hp> (monsters only).");
 		}
 	}
 	end;

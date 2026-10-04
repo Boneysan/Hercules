@@ -25307,8 +25307,10 @@ static BUILDIN(countcharitem)
 		script_pushint(st, -1);
 		return true;
 	}
+	// Equipped copies are never handed in (same rule as the offline SQL path in
+	// npc/custom/dm_campaign/shared/dm_quests.txt), so they are not counted.
 	for (i = 0; i < sd->status.inventorySize; i++) {
-		if (sd->status.inventory[i].nameid == nameid)
+		if (sd->status.inventory[i].nameid == nameid && sd->status.inventory[i].equip == 0)
 			count += sd->status.inventory[i].amount;
 	}
 	script_pushint(st, count);
@@ -25335,7 +25337,8 @@ static BUILDIN(delcharitem)
 	}
 	for (i = 0; i < sd->status.inventorySize && left > 0; i++) {
 		int take;
-		if (sd->status.inventory[i].nameid != nameid || sd->status.inventory[i].amount <= 0)
+		if (sd->status.inventory[i].nameid != nameid || sd->status.inventory[i].amount <= 0
+			|| sd->status.inventory[i].equip != 0) // equipped gear is never taken
 			continue;
 		take = sd->status.inventory[i].amount;
 		if (take > left)

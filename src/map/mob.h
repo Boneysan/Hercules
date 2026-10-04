@@ -642,6 +642,7 @@ struct mob_interface {
 	const struct mob_ai_profile *(*ai_profile_find) (int16 map_id, int mob_id);
 	void (*read_ai_profiles) (void);
 	bool (*ai_profile_step_away) (struct mob_data *md, struct block_list *target, int max_distance);
+	uint32 (*ai_profile_mode) (struct mob_data *md, uint32 mode);
 };
 
 #ifdef HERCULES_CORE

@@ -176,11 +176,17 @@ S_Spawns:
 	}
 	freeloop(false);
 	// With a monster id: just that kind (a rare kind would not make the top five).
+	// Counted by database name, not UDT_CLASS: for monsters UDT_CLASS is the view
+	// class, and a ViewData entry (the F15 elite looks like ORC_SKELETON, 1152)
+	// would otherwise be counted as the monster it borrows its sprite from.
 	if (.@only > 0) {
 		.@found = 0;
-		for (.@k = 0; .@k < .@kinds; ++.@k)
-			if (.@kclass[.@k] == .@only)
-				.@found = .@kcount[.@k];
+		.@want$ = getmonsterinfo(.@only, MOB_NAME);
+		freeloop(true);
+		for (.@i = 0; .@i < .@mobs; ++.@i)
+			if (getunitname(.@gid[.@i]) == .@want$)
+				++.@found;
+		freeloop(false);
 		dispbottom("[Metrics]   " + .@found + " x " + getmonsterinfo(.@only, MOB_NAME) + " (lv " + getmonsterinfo(.@only, MOB_LV) + ")");
 		return;
 	}
