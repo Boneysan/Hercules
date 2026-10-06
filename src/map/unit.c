@@ -1386,16 +1386,20 @@ static int unit_set_walkdelay(struct block_list *bl, int64 tick, int delay, int 
 	}
 	ud->canmove_tick = tick + delay;
 	if (ud->walktimer != INVALID_TIMER) {
+		// Fork delta: a player is told where a flinch stopped them. Upstream
+		// sends nothing, so a client that keeps walking is only corrected by
+		// its next move reply and visibly snaps back (rubber-banding).
+		int stop_flag = STOPWALKING_FLAG_NEXTCELL | (bl->type == BL_PC ? STOPWALKING_FLAG_FIXPOS : 0);
 		//Stop walking, if chasing, readjust timers.
 		if (delay == 1) {
 			//Minimal delay (walk-delay) disabled. Just stop walking.
-			unit->stop_walking(bl, STOPWALKING_FLAG_NEXTCELL);
+			unit->stop_walking(bl, stop_flag);
 		} else {
 			//Resume running after can move again [Kevin]
 			if (ud->state.running) {
 				timer->add(ud->canmove_tick, unit->resume_running, bl->id, (intptr_t)ud);
 			} else {
-				unit->stop_walking(bl, STOPWALKING_FLAG_NEXTCELL);
+				unit->stop_walking(bl, stop_flag);
 				if (ud->target)
 					timer->add(ud->canmove_tick + 1, unit->walktobl_timer, bl->id, ud->target);
 			}

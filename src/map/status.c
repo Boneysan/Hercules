@@ -13987,14 +13987,15 @@ static int status_natural_heal(struct block_list *bl, va_list args)
 		if (vd != NULL && vd->dead_sit == 2) {
 			int add_hp = 0, add_sp = 0;
 
+			// The campaign sit bonus is on top of natural regen, which falls
+			// through below and already runs at double rate while sitting.
+			// Returning here used to stop natural regen between bonus ticks.
 			if (status_apply_sitting_recovery(sd, (int)st->max_hp, (int)st->max_sp,
 					(int)status->natural_heal_diff_tick, &add_hp, &add_sp)) {
 				status->heal(bl, add_hp, add_sp, STATUS_HEAL_FORCED | STATUS_HEAL_SHOWEFFECT);
 				clif->updatestatus(sd, SP_HP);
 				clif->updatestatus(sd, SP_SP);
 			}
-			status_notify_recovery_ui(sd, (int)block_reason);
-			return 0;
 		}
 		status_notify_recovery_ui(sd, (int)block_reason);
 	}
