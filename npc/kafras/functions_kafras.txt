@@ -136,6 +136,12 @@ function	script	F_Kafra	{
 				default: setarray @K_Menu0$[0],"Save","Use Storage","Use Teleport Service","Rent a Pushcart","Check Other Information","Cancel"; break;
 			}
 		}
+		// Friends server: one kept potion, sold by every Kafra menu.
+		.@last = getarraysize(@K_Menu0$) - 1;
+		if (.@last >= 0 && @K_Menu0$[.@last] == "Cancel") {
+			@K_Menu0$[.@last] = "Rechargeable Potion";
+			@K_Menu0$[.@last + 1] = "Cancel";
+		}
 		.@menu$ = "";
 		for (.@i = 0; .@i < getarraysize(@K_Menu0$); ++.@i)
 			.@menu$ += @K_Menu0$[.@i] + ":";
@@ -174,6 +180,9 @@ function	script	F_Kafra	{
 		} else if (@K_Menu0$[.@j] == "Check Other Information") {
 			callfunc "F_KafInfo",getarg(2);
 			next;
+		} else if (@K_Menu0$[.@j] == "Rechargeable Potion") {
+			if (callfunc("F_RechargePotion") == 1)
+				next;
 		} else if (@K_Menu0$[.@j] == "Cancel"){
 			callfunc "F_KafEnd",getarg(0),0;
 			end;
@@ -612,6 +621,41 @@ function	script	F_EntKafCode	{
 	return @code_;
 }
 
+//== Rechargeable Potion ===================================
+// One kept healing item (id 50002). 30% HP and 30% SP, 10 second reuse.
+// 1000 zeny, and only while it is not already in the inventory.
+// Returns 1 when the caller should show the pending message.
+function	script	F_RechargePotion	{
+	mes "[Kafra Employee]";
+	if (countitem(50002) > 0) {
+		mes "You already have a Rechargeable Potion.";
+		mes "It restores 30% HP and 30% SP, and it stays in your bag.";
+		mes "You can use it again after 10 seconds.";
+		return 1;
+	}
+	mes "A Rechargeable Potion restores 30% HP and 30% SP.";
+	mes "It stays in your bag. You can use it again after 10 seconds.";
+	mes "One costs 1000 zeny.";
+	next;
+	if (select("Buy one:Cancel") == 2)
+		return 0;
+	if (Zeny < 1000) {
+		mes "[Kafra Employee]";
+		mes "You need 1000 zeny.";
+		return 1;
+	}
+	if (checkweight(50002, 1) == 0) {
+		mes "[Kafra Employee]";
+		mes "You cannot carry anything else.";
+		return 1;
+	}
+	Zeny -= 1000;
+	getitem 50002, 1;
+	mes "[Kafra Employee]";
+	mes "Thank you. Use it whenever you need it.";
+	return 1;
+}
+
 //== Warp Points / View Points Function ====================
 function	script	F_KafSet	{
 	deletearray @wrpC$;
@@ -672,6 +716,11 @@ function	script	F_KafSet	{
 		setarray @wrpD$, "Rachel";
 		setarray @wrpP, 2200;
 	}
+	// Friends server: every public destination is 800 zeny. The menu label
+	// and F_KafTele both read @wrpP. Guild castles set their own price and
+	// do not call this function. A free warp ticket still skips the charge.
+	for (.@i = 0; .@i < getarraysize(@wrpP); ++.@i)
+		@wrpP[.@i] = 800;
 	for (.@i = 0; .@i < getarraysize(@wrpD$); ++.@i)
 		@wrpC$[.@i] = @wrpD$[.@i]+" -> "+@wrpP[.@i];
 	@wrpC$[getarraysize(@wrpC$)] = "Cancel";

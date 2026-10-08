@@ -7531,13 +7531,28 @@ static int pc_skilldown(struct map_session_data *sd, uint16 skill_id)
 	int index;
 	int classidx;
 	int i;
+	int inf2;
 
 	nullpo_ret(sd);
 	if (!(index = skill->get_index(skill_id)))
 		return 0;
 	if (sd->status.skill[index].id == 0 || sd->status.skill[index].lv < 1)
 		return 0;
+	/* Granted, temporary, and plagiarized ranks were not spent as skill points. */
 	if (sd->status.skill[index].flag != SKILL_FLAG_PERMANENT)
+		return 0;
+
+	inf2 = skill->dbs->db[index].inf2;
+	/* Match pc_resetskill: these are not turned back into a skill point. */
+	if ((inf2 & INF2_QUEST_SKILL) && !battle_config.quest_skill_learn)
+		return 0;
+	if (inf2 & (INF2_WEDDING_SKILL | INF2_SPIRIT_SKILL | INF2_GUILD_SKILL))
+		return 0;
+	if (skill_id == NV_BASIC && (sd->job & MAPID_UPPERMASK) != MAPID_NOVICE)
+		return 0;
+	if (skill_id == SU_BASIC_SKILL && (sd->job & MAPID_BASEMASK) != MAPID_SUMMONER)
+		return 0;
+	if (skill_id == NV_TRICKDEAD && (sd->job & MAPID_UPPERMASK) != MAPID_NOVICE)
 		return 0;
 
 	classidx = pc->class2idx(sd->status.class);
@@ -7559,10 +7574,13 @@ static int pc_skilldown(struct map_session_data *sd, uint16 skill_id)
 
 	sd->status.skill[index].lv--;
 	sd->status.skill_point++;
-	if (sd->status.skill[index].lv == 0)
+	if (sd->status.skill[index].lv == 0) {
 		sd->status.skill[index].id = 0;
+		sd->status.skill[index].flag = 0;
+	}
 	status_calc_pc(sd, SCO_NONE);
-	clif->skillup(sd, skill_id, sd->status.skill[index].lv, 0);
+	/* flag 1 is the player skill-tree update, same as pc_skillup. */
+	clif->skillup(sd, skill_id, sd->status.skill[index].lv, 1);
 	clif->updatestatus(sd, SP_SKILLPOINT);
 	clif->skillinfoblock(sd);
 	return 1;

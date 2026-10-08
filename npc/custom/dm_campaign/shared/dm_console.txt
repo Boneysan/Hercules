@@ -53,7 +53,10 @@ OnDM:
 	.@sub$ = .@atcmd_parameters$[0];
 
 	if (.@sub$ == "help") {
-		callsub(S_Help);
+		if (.@atcmd_parameters$[1] == "flags")
+			callsub(S_HelpFlags);
+		else
+			callsub(S_Help);
 		end;
 	}
 
@@ -518,7 +521,8 @@ S_Help:
 	dispbottom("[DM] @dmenc tune [level] [percent] | @dm tune [level] [percent]");
 	dispbottom("[DM] @dm stealth [dc]   (default 15) | @dm wake");
 	dispbottom("[DM] Players: @check <tag|stat> <dc> and @assist <player> <tag>");
-	dispbottom("[DM] @dm flag <get|set|clear|arc01|cleararc01|arc02|cleararc02|arc03|cleararc03|arc04|cleararc04|arc05|cleararc05|arc06|cleararc06|arc07|cleararc07|arc08|cleararc08|arc09|cleararc09|arc10|cleararc10|arc11|cleararc11|arc12|cleararc12|arc13|cleararc13|arc14|cleararc14|arc15|cleararc15|arc16|cleararc16|arc17|cleararc17|arc18|cleararc18|arc19|cleararc19> [name] [value]");
+	dispbottom("[DM] @dm flag <get|set|clear> [name] [value]");
+	dispbottom("[DM] @dm help flags   (arc01 through arc19 shortcuts)");
 	dispbottom("[DM] @dm quest <start|complete|erase> <quest_id>   (current party)");
 	dispbottom("[DM] @dm beat                 (menu: location/NPC/story tracking)");
 	dispbottom("[DM] @dm story <message> | @dm globalstory <message>");
@@ -534,6 +538,14 @@ S_Help:
 	dispbottom("[DM] @dm reconcile [confirm] (preview/apply durable checkpoint sync)");
 	dispbottom("[DM] @dm reset confirm       (wipe all campaign flags for a fresh run)");
 	dispbottom("[DM] Shortcuts: @dmmode, @dmhazard, @dmreward, @dmflag, @dmquest, @dmbeat, @dmstory, @dmcleanup, @dmwarp, @dmrecall, @dminstance, @dmexp, @dmstatus, @dmcatchup, @dmreset");
+	return;
+
+S_HelpFlags:
+	dispbottom("[DM] @dm flag <get|set|clear> [name] [value]");
+	dispbottom("[DM] arc01 cleararc01, arc02 cleararc02, arc03 cleararc03, arc04 cleararc04, arc05 cleararc05");
+	dispbottom("[DM] arc06 cleararc06, arc07 cleararc07, arc08 cleararc08, arc09 cleararc09, arc10 cleararc10");
+	dispbottom("[DM] arc11 cleararc11, arc12 cleararc12, arc13 cleararc13, arc14 cleararc14, arc15 cleararc15");
+	dispbottom("[DM] arc16 cleararc16, arc17 cleararc17, arc18 cleararc18, arc19 cleararc19");
 	return;
 
 S_Enc:

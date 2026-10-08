@@ -99,6 +99,9 @@ iz_int,56,32,3	script	Wounded Swordsman#izint	4_TOWER_01,8,8,{
 OnInit:
 	questinfo(QTYPE_QUEST, 1);
 	setquestinfo(QINFO_JOB, Job_Novice);
+	setquestinfo(QINFO_QUEST, 21001, 0);
+	questinfo(QTYPE_QUEST2, 1);
+	setquestinfo(QINFO_JOB, Job_Novice);
 	setquestinfo(QINFO_QUEST, 21001, 1);
 	end;
 
@@ -167,7 +170,7 @@ int_land,58,69,5	script	Sailor#int_land	4W_SAILOR,{
 	}
 
 OnInit:
-	questinfo(QTYPE_QUEST, 1);
+	questinfo(QTYPE_QUEST2, 1);
 	setquestinfo(QINFO_JOB, Job_Novice);
 	setquestinfo(QINFO_QUEST, 21002, 1);
 	end;
@@ -268,6 +271,9 @@ int_land,78,103,5	script	Captain Carocc#int_land	4_M_REINDEER,{
 
 OnInit:
 	questinfo(QTYPE_QUEST, 1);
+	setquestinfo(QINFO_JOB, Job_Novice);
+	setquestinfo(QINFO_QUEST, 21002, 0);
+	questinfo(QTYPE_QUEST2, 1);
 	setquestinfo(QINFO_JOB, Job_Novice);
 	setquestinfo(QINFO_QUEST, 21002, 1);
 	end;
@@ -372,6 +378,9 @@ int_land,73,100,3	script	Lumin#iz_int	4_M_NOV_RUMIN,{
 	}
 OnInit:
 	questinfo(QTYPE_QUEST, 1);
+	setquestinfo(QINFO_JOB, Job_Novice);
+	setquestinfo(QINFO_QUEST, 7471, 0);
+	questinfo(QTYPE_QUEST2, 1);
 	setquestinfo(QINFO_JOB, Job_Novice);
 	setquestinfo(QINFO_QUEST, 7471, 1);
 	end;
@@ -791,6 +800,11 @@ izlude,198,213,3	script	Captain Carocc#iz	4_M_REINDEER,5,5,{
 	OnInit:
 		questinfo(QTYPE_QUEST, 1);
 		setquestinfo(QINFO_JOB, Job_Novice);
+		setquestinfo(QINFO_BASE_LEVEL, 1, 14);
+		setquestinfo(QINFO_QUEST, 7471, 2);
+		setquestinfo(QINFO_QUEST, 7472, 0);
+		questinfo(QTYPE_QUEST2, 1);
+		setquestinfo(QINFO_JOB, Job_Novice);
 		setquestinfo(QINFO_QUEST, 7472, 1);
 		//setquestLevel 7472 1 14
 		//SetQuestQuest 7472 7473 0
@@ -809,9 +823,9 @@ izlude_b,198,213,3	duplicate(Captain Carocc#iz)	Captain Carocc#iz_b	4_M_REINDEER
 izlude_c,198,213,3	duplicate(Captain Carocc#iz)	Captain Carocc#iz_c	4_M_REINDEER,5,5
 izlude_d,198,213,3	duplicate(Captain Carocc#iz)	Captain Carocc#iz_d	4_M_REINDEER,5,5
 
-//== Criatura Academy Staff ================================
+//== Hun ================================
 // - Teaches the player about the Inventory.
-izlude,122,207,3	script	Criatura Academy Staff#0	4_M_KHKYEL,3,3,{
+izlude,122,207,3	script	Hun#0	4_M_KHKYEL,3,3,{
 	if (!checkweight(Orcish_Axe, 3)) {
 		mes("Quest cannot be continued due to the overfilled inventory.");
 		mes("Continue the quest after organizing the inventory.");
@@ -1114,6 +1128,10 @@ izlude,122,207,3	script	Criatura Academy Staff#0	4_M_KHKYEL,3,3,{
 	OnInit:
 		questinfo(QTYPE_QUEST, 1);
 		setquestinfo(QINFO_JOB, Job_Novice);
+		setquestinfo(QINFO_BASE_LEVEL, 1, 14);
+		setquestinfo(QINFO_QUEST, 7473, 0);
+		questinfo(QTYPE_QUEST2, 1);
+		setquestinfo(QINFO_JOB, Job_Novice);
 		setquestinfo(QINFO_QUEST, 7473, 1);
 		//setquestLevel 7473 1 14
 		end;
@@ -1126,10 +1144,10 @@ izlude,122,207,3	script	Criatura Academy Staff#0	4_M_KHKYEL,3,3,{
 		end;
 }
 
-izlude_a,122,207,3	duplicate(Criatura Academy Staff#0)	Criatura Academy Staff#a	4_M_KHKYEL,3,3
-izlude_b,122,207,3	duplicate(Criatura Academy Staff#0)	Criatura Academy Staff#b	4_M_KHKYEL,3,3
-izlude_c,122,207,3	duplicate(Criatura Academy Staff#0)	Criatura Academy Staff#c	4_M_KHKYEL,3,3
-izlude_d,122,207,3	duplicate(Criatura Academy Staff#0)	Criatura Academy Staff#d	4_M_KHKYEL,3,3
+izlude_a,122,207,3	duplicate(Hun#0)	Hun#a	4_M_KHKYEL,3,3
+izlude_b,122,207,3	duplicate(Hun#0)	Hun#b	4_M_KHKYEL,3,3
+izlude_c,122,207,3	duplicate(Hun#0)	Hun#c	4_M_KHKYEL,3,3
+izlude_d,122,207,3	duplicate(Hun#0)	Hun#d	4_M_KHKYEL,3,3
 
 //== Information Staff =====================================
 // - Teaches the player about the Mini-Map through a quick quest.
